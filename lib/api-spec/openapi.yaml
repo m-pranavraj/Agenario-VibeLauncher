@@ -1,0 +1,498 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Agenario API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication
+  - name: scans
+    description: Code scans and analysis
+  - name: billing
+    description: Billing and subscriptions
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: registerUser
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegisterInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: loginUser
+      tags: [auth]
+      summary: Log in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLoginInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logoutUser
+      tags: [auth]
+      summary: Log out
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /scans:
+    get:
+      operationId: listScans
+      tags: [scans]
+      summary: List user scans
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Scan"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createScan
+      tags: [scans]
+      summary: Create and run a scan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScanInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanDetail"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Scan limit reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /scans/{id}:
+    get:
+      operationId: getScan
+      tags: [scans]
+      summary: Get a scan with issues
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanDetail"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /billing/create-order:
+    post:
+      operationId: createOrder
+      tags: [billing]
+      summary: Create a Razorpay order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RazorpayOrder"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /billing/verify:
+    post:
+      operationId: verifyPayment
+      tags: [billing]
+      summary: Verify and activate a payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentVerification"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyResult"
+        "400":
+          description: Invalid signature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /billing/status:
+    get:
+      operationId: getBillingStatus
+      tags: [billing]
+      summary: Get billing status
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingStatus"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    User:
+      type: object
+      required: [id, email, name, plan, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        plan:
+          type: string
+        createdAt:
+          type: string
+
+    UserRegisterInput:
+      type: object
+      required: [email, name, password]
+      properties:
+        email:
+          type: string
+        name:
+          type: string
+        password:
+          type: string
+          minLength: 8
+
+    UserLoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    IssueCounts:
+      type: object
+      required: [critical, high, medium, low]
+      properties:
+        critical:
+          type: integer
+        high:
+          type: integer
+        medium:
+          type: integer
+        low:
+          type: integer
+
+    Scan:
+      type: object
+      required: [id, userId, sourceType, sourceInput, status, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        sourceType:
+          type: string
+        sourceInput:
+          type: string
+        appDescription:
+          type: ["string", "null"]
+        status:
+          type: string
+        score:
+          type: ["integer", "null"]
+        summary:
+          type: ["string", "null"]
+        issueCounts:
+          oneOf:
+            - $ref: "#/components/schemas/IssueCounts"
+            - type: "null"
+        createdAt:
+          type: string
+        completedAt:
+          type: ["string", "null"]
+
+    ScanIssue:
+      type: object
+      required: [id, scanId, agentName, severity, title, description, fixPrompt]
+      properties:
+        id:
+          type: integer
+        scanId:
+          type: integer
+        agentName:
+          type: string
+        severity:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        fixPrompt:
+          type: string
+
+    ScanDetail:
+      type: object
+      required: [id, userId, sourceType, sourceInput, status, createdAt, issues]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        sourceType:
+          type: string
+        sourceInput:
+          type: string
+        appDescription:
+          type: ["string", "null"]
+        status:
+          type: string
+        score:
+          type: ["integer", "null"]
+        summary:
+          type: ["string", "null"]
+        issueCounts:
+          oneOf:
+            - $ref: "#/components/schemas/IssueCounts"
+            - type: "null"
+        createdAt:
+          type: string
+        completedAt:
+          type: ["string", "null"]
+        issues:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScanIssue"
+
+    ScanInput:
+      type: object
+      required: [sourceType, sourceInput]
+      properties:
+        sourceType:
+          type: string
+        sourceInput:
+          type: string
+        appDescription:
+          type: string
+
+    OrderInput:
+      type: object
+      required: [plan]
+      properties:
+        plan:
+          type: string
+
+    RazorpayOrder:
+      type: object
+      required: [orderId, keyId, amount, currency, planName]
+      properties:
+        orderId:
+          type: string
+        keyId:
+          type: string
+        amount:
+          type: integer
+        currency:
+          type: string
+        planName:
+          type: string
+
+    PaymentVerification:
+      type: object
+      required: [razorpayOrderId, razorpayPaymentId, razorpaySignature, plan]
+      properties:
+        razorpayOrderId:
+          type: string
+        razorpayPaymentId:
+          type: string
+        razorpaySignature:
+          type: string
+        plan:
+          type: string
+
+    VerifyResult:
+      type: object
+      required: [success, plan]
+      properties:
+        success:
+          type: boolean
+        plan:
+          type: string
+
+    BillingStatus:
+      type: object
+      required: [plan]
+      properties:
+        plan:
+          type: string
+        razorpayCustomerId:
+          type: ["string", "null"]

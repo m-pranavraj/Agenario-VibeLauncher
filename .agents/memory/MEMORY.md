@@ -1,0 +1,2 @@
+- [connect-pg-simple bundling](connect-pg-simple-bundling.md) — createTableIfMissing fails after esbuild; create session table via raw SQL instead.
+- [Agenario project overview](agenario-overview.md) — full-stack AI app review board; stack, env vars, key files.
