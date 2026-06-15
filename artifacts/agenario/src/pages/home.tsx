@@ -13,9 +13,11 @@ import {
 import { SiReplit } from "react-icons/si";
 import { Link } from "wouter";
 
-const FADE_UP = {
+import type { Variants } from "framer-motion";
+
+const FADE_UP: Variants = {
   hidden: { opacity: 0, y: 30 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } },
 };
 
 const STAGGER = {
@@ -84,7 +86,7 @@ export default function Home() {
       <nav className="fixed top-0 w-full z-50 bg-background/70 backdrop-blur-xl border-b border-border/50 transition-all">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-primary/20 border border-primary/30 rounded-lg shadow-[0_0_15px_rgba(124,58,237,0.3)]">
+            <div className="p-1.5 bg-primary/20 border border-primary/30 rounded-lg shadow-[0_0_15px_rgba(212,144,10,0.3)]">
               <Rocket className="w-5 h-5 text-primary" />
             </div>
             <span className="font-heading font-bold text-xl tracking-tight text-white">Agenario</span>
@@ -98,7 +100,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-muted-foreground hover:text-white text-sm transition-colors" data-testid="nav-login-btn">Sign In</Link>
             <Link href="/register">
-              <Button className="bg-primary hover:bg-primary/90 text-white font-semibold rounded-full px-6 shadow-[0_0_20px_rgba(124,58,237,0.4)] transition-all hover:shadow-[0_0_30px_rgba(124,58,237,0.6)]" data-testid="nav-start-btn">
+              <Button className="bg-primary hover:bg-primary/90 text-white font-semibold rounded-full px-6 shadow-[0_0_20px_rgba(212,144,10,0.4)] transition-all hover:shadow-[0_0_30px_rgba(212,144,10,0.6)]" data-testid="nav-start-btn">
                 Start for Free
               </Button>
             </Link>
@@ -111,7 +113,7 @@ export default function Home() {
         <section className="px-6 pt-20 pb-32 max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div initial="hidden" animate="show" variants={STAGGER} className="space-y-8">
-              <motion.div variants={FADE_UP} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium shadow-[0_0_15px_rgba(124,58,237,0.15)]">
+              <motion.div variants={FADE_UP} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium shadow-[0_0_15px_rgba(212,144,10,0.15)]">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
@@ -120,7 +122,7 @@ export default function Home() {
               </motion.div>
               
               <motion.h1 variants={FADE_UP} className="text-5xl lg:text-7xl font-heading font-extrabold leading-[1.05] tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-white/50">
-                Launch Vibecoded Apps <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400 drop-shadow-[0_0_15px_rgba(124,58,237,0.5)]">Confidently.</span>
+                Launch Vibecoded Apps <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-300 drop-shadow-[0_0_15px_rgba(212,144,10,0.5)]">Confidently.</span>
               </motion.h1>
               
               <motion.p variants={FADE_UP} className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-xl">
@@ -141,7 +143,7 @@ export default function Home() {
               
               <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row gap-4 pt-4">
                 <Link href="/register">
-                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-8 h-14 shadow-[0_0_30px_rgba(124,58,237,0.5)] hover:shadow-[0_0_40px_rgba(124,58,237,0.7)] transition-all text-lg" data-testid="hero-analyze-btn">
+                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-8 h-14 shadow-[0_0_30px_rgba(212,144,10,0.5)] hover:shadow-[0_0_40px_rgba(212,144,10,0.7)] transition-all text-lg" data-testid="hero-analyze-btn">
                     Analyze My App for Free
                   </Button>
                 </Link>
@@ -158,7 +160,7 @@ export default function Home() {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-              className="relative rounded-2xl border border-white/10 bg-[#0a0a1a]/80 backdrop-blur-2xl p-6 shadow-2xl overflow-hidden"
+              className="relative rounded-2xl border border-white/10 bg-[#0B0F1B]/80 backdrop-blur-2xl p-6 shadow-2xl overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 pointer-events-none"></div>
               
@@ -229,7 +231,7 @@ export default function Home() {
               <p className="text-sm text-muted-foreground font-medium uppercase tracking-wide">of AI-introduced issues survive to prod</p>
             </motion.div>
             <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={FADE_UP} className="text-center px-4 flex flex-col justify-center pt-8 md:pt-0">
-              <p className="text-lg font-heading font-bold italic text-primary drop-shadow-[0_0_10px_rgba(124,58,237,0.4)]">"Who verifies the apps AI builds?"</p>
+              <p className="text-lg font-heading font-bold italic text-primary drop-shadow-[0_0_10px_rgba(212,144,10,0.4)]">"Who verifies the apps AI builds?"</p>
               <p className="text-xs text-muted-foreground mt-3 uppercase tracking-widest">— The QA crisis of 2025</p>
             </motion.div>
           </div>
@@ -241,7 +243,7 @@ export default function Home() {
           
           <div className="text-center max-w-3xl mx-auto mb-20 relative z-10">
             <Badge variant="outline" className="mb-6 border-primary/30 text-primary bg-primary/5 px-4 py-1.5 text-sm">The Architecture</Badge>
-            <h2 className="text-4xl md:text-5xl font-heading font-bold mb-6 text-white">10 AI Agents. <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">One Unified Review.</span></h2>
+            <h2 className="text-4xl md:text-5xl font-heading font-bold mb-6 text-white">10 AI Agents. <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-300">One Unified Review.</span></h2>
             <p className="text-xl text-muted-foreground">Agenario deploys a specialized swarm of expert agents to interrogate your codebase from every angle before your users do.</p>
           </div>
 
@@ -254,7 +256,7 @@ export default function Home() {
                 viewport={{ once: true }} 
                 transition={{ delay: i * 0.05 }}
               >
-                <Card className="h-full bg-[#0a0a1a]/60 border-white/5 backdrop-blur-xl hover:border-primary/40 hover:bg-[#0a0a1a]/80 transition-all duration-300 group shadow-lg hover:shadow-[0_0_25px_rgba(124,58,237,0.15)] relative overflow-hidden">
+                <Card className="h-full bg-[#0B0F1B]/60 border-white/5 backdrop-blur-xl hover:border-primary/40 hover:bg-[#0B0F1B]/80 transition-all duration-300 group shadow-lg hover:shadow-[0_0_25px_rgba(212,144,10,0.15)] relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   <CardContent className="p-6">
                     <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-5 group-hover:bg-primary/10 group-hover:border-primary/30 transition-colors">
@@ -277,16 +279,16 @@ export default function Home() {
           <div className="max-w-7xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-12 text-white">Analyze Anywhere</h2>
             <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3 bg-[#0a0a1a]/80 border border-white/10 px-6 py-4 rounded-xl shadow-lg cursor-pointer hover:border-primary/50 transition-colors">
+              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3 bg-[#0B0F1B]/80 border border-white/10 px-6 py-4 rounded-xl shadow-lg cursor-pointer hover:border-primary/50 transition-colors">
                 <Github className="w-6 h-6 text-white" /> <span className="font-semibold text-white">GitHub Repo</span>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3 bg-[#0a0a1a]/80 border border-white/10 px-6 py-4 rounded-xl shadow-lg cursor-pointer hover:border-primary/50 transition-colors">
+              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3 bg-[#0B0F1B]/80 border border-white/10 px-6 py-4 rounded-xl shadow-lg cursor-pointer hover:border-primary/50 transition-colors">
                 <Upload className="w-6 h-6 text-white" /> <span className="font-semibold text-white">ZIP Upload</span>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3 bg-[#0a0a1a]/80 border border-white/10 px-6 py-4 rounded-xl shadow-lg cursor-pointer hover:border-primary/50 transition-colors">
+              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3 bg-[#0B0F1B]/80 border border-white/10 px-6 py-4 rounded-xl shadow-lg cursor-pointer hover:border-primary/50 transition-colors">
                 <LinkIcon className="w-6 h-6 text-white" /> <span className="font-semibold text-white">Live URL</span>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3 bg-[#0a0a1a]/80 border border-primary/30 px-6 py-4 rounded-xl shadow-[0_0_20px_rgba(124,58,237,0.2)] cursor-pointer hover:bg-primary/10 transition-colors">
+              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3 bg-[#0B0F1B]/80 border border-primary/30 px-6 py-4 rounded-xl shadow-[0_0_20px_rgba(212,144,10,0.2)] cursor-pointer hover:bg-primary/10 transition-colors">
                 <div className="flex gap-1.5 mr-1">
                   <Cpu className="w-5 h-5 text-white" />
                   <SiReplit className="w-5 h-5 text-[#F26207]" />
@@ -447,7 +449,7 @@ export default function Home() {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {PRICING.map((plan, i) => (
-                <Card key={i} className={`relative bg-[#0a0a1a]/80 backdrop-blur-sm border-white/10 flex flex-col ${plan.popular ? 'border-primary shadow-[0_0_30px_rgba(124,58,237,0.15)] transform md:-translate-y-4' : ''}`}>
+                <Card key={i} className={`relative bg-[#0B0F1B]/80 backdrop-blur-sm border-white/10 flex flex-col ${plan.popular ? 'border-primary shadow-[0_0_30px_rgba(212,144,10,0.15)] transform md:-translate-y-4' : ''}`}>
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                       Most Popular
@@ -543,9 +545,9 @@ export default function Home() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary/20 blur-[100px] rounded-full pointer-events-none -z-10"></div>
           
           <div className="bg-gradient-to-b from-primary/30 to-transparent p-[1px] rounded-[2rem] shadow-2xl shadow-primary/20 relative z-10">
-            <div className="bg-[#0a0a1a] rounded-[2rem] p-12 md:p-20 border border-primary/20">
+            <div className="bg-[#0B0F1B] rounded-[2rem] p-12 md:p-20 border border-primary/20">
               <h2 className="text-4xl md:text-6xl font-heading font-extrabold mb-6 text-white tracking-tight">
-                Stop Hoping. <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">Start Launching.</span>
+                Stop Hoping. <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-300">Start Launching.</span>
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl mx-auto">
                 Join 2,000+ builders who ship vibe-coded apps with absolute confidence.

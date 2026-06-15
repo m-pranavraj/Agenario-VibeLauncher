@@ -38,7 +38,7 @@
 
   --font-sans: 'Inter', sans-serif;
   --font-serif: Georgia, serif;
-  --font-mono: Menlo, monospace;
+  --font-mono: 'Menlo', 'Monaco', 'Consolas', monospace;
   --font-heading: 'Syne', sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
@@ -47,70 +47,71 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ── Obsidian Amber ─────────────────────────────────────────
+   Deep midnight blue-black + warm amber gold + teal.
+   No green. No purple. No generic black.
+   Feels like: Bloomberg Terminal × Premium Security Scanner.
+────────────────────────────────────────────────────────────── */
 :root {
-  --background: 240 44% 7%; /* #0a0a1a */
-  --foreground: 210 40% 98%;
+  /* midnight blue-black — just warm enough to feel premium */
+  --background: 222 38% 7%;      /* #0B0F1B */
+  --foreground: 210 45% 92%;     /* #DDE8F2 */
 
-  --border: 240 30% 18%;
-  --input: 240 30% 18%;
-  --ring: 262 83% 58%;
+  --border: 215 32% 19%;         /* #1E2C3E */
+  --input: 215 32% 19%;
+  --ring: 38 85% 54%;            /* amber focus ring */
 
-  --card: 240 40% 10%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 240 30% 18%;
+  --card: 222 34% 11%;           /* #131C2B */
+  --card-foreground: 210 45% 92%;
+  --card-border: 215 32% 19%;
 
-  --popover: 240 44% 7%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 240 30% 18%;
+  --popover: 222 38% 7%;
+  --popover-foreground: 210 45% 92%;
+  --popover-border: 215 32% 19%;
 
-  --primary: 262 83% 58%; /* #7c3aed */
-  --primary-foreground: 210 40% 98%;
+  /* amber/gold — the core brand accent */
+  --primary: 38 85% 54%;         /* #E8A020 warm gold */
+  --primary-foreground: 222 38% 7%;
 
-  --secondary: 160 84% 39%; /* #10b981 */
-  --secondary-foreground: 240 44% 7%;
+  /* teal — replaces all green "pass" states */
+  --secondary: 168 80% 40%;      /* #14B89A teal */
+  --secondary-foreground: 222 38% 7%;
 
-  --muted: 240 30% 15%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 222 30% 15%;          /* #161F2E */
+  --muted-foreground: 215 18% 52%; /* #6C7F94 */
 
-  --accent: 262 83% 58%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 38 85% 54%;
+  --accent-foreground: 222 38% 7%;
 
-  --destructive: 0 84.2% 60.2%; /* #ef4444 */
-  --destructive-foreground: 210 40% 98%;
+  /* vivid red for critical issues */
+  --destructive: 356 82% 61%;    /* #F44 */
+  --destructive-foreground: 210 45% 92%;
 
   --radius: 0.75rem;
 }
 
 .dark {
-  --background: 240 44% 7%;
-  --foreground: 210 40% 98%;
-
-  --border: 240 30% 18%;
-  --input: 240 30% 18%;
-  --ring: 262 83% 58%;
-
-  --card: 240 40% 10%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 240 30% 18%;
-
-  --popover: 240 44% 7%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 240 30% 18%;
-
-  --primary: 262 83% 58%;
-  --primary-foreground: 210 40% 98%;
-
-  --secondary: 160 84% 39%;
-  --secondary-foreground: 240 44% 7%;
-
-  --muted: 240 30% 15%;
-  --muted-foreground: 215 20.2% 65.1%;
-
-  --accent: 262 83% 58%;
-  --accent-foreground: 210 40% 98%;
-
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
+  --background: 222 38% 7%;
+  --foreground: 210 45% 92%;
+  --border: 215 32% 19%;
+  --input: 215 32% 19%;
+  --ring: 38 85% 54%;
+  --card: 222 34% 11%;
+  --card-foreground: 210 45% 92%;
+  --card-border: 215 32% 19%;
+  --popover: 222 38% 7%;
+  --popover-foreground: 210 45% 92%;
+  --popover-border: 215 32% 19%;
+  --primary: 38 85% 54%;
+  --primary-foreground: 222 38% 7%;
+  --secondary: 168 80% 40%;
+  --secondary-foreground: 222 38% 7%;
+  --muted: 222 30% 15%;
+  --muted-foreground: 215 18% 52%;
+  --accent: 38 85% 54%;
+  --accent-foreground: 222 38% 7%;
+  --destructive: 356 82% 61%;
+  --destructive-foreground: 210 45% 92%;
 }
 
 @layer base {
@@ -118,9 +119,29 @@
     @apply border-border;
   }
   body {
-    @apply font-sans antialiased bg-background text-foreground selection:bg-primary/30 selection:text-primary-foreground;
+    @apply font-sans antialiased bg-background text-foreground selection:bg-primary/25 selection:text-primary-foreground;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
   }
 }
+
+/* ── Amber glow utilities ───────────────────────────────── */
+.glow-amber {
+  box-shadow: 0 0 24px rgba(232, 160, 32, 0.25), 0 0 60px rgba(232, 160, 32, 0.1);
+}
+.glow-amber-sm {
+  box-shadow: 0 0 12px rgba(232, 160, 32, 0.3);
+}
+.glow-red-sm {
+  box-shadow: 0 0 20px rgba(244, 68, 68, 0.2);
+}
+.glow-teal-sm {
+  box-shadow: 0 0 20px rgba(20, 184, 154, 0.2);
+}
+
+/* ── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(215 32% 22%); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(38 85% 54% / 0.5); }

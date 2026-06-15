@@ -27,7 +27,7 @@ const PLANS = [
     price: "₹0",
     period: "forever",
     description: "Try Agenario with your first app",
-    color: "border-[#1e1e3a]",
+    color: "border-[#1D2B3E]",
     badge: null,
     features: ["1 scan per month", "Launch Readiness Score", "Basic issue list", "One-click fix prompts"],
     cta: "Current Plan",
@@ -38,7 +38,7 @@ const PLANS = [
     price: "₹499",
     period: "/month",
     description: "For indie hackers shipping fast",
-    color: "border-[#7c3aed]/50",
+    color: "border-[#D4900A]/50",
     badge: "Most Popular",
     features: ["Unlimited scans", "Full AI Tech Lead Report", "All 10 agents", "One-click fix prompts", "Priority analysis"],
     cta: "Upgrade to Creator",
@@ -50,7 +50,7 @@ const PLANS = [
     price: "₹2,999",
     period: "/month",
     description: "For agencies and power users",
-    color: "border-emerald-500/30",
+    color: "border-teal-500/30",
     badge: null,
     features: ["Everything in Creator", "API access", "Team members (5)", "Webhook notifications", "Custom reports"],
     cta: "Upgrade to Pro",
@@ -98,7 +98,7 @@ export default function PricingPage() {
           description: order.planName,
           order_id: order.orderId,
           prefill: { email: user.email, name: user.name },
-          theme: { color: "#7c3aed" },
+          theme: { color: "#D4900A" },
           handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
             try {
               await api.billing.verify({
@@ -124,17 +124,17 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a]">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(124,58,237,0.1)_0%,_transparent_60%)] pointer-events-none" />
+    <div className="min-h-screen bg-[#0B0F1B]">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(212,144,10,0.1)_0%,_transparent_60%)] pointer-events-none" />
 
-      <nav className="border-b border-[#1e1e3a] bg-[#0a0a1a]/90 backdrop-blur-sm sticky top-0 z-10">
+      <nav className="border-b border-[#1D2B3E] bg-[#0B0F1B]/90 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-4">
           {user ? (
-            <Link href="/dashboard" className="text-[#5a5a7a] hover:text-white transition-colors">
+            <Link href="/dashboard" className="text-[#566070] hover:text-white transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </Link>
           ) : (
-            <Link href="/" className="text-[#5a5a7a] hover:text-white transition-colors">
+            <Link href="/" className="text-[#566070] hover:text-white transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </Link>
           )}
@@ -150,11 +150,11 @@ export default function PricingPage() {
       <main className="max-w-6xl mx-auto px-6 py-12">
         <div className="text-center mb-12">
           <h1 className="text-3xl font-bold text-white font-['Syne'] mb-3">Fair & Simple Pricing</h1>
-          <p className="text-[#a8a8c0]">Start free. Upgrade when you need more scans.</p>
+          <p className="text-[#B0BFD0]">Start free. Upgrade when you need more scans.</p>
         </div>
 
         {success && (
-          <div className="max-w-md mx-auto mb-8 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-5 py-4 text-emerald-400 text-sm text-center">
+          <div className="max-w-md mx-auto mb-8 bg-teal-500/10 border border-teal-500/30 rounded-xl px-5 py-4 text-teal-400 text-sm text-center">
             <Zap className="w-4 h-4 inline mr-2" />
             Plan upgraded to <strong className="capitalize">{success}</strong>! Unlimited scans are now active.
           </div>
@@ -168,27 +168,27 @@ export default function PricingPage() {
             return (
               <div
                 key={plan.id}
-                className={`relative bg-[#0f0f1f] border rounded-2xl p-6 flex flex-col ${plan.color} ${plan.id === "creator" ? "shadow-[0_0_30px_rgba(124,58,237,0.2)]" : ""}`}
+                className={`relative bg-[#131C2B] border rounded-2xl p-6 flex flex-col ${plan.color} ${plan.id === "creator" ? "shadow-[0_0_30px_rgba(212,144,10,0.2)]" : ""}`}
               >
                 {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#7c3aed] text-white text-xs font-bold px-3 py-1 rounded-full">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#D4900A] text-white text-xs font-bold px-3 py-1 rounded-full">
                     {plan.badge}
                   </div>
                 )}
 
                 <div className="mb-6">
                   <h3 className="text-white font-bold font-['Syne'] text-lg">{plan.name}</h3>
-                  <p className="text-[#5a5a7a] text-xs mt-1">{plan.description}</p>
+                  <p className="text-[#566070] text-xs mt-1">{plan.description}</p>
                   <div className="mt-4 flex items-baseline gap-1">
                     <span className="text-2xl font-bold text-white font-['Syne']">{plan.price}</span>
-                    <span className="text-[#5a5a7a] text-sm">{plan.period}</span>
+                    <span className="text-[#566070] text-sm">{plan.period}</span>
                   </div>
                 </div>
 
                 <ul className="space-y-2.5 flex-1 mb-6">
                   {plan.features.map((feat) => (
-                    <li key={feat} className="flex items-start gap-2 text-sm text-[#a8a8c0]">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <li key={feat} className="flex items-start gap-2 text-sm text-[#B0BFD0]">
+                      <Check className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
                       {feat}
                     </li>
                   ))}
@@ -200,12 +200,12 @@ export default function PricingPage() {
                   data-testid={`button-plan-${plan.id}`}
                   className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                     isCurrent
-                      ? "bg-[#1e1e3a] text-[#5a5a7a] cursor-default"
+                      ? "bg-[#1D2B3E] text-[#566070] cursor-default"
                       : plan.id === "free"
-                      ? "bg-[#1e1e3a] text-[#5a5a7a] cursor-default"
+                      ? "bg-[#1D2B3E] text-[#566070] cursor-default"
                       : plan.id === "creator"
-                      ? "bg-[#7c3aed] hover:bg-[#6d28d9] text-white shadow-[0_0_15px_rgba(124,58,237,0.4)]"
-                      : "bg-[#1e1e3a] hover:bg-[#2a2a4a] text-white border border-[#2a2a4a]"
+                      ? "bg-[#D4900A] hover:bg-[#B47509] text-white shadow-[0_0_15px_rgba(212,144,10,0.4)]"
+                      : "bg-[#1D2B3E] hover:bg-[#253648] text-white border border-[#253648]"
                   }`}
                 >
                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : isCurrent ? "Current Plan" : plan.cta}
@@ -215,7 +215,7 @@ export default function PricingPage() {
           })}
         </div>
 
-        <p className="text-center text-xs text-[#5a5a7a] mt-8">
+        <p className="text-center text-xs text-[#566070] mt-8">
           Secure payments via Razorpay · Cancel anytime · All prices in INR + GST
         </p>
       </main>

@@ -32,8 +32,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(124,58,237,0.15)_0%,_transparent_70%)] pointer-events-none" />
+    <div className="min-h-screen bg-[#0B0F1B] flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(212,144,10,0.15)_0%,_transparent_70%)] pointer-events-none" />
 
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
@@ -44,10 +44,10 @@ export default function RegisterPage() {
             <span className="text-white font-bold text-lg font-['Syne']">Agenario</span>
           </Link>
           <h1 className="text-2xl font-bold text-white font-['Syne']">Start for free</h1>
-          <p className="text-[#a8a8c0] mt-1 text-sm">1 free scan per month · No credit card</p>
+          <p className="text-[#B0BFD0] mt-1 text-sm">1 free scan per month · No credit card</p>
         </div>
 
-        <div className="bg-[#0f0f1f] border border-[#7c3aed]/30 rounded-2xl p-8 shadow-[0_0_40px_rgba(124,58,237,0.15)]">
+        <div className="bg-[#131C2B] border border-[#D4900A]/30 rounded-2xl p-8 shadow-[0_0_40px_rgba(212,144,10,0.15)]">
           {error && (
             <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 mb-6 text-red-400 text-sm">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -57,9 +57,9 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-[#a8a8c0] mb-2">Full Name</label>
+              <label className="block text-sm font-medium text-[#B0BFD0] mb-2">Full Name</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5a5a7a]" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#566070]" />
                 <input
                   type="text"
                   required
@@ -67,15 +67,15 @@ export default function RegisterPage() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
                   data-testid="input-name"
-                  className="w-full bg-[#0a0a1a] border border-[#2a2a4a] rounded-lg pl-10 pr-4 py-3 text-white placeholder-[#5a5a7a] focus:outline-none focus:border-[#7c3aed]/70 focus:shadow-[0_0_0_3px_rgba(124,58,237,0.1)] transition-all text-sm"
+                  className="w-full bg-[#0B0F1B] border border-[#253648] rounded-lg pl-10 pr-4 py-3 text-white placeholder-[#566070] focus:outline-none focus:border-[#D4900A]/70 focus:shadow-[0_0_0_3px_rgba(212,144,10,0.1)] transition-all text-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#a8a8c0] mb-2">Email</label>
+              <label className="block text-sm font-medium text-[#B0BFD0] mb-2">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5a5a7a]" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#566070]" />
                 <input
                   type="email"
                   required
@@ -83,15 +83,15 @@ export default function RegisterPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   data-testid="input-email"
-                  className="w-full bg-[#0a0a1a] border border-[#2a2a4a] rounded-lg pl-10 pr-4 py-3 text-white placeholder-[#5a5a7a] focus:outline-none focus:border-[#7c3aed]/70 focus:shadow-[0_0_0_3px_rgba(124,58,237,0.1)] transition-all text-sm"
+                  className="w-full bg-[#0B0F1B] border border-[#253648] rounded-lg pl-10 pr-4 py-3 text-white placeholder-[#566070] focus:outline-none focus:border-[#D4900A]/70 focus:shadow-[0_0_0_3px_rgba(212,144,10,0.1)] transition-all text-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#a8a8c0] mb-2">Password</label>
+              <label className="block text-sm font-medium text-[#B0BFD0] mb-2">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5a5a7a]" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#566070]" />
                 <input
                   type="password"
                   required
@@ -100,7 +100,7 @@ export default function RegisterPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Min 8 characters"
                   data-testid="input-password"
-                  className="w-full bg-[#0a0a1a] border border-[#2a2a4a] rounded-lg pl-10 pr-4 py-3 text-white placeholder-[#5a5a7a] focus:outline-none focus:border-[#7c3aed]/70 focus:shadow-[0_0_0_3px_rgba(124,58,237,0.1)] transition-all text-sm"
+                  className="w-full bg-[#0B0F1B] border border-[#253648] rounded-lg pl-10 pr-4 py-3 text-white placeholder-[#566070] focus:outline-none focus:border-[#D4900A]/70 focus:shadow-[0_0_0_3px_rgba(212,144,10,0.1)] transition-all text-sm"
                 />
               </div>
             </div>
@@ -109,15 +109,15 @@ export default function RegisterPage() {
               type="submit"
               disabled={loading}
               data-testid="button-register"
-              className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-all shadow-[0_0_20px_rgba(124,58,237,0.4)] hover:shadow-[0_0_30px_rgba(124,58,237,0.6)] mt-2"
+              className="w-full bg-[#D4900A] hover:bg-[#B47509] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-all shadow-[0_0_20px_rgba(212,144,10,0.4)] hover:shadow-[0_0_30px_rgba(212,144,10,0.6)] mt-2"
             >
               {loading ? "Creating account..." : "Create Free Account"}
             </button>
           </form>
 
-          <p className="text-center text-sm text-[#5a5a7a] mt-6">
+          <p className="text-center text-sm text-[#566070] mt-6">
             Already have an account?{" "}
-            <Link href="/login" className="text-[#7c3aed] hover:text-[#a78bfa] transition-colors">
+            <Link href="/login" className="text-[#D4900A] hover:text-[#FDBA5A] transition-colors">
               Sign in
             </Link>
           </p>
