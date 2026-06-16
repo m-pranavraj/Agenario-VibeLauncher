@@ -79,6 +79,90 @@ Keep it under 250 words total. No bullet points — prose only.`,
   }
 }
 
+export async function generateLaunchReplay(input: CofounderInput): Promise<LaunchReplayStep[]> {
+  const { sourceInput, score, issueCounts, businessType, topIssues } = input;
+
+  const issuesSummary = topIssues
+    .filter((i) => i.severity === "critical" || i.severity === "high")
+    .slice(0, 5)
+    .map((i) => `  - [${i.severity.toUpperCase()}] ${i.title}`)
+    .join("\n");
+
+  const fallback: LaunchReplayStep[] = [
+    { step: "User discovers your app", status: "ok" },
+    { step: "Signs up / creates account", status: issueCounts.critical > 0 ? "warning" : "ok", detail: issueCounts.critical > 0 ? "Auth flow has critical issues — registration may fail for some users" : undefined },
+    { step: "Explores core features", status: "ok" },
+    { step: "Hits a critical issue", status: "fail", detail: topIssues[0] ? `${topIssues[0].title}` : "Critical issue encountered" },
+    { step: "No error message shown — user confused", status: "fail", detail: "White screen or silent failure. No recovery path." },
+    { step: "User abandons — never returns", status: "fail", detail: `Launch score ${score}/100 — ${issueCounts.critical} critical issue(s) cause user abandonment` },
+  ];
+
+  try {
+    const response = await groq.chat.completions.create({
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content: `You generate realistic user journey replay timelines for web apps, showing exactly where real users hit walls. Return ONLY valid JSON, no markdown, no extra text.`,
+        },
+        {
+          role: "user",
+          content: `Generate a user journey replay for this app based on its scan findings.
+
+App: ${sourceInput}
+Business type: ${businessType}
+Launch score: ${score}/100
+Issues: ${issueCounts.critical} critical, ${issueCounts.high} high, ${issueCounts.medium} medium
+
+Top issues found:
+${issuesSummary || "  - Minor issues only"}
+
+Generate 5–7 steps showing a typical user's first session, including where they hit failures.
+Each step should be realistic and specific to this app type.
+
+Rules:
+- Steps with "ok" status = things that work fine
+- Steps with "warning" status = friction points (slow, confusing, but recoverable)
+- Steps with "fail" status = hard failures (crashes, errors, security blocks, lost revenue)
+- The journey should tell a realistic story
+- Include business impact context in "detail" for fail/warning steps
+- Be specific to ${businessType} type apps
+
+Return JSON (no markdown):
+{
+  "steps": [
+    {"step": "User lands on homepage", "status": "ok"},
+    {"step": "Signs up with email", "status": "ok"},
+    {"step": "Browses product catalog", "status": "warning", "detail": "No search — user scrolls 50 items to find what they want"},
+    {"step": "Adds item to cart", "status": "fail", "detail": "No loading state — double-tap adds item twice silently"},
+    {"step": "Checkout fails at payment step", "status": "fail", "detail": "Stripe error not caught — white screen, user thinks order went through"},
+    {"step": "User emails support, gets refund", "status": "fail", "detail": "Direct revenue loss + support cost per failed checkout"}
+  ]
+}`,
+        },
+      ],
+      max_tokens: 700,
+      temperature: 0.6,
+      response_format: { type: "json_object" },
+    });
+
+    const raw = response.choices[0]?.message?.content ?? "";
+    const parsed = JSON.parse(raw) as { steps?: LaunchReplayStep[] };
+    const steps = parsed.steps;
+    if (Array.isArray(steps) && steps.length > 0) {
+      return steps.map((s) => ({
+        step: String(s.step ?? ""),
+        status: (["ok", "warning", "fail"].includes(s.status) ? s.status : "ok") as "ok" | "warning" | "fail",
+        detail: s.detail ? String(s.detail) : undefined,
+      }));
+    }
+  } catch (err) {
+    logger.warn({ err }, "Launch replay generation failed, using fallback");
+  }
+
+  return fallback;
+}
+
 export async function generateLaunchDNA(input: CofounderInput): Promise<LaunchDNA | null> {
   const { score, issueCounts, framework, businessType, topIssues } = input;
 

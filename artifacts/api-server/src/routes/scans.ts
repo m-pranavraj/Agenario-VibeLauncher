@@ -9,10 +9,11 @@ import { ingestZipFile, cleanupZip } from "../lib/zip-ingestion.js";
 import { detectFramework, detectVibeTool, detectBusinessType } from "../lib/detector.js";
 import { scanDirectory, type StaticFinding } from "../lib/scanner.js";
 import { runProofEngine } from "../lib/proof-engine.js";
+import { runPlaywrightBrowserProofs } from "../lib/playwright-proof.js";
 import { runShadowApiRadar } from "../lib/shadow-api-radar.js";
 import { computeRegressionDiff } from "../lib/regression.js";
 import { computeBenchmark } from "../lib/benchmark.js";
-import { generateCofounderNarrative, generateLaunchDNA } from "../lib/cofounder-agent.js";
+import { generateCofounderNarrative, generateLaunchDNA, generateLaunchReplay } from "../lib/cofounder-agent.js";
 
 const router: IRouter = Router();
 
@@ -145,10 +146,16 @@ async function runAnalysisPipeline(opts: {
   }
 
   // ── Run core agents + proof engine in parallel ────────────────
-  const [result, proofEvidence] = await Promise.all([
+  const [result, httpProofEvidence, browserProofEvidence] = await Promise.all([
     runAllAgents(sourceType, sourceInput, appDescription, codeContext),
     runProofEngine(sourceType, sourceInput),
+    runPlaywrightBrowserProofs(sourceType, sourceInput),
   ]);
+
+  // Merge: browser proofs (99% confidence) take precedence, deduplicate by type
+  const browserTypes = new Set(browserProofEvidence.map((p) => p.type));
+  const dedupedHttpProofs = httpProofEvidence.filter((p) => !browserTypes.has(p.type));
+  const proofEvidence = [...browserProofEvidence, ...dedupedHttpProofs];
 
   const aiIssueRows = result.agentResults.flatMap((ar) =>
     ar.issues.map((issue) => ({
@@ -214,31 +221,24 @@ async function runAnalysisPipeline(opts: {
     agentName: i.agentName,
   }));
 
-  const [regressionDiff, benchmarkPercentile, launchDNA, cofounderNarrative] = await Promise.all([
+  const cofounderInput = {
+    sourceType, sourceInput,
+    score: finalScore,
+    launchVerdict: result.launchVerdict,
+    issueCounts,
+    framework: framework !== "unknown" ? framework : "unknown",
+    vibeTool: vibeTool !== "unknown" ? vibeTool : "unknown",
+    businessType: businessType !== "unknown" ? businessType : "unknown",
+    topIssues,
+    riskForecastSummary: result.riskForecast?.executiveRecommendation,
+  };
+
+  const [regressionDiff, benchmarkPercentile, launchDNA, cofounderNarrative, launchReplaySteps] = await Promise.all([
     computeRegressionDiff(scanId, userId, sourceInput, finalScore),
     computeBenchmark(scanId, finalScore, vibeTool !== "unknown" ? vibeTool : null, businessType !== "unknown" ? businessType : null),
-    generateLaunchDNA({
-      sourceType, sourceInput,
-      score: finalScore,
-      launchVerdict: result.launchVerdict,
-      issueCounts,
-      framework: framework !== "unknown" ? framework : "unknown",
-      vibeTool: vibeTool !== "unknown" ? vibeTool : "unknown",
-      businessType: businessType !== "unknown" ? businessType : "unknown",
-      topIssues,
-      riskForecastSummary: result.riskForecast?.executiveRecommendation,
-    }),
-    generateCofounderNarrative({
-      sourceType, sourceInput,
-      score: finalScore,
-      launchVerdict: result.launchVerdict,
-      issueCounts,
-      framework: framework !== "unknown" ? framework : "unknown",
-      vibeTool: vibeTool !== "unknown" ? vibeTool : "unknown",
-      businessType: businessType !== "unknown" ? businessType : "unknown",
-      topIssues,
-      riskForecastSummary: result.riskForecast?.executiveRecommendation,
-    }),
+    generateLaunchDNA(cofounderInput),
+    generateCofounderNarrative(cofounderInput),
+    generateLaunchReplay(cofounderInput),
   ]);
 
   const [updated] = await db
@@ -258,6 +258,7 @@ async function runAnalysisPipeline(opts: {
       launchDNA,
       cofounderNarrative: cofounderNarrative || null,
       shadowApiFindings: shadowApiFindings ?? null,
+      launchReplaySteps: launchReplaySteps.length > 0 ? launchReplaySteps : null,
       framework: framework !== "unknown" ? framework : undefined,
       vibeTool: vibeTool !== "unknown" ? vibeTool : undefined,
       businessType: businessType !== "unknown" ? businessType : undefined,

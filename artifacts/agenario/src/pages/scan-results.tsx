@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   api, type ScanDetail, type ScanIssue, type ComplianceResult, type RiskForecast,
   type RevenueIntelligence, type ProofEvidence, type RegressionDiff, type BenchmarkData,
-  type LaunchDNA, type ShadowApiFindings,
+  type LaunchDNA, type ShadowApiFindings, type LaunchReplayStep,
 } from "@/lib/api";
 import { motion } from "framer-motion";
 
@@ -43,11 +43,12 @@ const SEVERITY_CONFIG = {
   },
 };
 
-function getConfidenceStyle(c: number): { label: string; color: string } {
-  if (c >= 95) return { label: `${c}% — Runtime proof`, color: "text-green-400" };
-  if (c >= 85) return { label: `${c}% — Code evidence`, color: "text-sky-400" };
-  if (c >= 70) return { label: `${c}% — Pattern match`, color: "text-amber-400" };
-  return { label: `${c}% — AI reasoning`, color: "text-white/35" };
+function getConfidenceStyle(c: number): { label: string; color: string; badge: string; icon: string } {
+  if (c >= 99) return { label: `${c}% — Browser Runtime Proof`, color: "text-green-400", badge: "bg-green-500/15 text-green-400 border border-green-500/25", icon: "🟢" };
+  if (c >= 90) return { label: `${c}% — HTTP Runtime Proof`, color: "text-green-400", badge: "bg-green-500/10 text-green-400 border border-green-500/20", icon: "🔵" };
+  if (c >= 75) return { label: `${c}% — Static Code Evidence`, color: "text-sky-400", badge: "bg-sky-500/10 text-sky-400 border border-sky-500/20", icon: "🔵" };
+  if (c >= 60) return { label: `${c}% — Pattern Match`, color: "text-amber-400", badge: "bg-amber-500/10 text-amber-400 border border-amber-500/20", icon: "🟡" };
+  return { label: `${c}% — AI Reasoning`, color: "text-white/35", badge: "bg-white/[0.05] text-white/35 border border-white/[0.08]", icon: "⚪" };
 }
 
 const AGENT_ICONS: Record<string, React.FC<{ className?: string }>> = {
@@ -188,8 +189,8 @@ function EvidenceCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
           {issue.severity}
         </span>
         <span className="text-sm font-medium text-white/90 flex-1 text-left">{issue.title}</span>
-        <span className={`text-xs shrink-0 hidden sm:block ${conf.color}`}>
-          {issue.confidence ?? 60}%
+        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:flex items-center gap-1 ${conf.badge}`}>
+          {conf.icon} {issue.confidence ?? 60}%
         </span>
         <span className="text-xs text-white/25 shrink-0 hidden lg:block truncate max-w-[120px]">
           {issue.agentName.replace(" Agent", "")}
@@ -207,7 +208,7 @@ function EvidenceCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
             <div className="bg-black/30 border border-white/[0.07] rounded-lg px-3 py-2.5">
               <div className="flex items-center gap-2 mb-1">
                 <span className={`text-xs font-semibold ${conf.color}`}>Evidence</span>
-                <span className={`text-xs ${conf.color}`}>· {conf.label}</span>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ml-auto ${conf.badge}`}>{conf.icon} {conf.label}</span>
               </div>
               <p className="text-xs text-white/35 font-mono leading-relaxed">{issue.evidence}</p>
             </div>
@@ -215,7 +216,7 @@ function EvidenceCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
 
           {!issue.evidence && (
             <div className="flex items-center gap-2">
-              <span className={`text-xs ${conf.color}`}>{conf.label}</span>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${conf.badge}`}>{conf.icon} {conf.label}</span>
             </div>
           )}
 
@@ -509,6 +510,24 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
                     </div>
                   )}
 
+                  {e.screenshot && (
+                    <div className="border border-white/[0.07] rounded-xl overflow-hidden">
+                      <div className="flex items-center gap-1.5 text-[10px] text-white/25 px-3 py-2 bg-black/20 border-b border-white/[0.05] uppercase tracking-wide font-medium">
+                        <Camera className="w-3 h-3" />
+                        Runtime Screenshot
+                        <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(e.confidence).badge}`}>
+                          {getConfidenceStyle(e.confidence).icon} {e.confidence}%
+                        </span>
+                      </div>
+                      <img
+                        src={e.screenshot}
+                        alt="Runtime proof screenshot"
+                        className="w-full object-contain bg-[#08080f]"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+
                   <div className="bg-black/30 border border-white/[0.07] rounded-xl p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-1.5 text-xs font-semibold text-white/50">
@@ -558,24 +577,29 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
 }
 
 function ConfidenceBadges({ evidence }: { evidence: ProofEvidence[] }) {
-  const runtimeCount = evidence.filter((e) => e.confidence >= 95).length;
-  const codeCount = evidence.filter((e) => e.confidence >= 85 && e.confidence < 95).length;
+  const browserCount = evidence.filter((e) => e.confidence >= 99).length;
+  const httpCount = evidence.filter((e) => e.confidence >= 90 && e.confidence < 99).length;
+  const staticCount = evidence.filter((e) => e.confidence >= 75 && e.confidence < 90).length;
 
   return (
     <div className="glass rounded-xl px-5 py-3 aurora-card">
       <div className="flex flex-wrap gap-4 items-center text-xs">
-        <span className="text-white/20 uppercase tracking-widest font-medium">Confidence</span>
-        {runtimeCount > 0 && (
-          <span className="flex items-center gap-1.5 text-green-400">
-            <CheckCircle2 className="w-3 h-3" />
-            {runtimeCount} Runtime Proof{runtimeCount > 1 ? "s" : ""} (95–99%)
-          </span>
-        )}
-        {codeCount > 0 && (
-          <span className="text-sky-400">{codeCount} Code Evidence (85–94%)</span>
-        )}
-        <span className="text-amber-400">Pattern Match (70–84%)</span>
-        <span className="text-white/25">AI Reasoning (&lt;70%)</span>
+        <span className="text-white/20 uppercase tracking-widest font-medium text-[10px]">Confidence Scale</span>
+        <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/15 border border-green-500/25 text-green-400 text-[10px] font-semibold">
+          🟢 99% Browser Runtime{browserCount > 0 ? ` (${browserCount})` : ""}
+        </span>
+        <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-semibold">
+          🔵 90% HTTP Runtime{httpCount > 0 ? ` (${httpCount})` : ""}
+        </span>
+        <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[10px] font-semibold">
+          🔵 75% Static Code{staticCount > 0 ? ` (${staticCount})` : ""}
+        </span>
+        <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-semibold">
+          🟡 60% Pattern Match
+        </span>
+        <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-white/35 text-[10px] font-semibold">
+          ⚪ &lt;60% AI Reasoning
+        </span>
       </div>
     </div>
   );
@@ -754,6 +778,109 @@ function LaunchDNAPanel({ dna }: { dna: LaunchDNA }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function LaunchReplaySection({ steps }: { steps: LaunchReplayStep[] }) {
+  const failCount = steps.filter((s) => s.status === "fail").length;
+  const warnCount = steps.filter((s) => s.status === "warning").length;
+  const hasCritical = failCount > 0;
+
+  return (
+    <div className="glass rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow">
+      <div className="flex items-center gap-2">
+        <Play className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm">Launch Replay</h2>
+        <div className="ml-auto flex items-center gap-2">
+          {failCount > 0 && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/25">
+              {failCount} failure{failCount !== 1 ? "s" : ""}
+            </span>
+          )}
+          {warnCount > 0 && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25">
+              {warnCount} warning{warnCount !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <p className="text-xs text-white/35 leading-relaxed">
+        Visual replay of a typical user's first session — showing exactly where real users hit walls, get confused, or lose trust.
+      </p>
+
+      <div className="space-y-0">
+        {steps.map((step, i) => {
+          const isLast = i === steps.length - 1;
+          const isOk = step.status === "ok";
+          const isWarn = step.status === "warning";
+          const isFail = step.status === "fail";
+
+          const dotColor = isOk ? "bg-green-500 border-green-500/50"
+            : isWarn ? "bg-amber-500 border-amber-500/50"
+            : "bg-red-500 border-red-500/50";
+
+          const cardBg = isOk ? "border-green-500/15 bg-green-500/[0.03]"
+            : isWarn ? "border-amber-500/20 bg-amber-500/[0.05]"
+            : "border-red-500/20 bg-red-500/[0.05]";
+
+          const statusLabel = isOk ? "ok" : isWarn ? "warning" : "fail";
+          const statusBadge = isOk
+            ? "bg-green-500/15 text-green-400 border-green-500/25"
+            : isWarn
+              ? "bg-amber-500/15 text-amber-400 border-amber-500/25"
+              : "bg-red-500/15 text-red-400 border-red-500/25";
+
+          const stepIcon = isOk
+            ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
+            : isWarn
+              ? <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+              : <XCircle className="w-3.5 h-3.5 text-red-400" />;
+
+          return (
+            <div key={i} className="flex gap-4">
+              {/* Timeline spine */}
+              <div className="flex flex-col items-center shrink-0" style={{ width: 28 }}>
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mt-3 shrink-0 z-10 bg-[#09090f] ${dotColor}`}>
+                  {stepIcon}
+                </div>
+                {!isLast && (
+                  <div className={`w-px flex-1 mt-1 mb-0 ${
+                    isFail ? "bg-red-500/30" : isWarn ? "bg-amber-500/30" : "bg-white/10"
+                  }`} style={{ minHeight: 20 }} />
+                )}
+              </div>
+
+              {/* Step card */}
+              <div className={`flex-1 border rounded-xl px-4 py-3 mb-3 ${cardBg}`}>
+                <div className="flex items-start gap-2">
+                  <span className="text-sm font-medium text-white/85 flex-1 leading-snug">{step.step}</span>
+                  <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border shrink-0 mt-0.5 ${statusBadge}`}>
+                    {statusLabel}
+                  </span>
+                </div>
+                {step.detail && (
+                  <p className="text-xs text-white/45 mt-1.5 leading-relaxed">{step.detail}</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {hasCritical && (
+        <div className="border border-red-500/25 bg-red-500/[0.05] rounded-xl p-4 flex items-start gap-3">
+          <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+          <div>
+            <div className="text-xs font-bold text-red-400 mb-0.5">🔴 DO NOT LAUNCH</div>
+            <p className="text-xs text-white/50 leading-relaxed">
+              {failCount} critical user journey failure{failCount !== 1 ? "s" : ""} detected. Real users will experience these in their first session.
+              Fix these before going live — first impressions are permanent.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1011,6 +1138,13 @@ export default function ScanResultsPage() {
           </motion.div>
         )}
 
+        {/* ── Launch Replay ─────────────────────────────────── */}
+        {scan.launchReplaySteps && scan.launchReplaySteps.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
+            <LaunchReplaySection steps={scan.launchReplaySteps} />
+          </motion.div>
+        )}
+
         {/* ── Regression Memory ────────────────────────────── */}
         {scan.regressionDiff && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
@@ -1071,15 +1205,18 @@ export default function ScanResultsPage() {
 
         {/* ── Confidence legend ────────────────────────────── */}
         <div className="glass rounded-xl px-5 py-3">
-          <div className="flex flex-wrap gap-5 text-xs">
-            <span className="text-white/20 uppercase tracking-widest font-medium">Confidence</span>
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-white/20 uppercase tracking-widest font-medium text-[10px] mr-1">Confidence</span>
             {[
-              { color: "text-green-400", label: "95–99% = Runtime proof" },
-              { color: "text-sky-400", label: "85–94% = Code evidence" },
-              { color: "text-amber-400", label: "70–84% = Pattern match" },
-              { color: "text-white/25", label: "< 70% = AI reasoning" },
+              { badge: "bg-green-500/15 text-green-400 border-green-500/25", label: "🟢 99% Browser Runtime Proof" },
+              { badge: "bg-green-500/10 text-green-400 border-green-500/20", label: "🔵 90% HTTP Runtime Proof" },
+              { badge: "bg-sky-500/10 text-sky-400 border-sky-500/20", label: "🔵 75% Static Code Evidence" },
+              { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20", label: "🟡 60% Pattern Match" },
+              { badge: "bg-white/[0.05] text-white/35 border-white/[0.08]", label: "⚪ <60% AI Reasoning" },
             ].map((item) => (
-              <span key={item.label} className={item.color}>{item.label}</span>
+              <span key={item.label} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${item.badge}`}>
+                {item.label}
+              </span>
             ))}
           </div>
         </div>
