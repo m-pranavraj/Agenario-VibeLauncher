@@ -187,9 +187,9 @@ export default function PricingPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className={`relative rounded-2xl p-7 flex flex-col ${
+                className={`relative rounded-2xl p-7 flex flex-col aurora-card ${
                   plan.highlight
-                    ? "bg-white/[0.07] border border-white/20"
+                    ? "bg-white/[0.07] border border-white/20 aurora-card-intense"
                     : "glass"
                 }`}
               >

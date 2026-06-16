@@ -221,7 +221,7 @@ export default function Home() {
               initial={{ opacity: 0, x: 30, y: 10 }}
               animate={{ opacity: 1, x: 0, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-              className="relative rounded-2xl glass p-6 shadow-2xl overflow-hidden"
+              className="relative rounded-2xl glass p-6 shadow-2xl overflow-hidden aurora-card aurora-card-intense"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.05] via-transparent to-blue-500/[0.04] pointer-events-none rounded-2xl" />
 
@@ -323,7 +323,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="glass rounded-2xl p-8 text-center glass-hover transition-all group"
+                className="glass rounded-2xl p-8 text-center glass-hover transition-all group aurora-card"
               >
                 <div className="text-4xl font-heading font-bold text-white/[0.08] mb-5 group-hover:text-white/[0.12] transition-colors">{step.step}</div>
                 <h3 className="text-lg font-heading font-bold text-white mb-3">{step.title}</h3>
@@ -355,7 +355,7 @@ export default function Home() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.04 }}
-                  className="glass rounded-2xl p-5 glass-hover transition-all group cursor-default"
+                  className="glass rounded-2xl p-5 glass-hover transition-all group cursor-default aurora-card"
                 >
                   <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center mb-4 group-hover:bg-white/[0.1] transition-colors">
                     <d.icon className="w-4.5 h-4.5 text-white/70" />
@@ -395,7 +395,7 @@ export default function Home() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="glass rounded-2xl p-7 space-y-4"
+              className="glass rounded-2xl p-7 space-y-4 aurora-card aurora-card-slow"
             >
               <h3 className="font-heading font-bold text-white text-lg mb-5">Sample Compliance Check</h3>
               {[
@@ -431,7 +431,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
-                className="glass rounded-2xl p-7 space-y-4"
+                className="glass rounded-2xl p-7 space-y-4 aurora-card aurora-card-slow"
               >
                 <h3 className="font-heading font-bold text-white text-lg mb-2">Revenue Risk Analysis</h3>
                 <p className="text-xs text-white/35 mb-5">Issues that directly threaten your MRR</p>
@@ -494,7 +494,7 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="glass rounded-2xl p-6 md:col-span-2">
+            <div className="glass rounded-2xl p-6 md:col-span-2 aurora-card aurora-card-slow">
               <div className="flex items-center gap-2 mb-4">
                 <FileText className="w-4 h-4 text-white/40" />
                 <h3 className="font-heading font-bold text-white text-sm">Executive Summary</h3>
@@ -517,7 +517,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="glass rounded-2xl p-6">
+            <div className="glass rounded-2xl p-6 aurora-card">
               <div className="flex items-center gap-2 mb-4">
                 <Code2 className="w-4 h-4 text-white/40" />
                 <h3 className="font-heading font-bold text-white text-sm">1-Click Fix Prompt</h3>
@@ -569,9 +569,9 @@ export default function Home() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className={`relative rounded-2xl p-7 flex flex-col ${
+                  className={`relative rounded-2xl p-7 flex flex-col aurora-card ${
                     plan.highlight
-                      ? "bg-white/[0.07] border border-white/20 shadow-[0_0_60px_rgba(255,255,255,0.05)]"
+                      ? "bg-white/[0.07] border border-white/20 shadow-[0_0_60px_rgba(255,255,255,0.05)] aurora-card-intense"
                       : "glass"
                   }`}
                 >

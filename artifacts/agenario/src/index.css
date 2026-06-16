@@ -207,6 +207,188 @@
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
 }
 
+/* ══════════════════════════════════════════════════════════════
+   PREMIUM MAC / iOS AURORA BORDER SYSTEM
+   Rotating conic-gradient border with mask technique.
+   Feels like: Apple Vision Pro glass panels × Vercel × Linear.
+════════════════════════════════════════════════════════════════ */
+
+@property --aurora-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@property --aurora-angle-fast {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes aurora-rotate {
+  to { --aurora-angle: 360deg; }
+}
+
+@keyframes aurora-rotate-fast {
+  to { --aurora-angle-fast: 360deg; }
+}
+
+@keyframes aurora-shimmer-sweep {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+@keyframes corner-spark {
+  0%,100% { opacity: 0; transform: scale(0.6); }
+  50%     { opacity: 1; transform: scale(1.4); }
+}
+
+/* ── Base aurora card ───────────────────────────────────────── */
+.aurora-card {
+  position: relative;
+  border: 1px solid transparent !important;
+}
+
+/* The rotating conic ring — shown at low opacity by default */
+.aurora-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--aurora-angle),
+    transparent           0deg,
+    rgba(139, 92, 246, 0.9)  40deg,
+    rgba(99, 102, 241, 0.85) 80deg,
+    rgba(59, 130, 246, 0.8)  120deg,
+    rgba(6, 182, 212, 0.7)   160deg,
+    rgba(16, 185, 129, 0.55) 200deg,
+    rgba(245, 158, 11, 0.35) 240deg,
+    transparent           290deg,
+    transparent           360deg
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box,
+                linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: aurora-rotate 4s linear infinite;
+  opacity: 0.4;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+/* Diffuse glow bloom behind the card */
+.aurora-card::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--aurora-angle),
+    transparent           0deg,
+    rgba(139, 92, 246, 0.25)  50deg,
+    rgba(59, 130, 246, 0.2)   110deg,
+    rgba(6, 182, 212, 0.15)   170deg,
+    transparent           260deg,
+    transparent           360deg
+  );
+  filter: blur(10px);
+  animation: aurora-rotate 4s linear infinite;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  transition: opacity 0.35s ease;
+}
+
+.aurora-card:hover::before { opacity: 1; }
+.aurora-card:hover::after  { opacity: 1; }
+
+/* ── Intense variant — always-on, used for hero / featured cards */
+.aurora-card-intense::before {
+  opacity: 0.75;
+  animation-duration: 3s;
+  background: conic-gradient(
+    from var(--aurora-angle),
+    transparent           0deg,
+    rgba(139, 92, 246, 1.0)  35deg,
+    rgba(99, 102, 241, 0.9)  70deg,
+    rgba(59, 130, 246, 0.9)  110deg,
+    rgba(6, 182, 212, 0.8)   150deg,
+    rgba(16, 185, 129, 0.65) 190deg,
+    rgba(245, 158, 11, 0.45) 230deg,
+    rgba(239, 68, 68, 0.35)  270deg,
+    transparent           310deg,
+    transparent           360deg
+  );
+}
+.aurora-card-intense::after { opacity: 0.7; animation-duration: 3s; }
+.aurora-card-intense:hover::before { opacity: 1; }
+.aurora-card-intense:hover::after  { opacity: 1; }
+
+/* ── Slow variant — large section cards (compliance, revenue) ── */
+.aurora-card-slow::before  { animation-duration: 7s; opacity: 0.35; }
+.aurora-card-slow::after   { animation-duration: 7s; }
+.aurora-card-slow:hover::before { opacity: 0.85; }
+
+/* ── Shimmer sweep overlay on hover ─────────────────────────── */
+.aurora-shimmer {
+  overflow: hidden;
+}
+.aurora-shimmer::before {
+  /* layered on top of the ring — the mask union makes both work */
+}
+/* We use a separate element approach via the group-hover trick */
+
+/* ── Corner spark dots (decorative) ─────────────────────────── */
+.aurora-corners {
+  position: relative;
+}
+.aurora-corners::before {
+  /* reused for the ring — corners come via box-shadow trick */
+  box-shadow:
+    -1px -1px 0 0 rgba(139,92,246,0.0),
+     1px -1px 0 0 rgba(59,130,246,0.0),
+    -1px  1px 0 0 rgba(6,182,212,0.0),
+     1px  1px 0 0 rgba(16,185,129,0.0);
+}
+
+/* ── Scan card hover ring (dashboard) ───────────────────────── */
+.scan-card-aurora {
+  position: relative;
+  border: 1px solid transparent !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.scan-card-aurora::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--aurora-angle-fast),
+    transparent              0deg,
+    rgba(139, 92, 246, 0.85) 45deg,
+    rgba(59, 130, 246, 0.75) 115deg,
+    rgba(6, 182, 212, 0.6)   170deg,
+    transparent              230deg,
+    transparent              360deg
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box,
+                linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: aurora-rotate-fast 2.5s linear infinite;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.scan-card-aurora:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.scan-card-aurora:hover::before { opacity: 1; }
+
 /* ── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }

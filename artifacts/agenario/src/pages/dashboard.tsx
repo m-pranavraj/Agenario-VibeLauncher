@@ -164,7 +164,7 @@ export default function DashboardPage() {
                 <Link
                   href={`/scans/${scan.id}`}
                   data-testid={`card-scan-${scan.id}`}
-                  className="flex items-center gap-4 glass rounded-xl p-4 hover:bg-white/[0.07] transition-all group cursor-pointer block"
+                  className="flex items-center gap-4 glass rounded-xl p-4 hover:bg-white/[0.07] transition-all group cursor-pointer block scan-card-aurora"
                 >
                   <div className="shrink-0">
                     {scan.score != null ? (
@@ -209,7 +209,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mt-6 glass rounded-2xl p-5 flex items-center justify-between border border-white/[0.09]"
+            className="mt-6 glass rounded-2xl p-5 flex items-center justify-between border border-white/[0.09] aurora-card aurora-card-intense"
           >
             <div>
               <p className="text-white font-semibold text-sm">Upgrade to Creator — ₹299/mo</p>

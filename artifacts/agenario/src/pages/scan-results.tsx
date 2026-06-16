@@ -245,7 +245,7 @@ function RiskForecastSection({ forecast }: { forecast: RiskForecast }) {
     "bg-green-500/[0.07] border-green-500/15 text-green-400";
 
   return (
-    <div className="glass rounded-2xl p-6 space-y-5">
+    <div className="glass rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow">
       <div className="flex items-center gap-2">
         <Target className="w-4 h-4 text-white/30" />
         <h2 className="text-white font-bold font-['Syne'] text-sm">Launch Risk Forecast</h2>
@@ -311,7 +311,7 @@ function ComplianceSection({ results }: { results: ComplianceResult[] }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
-    <div className="glass rounded-2xl p-6 space-y-5">
+    <div className="glass rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow">
       <div className="flex items-center gap-2">
         <Scale className="w-4 h-4 text-white/30" />
         <h2 className="text-white font-bold font-['Syne'] text-sm">8-Framework Compliance Audit</h2>
@@ -367,7 +367,7 @@ function RevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligence 
   const [expanded, setExpanded] = useState<number | null>(null);
 
   return (
-    <div className="glass rounded-2xl p-6 space-y-5">
+    <div className="glass rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow">
       <div className="flex items-center gap-2">
         <DollarSign className="w-4 h-4 text-white/30" />
         <h2 className="text-white font-bold font-['Syne'] text-sm">Revenue Intelligence</h2>
