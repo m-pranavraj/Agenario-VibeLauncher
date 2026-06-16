@@ -4,6 +4,56 @@
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
+/* ── Premium Grid & Ambient Backgrounds ──────────────────── */
+.grid-bg {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.045) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.grid-bg-fine {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.grid-lines {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── Glow effects ───────────────────────────────────────── */
+.glow-violet { box-shadow: 0 0 60px -10px rgba(139,92,246,0.15); }
+.glow-white  { box-shadow: 0 0 40px -10px rgba(255,255,255,0.12); }
+
+/* ── Shimmer skeleton ───────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg,rgba(255,255,255,0.03) 0%,rgba(255,255,255,0.07) 50%,rgba(255,255,255,0.03) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* ── Float animation ────────────────────────────────────── */
+@keyframes float {
+  0%,100% { transform: translateY(0px); }
+  50%     { transform: translateY(-8px); }
+}
+.animate-float { animation: float 4s ease-in-out infinite; }
+
+/* ── Card hover lift ────────────────────────────────────── */
+.card-hover {
+  transition: box-shadow 0.25s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.card-hover:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08);
+  transform: translateY(-1px);
+}
+
+/* ── Score ring transition ──────────────────────────────── */
+.score-ring-fill { transition: stroke-dasharray 1.2s cubic-bezier(0.4,0,0.2,1); }
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

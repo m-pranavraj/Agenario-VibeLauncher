@@ -35,7 +35,9 @@ const COMPLIANCE = [
   { label: "PCI-DSS", color: "text-green-400" },
   { label: "HIPAA-ready", color: "text-purple-400" },
   { label: "SOC 2 posture", color: "text-amber-400" },
-  { label: "WCAG 2.1", color: "text-cyan-400" },
+  { label: "WCAG 2.1 AA", color: "text-cyan-400" },
+  { label: "CCPA", color: "text-orange-400" },
+  { label: "ISO 27001", color: "text-violet-400" },
 ];
 
 const PRICING = [
@@ -137,6 +139,7 @@ export default function Home() {
             <a href="#dimensions" className="hover:text-white transition-colors">Analysis</a>
             <a href="#compliance" className="hover:text-white transition-colors">Compliance</a>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+            <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
           </div>
 
           <div className="flex items-center gap-3">

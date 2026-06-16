@@ -1,5 +1,5 @@
 import Groq from "groq-sdk";
-import { logger } from "./logger";
+import { logger } from "./logger.js";
 
 const groq = new Groq({ apiKey: process.env["GROQ_API_KEY"] });
 
@@ -19,46 +19,209 @@ interface AgentResult {
   issues: AgentIssue[];
 }
 
+export interface RiskForecast {
+  appType: string;
+  churnRisk: "low" | "medium" | "high" | "critical";
+  conversionLoss: string;
+  authBreakageProbability: string;
+  checkoutFailureRisk: "low" | "medium" | "high" | "critical";
+  incidentProbability: string;
+  supportLoadEstimate: string;
+  revenueAtRisk: string;
+  topFailureModes: string[];
+  executiveRecommendation: string;
+}
+
+export interface RevenueIntelligence {
+  overallRevenueRisk: "low" | "medium" | "high" | "critical";
+  leaks: Array<{
+    category: string;
+    severity: "critical" | "high" | "medium" | "low";
+    impact: string;
+    description: string;
+    fix: string;
+  }>;
+  estimatedMonthlyImpact: string;
+  quickWins: string[];
+}
+
+export interface ComplianceResult {
+  framework: string;
+  score: number;
+  status: "pass" | "partial" | "fail";
+  findings: string[];
+  riskLevel: "low" | "medium" | "high" | "critical";
+}
+
 const AGENTS = [
   {
     name: "Security & Access Control",
-    role: "You are an expert application security engineer specializing in AI-generated codebases. Analyze the app for: exposed API keys or secrets in client code, authentication misconfigurations, broken access control (IDOR), insecure direct object references, missing authorization on endpoints, CORS misconfigurations, SQL/NoSQL injection risks, XSS vulnerabilities, insecure session management, and data exposure risks. Focus on issues that could cause immediate security breaches or data leaks in production.",
+    role: `You are a world-class application security engineer and penetration tester specializing in AI-generated codebases. 
+Analyze the app for:
+- Exposed API keys, secrets, or tokens in client-side code or env files
+- Broken authentication: session fixation, weak password policies, missing MFA hooks
+- Broken Access Control (IDOR): can user A access user B's resources by changing an ID?
+- Missing authorization middleware on sensitive routes
+- CORS misconfigurations allowing cross-origin attacks
+- SQL/NoSQL injection via unsanitized inputs
+- XSS: missing Content-Security-Policy, unsanitized innerHTML
+- Insecure direct object references in file uploads
+- Missing rate limiting on auth endpoints (brute force risk)
+- JWT/token security: algorithm confusion, missing expiry, weak secrets
+- Server-Side Request Forgery (SSRF) via user-controlled URLs
+- Path traversal in file operations
+- Mass assignment vulnerabilities
+
+For each issue, provide: exact reproduction steps if possible, business impact (data breach, account takeover, financial loss), and a specific Cursor/Bolt fix prompt.`,
   },
   {
     name: "Compliance & Regulatory",
-    role: "You are a compliance engineer specializing in software regulatory requirements. Analyze the app for: GDPR compliance gaps (missing consent, data retention policies, right to deletion), OWASP Top 10 violations, missing privacy policy requirements, PCI-DSS issues if payments are involved (card data handling, secure transmission), accessibility (WCAG 2.1) violations that create legal liability, missing terms of service or cookie consent, data residency concerns, and audit trail deficiencies. Be specific about regulatory risk.",
+    role: `You are a compliance engineer specializing in multi-framework software regulatory requirements.
+Analyze the app against these 8 frameworks:
+
+GDPR: Missing consent mechanisms, data retention policies, right-to-deletion, DPA requirements, cross-border data transfer
+OWASP Top 10 (2021): A01-A10 — injection, auth failures, data exposure, XXE, security misconfig, vulnerable components, auth/session, SSRF
+PCI-DSS v4.0: Card data handling, TLS enforcement, no storing CVV, audit logging
+HIPAA: PHI protection, access controls, audit trails, encryption at rest/transit
+SOC 2 Type II: Availability, confidentiality, processing integrity, security controls
+ISO 27001: Information security management gaps
+CCPA: California consumer rights — opt-out, disclosure, deletion rights
+WCAG 2.1 AA: Accessibility violations creating legal liability
+
+For each finding, specify which framework(s) it violates, the specific clause, and the penalty risk.`,
   },
   {
     name: "Revenue & Business Logic",
-    role: "You are a revenue engineering expert. Analyze the app for issues that directly threaten revenue: payment flow vulnerabilities (double charges, failed webhook handling, missing retry logic), checkout UX friction that causes cart abandonment, missing subscription lifecycle handling, billing edge cases that create revenue leakage, lack of fraud prevention, missing upsell/cross-sell hooks, broken pricing logic, and missing dunning management for subscription failures. Quantify the potential revenue impact where possible.",
+    role: `You are a revenue engineering expert who has audited 500+ SaaS products.
+Analyze the app for revenue-killing issues:
+
+PAYMENT FLOWS: Double charges, failed webhook handling, missing idempotency keys, no retry on payment failure, subscription lifecycle gaps (dunning, cancellation, reactivation)
+CHECKOUT FRICTION: Steps to conversion, missing progress indicators, confusing error messages, abandoned cart scenarios
+BILLING EDGE CASES: Trial expiry without notification, proration errors, invoice generation failures, tax calculation missing
+FRAUD VECTORS: Coupon abuse, trial account abuse, chargebacks not handled, free tier bypass
+ONBOARDING LEAKS: Where users drop off before activation, missing onboarding emails, no progress tracking
+PRICING PAGE GAPS: Missing social proof, no urgency mechanism, unclear value proposition, no comparison table
+UPSELL GAPS: No contextual upgrade prompts, feature gates not shown, no usage-based billing signals
+RETENTION SIGNALS: No usage analytics, no re-engagement triggers, no success milestones
+
+Quantify revenue impact in dollar/rupee estimates where possible.`,
   },
   {
     name: "Performance & Scalability",
-    role: "You are a performance and scalability engineer. Analyze the app for: large JavaScript bundle sizes causing slow time-to-interactive, unoptimized database queries (N+1 problems, missing indexes), missing caching at API and CDN layers, unnecessary re-renders, memory leaks, blocking operations on the main thread, missing pagination on large datasets, and scalability bottlenecks that will cause outages under real traffic. Focus on issues that will manifest in production with real users.",
+    role: `You are a principal performance engineer who has scaled products to millions of users.
+Analyze for:
+
+BUNDLE PERFORMANCE: JavaScript bundle size, code splitting, tree shaking, lazy loading of routes/components
+DATABASE: N+1 queries, missing indexes on filter/sort columns, unbounded queries without pagination, connection pool misconfiguration
+CACHING: Missing Redis/CDN caching, cache stampede risks, stale-while-revalidate patterns
+RENDERING: Unnecessary re-renders, missing memo/useMemo/useCallback, large component trees
+API LATENCY: Missing compression, no streaming for large payloads, synchronous blocking operations
+SCALABILITY LIMITS: Single-instance assumptions, no horizontal scaling design, hardcoded limits
+MEMORY: Memory leaks in event listeners, unbounded data growth, large object retention
+REAL-WORLD TRAFFIC: What breaks first at 100 concurrent users? At 1,000? At 10,000?
+
+Provide specific performance improvement estimates (load time, query time, throughput).`,
   },
   {
     name: "User Experience & Conversion",
-    role: "You are a UX engineer focused on conversion rate optimization. Analyze the app for: broken or confusing user flows, missing loading states that make the app feel broken, poor mobile responsiveness, accessibility violations (missing ARIA labels, keyboard navigation), inconsistent UI patterns, missing form validation feedback, error messages that confuse users, slow time-to-first-meaningful-interaction, and friction points in the critical conversion funnel. Prioritize issues that cause user drop-off.",
+    role: `You are a UX engineer and conversion rate optimization expert.
+Analyze for:
+
+CRITICAL FLOWS: Sign up → activation → first value (time to value), purchase flow completion rate
+LOADING STATES: Skeleton screens vs spinners vs nothing, perceived performance
+MOBILE EXPERIENCE: Touch targets (min 44px), viewport issues, horizontal scroll, font sizes
+ERROR HANDLING: User-facing error messages (jargon-free?), recovery paths, form validation
+ACCESSIBILITY: Screen reader compatibility, keyboard navigation, color contrast (4.5:1 minimum), ARIA labels
+EMPTY STATES: First-time user experience, zero-data states, onboarding hints
+MICRO-INTERACTIONS: Button feedback, form progression, success confirmations
+TRUST SIGNALS: Security badges, testimonials, privacy assurance at conversion points
+
+Estimate conversion impact in %-points for each issue.`,
   },
   {
     name: "Reliability & Error Handling",
-    role: "You are a reliability engineer (SRE). Analyze the app for: missing error boundaries that cause full-page crashes, no retry logic on transient API failures, missing timeout configurations, no graceful degradation for failed external services, race conditions in async code, unhandled promise rejections, missing fallback UI states, no circuit breaker patterns for external dependencies, and potential data loss scenarios. Focus on issues that cause production outages.",
+    role: `You are a Senior SRE (Site Reliability Engineer) with experience at high-scale production systems.
+Analyze for:
+
+ERROR BOUNDARIES: Missing React error boundaries that cause full white-screen crashes
+RETRY LOGIC: No exponential backoff on failed API calls, no circuit breaker for external dependencies
+TIMEOUTS: Missing request timeouts (both client and server), no AbortController usage
+GRACEFUL DEGRADATION: What happens when Stripe is down? When the DB is slow? When Groq/OpenAI fails?
+RACE CONDITIONS: Parallel state updates, missing optimistic update rollbacks, duplicate submissions
+UNHANDLED REJECTIONS: Bare async/await without try-catch, unhandled Promise.reject()
+DATA LOSS SCENARIOS: Form data lost on navigation, optimistic updates not rolled back on failure
+MONITORING GAPS: No uptime monitoring, no alerting on error rate spikes, no SLA definition
+
+Estimate MTTR (Mean Time To Recovery) impact for each issue.`,
   },
   {
     name: "Data Integrity & Architecture",
-    role: "You are a software architect and data integrity expert. Analyze the app for: missing data validation at API boundaries, inconsistent data models, missing database transactions where needed, potential data corruption scenarios, tight coupling that creates cascading failures, over-engineered patterns that create unnecessary complexity, missing soft-delete vs hard-delete considerations, and architectural decisions that will create technical debt at scale.",
+    role: `You are a software architect and data integrity expert with 15+ years experience.
+Analyze for:
+
+API VALIDATION: Missing server-side validation (trusting client data), no schema enforcement
+DATABASE TRANSACTIONS: Missing ACID transactions for multi-step operations, potential partial writes
+DATA CORRUPTION: Race conditions in concurrent writes, missing row-level locking
+ARCHITECTURE SMELLS: Tight coupling creating cascading failures, circular dependencies, god objects/components
+TECHNICAL DEBT: Dead code from AI scaffolding, over-engineered solutions, wrong abstractions
+SOFT DELETE: Hard deletes breaking referential integrity, no audit trail
+DATA MODELING: Missing foreign keys, no normalization strategy, blob columns hiding structured data
+BACKUP STRATEGY: No backup configuration, no point-in-time recovery plan, no disaster recovery
+
+Estimate technical debt accumulation rate and remediation cost.`,
   },
   {
     name: "Observability & Launch Readiness",
-    role: "You are an observability and DevOps engineer. Analyze the app for: missing structured logging (making production debugging impossible), no error tracking integration (Sentry or equivalent), missing analytics and conversion funnel instrumentation, no health check endpoints, missing environment variable validation on startup, no rate limiting on public APIs, missing CORS policies, no Content Security Policy headers, and absent monitoring for critical business metrics. These gaps create operational blindness in production.",
+    role: `You are a DevOps and observability engineer.
+Analyze for:
+
+LOGGING: Missing structured logs for critical business events (sign up, payment, error), PII in logs
+ERROR TRACKING: No Sentry/Datadog/equivalent configured, errors silently swallowed
+ANALYTICS: No conversion funnel tracking, no feature usage analytics, flying blind on user behavior
+HEALTH CHECKS: Missing /healthz endpoint, no database connectivity check, no external dependency checks
+ENV VALIDATION: App starts with missing required env vars (should fail fast on startup)
+RATE LIMITING: Public APIs unprotected, no DDoS mitigation
+SECURITY HEADERS: Missing CSP, HSTS, X-Frame-Options, X-Content-Type-Options
+DEPLOYMENT: No zero-downtime deployment strategy, missing rollback plan, no blue-green/canary
+ALERTS: No PagerDuty/alerting on error spike, payment failure rate, or latency degradation
+RUNBOOKS: No incident response documentation
+
+Score: would a new engineer be able to debug a production incident in < 1 hour?`,
   },
   {
     name: "AI Code Quality",
-    role: "You are an AI code quality expert specializing in vibecoded applications. Analyze the app for AI-generation anti-patterns: hallucinated library APIs that don't exist, over-engineered solutions for simple problems (AI overcomplication), duplicate logic from multiple AI sessions (copy-paste debt), massive monolithic files that AI generates but should be split, incorrect async/await patterns typical of AI generation, unnecessary state management complexity, unused imports and dead code from AI scaffolding, and AI-typical mistakes like incorrect React hooks usage.",
+    role: `You are the world's leading expert on AI-generated code quality and vibe-coding anti-patterns.
+Analyze for:
+
+HALLUCINATED APIS: Import statements for libraries that don't exist, methods called on wrong types
+AI COPY-PASTE DEBT: Duplicate implementations of the same logic from different AI sessions, inconsistent patterns
+MONOLITHIC FILES: 500+ line components that AI generated but should be 5 separate files
+OVER-ENGINEERING: AI generated a complex state machine for a simple toggle, Redux for a 2-screen app
+INCORRECT HOOKS: useEffect with wrong deps array, missing cleanup, stale closure bugs (AI classic)
+AI SECURITY PATTERNS: console.log(password), hardcoded test credentials left in, debug flags in production
+PROMPT ARTIFACT DEBT: Comments like "TODO: add auth" from original AI prompt still in code
+AI SCAFFOLDING BLOAT: Unused imports, dead components, placeholder text left in production UI
+VIBE TOOL DETECTION: Identify which AI tool(s) likely built this (Cursor/Replit/Lovable/Bolt) and their known failure patterns
+
+Be opinionated — AI code has specific, recognizable quality patterns.`,
   },
   {
     name: "Founder Blind Spots",
-    role: "You are a seasoned technical co-founder and startup advisor. Analyze the app for critical pre-launch blind spots: missing rate limiting that will be exploited on day one, no email verification allowing spam accounts, missing admin interface for support operations, no way to disable features without redeploy (feature flags), missing backup strategy, no staging environment separation, hardcoded limits that will need code changes to scale, missing customer support tooling, and technical decisions that look fine at 10 users but fail at 10,000 users.",
+    role: `You are a battle-hardened technical co-founder and startup advisor who has seen 200+ products launch.
+This is the "what founders miss" analysis. Look for:
+
+DAY-ONE EXPLOITS: Rate limit bypass, signup spam, resource exhaustion attacks that will happen within 24h of launch
+ADMIN TOOLING: No way to ban users, reset passwords, view/manage customer data without direct DB access
+FEATURE FLAGS: Zero ability to disable a broken feature without a redeploy (kills you at 3am)
+EMAIL DELIVERABILITY: Transactional emails going to spam, missing SPF/DKIM, no bounce handling
+LEGAL EXPOSURE: Missing privacy policy, terms of service, cookie consent (GDPR fine risk)
+SCALE ASSUMPTIONS: "We'll fix it when we have users" — but which thing breaks first at 100 users?
+SUPPORT TOOLING: No way for customer support to impersonate/help a specific user
+ENVIRONMENT HYGIENE: Using production Stripe keys in development, no staging environment
+BACKUP STRATEGY: One DB drop and they lose everything — no automated backups
+FOUNDER KNOWLEDGE: The app only works because the founder knows the magic URL — no documentation
+
+Final answer: If this app launched on Product Hunt tomorrow, what would break in the first 24 hours?`,
   },
 ];
 
@@ -112,10 +275,10 @@ Return ONLY valid JSON in this exact format:
 }
 
 Rules:
-- Find 2–4 realistic, high-impact issues. No filler.
+- Find 2–5 realistic, high-impact issues. No filler.
 - Every issue must have a clear production consequence (data breach, revenue loss, outage, user drop-off).
 - confidence: 95–99 for runtime-provable issues, 85–94 for direct code evidence, 70–84 for pattern-based inference, 60–69 for AI reasoning.
-- fixPrompt must be ready-to-use — not "consider adding X" but the actual prompt a developer pastes into their AI editor.
+- fixPrompt must be ready-to-use — not "consider adding X" but the actual prompt a developer pastes into Cursor/Claude.
 - If you have real code context, reference specific file paths in evidence.`;
 }
 
@@ -156,6 +319,207 @@ async function runAgent(
   }
 }
 
+async function runLaunchRiskForecast(
+  sourceType: string,
+  sourceInput: string,
+  appDescription?: string | null,
+  codeContext?: CodeContext | null,
+  issues?: AgentIssue[],
+): Promise<RiskForecast> {
+  const issuesSummary = issues?.slice(0, 10).map((i) => `${i.severity}: ${i.title}`).join("\n") ?? "";
+  const appType = codeContext?.businessType ?? "saas";
+
+  try {
+    const response = await groq.chat.completions.create({
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content: `You are a startup risk forecasting expert. Predict specific business failure probabilities based on app type and known issues.`,
+        },
+        {
+          role: "user",
+          content: `Analyze this app and predict launch failure risks:
+
+App: ${sourceInput} (${sourceType})
+Type: ${appType}
+${appDescription ? `Description: ${appDescription}` : ""}
+${codeContext?.framework ? `Framework: ${codeContext.framework}` : ""}
+
+Known issues found:
+${issuesSummary}
+
+Return ONLY valid JSON:
+{
+  "appType": "saas|ecommerce|marketplace|restaurant|ai-app|portfolio|other",
+  "churnRisk": "low|medium|high|critical",
+  "conversionLoss": "e.g. 15-25% estimated conversion loss due to UX friction",
+  "authBreakageProbability": "e.g. 40% chance of auth issues in first week based on patterns",
+  "checkoutFailureRisk": "low|medium|high|critical",
+  "incidentProbability": "e.g. 70% chance of P1 incident within 30 days of launch",
+  "supportLoadEstimate": "e.g. 5-8 support tickets per 100 signups",
+  "revenueAtRisk": "e.g. ₹50,000-₹2,00,000/mo at risk",
+  "topFailureModes": ["specific failure mode 1", "specific failure mode 2", "specific failure mode 3"],
+  "executiveRecommendation": "One paragraph board-level recommendation on launch readiness"
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 1024,
+    });
+
+    const content = response.choices[0]?.message?.content ?? "{}";
+    return JSON.parse(content) as RiskForecast;
+  } catch (err) {
+    logger.error({ err }, "Risk forecast failed");
+    return {
+      appType: appType,
+      churnRisk: "medium",
+      conversionLoss: "Unknown — analysis incomplete",
+      authBreakageProbability: "Unknown",
+      checkoutFailureRisk: "medium",
+      incidentProbability: "Unknown",
+      supportLoadEstimate: "Unknown",
+      revenueAtRisk: "Unknown",
+      topFailureModes: ["Could not complete risk forecast"],
+      executiveRecommendation: "Risk forecast unavailable. Review individual findings.",
+    };
+  }
+}
+
+async function runRevenueIntelligence(
+  sourceType: string,
+  sourceInput: string,
+  appDescription?: string | null,
+  codeContext?: CodeContext | null,
+): Promise<RevenueIntelligence> {
+  try {
+    const response = await groq.chat.completions.create({
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content: `You are a revenue growth expert who identifies exactly where products lose money. Focus on concrete, specific revenue leaks with quantified impact.`,
+        },
+        {
+          role: "user",
+          content: `Identify revenue leaks and business growth blockers in this app:
+
+App: ${sourceInput} (${sourceType})
+${appDescription ? `Description: ${appDescription}` : ""}
+${codeContext ? `Framework: ${codeContext.framework}, Business Type: ${codeContext.businessType}` : ""}
+${codeContext?.routes ? `Routes: ${codeContext.routes.slice(0, 800)}` : ""}
+
+Analyze for:
+- Broken onboarding funnel (where users drop before activation)
+- Abandoned checkout patterns (cart abandonment triggers)
+- Missing activation events (what should the first "aha moment" be?)
+- Weak pricing page (missing social proof, urgency, comparison)
+- Invisible upsells (no contextual upgrade prompts)
+- Poor retention loops (no re-engagement triggers)
+- Payment failure handling (dunning management gaps)
+- Revenue leakage (free tier abuse, trial extension, coupon stacking)
+
+Return ONLY valid JSON:
+{
+  "overallRevenueRisk": "low|medium|high|critical",
+  "leaks": [
+    {
+      "category": "Onboarding|Checkout|Retention|Pricing|Upsell|Payments|Fraud",
+      "severity": "critical|high|medium|low",
+      "impact": "e.g. ₹20,000-₹80,000/mo revenue impact",
+      "description": "Specific description of the revenue leak",
+      "fix": "Concrete fix prompt for Cursor/Claude"
+    }
+  ],
+  "estimatedMonthlyImpact": "Total estimated monthly revenue impact across all leaks",
+  "quickWins": ["Quick win 1 that can be done in < 1 day", "Quick win 2", "Quick win 3"]
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 1500,
+    });
+
+    const content = response.choices[0]?.message?.content ?? "{}";
+    return JSON.parse(content) as RevenueIntelligence;
+  } catch (err) {
+    logger.error({ err }, "Revenue intelligence failed");
+    return {
+      overallRevenueRisk: "medium",
+      leaks: [],
+      estimatedMonthlyImpact: "Analysis incomplete",
+      quickWins: [],
+    };
+  }
+}
+
+async function runComplianceAnalysis(
+  sourceType: string,
+  sourceInput: string,
+  appDescription?: string | null,
+  codeContext?: CodeContext | null,
+): Promise<ComplianceResult[]> {
+  const frameworks = ["GDPR", "OWASP Top 10", "PCI-DSS", "HIPAA", "SOC 2", "WCAG 2.1", "CCPA", "ISO 27001"];
+
+  try {
+    const response = await groq.chat.completions.create({
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content: `You are a multi-framework compliance auditor. Score apps against 8 compliance frameworks with specific findings.`,
+        },
+        {
+          role: "user",
+          content: `Run a compliance audit for this app against all 8 major frameworks:
+
+App: ${sourceInput} (${sourceType})
+${appDescription ? `Description: ${appDescription}` : ""}
+${codeContext ? `Framework: ${codeContext.framework}, Business Type: ${codeContext.businessType}` : ""}
+${codeContext?.routes ? `Routes: ${codeContext.routes.slice(0, 600)}` : ""}
+
+Frameworks to audit: ${frameworks.join(", ")}
+
+Return ONLY valid JSON:
+{
+  "results": [
+    {
+      "framework": "GDPR",
+      "score": 45,
+      "status": "fail",
+      "findings": ["Missing cookie consent banner", "No data retention policy"],
+      "riskLevel": "high"
+    }
+  ]
+}
+
+For each framework:
+- score: 0-100 (how compliant)
+- status: "pass" (>80), "partial" (50-80), "fail" (<50)
+- findings: 1-4 specific actionable items
+- riskLevel: "low"|"medium"|"high"|"critical"`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 2000,
+    });
+
+    const content = response.choices[0]?.message?.content ?? "{}";
+    const parsed = JSON.parse(content) as { results?: ComplianceResult[] };
+    return parsed.results ?? [];
+  } catch (err) {
+    logger.error({ err }, "Compliance analysis failed");
+    return frameworks.map((f) => ({
+      framework: f,
+      score: 50,
+      status: "partial" as const,
+      findings: ["Analysis incomplete — rerun for full results"],
+      riskLevel: "medium" as const,
+    }));
+  }
+}
+
 export interface CodeContext {
   framework: string;
   vibeTool: string;
@@ -174,6 +538,9 @@ export interface ScanAnalysisResult {
   launchVerdict: string;
   issueCounts: { critical: number; high: number; medium: number; low: number };
   agentResults: AgentResult[];
+  riskForecast?: RiskForecast;
+  revenueIntelligence?: RevenueIntelligence;
+  complianceResults?: ComplianceResult[];
 }
 
 export async function runAllAgents(
@@ -184,11 +551,16 @@ export async function runAllAgents(
 ): Promise<ScanAnalysisResult> {
   logger.info({ sourceType, sourceInput }, "Starting deep analysis");
 
-  const agentResults = await Promise.all(
-    AGENTS.map((agent) =>
-      runAgent(agent, sourceType, sourceInput, appDescription, codeContext),
+  // Run all 10 agents + compliance + revenue intelligence in parallel
+  const [agentResults, complianceResults, revenueIntelligence] = await Promise.all([
+    Promise.all(
+      AGENTS.map((agent) =>
+        runAgent(agent, sourceType, sourceInput, appDescription, codeContext),
+      ),
     ),
-  );
+    runComplianceAnalysis(sourceType, sourceInput, appDescription, codeContext),
+    runRevenueIntelligence(sourceType, sourceInput, appDescription, codeContext),
+  ]);
 
   const allIssues = agentResults.flatMap((r) => r.issues);
   const issueCounts = {
@@ -206,7 +578,19 @@ export async function runAllAgents(
 
   const score = Math.max(0, 100 - penalty);
 
-  const criticalText = issueCounts.critical > 0 ? ` including ${issueCounts.critical} critical ${issueCounts.critical === 1 ? "blocker" : "blockers"}` : "";
+  // Run risk forecast after we know the issues
+  const riskForecast = await runLaunchRiskForecast(
+    sourceType,
+    sourceInput,
+    appDescription,
+    codeContext,
+    allIssues,
+  );
+
+  const criticalText =
+    issueCounts.critical > 0
+      ? ` including ${issueCounts.critical} critical ${issueCounts.critical === 1 ? "blocker" : "blockers"}`
+      : "";
 
   const summary =
     score >= 80
@@ -218,5 +602,14 @@ export async function runAllAgents(
   const launchVerdict =
     score >= 80 ? "ready" : score >= 55 ? "caution" : "do-not-launch";
 
-  return { score, summary, launchVerdict, issueCounts, agentResults };
+  return {
+    score,
+    summary,
+    launchVerdict,
+    issueCounts,
+    agentResults,
+    riskForecast,
+    revenueIntelligence,
+    complianceResults,
+  };
 }

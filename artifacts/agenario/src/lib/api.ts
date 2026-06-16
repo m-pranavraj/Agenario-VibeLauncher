@@ -38,6 +38,8 @@ export interface ScanIssue {
   title: string;
   description: string;
   fixPrompt: string;
+  confidence?: number;
+  evidence?: string | null;
 }
 
 export interface IssueCounts {
@@ -45,6 +47,42 @@ export interface IssueCounts {
   high: number;
   medium: number;
   low: number;
+}
+
+export interface RiskForecast {
+  appType: string;
+  churnRisk: string;
+  conversionLoss: string;
+  authBreakageProbability: string;
+  checkoutFailureRisk: string;
+  incidentProbability: string;
+  supportLoadEstimate: string;
+  revenueAtRisk: string;
+  topFailureModes: string[];
+  executiveRecommendation: string;
+}
+
+export interface RevenueIntelligenceLeak {
+  category: string;
+  severity: string;
+  impact: string;
+  description: string;
+  fix: string;
+}
+
+export interface RevenueIntelligence {
+  overallRevenueRisk: string;
+  leaks: RevenueIntelligenceLeak[];
+  estimatedMonthlyImpact: string;
+  quickWins: string[];
+}
+
+export interface ComplianceResult {
+  framework: string;
+  score: number;
+  status: string;
+  findings: string[];
+  riskLevel: string;
 }
 
 export interface Scan {
@@ -56,7 +94,14 @@ export interface Scan {
   status: string;
   score: number | null;
   summary: string | null;
+  launchVerdict: string | null;
   issueCounts: IssueCounts | null;
+  framework: string | null;
+  vibeTool: string | null;
+  businessType: string | null;
+  riskForecast: RiskForecast | null;
+  revenueIntelligence: RevenueIntelligence | null;
+  complianceResults: ComplianceResult[] | null;
   createdAt: string;
   completedAt: string | null;
 }

@@ -5,13 +5,70 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import pkg from "pg";
 import pinoHttp from "pino-http";
-import router from "./routes";
-import { logger } from "./lib/logger";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
+import router from "./routes/index.js";
+import { logger } from "./lib/logger.js";
 
 const { Pool } = pkg;
 
 const app: Express = express();
 
+// ── Security headers (Helmet) ─────────────────────────────────────────────
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
+        frameSrc: ["https://api.razorpay.com", "https://checkout.razorpay.com"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    crossOriginEmbedderPolicy: false, // Allow Razorpay iframe
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+  }),
+);
+
+// ── Rate limiting ─────────────────────────────────────────────────────────
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please try again later." },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // Max 20 auth attempts per 15 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many authentication attempts. Please try again in 15 minutes." },
+  skipSuccessfulRequests: true,
+});
+
+const scanLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 30, // Max 30 scan requests per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Scan rate limit reached. Please wait before starting another analysis." },
+});
+
+app.use(globalLimiter);
+app.use("/api/auth", authLimiter);
+app.use("/api/scans", scanLimiter);
+
+// ── Logging ───────────────────────────────────────────────────────────────
 app.use(
   pinoHttp({
     logger,
@@ -34,6 +91,7 @@ app.use(
 
 const isProduction = process.env["NODE_ENV"] === "production";
 
+// ── CORS ──────────────────────────────────────────────────────────────────
 app.use(
   cors({
     origin: true,
@@ -41,20 +99,27 @@ app.use(
   }),
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// ── Body parsing ──────────────────────────────────────────────────────────
+// Raw body for GitHub webhook signature verification
+app.use(
+  "/api/github/webhook",
+  express.raw({ type: "application/json" }),
+);
 
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// ── Session ───────────────────────────────────────────────────────────────
 const PgStore = connectPgSimple(session);
 const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
 
 app.use(
   session({
-    store: new PgStore({
-      pool,
-    }),
+    store: new PgStore({ pool }),
     secret: process.env["SESSION_SECRET"] ?? "dev-secret-change-me",
     resave: false,
     saveUninitialized: false,
+    name: "agn_sid", // Don't use default 'connect.sid'
     cookie: {
       secure: isProduction,
       httpOnly: true,
@@ -64,6 +129,20 @@ app.use(
   }),
 );
 
+// ── Routes ────────────────────────────────────────────────────────────────
 app.use("/api", router);
+
+// ── Global error handler ──────────────────────────────────────────────────
+app.use(
+  (
+    err: Error,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction,
+  ) => {
+    logger.error({ err }, "Unhandled error");
+    res.status(500).json({ error: "Internal server error" });
+  },
+);
 
 export default app;

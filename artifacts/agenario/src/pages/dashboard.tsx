@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
-import { Rocket, Plus, ChevronRight, Clock, CheckCircle, XCircle, Loader2, LogOut, Zap } from "lucide-react";
+import { Rocket, Plus, ChevronRight, Clock, CheckCircle, XCircle, Loader2, LogOut, Zap, BarChart3, Activity, BookOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { api, type Scan } from "@/lib/api";
 import { motion } from "framer-motion";
@@ -78,6 +78,17 @@ export default function DashboardPage() {
             <span className="text-white font-bold font-['Syne'] text-sm">Agenario</span>
           </Link>
 
+          <div className="hidden md:flex items-center gap-4 text-xs">
+            <Link href="/monitoring" className="flex items-center gap-1.5 text-white/35 hover:text-white transition-colors">
+              <Activity className="w-3.5 h-3.5" />Monitoring
+            </Link>
+            <Link href="/portfolio" className="flex items-center gap-1.5 text-white/35 hover:text-white transition-colors">
+              <BarChart3 className="w-3.5 h-3.5" />Portfolio
+            </Link>
+            <Link href="/docs" className="flex items-center gap-1.5 text-white/35 hover:text-white transition-colors">
+              <BookOpen className="w-3.5 h-3.5" />Docs
+            </Link>
+          </div>
           <div className="flex items-center gap-3">
             <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${plan.badge}`}>{plan.label}</span>
             <span className="text-white/25 text-xs hidden sm:block">{user.email}</span>

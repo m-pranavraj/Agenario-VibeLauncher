@@ -5,10 +5,10 @@ import {
   Shield, Zap, Eye, Layers, Bot, Activity, Loader2,
   AlertTriangle, XCircle, CheckCircle2, CreditCard, Upload, Lock, Search,
   TrendingUp, Scale, Database, Cpu, Fingerprint, ShieldCheck,
-  FileText, ArrowRight,
+  FileText, ArrowRight, BarChart3, DollarSign, Target, ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api, type ScanDetail, type ScanIssue } from "@/lib/api";
+import { api, type ScanDetail, type ScanIssue, type ComplianceResult, type RiskForecast, type RevenueIntelligence } from "@/lib/api";
 import { motion } from "framer-motion";
 
 const SEVERITY_CONFIG = {
@@ -53,7 +53,7 @@ const AGENT_ICONS: Record<string, React.FC<{ className?: string }>> = {
   "User Experience & Conversion": Eye,
   "Reliability & Error Handling": Activity,
   "Data Integrity & Architecture": Database,
-  "Observability & Ops Readiness": Fingerprint,
+  "Observability & Launch Readiness": Fingerprint,
   "AI Code Quality": Bot,
   "Founder Blind Spots": Cpu,
   "IDOR & Access Control Agent": Lock,
@@ -103,6 +103,17 @@ const VERDICT_CONFIG = {
   },
 };
 
+const COMPLIANCE_COLORS: Record<string, string> = {
+  "GDPR": "text-blue-400",
+  "OWASP Top 10": "text-red-400",
+  "PCI-DSS": "text-green-400",
+  "HIPAA": "text-purple-400",
+  "SOC 2": "text-amber-400",
+  "WCAG 2.1": "text-cyan-400",
+  "CCPA": "text-orange-400",
+  "ISO 27001": "text-violet-400",
+};
+
 function ScoreRing({ score }: { score: number }) {
   const color = score >= 80 ? "#4ade80" : score >= 55 ? "#f59e0b" : "#f87171";
   const r = 48;
@@ -120,6 +131,25 @@ function ScoreRing({ score }: { score: number }) {
           <span className="text-2xl font-bold font-['Syne']" style={{ color }}>{score}</span>
           <span className="text-[10px] text-white/25">/100</span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ComplianceRing({ score, status }: { score: number; status: string }) {
+  const color = status === "pass" ? "#4ade80" : status === "partial" ? "#f59e0b" : "#f87171";
+  const r = 20;
+  const circ = 2 * Math.PI * r;
+  const dash = (score / 100) * circ;
+  return (
+    <div className="relative shrink-0" style={{ width: 50, height: 50 }}>
+      <svg width="50" height="50" viewBox="0 0 50 50" className="-rotate-90">
+        <circle cx="25" cy="25" r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
+        <circle cx="25" cy="25" r={r} fill="none" stroke={color} strokeWidth="4"
+          strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round" />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-[9px] font-bold font-['Syne']" style={{ color }}>{score}</span>
       </div>
     </div>
   );
@@ -205,6 +235,206 @@ function EvidenceCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
   );
 }
 
+function RiskForecastSection({ forecast }: { forecast: RiskForecast }) {
+  const riskColor = (r: string) =>
+    r === "critical" ? "text-red-400" : r === "high" ? "text-amber-400" : r === "medium" ? "text-yellow-400" : "text-green-400";
+  const riskBg = (r: string) =>
+    r === "critical" ? "bg-red-500/10 border-red-500/20 text-red-400" :
+    r === "high" ? "bg-amber-500/10 border-amber-500/18 text-amber-400" :
+    r === "medium" ? "bg-yellow-500/[0.07] border-yellow-500/15 text-yellow-400" :
+    "bg-green-500/[0.07] border-green-500/15 text-green-400";
+
+  return (
+    <div className="glass rounded-2xl p-6 space-y-5">
+      <div className="flex items-center gap-2">
+        <Target className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm">Launch Risk Forecast</h2>
+        <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 ml-auto">AI Forecast</span>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Churn Risk", value: forecast.churnRisk, type: "badge" },
+          { label: "Checkout Risk", value: forecast.checkoutFailureRisk, type: "badge" },
+          { label: "Revenue at Risk", value: forecast.revenueAtRisk, type: "text" },
+          { label: "Conversion Loss", value: forecast.conversionLoss, type: "text" },
+        ].map(({ label, value, type }) => (
+          <div key={label} className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-3">
+            <div className="text-[10px] text-white/30 mb-1.5 uppercase tracking-wide">{label}</div>
+            {type === "badge" ? (
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border capitalize ${riskBg(value)}`}>
+                {value}
+              </span>
+            ) : (
+              <div className="text-xs font-semibold text-white/70">{value}</div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-4">
+          <div className="text-[10px] text-white/30 uppercase tracking-wide mb-2">Auth Breakage</div>
+          <div className="text-xs text-white/60">{forecast.authBreakageProbability}</div>
+        </div>
+        <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-4">
+          <div className="text-[10px] text-white/30 uppercase tracking-wide mb-2">Incident Probability</div>
+          <div className="text-xs text-white/60">{forecast.incidentProbability}</div>
+        </div>
+      </div>
+
+      {forecast.topFailureModes && forecast.topFailureModes.length > 0 && (
+        <div className="bg-white/[0.02] border border-white/[0.07] rounded-xl p-4">
+          <div className="text-[10px] text-white/30 uppercase tracking-wide mb-3">Top Failure Modes</div>
+          <div className="space-y-1.5">
+            {forecast.topFailureModes.map((mode, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs text-white/55">
+                <span className="text-white/20 font-mono">{i + 1}.</span>
+                {mode}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {forecast.executiveRecommendation && (
+        <div className="border border-violet-500/15 bg-violet-500/[0.04] rounded-xl p-4">
+          <div className="text-[10px] text-violet-400/70 uppercase tracking-wide mb-2 font-medium">Board Recommendation</div>
+          <p className="text-sm text-white/55 leading-relaxed">{forecast.executiveRecommendation}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ComplianceSection({ results }: { results: ComplianceResult[] }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  return (
+    <div className="glass rounded-2xl p-6 space-y-5">
+      <div className="flex items-center gap-2">
+        <Scale className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm">8-Framework Compliance Audit</h2>
+        <span className="text-[10px] text-white/25 ml-auto">{results.filter(r => r.status === "pass").length}/{results.length} passed</span>
+      </div>
+
+      <div className="grid gap-2.5">
+        {results.map((result) => {
+          const isExpanded = expanded === result.framework;
+          const statusColor = result.status === "pass" ? "text-green-400" : result.status === "partial" ? "text-amber-400" : "text-red-400";
+          const statusBg = result.status === "pass" ? "bg-green-500/[0.07] border-green-500/15" : result.status === "partial" ? "bg-amber-500/[0.06] border-amber-500/15" : "bg-red-500/[0.06] border-red-500/15";
+          const fwColor = COMPLIANCE_COLORS[result.framework] ?? "text-white/50";
+
+          return (
+            <div key={result.framework} className={`border rounded-xl overflow-hidden ${statusBg}`}>
+              <button
+                onClick={() => setExpanded(isExpanded ? null : result.framework)}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors"
+              >
+                <ComplianceRing score={result.score} status={result.status} />
+                <div className="flex-1 text-left">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-semibold ${fwColor}`}>{result.framework}</span>
+                    <span className={`text-[10px] font-bold uppercase ${statusColor}`}>{result.status}</span>
+                  </div>
+                  <div className="text-[11px] text-white/30 mt-0.5">
+                    {result.findings.length} finding{result.findings.length !== 1 ? "s" : ""}
+                    {result.riskLevel && ` · ${result.riskLevel} risk`}
+                  </div>
+                </div>
+                {isExpanded ? <ChevronUp className="w-4 h-4 text-white/20 shrink-0" /> : <ChevronDown className="w-4 h-4 text-white/20 shrink-0" />}
+              </button>
+              {isExpanded && result.findings.length > 0 && (
+                <div className="px-4 pb-3 border-t border-white/[0.05] pt-3 space-y-1.5">
+                  {result.findings.map((finding, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs text-white/50">
+                      <span className="text-white/20 font-mono mt-0.5 shrink-0">{i + 1}.</span>
+                      {finding}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function RevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligence }) {
+  const riskColor = revenue.overallRevenueRisk === "critical" ? "text-red-400" : revenue.overallRevenueRisk === "high" ? "text-amber-400" : "text-yellow-400";
+  const [expanded, setExpanded] = useState<number | null>(null);
+
+  return (
+    <div className="glass rounded-2xl p-6 space-y-5">
+      <div className="flex items-center gap-2">
+        <DollarSign className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm">Revenue Intelligence</h2>
+        <div className="ml-auto flex items-center gap-2">
+          <span className={`text-xs font-bold capitalize ${riskColor}`}>{revenue.overallRevenueRisk} Risk</span>
+        </div>
+      </div>
+
+      {revenue.estimatedMonthlyImpact && (
+        <div className="bg-amber-500/[0.05] border border-amber-500/15 rounded-xl px-4 py-3">
+          <div className="text-[10px] text-amber-400/70 uppercase tracking-wide mb-1">Estimated Monthly Revenue Impact</div>
+          <div className="text-sm font-bold text-amber-400">{revenue.estimatedMonthlyImpact}</div>
+        </div>
+      )}
+
+      {revenue.leaks && revenue.leaks.length > 0 && (
+        <div className="space-y-2">
+          <div className="text-[10px] text-white/25 uppercase tracking-widest font-medium mb-3">Revenue Leaks</div>
+          {revenue.leaks.map((leak, i) => {
+            const isExp = expanded === i;
+            const sev = SEVERITY_CONFIG[leak.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.medium;
+            return (
+              <div key={i} className={`border rounded-xl overflow-hidden ${sev.bg}`}>
+                <button
+                  onClick={() => setExpanded(isExp ? null : i)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
+                >
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase shrink-0 ${sev.badge}`}>{leak.severity}</span>
+                  <span className="text-xs font-medium text-white/80 flex-1">{leak.description}</span>
+                  <span className="text-[10px] text-white/30 shrink-0 hidden sm:block">{leak.category}</span>
+                  <span className="text-[10px] text-amber-400/70 shrink-0 hidden md:block">{leak.impact}</span>
+                  {isExp ? <ChevronUp className="w-4 h-4 text-white/20" /> : <ChevronDown className="w-4 h-4 text-white/20" />}
+                </button>
+                {isExp && (
+                  <div className="px-4 pb-3 pt-3 border-t border-white/[0.05] space-y-2">
+                    <div className="text-xs text-white/40 leading-relaxed">{leak.description}</div>
+                    {leak.fix && (
+                      <div className="bg-black/30 border border-white/[0.07] rounded-lg p-3">
+                        <div className="text-[10px] text-white/30 mb-1 font-medium">Fix Prompt</div>
+                        <p className="text-xs text-white/45 font-mono leading-relaxed">{leak.fix}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {revenue.quickWins && revenue.quickWins.length > 0 && (
+        <div className="bg-green-500/[0.04] border border-green-500/15 rounded-xl p-4">
+          <div className="text-[10px] text-green-400/70 uppercase tracking-wide mb-3 font-medium">Quick Wins ({"<"}1 day)</div>
+          <div className="space-y-1.5">
+            {revenue.quickWins.map((win, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs text-white/55">
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-400/60 shrink-0 mt-0.5" />
+                {win}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ScanResultsPage() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -276,6 +506,13 @@ export default function ScanResultsPage() {
             <span className="text-white font-bold font-['Syne'] text-sm">Launch Report</span>
           </div>
           <span className="text-white/20 text-xs ml-2 truncate hidden sm:block max-w-xs">{scan.sourceInput}</span>
+          <div className="ml-auto flex items-center gap-2">
+            <Link href="/portfolio">
+              <button className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/15">
+                <BarChart3 className="w-3 h-3" />Portfolio
+              </button>
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -351,6 +588,27 @@ export default function ScanResultsPage() {
             )}
           </div>
         </div>
+
+        {/* ── Launch Risk Forecast ──────────────────────────── */}
+        {scan.riskForecast && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <RiskForecastSection forecast={scan.riskForecast} />
+          </motion.div>
+        )}
+
+        {/* ── Compliance Audit ─────────────────────────────── */}
+        {scan.complianceResults && scan.complianceResults.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+            <ComplianceSection results={scan.complianceResults} />
+          </motion.div>
+        )}
+
+        {/* ── Revenue Intelligence ─────────────────────────── */}
+        {scan.revenueIntelligence && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <RevenueIntelligenceSection revenue={scan.revenueIntelligence} />
+          </motion.div>
+        )}
 
         {/* ── Top 3 Action Plan ────────────────────────────── */}
         {topThree.length > 0 && (

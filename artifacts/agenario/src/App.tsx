@@ -11,6 +11,9 @@ import DashboardPage from "@/pages/dashboard";
 import NewScanPage from "@/pages/new-scan";
 import ScanResultsPage from "@/pages/scan-results";
 import PricingPage from "@/pages/pricing";
+import DocsPage from "@/pages/docs";
+import PortfolioPage from "@/pages/portfolio";
+import MonitoringPage from "@/pages/monitoring";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -25,6 +28,9 @@ function Router() {
       <Route path="/scans/new" component={NewScanPage} />
       <Route path="/scans/:id" component={ScanResultsPage} />
       <Route path="/pricing" component={PricingPage} />
+      <Route path="/docs" component={DocsPage} />
+      <Route path="/portfolio" component={PortfolioPage} />
+      <Route path="/monitoring" component={MonitoringPage} />
       <Route component={NotFound} />
     </Switch>
   );
