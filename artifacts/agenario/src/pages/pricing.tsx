@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Rocket, Check, Zap, ArrowLeft, Loader2 } from "lucide-react";
+import { Rocket, Check, Zap, ArrowLeft, Loader2, ShieldCheck, Building2, Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
+import { motion } from "framer-motion";
 
 declare global {
   interface Window {
@@ -26,49 +27,66 @@ const PLANS = [
     name: "Free",
     price: "₹0",
     period: "forever",
-    description: "Try Agenario with your first app",
-    color: "border-[#1D2B3E]",
-    badge: null,
-    features: ["1 scan per month", "Launch Readiness Score", "Basic issue list", "One-click fix prompts"],
+    description: "For founders trying it out",
+    icon: Rocket,
+    features: [
+      "5 scans per month",
+      "Launch Readiness Score",
+      "Security & critical issue checks",
+      "1-Click fix prompts",
+      "Compliance overview",
+    ],
     cta: "Current Plan",
+    amount: null,
+    highlight: false,
   },
   {
     id: "creator",
     name: "Creator",
-    price: "₹499",
+    price: "₹299",
     period: "/month",
-    description: "For indie hackers shipping fast",
-    color: "border-[#D4900A]/50",
-    badge: "Most Popular",
-    features: ["Unlimited scans", "Full AI Tech Lead Report", "All 10 agents", "One-click fix prompts", "Priority analysis"],
+    description: "For indie founders shipping at speed",
+    icon: Zap,
+    features: [
+      "Unlimited scans",
+      "Full 10-dimension analysis",
+      "Compliance checks (GDPR, OWASP, PCI-DSS)",
+      "Revenue intelligence layer",
+      "Board-memo style reports",
+      "1-Click fix prompts",
+      "Priority analysis queue",
+    ],
     cta: "Upgrade to Creator",
-    amount: 49900,
+    amount: 29900,
+    highlight: true,
+    badge: "Most Popular",
   },
   {
-    id: "pro",
-    name: "Pro",
-    price: "₹2,999",
-    period: "/month",
-    description: "For agencies and power users",
-    color: "border-teal-500/30",
-    badge: null,
-    features: ["Everything in Creator", "API access", "Team members (5)", "Webhook notifications", "Custom reports"],
-    cta: "Upgrade to Pro",
-    amount: 299900,
-  },
-  {
-    id: "team",
-    name: "Team",
+    id: "enterprise",
+    name: "Enterprise",
     price: "Custom",
     period: "",
-    description: "For large teams and enterprises",
-    color: "border-amber-500/20",
-    badge: null,
-    features: ["Everything in Pro", "Unlimited team members", "Dedicated support", "Custom integrations", "SLA guarantee"],
-    cta: "Contact Us",
+    description: "For agencies, studios & funded teams",
+    icon: Building2,
+    features: [
+      "Everything in Creator",
+      "Team workspace",
+      "API & webhook access",
+      "CI/CD integration",
+      "Custom compliance rules",
+      "Dedicated support & SLA",
+      "Invoiced billing",
+    ],
+    cta: "Contact Sales",
     amount: null,
+    highlight: false,
   },
 ];
+
+const FADE_UP = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
+};
 
 export default function PricingPage() {
   const { user, refresh } = useAuth();
@@ -79,8 +97,8 @@ export default function PricingPage() {
   const handleUpgrade = async (planId: string, amount: number | null | undefined) => {
     if (!user) { setLocation("/register"); return; }
     if (planId === "free" || planId === user.plan) return;
-    if (planId === "team" || amount == null) {
-      window.open("mailto:hello@agenario.ai?subject=Team Plan Inquiry", "_blank");
+    if (planId === "enterprise" || amount == null) {
+      window.open("mailto:hello@agenario.ai?subject=Enterprise Plan Inquiry", "_blank");
       return;
     }
 
@@ -98,7 +116,7 @@ export default function PricingPage() {
           description: order.planName,
           order_id: order.orderId,
           prefill: { email: user.email, name: user.name },
-          theme: { color: "#D4900A" },
+          theme: { color: "#ffffff" },
           handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
             try {
               await api.billing.verify({
@@ -124,71 +142,79 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F1B]">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(212,144,10,0.1)_0%,_transparent_60%)] pointer-events-none" />
+    <div className="min-h-screen bg-[#050505]">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.06)_0%,_transparent_60%)] pointer-events-none" />
 
-      <nav className="border-b border-[#1D2B3E] bg-[#0B0F1B]/90 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-4">
-          {user ? (
-            <Link href="/dashboard" className="text-[#566070] hover:text-white transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          ) : (
-            <Link href="/" className="text-[#566070] hover:text-white transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          )}
+      <nav className="border-b border-white/[0.07] bg-[#050505]/90 backdrop-blur-2xl sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-3">
+          <Link href={user ? "/dashboard" : "/"} className="text-white/30 hover:text-white transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary/20 border border-primary/40 flex items-center justify-center">
-              <Rocket className="w-3.5 h-3.5 text-primary" />
+            <div className="w-7 h-7 rounded-xl bg-white/[0.08] border border-white/[0.12] flex items-center justify-center">
+              <Rocket className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-white font-bold font-['Syne']">Pricing</span>
+            <span className="text-white font-bold font-['Syne'] text-sm">Pricing</span>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-6 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-white font-['Syne'] mb-3">Fair & Simple Pricing</h1>
-          <p className="text-[#B0BFD0]">Start free. Upgrade when you need more scans.</p>
-        </div>
+      <main className="max-w-5xl mx-auto px-6 py-16">
+        <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }} className="text-center mb-14">
+          <motion.p variants={FADE_UP} className="text-xs text-white/30 uppercase tracking-widest mb-4 font-medium">Pricing</motion.p>
+          <motion.h1 variants={FADE_UP} className="text-4xl font-bold text-white font-['Syne'] mb-4">
+            Start free. Upgrade when you need it.
+          </motion.h1>
+          <motion.p variants={FADE_UP} className="text-white/40 text-lg">No contracts. Cancel anytime.</motion.p>
+        </motion.div>
 
         {success && (
-          <div className="max-w-md mx-auto mb-8 bg-teal-500/10 border border-teal-500/30 rounded-xl px-5 py-4 text-teal-400 text-sm text-center">
-            <Zap className="w-4 h-4 inline mr-2" />
+          <div className="max-w-md mx-auto mb-10 bg-green-500/[0.07] border border-green-500/20 rounded-xl px-5 py-4 text-green-400 text-sm text-center flex items-center justify-center gap-2">
+            <Zap className="w-4 h-4" />
             Plan upgraded to <strong className="capitalize">{success}</strong>! Unlimited scans are now active.
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {PLANS.map((plan) => {
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {PLANS.map((plan, i) => {
             const isCurrent = user?.plan === plan.id;
             const isLoading = loadingPlan === plan.id;
+            const Icon = plan.icon;
 
             return (
-              <div
+              <motion.div
                 key={plan.id}
-                className={`relative bg-[#131C2B] border rounded-2xl p-6 flex flex-col ${plan.color} ${plan.id === "creator" ? "shadow-[0_0_30px_rgba(212,144,10,0.2)]" : ""}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className={`relative rounded-2xl p-7 flex flex-col ${
+                  plan.highlight
+                    ? "bg-white/[0.07] border border-white/20"
+                    : "glass"
+                }`}
               >
                 {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#D4900A] text-white text-xs font-bold px-3 py-1 rounded-full">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white text-black text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">
                     {plan.badge}
                   </div>
                 )}
 
                 <div className="mb-6">
-                  <h3 className="text-white font-bold font-['Syne'] text-lg">{plan.name}</h3>
-                  <p className="text-[#566070] text-xs mt-1">{plan.description}</p>
-                  <div className="mt-4 flex items-baseline gap-1">
-                    <span className="text-2xl font-bold text-white font-['Syne']">{plan.price}</span>
-                    <span className="text-[#566070] text-sm">{plan.period}</span>
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center mb-4">
+                    <Icon className="w-4.5 h-4.5 text-white/60" />
+                  </div>
+                  <h3 className="font-bold font-['Syne'] text-white text-xl mb-1">{plan.name}</h3>
+                  <p className="text-white/30 text-xs mb-5">{plan.description}</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-bold font-['Syne'] text-white">{plan.price}</span>
+                    {plan.period && <span className="text-white/30 text-sm">{plan.period}</span>}
                   </div>
                 </div>
 
-                <ul className="space-y-2.5 flex-1 mb-6">
-                  {plan.features.map((feat) => (
-                    <li key={feat} className="flex items-start gap-2 text-sm text-[#B0BFD0]">
-                      <Check className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+                <ul className="space-y-3 flex-1 mb-7">
+                  {plan.features.map((feat, j) => (
+                    <li key={j} className="flex items-center gap-2.5 text-sm text-white/55">
+                      <Check className="w-3.5 h-3.5 text-green-400 shrink-0" />
                       {feat}
                     </li>
                   ))}
@@ -198,26 +224,36 @@ export default function PricingPage() {
                   onClick={() => handleUpgrade(plan.id, plan.amount)}
                   disabled={isCurrent || isLoading || plan.id === "free"}
                   data-testid={`button-plan-${plan.id}`}
-                  className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                  className={`w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                     isCurrent
-                      ? "bg-[#1D2B3E] text-[#566070] cursor-default"
+                      ? "bg-white/[0.04] border border-white/[0.08] text-white/25 cursor-default"
                       : plan.id === "free"
-                      ? "bg-[#1D2B3E] text-[#566070] cursor-default"
-                      : plan.id === "creator"
-                      ? "bg-[#D4900A] hover:bg-[#B47509] text-white shadow-[0_0_15px_rgba(212,144,10,0.4)]"
-                      : "bg-[#1D2B3E] hover:bg-[#253648] text-white border border-[#253648]"
+                        ? "bg-white/[0.04] border border-white/[0.08] text-white/25 cursor-default"
+                        : plan.highlight
+                          ? "bg-white text-black hover:bg-white/90"
+                          : "bg-white/[0.07] border border-white/[0.12] text-white hover:bg-white/[0.12]"
                   }`}
                 >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : isCurrent ? "Current Plan" : plan.cta}
+                  {isLoading
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : isCurrent
+                      ? "Current Plan"
+                      : plan.id === "enterprise"
+                        ? <><Mail className="w-4 h-4" />{plan.cta}</>
+                        : plan.cta}
                 </button>
-              </div>
+              </motion.div>
             );
           })}
         </div>
 
-        <p className="text-center text-xs text-[#566070] mt-8">
-          Secure payments via Razorpay · Cancel anytime · All prices in INR + GST
-        </p>
+        <div className="flex flex-col items-center gap-3 mt-12">
+          <div className="flex items-center gap-2 text-xs text-white/25">
+            <ShieldCheck className="w-3.5 h-3.5 text-green-400/60" />
+            Secure payments via Razorpay · All prices in INR + GST · Cancel anytime
+          </div>
+          <p className="text-xs text-white/15">Your code is never stored. Analyzed in-session only.</p>
+        </div>
       </main>
     </div>
   );

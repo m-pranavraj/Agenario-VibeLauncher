@@ -1,611 +1,664 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Rocket, ShieldCheck, Activity, Zap, Search, Globe, CheckCircle,
-  AlertTriangle, Github, Upload, Link as LinkIcon, PlaySquare,
-  Lock, Eye, TrendingUp, BrainCircuit, ArrowRight, XCircle, Code2, 
-  Cpu, TerminalSquare, Laptop, Database, Briefcase, FileText, 
-  GitBranch, Box, Server, Mail, Webhook, BarChart, Slack,
-  Users, Bot, Layers, Check, X, ShieldAlert
+import {
+  Rocket, ShieldCheck, Activity, Zap, Globe, CheckCircle,
+  AlertTriangle, Github, Lock, Eye, TrendingUp, BrainCircuit,
+  ArrowRight, XCircle, Code2, FileText, BarChart,
+  Check, X, ShieldAlert, Cpu, Star, Users, Building2,
+  BadgeCheck, Scale, Database, Fingerprint, CreditCard,
+  ChevronRight, Sparkles,
 } from "lucide-react";
-import { SiReplit } from "react-icons/si";
 import { Link } from "wouter";
-
 import type { Variants } from "framer-motion";
 
 const FADE_UP: Variants = {
-  hidden: { opacity: 0, y: 30 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } },
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: "easeOut" as const } },
 };
+const STAGGER = { show: { transition: { staggerChildren: 0.08 } } };
 
-const STAGGER = {
-  show: { transition: { staggerChildren: 0.1 } }
-};
-
-const AGENTS = [
-  { name: "Functional QA", icon: ShieldCheck, risk: "User bugs", desc: "Checks flows, forms, validations, edge cases, broken states" },
-  { name: "Cleanup", icon: Zap, risk: "Code rot", desc: "Finds dead files, unused deps, duplicates" },
-  { name: "Architecture", icon: Activity, risk: "Tech debt", desc: "Analyzes code structure, coupling, complexity" },
-  { name: "Security Launch", icon: Lock, risk: "Data breaches", desc: "Secrets, auth issues, exposed endpoints" },
-  { name: "Performance", icon: Rocket, risk: "Slow load times", desc: "Checks bundle size, render performance, API calls, caching" },
-  { name: "UX", icon: Eye, risk: "User drop-off", desc: "Reviews flows, UI consistency, accessibility, mobile experience" },
-  { name: "Reliability", icon: AlertTriangle, risk: "Downtime", desc: "Error handling, timeouts, retries, fallbacks" },
-  { name: "Observability", icon: Search, risk: "Blind spots", desc: "Logging, monitoring, alerts, health checks" },
-  { name: "Growth", icon: TrendingUp, risk: "No conversions", desc: "Analytics, events, funnels, feature flags, A/B testing" },
-  { name: "AI Smell", icon: BrainCircuit, risk: "Maintenance hell", desc: "Detects over-engineering, hallucinated code, boilerplate bloat" },
+const DIMENSIONS = [
+  { icon: Lock, label: "Security Audit", desc: "Secrets, auth gaps, OWASP Top 10, injection risks" },
+  { icon: Scale, label: "Compliance Check", desc: "GDPR, PCI-DSS, HIPAA-ready, SOC2 posture" },
+  { icon: CreditCard, label: "Revenue Intelligence", desc: "Payment flows, billing edge cases, churn risks" },
+  { icon: Zap, label: "Performance", desc: "Bundle size, N+1 queries, render bottlenecks" },
+  { icon: Eye, label: "UX & Conversion", desc: "Flows, mobile, accessibility, drop-off points" },
+  { icon: Activity, label: "Reliability", desc: "Error boundaries, retries, graceful degradation" },
+  { icon: Database, label: "Data Integrity", desc: "Validation, transactions, corruption scenarios" },
+  { icon: Fingerprint, label: "Observability", desc: "Logging, error tracking, health checks" },
+  { icon: BrainCircuit, label: "AI Code Quality", desc: "Hallucinated APIs, anti-patterns, debt" },
+  { icon: Cpu, label: "Founder Blind Spots", desc: "Day-one exploits, scaling limits, ops gaps" },
 ];
 
-const FEATURES = {
-  core: [
-    { title: "Launch Readiness Score", desc: "0-100 metric on production readiness" },
-    { title: "AI Tech Lead Report", desc: "Narrative summary of your codebase state" },
-    { title: "Cleanup & Refactor Suggestions", desc: "Targeted improvements" },
-    { title: "Must Fix Before Launch", desc: "Critical blockers isolated" },
-    { title: "One-Click Fix Prompts", desc: "Copy-paste to your AI editor" }
-  ],
-  differentiators: [
-    { title: "Verification Debt Score", desc: "Track unverified code over time" },
-    { title: "Future Scale Predictor", desc: "Where will it break next?" },
-    { title: "Product Hunt Mode", desc: "Optimize for spike traffic" },
-    { title: "Founder Explainability Mode", desc: "Plain English reports" },
-    { title: "Investor Due Diligence Mode", desc: "Exportable technical audits" }
-  ],
-  power: [
-    { title: "CI/CD Integration", desc: "Block bad deploys automatically" },
-    { title: "IDE Integration", desc: "Real-time feedback in Cursor/VS Code" },
-    { title: "Slack/Email Notifications", desc: "Alerts where you work" },
-    { title: "API & Webhooks", desc: "Build custom workflows" },
-    { title: "Custom Team Reports", desc: "Shareable interactive dashboards" }
-  ]
-};
+const COMPLIANCE = [
+  { label: "OWASP Top 10", color: "text-red-400" },
+  { label: "GDPR", color: "text-blue-400" },
+  { label: "PCI-DSS", color: "text-green-400" },
+  { label: "HIPAA-ready", color: "text-purple-400" },
+  { label: "SOC 2 posture", color: "text-amber-400" },
+  { label: "WCAG 2.1", color: "text-cyan-400" },
+];
 
 const PRICING = [
-  { name: "Free", price: "₹0", desc: "Basic vibe check", features: ["1 scan/month", "Basic Score", "Critical Issues Only"], cta: "Start Free", popular: false },
-  { name: "Creator", price: "₹499", period: "/mo", desc: "For founders & indie hackers", features: ["Unlimited scans", "Full AI Tech Lead Reports", "One-Click Fix Prompts", "GitHub Integration"], cta: "Go Creator", popular: true },
-  { name: "Pro", price: "₹2,999", period: "/mo", desc: "For agencies & power users", features: ["Everything in Creator", "API Access", "CI/CD Integration", "Team Collaboration"], cta: "Go Pro", popular: false },
-  { name: "Team", price: "Custom", desc: "Enterprise readiness", features: ["Custom Reports", "Dedicated Support", "On-Prem Options", "SLA"], cta: "Contact Sales", popular: false }
+  {
+    id: "free",
+    name: "Free",
+    price: "₹0",
+    period: "forever",
+    desc: "First scan for every founder",
+    features: [
+      "5 scans / month",
+      "Launch Readiness Score",
+      "Security & critical issues",
+      "1-Click fix prompts",
+    ],
+    cta: "Start Free",
+    href: "/register",
+    highlight: false,
+  },
+  {
+    id: "creator",
+    name: "Creator",
+    price: "₹299",
+    period: "/mo",
+    desc: "Unlimited analysis for indie founders",
+    features: [
+      "Unlimited scans",
+      "Full 10-dimension analysis",
+      "Compliance checks included",
+      "Revenue intelligence layer",
+      "Board-memo style reports",
+      "Priority analysis queue",
+    ],
+    cta: "Upgrade to Creator",
+    href: "/pricing",
+    highlight: true,
+  },
+  {
+    id: "enterprise",
+    name: "Enterprise",
+    price: "Custom",
+    period: "",
+    desc: "For agencies, studios & funded teams",
+    features: [
+      "Everything in Creator",
+      "Team workspace",
+      "API & webhook access",
+      "CI/CD integration",
+      "Custom compliance rules",
+      "Dedicated support & SLA",
+    ],
+    cta: "Contact Sales",
+    href: "mailto:hello@agenario.ai?subject=Enterprise Plan",
+    highlight: false,
+  },
+];
+
+const HOW_IT_WORKS = [
+  {
+    step: "01",
+    title: "Submit your app",
+    desc: "GitHub repo, ZIP archive, live URL, or just describe what you built. Works with any stack.",
+  },
+  {
+    step: "02",
+    title: "Deep analysis runs",
+    desc: "Our multi-dimensional analysis engine examines your code across security, compliance, revenue, UX, and performance simultaneously.",
+  },
+  {
+    step: "03",
+    title: "Get your board memo",
+    desc: "A structured readiness report with a 0–100 score, top 3 action plan, compliance status, and 1-click fix prompts.",
+  },
 ];
 
 export default function Home() {
   const { scrollYProgress } = useScroll();
-  const yBg = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+  const yBg = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-hidden selection:bg-primary/30 selection:text-primary-foreground font-sans">
-      
-      {/* Background Gradients & Noise */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-30 mix-blend-overlay" 
-           style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}>
-      </div>
-      <motion.div style={{ y: yBg }} className="fixed top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/20 blur-[150px] rounded-full pointer-events-none z-0"></motion.div>
-      <motion.div style={{ y: yBg }} className="fixed bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-secondary/10 blur-[150px] rounded-full pointer-events-none z-0"></motion.div>
+    <div className="min-h-screen bg-[#050505] text-white overflow-hidden font-sans selection:bg-violet-500/20 selection:text-white">
+
+      {/* Ambient glow orbs */}
+      <motion.div style={{ y: yBg }} className="fixed top-[-15%] left-[-5%] w-[50%] h-[50%] bg-violet-600/8 blur-[180px] rounded-full pointer-events-none z-0" />
+      <motion.div style={{ y: yBg }} className="fixed bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-500/5 blur-[160px] rounded-full pointer-events-none z-0" />
 
       {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-background/70 backdrop-blur-xl border-b border-border/50 transition-all">
+      <nav className="fixed top-0 w-full z-50 border-b border-white/[0.06] bg-[#050505]/80 backdrop-blur-2xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-primary/20 border border-primary/30 rounded-lg shadow-[0_0_15px_rgba(212,144,10,0.3)]">
-              <Rocket className="w-5 h-5 text-primary" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center">
+              <Rocket className="w-4 h-4 text-white" />
             </div>
-            <span className="font-heading font-bold text-xl tracking-tight text-white">Agenario</span>
+            <span className="font-heading font-bold text-lg text-white tracking-tight">Agenario</span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
-            <a href="#how-it-works" className="hover:text-primary transition-colors">How It Works</a>
-            <a href="#features" className="hover:text-primary transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-primary transition-colors">Pricing</a>
-            <a href="#for-who" className="hover:text-primary transition-colors">For Who</a>
+
+          <div className="hidden md:flex items-center gap-7 text-sm font-medium text-white/45">
+            <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
+            <a href="#dimensions" className="hover:text-white transition-colors">Analysis</a>
+            <a href="#compliance" className="hover:text-white transition-colors">Compliance</a>
+            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           </div>
+
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-muted-foreground hover:text-white text-sm transition-colors" data-testid="nav-login-btn">Sign In</Link>
-            <Link href="/register">
-              <Button className="bg-primary hover:bg-primary/90 text-white font-semibold rounded-full px-6 shadow-[0_0_20px_rgba(212,144,10,0.4)] transition-all hover:shadow-[0_0_30px_rgba(212,144,10,0.6)]" data-testid="nav-start-btn">
-                Start for Free
-              </Button>
+            <Link href="/login" className="text-white/45 hover:text-white text-sm transition-colors" data-testid="nav-login-btn">
+              Sign In
+            </Link>
+            <Link href="/register" data-testid="nav-start-btn">
+              <button className="bg-white text-black text-sm font-semibold px-5 py-2 rounded-xl hover:bg-white/90 transition-all">
+                Start Free
+              </button>
             </Link>
           </div>
         </div>
       </nav>
 
-      <main className="relative z-10 pt-24">
-        {/* Hero Section */}
-        <section className="px-6 pt-20 pb-32 max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <main className="relative z-10 pt-16">
+
+        {/* ── Hero ─────────────────────────────────────────── */}
+        <section className="px-6 pt-28 pb-32 max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
             <motion.div initial="hidden" animate="show" variants={STAGGER} className="space-y-8">
-              <motion.div variants={FADE_UP} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium shadow-[0_0_15px_rgba(212,144,10,0.15)]">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+
+              <motion.div variants={FADE_UP} className="flex items-center gap-3">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-white/70 text-xs font-medium">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+                  </span>
+                  Production Review Board for AI-built Apps
                 </span>
-                The Production Review Board for AI Apps
               </motion.div>
-              
-              <motion.h1 variants={FADE_UP} className="text-5xl lg:text-7xl font-heading font-extrabold leading-[1.05] tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-white/50">
-                Launch Vibecoded Apps <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-300 drop-shadow-[0_0_15px_rgba(212,144,10,0.5)]">Confidently.</span>
+
+              <motion.h1 variants={FADE_UP} className="text-5xl lg:text-6xl font-heading font-extrabold leading-[1.05] tracking-tight">
+                Ship your AI app<br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40">
+                  with certainty.
+                </span>
               </motion.h1>
-              
-              <motion.p variants={FADE_UP} className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-xl">
-                Your AI built the app. Agenario decides if it's ready for the real world. Stop hoping your prompts were perfect and start deploying with cryptographic certainty.
+
+              <motion.p variants={FADE_UP} className="text-lg text-white/50 leading-relaxed max-w-lg">
+                Your AI wrote the code. Agenario decides if it's production-ready. Multi-dimensional analysis across security, compliance, revenue, and UX — before your users find the bugs.
               </motion.p>
 
+              {/* Privacy badge */}
+              <motion.div variants={FADE_UP} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/[0.08] border border-green-500/20 text-green-400 text-xs font-medium">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Your code is never stored. Analyzed in-session only.
+              </motion.div>
+
               {/* Before / After */}
-              <motion.div variants={FADE_UP} className="flex flex-col gap-4 text-sm font-medium bg-black/30 border border-white/5 p-5 rounded-2xl">
-                <div className="flex items-center gap-3 text-muted-foreground">
-                  <XCircle className="w-5 h-5 text-red-400" />
-                  <span className="opacity-70 line-through">Prompt → Deploy → Users find bugs</span>
+              <motion.div variants={FADE_UP} className="space-y-3 bg-white/[0.03] border border-white/[0.08] p-5 rounded-2xl">
+                <div className="flex items-center gap-3">
+                  <XCircle className="w-4 h-4 text-red-400/70 shrink-0" />
+                  <span className="text-sm text-white/30 line-through">Prompt → Deploy → Users find security holes</span>
                 </div>
-                <div className="flex items-center gap-3 text-white">
-                  <CheckCircle className="w-5 h-5 text-secondary" />
-                  <span>Prompt → Build → <strong className="text-primary">Agenario Review</strong> → Deploy confidently</span>
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-4 h-4 text-green-400 shrink-0" />
+                  <span className="text-sm text-white/80">Prompt → Build → <strong className="text-white">Agenario Review</strong> → Ship confidently</span>
                 </div>
               </motion.div>
-              
-              <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row gap-4 pt-4">
+
+              <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row gap-3">
                 <Link href="/register">
-                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-8 h-14 shadow-[0_0_30px_rgba(212,144,10,0.5)] hover:shadow-[0_0_40px_rgba(212,144,10,0.7)] transition-all text-lg" data-testid="hero-analyze-btn">
+                  <button className="flex items-center gap-2 bg-white text-black font-bold px-8 py-3.5 rounded-xl hover:bg-white/92 transition-all text-sm" data-testid="hero-analyze-btn">
                     Analyze My App for Free
-                  </Button>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
                 </Link>
                 <a href="#how-it-works">
-                  <Button size="lg" variant="outline" className="border-border hover:bg-white/5 hover:border-white/20 text-white rounded-full px-8 h-14 font-semibold text-lg" data-testid="hero-howitworks-btn">
+                  <button className="flex items-center gap-2 bg-white/[0.06] border border-white/[0.1] text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-white/[0.1] transition-all text-sm" data-testid="hero-howitworks-btn">
                     See How It Works
-                  </Button>
+                  </button>
                 </a>
               </motion.div>
             </motion.div>
 
             {/* Dashboard Mockup */}
-            <motion.div 
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
+            <motion.div
+              initial={{ opacity: 0, x: 30, y: 10 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-              className="relative rounded-2xl border border-white/10 bg-[#0B0F1B]/80 backdrop-blur-2xl p-6 shadow-2xl overflow-hidden"
+              className="relative rounded-2xl glass p-6 shadow-2xl overflow-hidden"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 pointer-events-none"></div>
-              
-              <div className="relative z-10 space-y-6">
-                <div className="flex items-center justify-between border-b border-white/10 pb-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center">
-                      <ShieldCheck className="w-6 h-6 text-primary" />
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.05] via-transparent to-blue-500/[0.04] pointer-events-none rounded-2xl" />
+
+              <div className="relative z-10 space-y-5">
+                <div className="flex items-center justify-between pb-4 border-b border-white/[0.07]">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Github className="w-3.5 h-3.5 text-white/40" />
+                      <span className="text-xs text-white/40">main/my-saas-app</span>
                     </div>
-                    <div>
-                      <h3 className="font-heading font-bold text-lg text-white">App Readiness Report</h3>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1"><Github className="w-3 h-3"/> main/vibe-startup</p>
-                    </div>
+                    <h3 className="font-heading font-bold text-white">Launch Readiness Report</h3>
                   </div>
                   <div className="text-right">
-                    <div className="text-4xl font-heading font-bold text-secondary drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]">82<span className="text-xl text-muted-foreground">/100</span></div>
-                    <p className="text-xs font-bold text-secondary uppercase tracking-widest mt-1">Ready to Launch</p>
+                    <div className="text-3xl font-heading font-bold text-green-400">76<span className="text-sm text-white/30">/100</span></div>
+                    <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mt-0.5">Launch with Caution</p>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/15 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <Lock className="w-5 h-5 text-red-400" />
-                      <span className="text-sm font-medium text-red-200">Hardcoded Supabase Keys in Client</span>
+                <div className="space-y-2.5">
+                  {[
+                    { severity: "CRITICAL", title: "Stripe key exposed in client bundle", bg: "bg-red-500/[0.08] border-red-500/25", badge: "bg-red-500/15 text-red-400" },
+                    { severity: "HIGH", title: "No GDPR consent banner present", bg: "bg-amber-500/[0.07] border-amber-500/20", badge: "bg-amber-500/12 text-amber-400" },
+                    { severity: "MEDIUM", title: "Checkout missing loading state", bg: "bg-white/[0.03] border-white/[0.07]", badge: "bg-white/8 text-white/50" },
+                  ].map((item, i) => (
+                    <div key={i} className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${item.bg}`}>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${item.badge}`}>
+                        {item.severity}
+                      </span>
+                      <span className="text-sm text-white/80 flex-1">{item.title}</span>
                     </div>
-                    <Badge variant="destructive" className="bg-red-500/20 text-red-400 border-red-500/30">Critical Block</Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/15 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle className="w-5 h-5 text-amber-400" />
-                      <span className="text-sm font-medium text-amber-200">Missing loading state on checkout</span>
-                    </div>
-                    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">UX Warning</Badge>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-secondary/10 border border-secondary/20 hover:bg-secondary/15 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-secondary" />
-                      <span className="text-sm font-medium text-green-200">Responsive layout passes mobile check</span>
-                    </div>
-                    <Badge className="bg-secondary/20 text-secondary border-secondary/30">Pass</Badge>
-                  </div>
+                  ))}
                 </div>
 
-                <Button className="w-full bg-white/5 hover:bg-white/10 text-white rounded-xl h-12 font-medium border border-white/10" data-testid="mockup-fix-btn">
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  {[
+                    { label: "Security", color: "text-red-400", score: "3 issues" },
+                    { label: "Compliance", color: "text-amber-400", score: "2 issues" },
+                    { label: "Revenue", color: "text-green-400", score: "Clean" },
+                  ].map((d, i) => (
+                    <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
+                      <div className={`text-xs font-bold ${d.color}`}>{d.score}</div>
+                      <div className="text-[10px] text-white/35 mt-0.5">{d.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <button className="w-full bg-white/[0.06] border border-white/[0.1] hover:bg-white/[0.1] text-white text-sm font-medium py-2.5 rounded-xl transition-all flex items-center justify-center gap-2" data-testid="mockup-fix-btn">
+                  <Sparkles className="w-4 h-4" />
                   Generate 1-Click Fix Prompts
-                </Button>
+                </button>
               </div>
             </motion.div>
           </div>
         </section>
 
-        {/* Stats / The Problem */}
-        <section className="border-y border-border/50 bg-black/40 backdrop-blur-md relative overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6 py-20 grid md:grid-cols-4 gap-8 divide-y md:divide-y-0 md:divide-x divide-border/50">
-            <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={FADE_UP} className="text-center px-4 pt-4 md:pt-0">
-              <div className="text-4xl md:text-5xl font-heading font-bold text-white mb-3">72%+</div>
-              <p className="text-sm text-muted-foreground font-medium uppercase tracking-wide">developers use AI daily to write code</p>
-            </motion.div>
-            <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={FADE_UP} className="text-center px-4 pt-8 md:pt-0">
-              <div className="text-4xl md:text-5xl font-heading font-bold text-amber-400 mb-3 drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]">&lt; 50%</div>
-              <p className="text-sm text-muted-foreground font-medium uppercase tracking-wide">thoroughly review AI code before deploy</p>
-            </motion.div>
-            <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={FADE_UP} className="text-center px-4 pt-8 md:pt-0">
-              <div className="text-4xl md:text-5xl font-heading font-bold text-red-400 mb-3 drop-shadow-[0_0_15px_rgba(239,68,68,0.3)]">24%</div>
-              <p className="text-sm text-muted-foreground font-medium uppercase tracking-wide">of AI-introduced issues survive to prod</p>
-            </motion.div>
-            <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={FADE_UP} className="text-center px-4 flex flex-col justify-center pt-8 md:pt-0">
-              <p className="text-lg font-heading font-bold italic text-primary drop-shadow-[0_0_10px_rgba(212,144,10,0.4)]">"Who verifies the apps AI builds?"</p>
-              <p className="text-xs text-muted-foreground mt-3 uppercase tracking-widest">— The QA crisis of 2025</p>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* 10 AI Agents Architecture */}
-        <section id="how-it-works" className="px-6 py-32 max-w-7xl mx-auto relative">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
-          
-          <div className="text-center max-w-3xl mx-auto mb-20 relative z-10">
-            <Badge variant="outline" className="mb-6 border-primary/30 text-primary bg-primary/5 px-4 py-1.5 text-sm">The Architecture</Badge>
-            <h2 className="text-4xl md:text-5xl font-heading font-bold mb-6 text-white">10 AI Agents. <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-300">One Unified Review.</span></h2>
-            <p className="text-xl text-muted-foreground">Agenario deploys a specialized swarm of expert agents to interrogate your codebase from every angle before your users do.</p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5 relative z-10">
-            {AGENTS.map((agent, i) => (
-              <motion.div 
-                key={i} 
-                initial={{ opacity: 0, y: 20 }} 
-                whileInView={{ opacity: 1, y: 0 }} 
-                viewport={{ once: true }} 
-                transition={{ delay: i * 0.05 }}
+        {/* ── Stats ────────────────────────────────────────── */}
+        <section className="border-y border-white/[0.06] bg-white/[0.02] backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-4 gap-8 divide-y md:divide-y-0 md:divide-x divide-white/[0.06]">
+            {[
+              { value: "72%+", label: "of developers ship with AI-generated code daily", color: "text-white" },
+              { value: "< 48%", label: "review AI code before production deployment", color: "text-amber-400" },
+              { value: "24%", label: "of AI-introduced vulnerabilities survive to prod", color: "text-red-400" },
+              { value: "₹0", label: "to get your first full analysis — no credit card needed", color: "text-green-400" },
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                initial="hidden" whileInView="show" viewport={{ once: true }} variants={FADE_UP}
+                className="text-center px-4 pt-8 md:pt-0 first:pt-0"
               >
-                <Card className="h-full bg-[#0B0F1B]/60 border-white/5 backdrop-blur-xl hover:border-primary/40 hover:bg-[#0B0F1B]/80 transition-all duration-300 group shadow-lg hover:shadow-[0_0_25px_rgba(212,144,10,0.15)] relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <CardContent className="p-6">
-                    <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-5 group-hover:bg-primary/10 group-hover:border-primary/30 transition-colors">
-                      <agent.icon className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
-                    </div>
-                    <h3 className="font-heading font-bold text-white mb-1">{agent.name}</h3>
-                    <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-3 flex items-center gap-1">
-                      <ShieldAlert className="w-3 h-3" /> Risk: {agent.risk}
-                    </p>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{agent.desc}</p>
-                  </CardContent>
-                </Card>
+                <div className={`text-4xl font-heading font-bold mb-2 ${stat.color}`}>{stat.value}</div>
+                <p className="text-xs text-white/40 leading-relaxed uppercase tracking-wide">{stat.label}</p>
               </motion.div>
             ))}
           </div>
         </section>
 
-        {/* Input Sources */}
-        <section className="px-6 py-24 bg-gradient-to-b from-transparent to-primary/5 border-y border-border/30">
-          <div className="max-w-7xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-heading font-bold mb-12 text-white">Analyze Anywhere</h2>
-            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3 bg-[#0B0F1B]/80 border border-white/10 px-6 py-4 rounded-xl shadow-lg cursor-pointer hover:border-primary/50 transition-colors">
-                <Github className="w-6 h-6 text-white" /> <span className="font-semibold text-white">GitHub Repo</span>
+        {/* ── How It Works ─────────────────────────────────── */}
+        <section id="how-it-works" className="px-6 py-32 max-w-7xl mx-auto">
+          <motion.div
+            initial="hidden" whileInView="show" viewport={{ once: true }} variants={STAGGER}
+            className="text-center mb-20"
+          >
+            <motion.p variants={FADE_UP} className="text-xs text-white/35 uppercase tracking-widest mb-4 font-medium">How It Works</motion.p>
+            <motion.h2 variants={FADE_UP} className="text-4xl md:text-5xl font-heading font-bold text-white mb-5">
+              From code to confidence<br />
+              <span className="text-white/40">in under 90 seconds.</span>
+            </motion.h2>
+            <motion.p variants={FADE_UP} className="text-white/45 text-lg max-w-2xl mx-auto">
+              Submit anything — GitHub repo, ZIP, URL, or a plain description. Our analysis engine does the rest.
+            </motion.p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6 relative">
+            <div className="hidden md:block absolute top-10 left-[33%] right-[33%] h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            {HOW_IT_WORKS.map((step, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="glass rounded-2xl p-8 text-center glass-hover transition-all group"
+              >
+                <div className="text-4xl font-heading font-bold text-white/[0.08] mb-5 group-hover:text-white/[0.12] transition-colors">{step.step}</div>
+                <h3 className="text-lg font-heading font-bold text-white mb-3">{step.title}</h3>
+                <p className="text-white/45 text-sm leading-relaxed">{step.desc}</p>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3 bg-[#0B0F1B]/80 border border-white/10 px-6 py-4 rounded-xl shadow-lg cursor-pointer hover:border-primary/50 transition-colors">
-                <Upload className="w-6 h-6 text-white" /> <span className="font-semibold text-white">ZIP Upload</span>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3 bg-[#0B0F1B]/80 border border-white/10 px-6 py-4 rounded-xl shadow-lg cursor-pointer hover:border-primary/50 transition-colors">
-                <LinkIcon className="w-6 h-6 text-white" /> <span className="font-semibold text-white">Live URL</span>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3 bg-[#0B0F1B]/80 border border-primary/30 px-6 py-4 rounded-xl shadow-[0_0_20px_rgba(212,144,10,0.2)] cursor-pointer hover:bg-primary/10 transition-colors">
-                <div className="flex gap-1.5 mr-1">
-                  <Cpu className="w-5 h-5 text-white" />
-                  <SiReplit className="w-5 h-5 text-[#F26207]" />
-                </div>
-                <span className="font-semibold text-white">Direct Integrations</span>
-              </motion.div>
-            </div>
+            ))}
           </div>
         </section>
 
-        {/* Output Samples */}
-        <section className="px-6 py-32 max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-heading font-bold mb-4">What You Get Back</h2>
-            <p className="text-lg text-muted-foreground">Actionable intelligence, not just a list of lint errors.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="bg-black/40 border-white/10 backdrop-blur-sm col-span-1 md:col-span-2">
-              <CardContent className="p-8">
-                <h3 className="font-heading font-bold text-xl mb-6 text-white flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  AI Tech Lead Report
-                </h3>
-                <div className="space-y-4 text-sm text-muted-foreground">
-                  <p className="p-4 bg-white/5 rounded-lg border border-white/5 leading-relaxed">
-                    "The app structurally looks sound for an MVP, but the AI hallucinated several complex React Query caching strategies that aren't necessary and will cause stale data bugs. Furthermore, you have hardcoded API keys in <code className="text-primary bg-primary/10 px-1 py-0.5 rounded">src/lib/supabase.ts</code> which must be fixed before deployment."
-                  </p>
-                  <Button variant="outline" className="w-full border-primary/30 text-primary hover:bg-primary/10" data-testid="output-read-full-btn">
-                    Read Full Sample Report
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
-              <CardContent className="p-8">
-                <h3 className="font-heading font-bold text-xl mb-6 text-white flex items-center gap-2">
-                  <TerminalSquare className="w-5 h-5 text-primary" />
-                  1-Click Fix Prompts
-                </h3>
-                <div className="p-4 bg-black/60 rounded-lg border border-white/10 font-mono text-xs text-muted-foreground overflow-hidden">
-                  <span className="text-primary">@workspace</span> Remove hardcoded keys in supabase.ts and replace them with process.env.VITE_SUPABASE_URL and process.env.VITE_SUPABASE_ANON_KEY. Ensure they are added to .env.example.
-                </div>
-                <Button className="w-full mt-4 bg-white/10 hover:bg-white/20 text-white" data-testid="output-copy-prompt-btn">
-                  Copy to Cursor/Bolt
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-
-        {/* 15 Features Grid */}
-        <section id="features" className="px-6 py-32 bg-black/20 border-y border-border/30">
+        {/* ── Analysis Dimensions ──────────────────────────── */}
+        <section id="dimensions" className="px-6 py-28 bg-white/[0.015] border-y border-white/[0.06]">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-heading font-bold mb-4 text-white">Everything You Need to Ship</h2>
-              <p className="text-lg text-muted-foreground">Comprehensive toolset for AI-assisted engineering.</p>
+              <p className="text-xs text-white/35 uppercase tracking-widest mb-4 font-medium">Analysis Engine</p>
+              <h2 className="text-4xl md:text-5xl font-heading font-bold text-white mb-5">
+                Every dimension.<br />
+                <span className="text-white/40">Every risk surface.</span>
+              </h2>
+              <p className="text-white/45 text-lg max-w-2xl mx-auto">
+                A multi-layered review that covers every failure mode your users, investors, or regulators will find — before you ship.
+              </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-12">
-              {/* Core */}
-              <div>
-                <h3 className="text-xl font-heading font-bold text-white mb-6 flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-primary" /> Core Features
-                </h3>
-                <div className="space-y-6">
-                  {FEATURES.core.map((f, i) => (
-                    <div key={i}>
-                      <h4 className="font-semibold text-white mb-1">{f.title}</h4>
-                      <p className="text-sm text-muted-foreground">{f.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Differentiators */}
-              <div>
-                <h3 className="text-xl font-heading font-bold text-white mb-6 flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-secondary" /> Differentiators
-                </h3>
-                <div className="space-y-6">
-                  {FEATURES.differentiators.map((f, i) => (
-                    <div key={i}>
-                      <h4 className="font-semibold text-white mb-1">{f.title}</h4>
-                      <p className="text-sm text-muted-foreground">{f.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Power */}
-              <div>
-                <h3 className="text-xl font-heading font-bold text-white mb-6 flex items-center gap-2">
-                  <Cpu className="w-5 h-5 text-amber-400" /> Power Features
-                </h3>
-                <div className="space-y-6">
-                  {FEATURES.power.map((f, i) => (
-                    <div key={i}>
-                      <h4 className="font-semibold text-white mb-1">{f.title}</h4>
-                      <p className="text-sm text-muted-foreground">{f.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Tech Stack */}
-        <section className="px-6 py-24 max-w-7xl mx-auto text-center">
-          <Badge variant="outline" className="mb-6 border-white/20 text-muted-foreground bg-white/5 px-4 py-1.5">Under the Hood</Badge>
-          <h2 className="text-3xl font-heading font-bold mb-12 text-white">Hybrid Analysis Engine</h2>
-          
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-left">
-              <Database className="w-8 h-8 text-primary mb-4" />
-              <h3 className="font-bold text-white mb-2">Deterministic Layer</h3>
-              <p className="text-sm text-muted-foreground mb-4">Fast, exact analysis for known patterns.</p>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="bg-white/10">Tree-sitter</Badge>
-                <Badge variant="secondary" className="bg-white/10">ESLint</Badge>
-                <Badge variant="secondary" className="bg-white/10">Semgrep</Badge>
-              </div>
-            </div>
-            
-            <div className="p-6 rounded-2xl bg-primary/10 border border-primary/30 text-left relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10"><BrainCircuit className="w-24 h-24" /></div>
-              <BrainCircuit className="w-8 h-8 text-primary mb-4 relative z-10" />
-              <h3 className="font-bold text-white mb-2 relative z-10">AI / LLM Layer</h3>
-              <p className="text-sm text-muted-foreground mb-4 relative z-10">Deep reasoning and context understanding.</p>
-              <div className="flex flex-wrap gap-2 relative z-10">
-                <Badge className="bg-primary hover:bg-primary">Claude 3.5 Sonnet</Badge>
-                <Badge className="bg-primary/50">Gemini 1.5 Pro</Badge>
-                <Badge className="bg-primary/50">Groq</Badge>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-left">
-              <Server className="w-8 h-8 text-primary mb-4" />
-              <h3 className="font-bold text-white mb-2">Runtime Layer</h3>
-              <p className="text-sm text-muted-foreground mb-4">Optional execution testing.</p>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="bg-white/10">Smoke Tests</Badge>
-                <Badge variant="secondary" className="bg-white/10">Bundle Analysis</Badge>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Pricing */}
-        <section id="pricing" className="px-6 py-32 bg-black/40 border-y border-border/30">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-heading font-bold mb-4 text-white">Simple, Transparent Pricing</h2>
-              <p className="text-lg text-muted-foreground">Ship confidently, no matter your size.</p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {PRICING.map((plan, i) => (
-                <Card key={i} className={`relative bg-[#0B0F1B]/80 backdrop-blur-sm border-white/10 flex flex-col ${plan.popular ? 'border-primary shadow-[0_0_30px_rgba(212,144,10,0.15)] transform md:-translate-y-4' : ''}`}>
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                      Most Popular
-                    </div>
-                  )}
-                  <CardContent className="p-8 flex flex-col h-full">
-                    <h3 className="text-xl font-heading font-bold text-white mb-2">{plan.name}</h3>
-                    <div className="mb-4">
-                      <span className="text-4xl font-bold text-white">{plan.price}</span>
-                      {plan.period && <span className="text-muted-foreground">{plan.period}</span>}
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-8 pb-6 border-b border-white/10">{plan.desc}</p>
-                    
-                    <ul className="space-y-4 mb-8 flex-1">
-                      {plan.features.map((f, j) => (
-                        <li key={j} className="flex items-start gap-3 text-sm text-gray-300">
-                          <Check className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    
-                    <Button 
-                      className={`w-full font-bold h-12 ${plan.popular ? 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25' : 'bg-white/5 hover:bg-white/10 text-white'}`}
-                      data-testid={`pricing-btn-${plan.name.toLowerCase()}`}
-                    >
-                      {plan.cta}
-                    </Button>
-                  </CardContent>
-                </Card>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {DIMENSIONS.map((d, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.04 }}
+                  className="glass rounded-2xl p-5 glass-hover transition-all group cursor-default"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center mb-4 group-hover:bg-white/[0.1] transition-colors">
+                    <d.icon className="w-4.5 h-4.5 text-white/70" />
+                  </div>
+                  <h3 className="font-heading font-bold text-white text-sm mb-1.5">{d.label}</h3>
+                  <p className="text-[11px] text-white/35 leading-relaxed">{d.desc}</p>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Who It's For */}
-        <section id="for-who" className="px-6 py-24 max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-heading font-bold mb-4 text-white">Built for Modern Engineering</h2>
-          </div>
+        {/* ── Compliance ───────────────────────────────────── */}
+        <section id="compliance" className="px-6 py-28 max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={STAGGER}>
+              <motion.p variants={FADE_UP} className="text-xs text-white/35 uppercase tracking-widest mb-4 font-medium">Compliance Intelligence</motion.p>
+              <motion.h2 variants={FADE_UP} className="text-4xl font-heading font-bold text-white mb-6">
+                Regulatory gaps cost more<br />
+                <span className="text-white/40">than you think.</span>
+              </motion.h2>
+              <motion.p variants={FADE_UP} className="text-white/50 text-lg mb-8 leading-relaxed">
+                Every scan checks your app against the standards that matter — from GDPR to OWASP Top 10 to PCI-DSS. Ship with a compliance posture, not a compliance prayer.
+              </motion.p>
+              <motion.div variants={FADE_UP} className="flex flex-wrap gap-2.5">
+                {COMPLIANCE.map((c, i) => (
+                  <span key={i} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg glass text-xs font-semibold ${c.color}`}>
+                    <BadgeCheck className="w-3.5 h-3.5" />
+                    {c.label}
+                  </span>
+                ))}
+              </motion.div>
+            </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-6">
-                <Bot className="w-8 h-8 text-primary mb-4" />
-                <h3 className="font-bold text-white mb-2">Vibe Coders</h3>
-                <p className="text-sm text-muted-foreground">You build with AI. We ensure it's actually ready to deploy.</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-6">
-                <Rocket className="w-8 h-8 text-primary mb-4" />
-                <h3 className="font-bold text-white mb-2">Indie Hackers</h3>
-                <p className="text-sm text-muted-foreground">Launch fast without the fear of embarrassing public bugs.</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-6">
-                <Layers className="w-8 h-8 text-primary mb-4" />
-                <h3 className="font-bold text-white mb-2">Startups</h3>
-                <p className="text-sm text-muted-foreground">Ship features rapidly without accumulating massive tech debt.</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-6">
-                <Briefcase className="w-8 h-8 text-primary mb-4" />
-                <h3 className="font-bold text-white mb-2">Agencies</h3>
-                <p className="text-sm text-muted-foreground">Deliver AI-assisted client work with proven quality metrics.</p>
-              </CardContent>
-            </Card>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="glass rounded-2xl p-7 space-y-4"
+            >
+              <h3 className="font-heading font-bold text-white text-lg mb-5">Sample Compliance Check</h3>
+              {[
+                { label: "OWASP A01: Broken Access Control", status: "fail", detail: "3 unprotected admin endpoints detected" },
+                { label: "GDPR: User data consent", status: "fail", detail: "No consent banner or privacy policy link" },
+                { label: "PCI-DSS: Card data in transit", status: "pass", detail: "HTTPS enforced, no card data stored" },
+                { label: "WCAG 2.1 AA: Keyboard navigation", status: "warn", detail: "2 interactive elements not keyboard-accessible" },
+                { label: "OWASP A03: Injection", status: "pass", detail: "No SQL/NoSQL injection patterns found" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-3 py-2.5 border-b border-white/[0.05] last:border-0">
+                  {item.status === "fail"
+                    ? <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                    : item.status === "warn"
+                      ? <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      : <CheckCircle className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
+                  }
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white/90">{item.label}</p>
+                    <p className="text-xs text-white/35 mt-0.5">{item.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
           </div>
         </section>
 
-        {/* Social Proof / Moat */}
-        <section className="px-6 py-24 bg-primary/5 border-y border-primary/10">
-          <div className="max-w-4xl mx-auto text-center">
-            <ShieldCheck className="w-12 h-12 text-primary mx-auto mb-6" />
-            <h2 className="text-3xl font-heading font-bold mb-6 text-white">The Launch Dataset</h2>
-            <p className="text-xl text-muted-foreground mb-8">
-              Thousands of AI-built apps analyzed. We learn the patterns, mistakes, and risks others will never see coming.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4 text-sm font-medium text-white/70">
-              <span className="px-4 py-2 bg-black/40 rounded-full border border-white/5">Lovable mistakes detected</span>
-              <span className="px-4 py-2 bg-black/40 rounded-full border border-white/5">Cursor anti-patterns</span>
-              <span className="px-4 py-2 bg-black/40 rounded-full border border-white/5">Replit edge cases</span>
-              <span className="px-4 py-2 bg-black/40 rounded-full border border-white/5">Bolt scaling issues</span>
+        {/* ── Revenue Intelligence ─────────────────────────── */}
+        <section className="px-6 py-24 bg-white/[0.015] border-y border-white/[0.06]">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="glass rounded-2xl p-7 space-y-4"
+              >
+                <h3 className="font-heading font-bold text-white text-lg mb-2">Revenue Risk Analysis</h3>
+                <p className="text-xs text-white/35 mb-5">Issues that directly threaten your MRR</p>
+                {[
+                  { title: "Webhook signature not verified", impact: "~₹18,000 avg fraud loss/month", severity: "critical" },
+                  { title: "Subscription cancellation race condition", impact: "Users downgraded before period ends", severity: "high" },
+                  { title: "No dunning for failed card retries", impact: "~12% involuntary churn preventable", severity: "high" },
+                  { title: "Checkout flow has 6-step friction", impact: "~23% drop-off at payment step", severity: "medium" },
+                ].map((item, i) => (
+                  <div key={i} className={`flex items-start gap-3 px-4 py-3 rounded-xl border ${
+                    item.severity === "critical" ? "bg-red-500/[0.07] border-red-500/20" :
+                    item.severity === "high" ? "bg-amber-500/[0.06] border-amber-500/15" :
+                    "bg-white/[0.03] border-white/[0.07]"
+                  }`}>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide shrink-0 mt-0.5 ${
+                      item.severity === "critical" ? "bg-red-500/15 text-red-400" :
+                      item.severity === "high" ? "bg-amber-500/15 text-amber-400" :
+                      "bg-white/8 text-white/40"
+                    }`}>{item.severity}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white/85">{item.title}</p>
+                      <p className="text-xs text-white/35 mt-0.5 flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3 text-red-400" />
+                        {item.impact}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+
+              <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={STAGGER}>
+                <motion.p variants={FADE_UP} className="text-xs text-white/35 uppercase tracking-widest mb-4 font-medium">Revenue Intelligence</motion.p>
+                <motion.h2 variants={FADE_UP} className="text-4xl font-heading font-bold text-white mb-6">
+                  Know the MRR at risk<br />
+                  <span className="text-white/40">before day one.</span>
+                </motion.h2>
+                <motion.p variants={FADE_UP} className="text-white/50 text-lg mb-8 leading-relaxed">
+                  Most launch reviews miss the money. Agenario's revenue intelligence layer audits payment flows, billing logic, and conversion friction — and tells you what each issue costs you in MRR.
+                </motion.p>
+                <motion.div variants={FADE_UP} className="flex flex-wrap gap-3">
+                  {["Payment flow audit", "Billing edge cases", "Churn risk scoring", "Checkout friction", "Webhook security"].map((tag, i) => (
+                    <span key={i} className="text-xs px-3 py-1.5 rounded-lg glass text-white/50 font-medium">{tag}</span>
+                  ))}
+                </motion.div>
+              </motion.div>
             </div>
           </div>
         </section>
 
-        {/* Final CTA */}
-        <section className="px-6 py-32 max-w-4xl mx-auto text-center relative">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary/20 blur-[100px] rounded-full pointer-events-none -z-10"></div>
-          
-          <div className="bg-gradient-to-b from-primary/30 to-transparent p-[1px] rounded-[2rem] shadow-2xl shadow-primary/20 relative z-10">
-            <div className="bg-[#0B0F1B] rounded-[2rem] p-12 md:p-20 border border-primary/20">
-              <h2 className="text-4xl md:text-6xl font-heading font-extrabold mb-6 text-white tracking-tight">
-                Stop Hoping. <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-300">Start Launching.</span>
-              </h2>
-              <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl mx-auto">
-                Join 2,000+ builders who ship vibe-coded apps with absolute confidence.
+        {/* ── Sample Output ────────────────────────────────── */}
+        <section className="px-6 py-28 max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-xs text-white/35 uppercase tracking-widest mb-4 font-medium">What You Get Back</p>
+            <h2 className="text-4xl font-heading font-bold text-white mb-4">
+              A board memo, not a lint report.
+            </h2>
+            <p className="text-white/45 text-lg max-w-2xl mx-auto">
+              Structured analysis your whole team can act on — with a 0–100 score, top 3 action plan, and copy-paste fix prompts.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="glass rounded-2xl p-6 md:col-span-2">
+              <div className="flex items-center gap-2 mb-4">
+                <FileText className="w-4 h-4 text-white/40" />
+                <h3 className="font-heading font-bold text-white text-sm">Executive Summary</h3>
+              </div>
+              <p className="text-sm text-white/55 leading-relaxed p-4 bg-white/[0.03] rounded-xl border border-white/[0.06]">
+                "The app is structurally sound for MVP traffic, but has 2 critical blockers before launch. A Stripe secret key is exposed in the client bundle and will be scraped by bots within hours of going live. Additionally, there is no GDPR consent mechanism — this creates immediate regulatory exposure for EU users. Revenue impact: ~₹35,000/mo at risk from fraud and potential €50K GDPR fine."
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-lg mx-auto">
-                <input 
-                  type="email" 
-                  placeholder="Enter your email" 
-                  className="px-6 py-4 rounded-full bg-white/5 border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none flex-1 text-white placeholder:text-muted-foreground"
-                  data-testid="cta-email-input"
-                />
-                <Button size="lg" className="bg-primary hover:bg-primary/90 text-white rounded-full px-8 h-14 font-bold shadow-lg shadow-primary/25 text-lg w-full sm:w-auto" data-testid="cta-submit-btn">
-                  Analyze Free
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
+              <div className="mt-4 space-y-2">
+                <p className="text-xs text-white/30 uppercase tracking-widest font-medium mb-3">Top 3 Action Plan</p>
+                {[
+                  { n: "1", text: "Move Stripe keys to server-side environment variables — critical, 15 min fix" },
+                  { n: "2", text: "Add cookie consent banner with opt-out before EU traffic — GDPR required" },
+                  { n: "3", text: "Implement webhook signature verification — prevents payment fraud" },
+                ].map((a) => (
+                  <div key={a.n} className="flex items-start gap-3 text-sm text-white/60">
+                    <span className="w-5 h-5 rounded-full bg-white/[0.07] border border-white/[0.1] flex items-center justify-center text-[10px] font-bold text-white/50 shrink-0 mt-0.5">{a.n}</span>
+                    {a.text}
+                  </div>
+                ))}
               </div>
             </div>
+
+            <div className="glass rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Code2 className="w-4 h-4 text-white/40" />
+                <h3 className="font-heading font-bold text-white text-sm">1-Click Fix Prompt</h3>
+              </div>
+              <div className="p-4 bg-black/40 rounded-xl border border-white/[0.07] font-mono text-xs text-white/40 overflow-hidden leading-relaxed">
+                <span className="text-violet-400">@workspace</span> Move the Stripe publishable key to a VITE_ env variable. Create .env.example with VITE_STRIPE_PUBLISHABLE_KEY=pk_... Move the secret key to server-side only. Never import it in any file under /src/client/.
+              </div>
+              <button className="w-full mt-4 flex items-center justify-center gap-2 bg-white/[0.06] border border-white/[0.1] hover:bg-white/[0.1] text-white text-sm font-medium py-2.5 rounded-xl transition-all" data-testid="output-copy-prompt-btn">
+                Copy to Cursor / Bolt
+              </button>
+            </div>
           </div>
         </section>
-      </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border/50 bg-black/60 py-16 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12">
-          <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <Rocket className="w-5 h-5 text-primary" />
-              <span className="font-heading font-bold text-xl text-white">Agenario</span>
+        {/* ── Privacy ──────────────────────────────────────── */}
+        <section className="px-6 py-16 max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="glass rounded-2xl p-10 text-center border border-green-500/10"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-green-500/[0.08] border border-green-500/20 flex items-center justify-center mx-auto mb-5">
+              <ShieldCheck className="w-6 h-6 text-green-400" />
             </div>
-            <p className="text-sm text-muted-foreground max-w-xs mb-6">
-              Your AI built the app. Agenario decides if it's ready for the real world.
+            <h2 className="text-2xl font-heading font-bold text-white mb-3">Your code stays private. Always.</h2>
+            <p className="text-white/50 text-base max-w-xl mx-auto leading-relaxed">
+              We analyze your code entirely in-session and never persist it to our servers. No code is stored, indexed, or used for training. Your IP stays yours.
             </p>
-            <div className="text-sm font-medium text-white/50">
-              Built with AI. Verified by Agenario.
+          </motion.div>
+        </section>
+
+        {/* ── Pricing ──────────────────────────────────────── */}
+        <section id="pricing" className="px-6 py-28 bg-white/[0.015] border-y border-white/[0.06]">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-16">
+              <p className="text-xs text-white/35 uppercase tracking-widest mb-4 font-medium">Pricing</p>
+              <h2 className="text-4xl font-heading font-bold text-white mb-5">
+                Start free. Upgrade when you need it.
+              </h2>
+              <p className="text-white/45 text-lg">No contracts, no hidden fees. Cancel anytime.</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-5">
+              {PRICING.map((plan, i) => (
+                <motion.div
+                  key={plan.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className={`relative rounded-2xl p-7 flex flex-col ${
+                    plan.highlight
+                      ? "bg-white/[0.07] border border-white/20 shadow-[0_0_60px_rgba(255,255,255,0.05)]"
+                      : "glass"
+                  }`}
+                >
+                  {plan.highlight && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white text-black text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+                      Most Popular
+                    </div>
+                  )}
+
+                  <div className="mb-7">
+                    <h3 className="font-heading font-bold text-white text-lg mb-1">{plan.name}</h3>
+                    <p className="text-white/35 text-xs mb-5">{plan.desc}</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-heading font-bold text-white">{plan.price}</span>
+                      {plan.period && <span className="text-white/35 text-sm">{plan.period}</span>}
+                    </div>
+                  </div>
+
+                  <ul className="space-y-3 flex-1 mb-7">
+                    {plan.features.map((feat, j) => (
+                      <li key={j} className="flex items-center gap-2.5 text-sm text-white/65">
+                        <Check className="w-3.5 h-3.5 text-green-400 shrink-0" />
+                        {feat}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Link href={plan.href}>
+                    <button
+                      data-testid={`button-plan-${plan.id}`}
+                      className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                        plan.highlight
+                          ? "bg-white text-black hover:bg-white/90"
+                          : "bg-white/[0.07] border border-white/[0.1] text-white hover:bg-white/[0.12]"
+                      }`}
+                    >
+                      {plan.cta}
+                    </button>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+
+            <p className="text-center text-xs text-white/25 mt-8">
+              All prices in INR · GST applicable · Secure payments via Razorpay
+            </p>
+          </div>
+        </section>
+
+        {/* ── Final CTA ────────────────────────────────────── */}
+        <section className="px-6 py-32 max-w-4xl mx-auto text-center">
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={STAGGER}>
+            <motion.div variants={FADE_UP} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-white/[0.1] text-white/50 text-xs font-medium mb-8">
+              <Rocket className="w-3.5 h-3.5" />
+              Free for your first 5 scans — no credit card
+            </motion.div>
+            <motion.h2 variants={FADE_UP} className="text-4xl md:text-5xl font-heading font-bold text-white mb-6">
+              Your app deserves a<br />real review before launch.
+            </motion.h2>
+            <motion.p variants={FADE_UP} className="text-white/45 text-lg mb-10 leading-relaxed max-w-2xl mx-auto">
+              Join founders who stopped guessing and started shipping with a documented readiness score.
+            </motion.p>
+            <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href="/register">
+                <button className="flex items-center gap-2 bg-white text-black font-bold px-10 py-3.5 rounded-xl hover:bg-white/92 transition-all text-sm" data-testid="cta-analyze-btn">
+                  Analyze My App for Free
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </Link>
+            </motion.div>
+          </motion.div>
+        </section>
+
+        {/* ── Footer ───────────────────────────────────────── */}
+        <footer className="border-t border-white/[0.06] px-6 py-10">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-xl bg-white/[0.07] border border-white/[0.1] flex items-center justify-center">
+                <Rocket className="w-3.5 h-3.5 text-white/60" />
+              </div>
+              <span className="font-heading font-bold text-white/60 text-sm">Agenario</span>
+            </div>
+            <p className="text-xs text-white/25">© 2026 Agenario · Production Review Board for AI-built Apps · Your code is never stored.</p>
+            <div className="flex items-center gap-5 text-xs text-white/30">
+              <a href="/pricing" className="hover:text-white/60 transition-colors">Pricing</a>
+              <a href="mailto:hello@agenario.ai" className="hover:text-white/60 transition-colors">Contact</a>
             </div>
           </div>
-          
-          <div>
-            <h4 className="font-bold text-white mb-4">Product</h4>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><a href="#features" className="hover:text-primary transition-colors">Features</a></li>
-              <li><a href="#pricing" className="hover:text-primary transition-colors">Pricing</a></li>
-              <li><a href="#how-it-works" className="hover:text-primary transition-colors">How it Works</a></li>
-              <li><a href="#for-who" className="hover:text-primary transition-colors">Customers</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-bold text-white mb-4">Company</h4>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Blog</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Twitter / X</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">GitHub</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Privacy & Terms</a></li>
-            </ul>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      </main>
     </div>
   );
 }

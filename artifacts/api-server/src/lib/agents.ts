@@ -10,6 +10,8 @@ interface AgentIssue {
   title: string;
   description: string;
   fixPrompt: string;
+  confidence?: number;
+  evidence?: string;
 }
 
 interface AgentResult {
@@ -19,44 +21,44 @@ interface AgentResult {
 
 const AGENTS = [
   {
-    name: "Functional QA Agent",
-    role: "You are a QA engineer specializing in AI-generated code. Analyze the app for broken user flows, missing form validations, edge cases that crash the app, broken states, and missing error handling in user-facing interactions.",
+    name: "Security & Access Control",
+    role: "You are an expert application security engineer specializing in AI-generated codebases. Analyze the app for: exposed API keys or secrets in client code, authentication misconfigurations, broken access control (IDOR), insecure direct object references, missing authorization on endpoints, CORS misconfigurations, SQL/NoSQL injection risks, XSS vulnerabilities, insecure session management, and data exposure risks. Focus on issues that could cause immediate security breaches or data leaks in production.",
   },
   {
-    name: "Cleanup Agent",
-    role: "You are a code quality engineer. Analyze the app for dead code, unused files, unused dependencies, duplicate components, copy-pasted boilerplate from AI generation, and unnecessary complexity that should be removed.",
+    name: "Compliance & Regulatory",
+    role: "You are a compliance engineer specializing in software regulatory requirements. Analyze the app for: GDPR compliance gaps (missing consent, data retention policies, right to deletion), OWASP Top 10 violations, missing privacy policy requirements, PCI-DSS issues if payments are involved (card data handling, secure transmission), accessibility (WCAG 2.1) violations that create legal liability, missing terms of service or cookie consent, data residency concerns, and audit trail deficiencies. Be specific about regulatory risk.",
   },
   {
-    name: "Architecture Agent",
-    role: "You are a software architect. Analyze the app for poor code structure, tight coupling, over-engineered patterns, missing abstractions, scalability bottlenecks, and architectural decisions that will create technical debt.",
+    name: "Revenue & Business Logic",
+    role: "You are a revenue engineering expert. Analyze the app for issues that directly threaten revenue: payment flow vulnerabilities (double charges, failed webhook handling, missing retry logic), checkout UX friction that causes cart abandonment, missing subscription lifecycle handling, billing edge cases that create revenue leakage, lack of fraud prevention, missing upsell/cross-sell hooks, broken pricing logic, and missing dunning management for subscription failures. Quantify the potential revenue impact where possible.",
   },
   {
-    name: "Security Launch Agent",
-    role: "You are a security engineer. Analyze the app for exposed API keys, hardcoded secrets, authentication misconfigurations, insecure endpoints, CORS misconfigurations, SQL injection risks, XSS vulnerabilities, and data exposure risks.",
+    name: "Performance & Scalability",
+    role: "You are a performance and scalability engineer. Analyze the app for: large JavaScript bundle sizes causing slow time-to-interactive, unoptimized database queries (N+1 problems, missing indexes), missing caching at API and CDN layers, unnecessary re-renders, memory leaks, blocking operations on the main thread, missing pagination on large datasets, and scalability bottlenecks that will cause outages under real traffic. Focus on issues that will manifest in production with real users.",
   },
   {
-    name: "Performance Agent",
-    role: "You are a performance engineer. Analyze the app for large bundle sizes, unnecessary re-renders, missing memoization, N+1 query problems, missing image optimization, lack of caching, slow API calls, and render-blocking resources.",
+    name: "User Experience & Conversion",
+    role: "You are a UX engineer focused on conversion rate optimization. Analyze the app for: broken or confusing user flows, missing loading states that make the app feel broken, poor mobile responsiveness, accessibility violations (missing ARIA labels, keyboard navigation), inconsistent UI patterns, missing form validation feedback, error messages that confuse users, slow time-to-first-meaningful-interaction, and friction points in the critical conversion funnel. Prioritize issues that cause user drop-off.",
   },
   {
-    name: "UX Agent",
-    role: "You are a UX engineer. Analyze the app for confusing user flows, missing loading states, poor mobile responsiveness, accessibility violations, inconsistent UI patterns, missing feedback on actions, and poor error message clarity.",
+    name: "Reliability & Error Handling",
+    role: "You are a reliability engineer (SRE). Analyze the app for: missing error boundaries that cause full-page crashes, no retry logic on transient API failures, missing timeout configurations, no graceful degradation for failed external services, race conditions in async code, unhandled promise rejections, missing fallback UI states, no circuit breaker patterns for external dependencies, and potential data loss scenarios. Focus on issues that cause production outages.",
   },
   {
-    name: "Reliability Agent",
-    role: "You are a reliability engineer. Analyze the app for missing error boundaries, no retry logic on API calls, timeouts not configured, no fallback UI for failed states, race conditions, and missing graceful degradation.",
+    name: "Data Integrity & Architecture",
+    role: "You are a software architect and data integrity expert. Analyze the app for: missing data validation at API boundaries, inconsistent data models, missing database transactions where needed, potential data corruption scenarios, tight coupling that creates cascading failures, over-engineered patterns that create unnecessary complexity, missing soft-delete vs hard-delete considerations, and architectural decisions that will create technical debt at scale.",
   },
   {
-    name: "Observability Agent",
-    role: "You are an observability engineer. Analyze the app for missing logging, no error tracking integration, no analytics, missing health checks, no alerting setup, and inability to debug production issues.",
+    name: "Observability & Launch Readiness",
+    role: "You are an observability and DevOps engineer. Analyze the app for: missing structured logging (making production debugging impossible), no error tracking integration (Sentry or equivalent), missing analytics and conversion funnel instrumentation, no health check endpoints, missing environment variable validation on startup, no rate limiting on public APIs, missing CORS policies, no Content Security Policy headers, and absent monitoring for critical business metrics. These gaps create operational blindness in production.",
   },
   {
-    name: "Growth Agent",
-    role: "You are a growth engineer. Analyze the app for missing analytics events, no funnel tracking, missing A/B testing infrastructure, no conversion optimization, missing SEO basics, and inability to measure product-market fit.",
+    name: "AI Code Quality",
+    role: "You are an AI code quality expert specializing in vibecoded applications. Analyze the app for AI-generation anti-patterns: hallucinated library APIs that don't exist, over-engineered solutions for simple problems (AI overcomplication), duplicate logic from multiple AI sessions (copy-paste debt), massive monolithic files that AI generates but should be split, incorrect async/await patterns typical of AI generation, unnecessary state management complexity, unused imports and dead code from AI scaffolding, and AI-typical mistakes like incorrect React hooks usage.",
   },
   {
-    name: "AI Smell Agent",
-    role: "You are an AI code quality expert. Analyze the app for AI-generated anti-patterns: hallucinated library APIs, over-engineered solutions for simple problems, duplicate logic from multiple AI sessions, massive files that should be split, boilerplate that serves no purpose, and AI-typical mistakes like incorrect async handling.",
+    name: "Founder Blind Spots",
+    role: "You are a seasoned technical co-founder and startup advisor. Analyze the app for critical pre-launch blind spots: missing rate limiting that will be exploited on day one, no email verification allowing spam accounts, missing admin interface for support operations, no way to disable features without redeploy (feature flags), missing backup strategy, no staging environment separation, hardcoded limits that will need code changes to scale, missing customer support tooling, and technical decisions that look fine at 10 users but fail at 10,000 users.",
   },
 ];
 
@@ -64,14 +66,36 @@ function buildUserPrompt(
   sourceType: string,
   sourceInput: string,
   appDescription?: string | null,
+  codeContext?: CodeContext | null,
 ): string {
-  return `Analyze this AI-built (vibecoded) app and find real, specific issues:
+  let contextSection = "";
 
-Source Type: ${sourceType}
-Source: ${sourceInput}
-${appDescription ? `App Description: ${appDescription}` : ""}
+  if (codeContext) {
+    contextSection = `
+REAL CODE CONTEXT (use this for evidence-based findings):
+Framework: ${codeContext.framework}
+Build Tool / AI Tool: ${codeContext.vibeTool}
+Business Type: ${codeContext.businessType}
+Total Files: ${codeContext.totalFiles}
 
-Based on the source type and input, reason about what a typical AI-generated app of this kind would look like and identify the most likely issues.
+File Tree (partial):
+${codeContext.fileTree.slice(0, 2000)}
+
+API Routes Found:
+${codeContext.routes.slice(0, 1500)}
+
+${codeContext.schemas ? `Database Schema:\n${codeContext.schemas.slice(0, 1500)}` : ""}
+
+Key File Contents (excerpt):
+${codeContext.keyFiles.slice(0, 4).map((f) => `--- ${f.path} ---\n${f.content.slice(0, 800)}`).join("\n\n")}
+`;
+  }
+
+  return `Analyze this app and find real, specific, production-critical issues within your area of expertise.
+
+Source: ${sourceInput} (type: ${sourceType})
+${appDescription ? `Developer's Description: ${appDescription}` : ""}
+${contextSection}
 
 Return ONLY valid JSON in this exact format:
 {
@@ -79,13 +103,20 @@ Return ONLY valid JSON in this exact format:
     {
       "severity": "critical|high|medium|low",
       "title": "Short specific issue title",
-      "description": "Clear explanation of the problem and why it matters for a real production launch",
-      "fixPrompt": "Specific, actionable prompt the developer can paste into Cursor or GitHub Copilot to fix this issue"
+      "description": "Clear explanation of the problem and its real-world production impact. Be specific and concrete.",
+      "fixPrompt": "Ready-to-paste prompt for Cursor, Bolt, or Claude to fix this issue precisely",
+      "confidence": 60,
+      "evidence": "File path, code pattern, or specific reason you identified this (omit if pure reasoning)"
     }
   ]
 }
 
-Find 2-5 realistic issues. Be specific — no generic advice. Each fixPrompt should be a ready-to-use AI coding prompt.`;
+Rules:
+- Find 2–4 realistic, high-impact issues. No filler.
+- Every issue must have a clear production consequence (data breach, revenue loss, outage, user drop-off).
+- confidence: 95–99 for runtime-provable issues, 85–94 for direct code evidence, 70–84 for pattern-based inference, 60–69 for AI reasoning.
+- fixPrompt must be ready-to-use — not "consider adding X" but the actual prompt a developer pastes into their AI editor.
+- If you have real code context, reference specific file paths in evidence.`;
 }
 
 async function runAgent(
@@ -93,6 +124,7 @@ async function runAgent(
   sourceType: string,
   sourceInput: string,
   appDescription?: string | null,
+  codeContext?: CodeContext | null,
 ): Promise<AgentResult> {
   try {
     const response = await groq.chat.completions.create({
@@ -101,7 +133,7 @@ async function runAgent(
         { role: "system", content: agent.role },
         {
           role: "user",
-          content: buildUserPrompt(sourceType, sourceInput, appDescription),
+          content: buildUserPrompt(sourceType, sourceInput, appDescription, codeContext),
         },
       ],
       response_format: { type: "json_object" },
@@ -112,7 +144,11 @@ async function runAgent(
     const parsed = JSON.parse(content) as { issues?: AgentIssue[] };
     return {
       agentName: agent.name,
-      issues: parsed.issues ?? [],
+      issues: (parsed.issues ?? []).map((issue) => ({
+        ...issue,
+        confidence: issue.confidence ?? 65,
+        evidence: issue.evidence ?? undefined,
+      })),
     };
   } catch (err) {
     logger.error({ err, agent: agent.name }, "Agent failed");
@@ -144,13 +180,13 @@ export async function runAllAgents(
   sourceType: string,
   sourceInput: string,
   appDescription?: string | null,
-  _codeContext?: CodeContext | null,
+  codeContext?: CodeContext | null,
 ): Promise<ScanAnalysisResult> {
-  logger.info({ sourceType, sourceInput }, "Starting multi-agent analysis");
+  logger.info({ sourceType, sourceInput }, "Starting deep analysis");
 
   const agentResults = await Promise.all(
     AGENTS.map((agent) =>
-      runAgent(agent, sourceType, sourceInput, appDescription),
+      runAgent(agent, sourceType, sourceInput, appDescription, codeContext),
     ),
   );
 
@@ -163,22 +199,24 @@ export async function runAllAgents(
   };
 
   const penalty =
-    Math.min(issueCounts.critical * 10, 50) +
-    Math.min(issueCounts.high * 5, 30) +
-    Math.min(issueCounts.medium * 2, 15) +
+    Math.min(issueCounts.critical * 12, 55) +
+    Math.min(issueCounts.high * 5, 28) +
+    Math.min(issueCounts.medium * 2, 12) +
     Math.min(issueCounts.low * 1, 5);
 
   const score = Math.max(0, 100 - penalty);
 
+  const criticalText = issueCounts.critical > 0 ? ` including ${issueCounts.critical} critical ${issueCounts.critical === 1 ? "blocker" : "blockers"}` : "";
+
   const summary =
     score >= 80
-      ? `Good launch readiness! Found ${allIssues.length} issues to address before going live. Focus on the ${issueCounts.critical} critical and ${issueCounts.high} high-priority items first.`
-      : score >= 60
-        ? `Moderate launch risk. ${allIssues.length} issues detected including ${issueCounts.critical} critical blockers. Fix critical issues before launching to real users.`
-        : `High launch risk — do not deploy yet. ${issueCounts.critical} critical issues could cause security breaches, data loss, or a broken user experience. Significant work needed before launch.`;
+      ? `Strong launch readiness. ${allIssues.length} issues identified${criticalText} — address these before going live to protect your users and revenue.`
+      : score >= 55
+        ? `Moderate launch risk. ${allIssues.length} issues detected${criticalText}. Resolve critical and high-priority items before exposing to real users.`
+        : `High pre-launch risk — do not deploy yet. ${issueCounts.critical} critical issues pose serious threats to security, data integrity, or user experience. Significant remediation required.`;
 
   const launchVerdict =
-    score >= 80 ? "ready" : score >= 60 ? "needs_work" : "not_ready";
+    score >= 80 ? "ready" : score >= 55 ? "caution" : "do-not-launch";
 
   return { score, summary, launchVerdict, issueCounts, agentResults };
 }

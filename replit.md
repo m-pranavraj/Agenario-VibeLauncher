@@ -1,6 +1,6 @@
 # Agenario
 
-AI-powered production review board that analyzes vibe-coded apps with 10 specialized Groq agents and gives a readiness score before you ship.
+AI-powered production review board for vibe-coded apps. Multi-dimensional analysis (security, compliance, revenue, UX, performance, reliability, and more) with a 0–100 launch readiness score, board-memo style report, and 1-click fix prompts.
 
 ## Run & Operate
 
@@ -15,10 +15,10 @@ AI-powered production review board that analyzes vibe-coded apps with 10 special
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- Frontend: React + Vite + Tailwind + shadcn/ui + Framer Motion (dark navy/neon purple theme)
+- Frontend: React + Vite + Tailwind + shadcn/ui + Framer Motion (iOS black/frosted glass design system)
 - API: Express 5 + express-session (PostgreSQL-backed via connect-pg-simple)
 - DB: PostgreSQL + Drizzle ORM
-- AI: Groq SDK (`llama-3.3-70b-versatile`) — 10 parallel analysis agents
+- AI: Groq SDK (`llama-3.3-70b-versatile`) — 10 parallel analysis dimensions (security, compliance, revenue, performance, UX, reliability, data integrity, observability, AI code quality, founder blind spots)
 - Payments: Razorpay (HMAC SHA256 signature verification)
 - Auth: bcryptjs + express-session
 - Validation: Zod (`zod/v4`), `drizzle-zod`
@@ -32,7 +32,7 @@ AI-powered production review board that analyzes vibe-coded apps with 10 special
   - `src/pages/login.tsx`, `register.tsx` — auth forms
   - `src/pages/dashboard.tsx` — scan history, usage stats
   - `src/pages/new-scan.tsx` — submit repo/code for analysis
-  - `src/pages/scan-results.tsx` — AI report with 10 agent results
+  - `src/pages/scan-results.tsx` — board-memo style report: verdict, exec summary, top 3 action plan, full findings
   - `src/pages/pricing.tsx` — Razorpay checkout integration
   - `src/contexts/AuthContext.tsx` — global auth state
   - `src/lib/api.ts` — fetch-based API client
@@ -40,7 +40,7 @@ AI-powered production review board that analyzes vibe-coded apps with 10 special
   - `auth.ts` — register, login, logout, me
   - `scans.ts` — list, create (triggers Groq agents), get by id
   - `billing.ts` — Razorpay create-order, verify, status
-- `artifacts/api-server/src/lib/agents.ts` — 10 parallel Groq agents
+- `artifacts/api-server/src/lib/agents.ts` — 10 parallel Groq analysis dimensions (see roles above)
 - `lib/db/src/schema/index.ts` — users, scans, scan_issues tables
 - `lib/api-spec/openapi.yaml` — OpenAPI spec (source of truth for codegen)
 
@@ -48,13 +48,14 @@ AI-powered production review board that analyzes vibe-coded apps with 10 special
 
 - Contract-first API: OpenAPI spec → Orval generates Zod schemas + React Query hooks; server validates with those same Zod schemas
 - Sessions stored in PostgreSQL (`session` table created manually via SQL, not `createTableIfMissing` — the latter fails after esbuild bundling because it can't find `table.sql`)
-- 10 Groq agents run in parallel via `Promise.all`, each analyzes a specific dimension (security, performance, auth, etc.)
-- Free plan: 1 scan/month enforced server-side; Pro plan: unlimited scans
+- 10 analysis dimensions run in parallel via `Promise.all` — security, compliance, revenue, performance, UX, reliability, data, observability, AI quality, founder blind spots
+- Free plan: 5 scans/month enforced server-side; Creator/Enterprise: unlimited scans
 - Razorpay webhook-free: payment verified client-side via HMAC SHA256 signature check on `/api/billing/verify`
+- Creator plan: ₹299/mo (29900 paise); Enterprise: custom via email
 
 ## Product
 
-Users paste a GitHub URL or code snippet, Agenario runs 10 specialized AI agents in parallel (security audit, auth hardening, data exposure, performance, error handling, UX, scalability, dependency, environment, OWASP Top 10), returns a 0–100 readiness score with actionable issues, then optionally suggests 1-click fix prompts. Free tier: 1 scan/month. Pro tier: unlimited scans + priority queue via Razorpay payment.
+Users submit a GitHub repo, ZIP, URL, or description. Agenario runs multi-dimensional analysis (never reveals internal agent count or names in UI) across security, compliance (GDPR/OWASP/PCI-DSS), revenue intelligence, performance, UX, reliability, data integrity, observability, AI code quality, and founder blind spots. Returns a 0–100 readiness score, board-memo style executive summary, top 3 action plan, and 1-click fix prompts. Free tier: 5 scans/month. Creator: ₹299/mo unlimited. Enterprise: custom. Privacy: code never stored.
 
 ## User preferences
 

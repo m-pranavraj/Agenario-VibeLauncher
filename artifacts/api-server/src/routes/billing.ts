@@ -11,9 +11,8 @@ const razorpay = new Razorpay({
 });
 
 const PLAN_PRICES: Record<string, { amount: number; label: string }> = {
-  creator: { amount: 49900, label: "Creator Plan" },
-  pro: { amount: 299900, label: "Pro Plan" },
-  team: { amount: 499900, label: "Team Plan" },
+  creator: { amount: 29900, label: "Creator Plan — ₹299/mo" },
+  enterprise: { amount: 0, label: "Enterprise Plan" },
 };
 
 const router: IRouter = Router();

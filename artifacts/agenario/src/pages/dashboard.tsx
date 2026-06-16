@@ -1,43 +1,42 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
-import { Rocket, Plus, ChevronRight, Clock, CheckCircle, XCircle, Loader2, LogOut, CreditCard, Zap } from "lucide-react";
+import { Rocket, Plus, ChevronRight, Clock, CheckCircle, XCircle, Loader2, LogOut, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { api, type Scan } from "@/lib/api";
+import { motion } from "framer-motion";
 
-const PLAN_LABELS: Record<string, { label: string; color: string }> = {
-  free: { label: "Free", color: "bg-[#253648] text-[#B0BFD0]" },
-  creator: { label: "Creator", color: "bg-[#D4900A]/20 text-[#FDBA5A] border border-[#D4900A]/40" },
-  pro: { label: "Pro", color: "bg-teal-500/20 text-teal-400 border border-teal-500/30" },
-  team: { label: "Team", color: "bg-amber-500/20 text-amber-400 border border-amber-500/30" },
+const PLAN_LABELS: Record<string, { label: string; color: string; badge: string }> = {
+  free: { label: "Free", color: "text-white/40", badge: "bg-white/[0.06] border border-white/[0.1] text-white/40" },
+  creator: { label: "Creator", color: "text-white", badge: "bg-white/[0.1] border border-white/20 text-white" },
+  enterprise: { label: "Enterprise", color: "text-violet-400", badge: "bg-violet-500/10 border border-violet-500/20 text-violet-400" },
+  pro: { label: "Pro", color: "text-white", badge: "bg-white/[0.1] border border-white/20 text-white" },
+  team: { label: "Team", color: "text-amber-400", badge: "bg-amber-500/10 border border-amber-500/20 text-amber-400" },
 };
 
 function ScoreRing({ score }: { score: number }) {
-  const color = score >= 80 ? "#14B89A" : score >= 60 ? "#f59e0b" : "#ef4444";
-  const r = 22;
+  const color = score >= 80 ? "#4ade80" : score >= 60 ? "#f59e0b" : "#f87171";
+  const r = 20;
   const circ = 2 * Math.PI * r;
   const dash = (score / 100) * circ;
   return (
-    <div className="relative flex items-center justify-center" style={{ width: 56, height: 56 }}>
-      <svg width="56" height="56" viewBox="0 0 56 56" className="-rotate-90">
-        <circle cx="28" cy="28" r={r} fill="none" stroke="#1D2B3E" strokeWidth="5" />
-        <circle
-          cx="28" cy="28" r={r} fill="none"
-          stroke={color} strokeWidth="5"
-          strokeDasharray={`${dash} ${circ - dash}`}
-          strokeLinecap="round"
+    <div className="relative flex items-center justify-center" style={{ width: 52, height: 52 }}>
+      <svg width="52" height="52" viewBox="0 0 52 52" className="-rotate-90">
+        <circle cx="26" cy="26" r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="5" />
+        <circle cx="26" cy="26" r={r} fill="none" stroke={color} strokeWidth="5"
+          strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round"
           style={{ transition: "stroke-dasharray 1s ease" }}
         />
       </svg>
-      <span className="absolute text-xs font-bold" style={{ color }}>{score}</span>
+      <span className="absolute text-xs font-bold font-['Syne']" style={{ color }}>{score}</span>
     </div>
   );
 }
 
 function StatusIcon({ status }: { status: string }) {
-  if (status === "completed") return <CheckCircle className="w-4 h-4 text-teal-400" />;
-  if (status === "failed") return <XCircle className="w-4 h-4 text-red-400" />;
-  if (status === "running") return <Loader2 className="w-4 h-4 text-[#D4900A] animate-spin" />;
-  return <Clock className="w-4 h-4 text-[#566070]" />;
+  if (status === "completed") return <CheckCircle className="w-3.5 h-3.5 text-green-400" />;
+  if (status === "failed") return <XCircle className="w-3.5 h-3.5 text-red-400" />;
+  if (status === "running") return <Loader2 className="w-3.5 h-3.5 text-white/40 animate-spin" />;
+  return <Clock className="w-3.5 h-3.5 text-white/25" />;
 }
 
 export default function DashboardPage() {
@@ -64,44 +63,54 @@ export default function DashboardPage() {
   if (loading || !user) return null;
 
   const plan = PLAN_LABELS[user.plan] ?? PLAN_LABELS.free;
+  const isFreePlan = user.plan === "free";
 
   return (
-    <div className="min-h-screen bg-[#0B0F1B]">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(212,144,10,0.08)_0%,_transparent_60%)] pointer-events-none" />
+    <div className="min-h-screen bg-[#050505]">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.04)_0%,_transparent_60%)] pointer-events-none" />
 
-      <nav className="border-b border-[#1D2B3E] bg-[#0B0F1B]/90 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <nav className="border-b border-white/[0.07] bg-[#050505]/90 backdrop-blur-2xl sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary/20 border border-primary/40 flex items-center justify-center">
-              <Rocket className="w-3.5 h-3.5 text-primary" />
+            <div className="w-7 h-7 rounded-xl bg-white/[0.08] border border-white/[0.12] flex items-center justify-center">
+              <Rocket className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-white font-bold font-['Syne']">Agenario</span>
+            <span className="text-white font-bold font-['Syne'] text-sm">Agenario</span>
           </Link>
+
           <div className="flex items-center gap-3">
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${plan.color}`}>{plan.label}</span>
-            <span className="text-[#566070] text-sm hidden sm:block">{user.email}</span>
-            <Link href="/pricing" data-testid="link-upgrade" className="flex items-center gap-1.5 text-xs bg-[#D4900A]/20 hover:bg-[#D4900A]/30 text-[#FDBA5A] px-3 py-1.5 rounded-lg transition-colors border border-[#D4900A]/30">
-              <Zap className="w-3 h-3" /> Upgrade
-            </Link>
-            <button onClick={handleLogout} data-testid="button-logout" className="text-[#566070] hover:text-white transition-colors p-1.5 rounded-lg hover:bg-[#1D2B3E]">
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${plan.badge}`}>{plan.label}</span>
+            <span className="text-white/25 text-xs hidden sm:block">{user.email}</span>
+            {isFreePlan && (
+              <Link href="/pricing" data-testid="link-upgrade" className="flex items-center gap-1.5 text-xs glass text-white/50 px-3 py-1.5 rounded-lg transition-colors hover:text-white border-transparent">
+                <Zap className="w-3 h-3" /> Upgrade
+              </Link>
+            )}
+            <button
+              onClick={handleLogout}
+              data-testid="button-logout"
+              className="text-white/25 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/[0.06]"
+            >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-6 py-10">
+      <main className="max-w-5xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white font-['Syne']">Welcome back, {user.name.split(" ")[0]}</h1>
-            <p className="text-[#566070] text-sm mt-1">
-              {user.plan === "free" ? "Free plan · 1 scan/month" : `${plan.label} plan · Unlimited scans`}
+            <h1 className="text-2xl font-bold text-white font-['Syne']">
+              Welcome back, {user.name.split(" ")[0]}
+            </h1>
+            <p className="text-white/30 text-sm mt-1">
+              {isFreePlan ? "Free plan · 5 scans/month" : `${plan.label} plan · Unlimited scans`}
             </p>
           </div>
           <Link
             href="/scans/new"
             data-testid="button-new-scan"
-            className="flex items-center gap-2 bg-[#D4900A] hover:bg-[#B47509] text-white font-semibold px-5 py-2.5 rounded-xl transition-all shadow-[0_0_20px_rgba(212,144,10,0.4)] hover:shadow-[0_0_30px_rgba(212,144,10,0.6)] text-sm"
+            className="flex items-center gap-2 bg-white hover:bg-white/90 text-black font-semibold px-5 py-2.5 rounded-xl transition-all text-sm"
           >
             <Plus className="w-4 h-4" /> New Scan
           </Link>
@@ -109,73 +118,100 @@ export default function DashboardPage() {
 
         {scansLoading ? (
           <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 text-[#D4900A] animate-spin" />
+            <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
           </div>
         ) : scans.length === 0 ? (
-          <div className="text-center py-24 bg-[#131C2B] border border-[#1D2B3E] rounded-2xl">
-            <div className="w-16 h-16 rounded-2xl bg-[#D4900A]/10 border border-[#D4900A]/20 flex items-center justify-center mx-auto mb-4">
-              <Rocket className="w-7 h-7 text-[#D4900A]" />
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-24 glass rounded-2xl"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center mx-auto mb-4">
+              <Rocket className="w-6 h-6 text-white/50" />
             </div>
-            <h3 className="text-white font-bold text-lg font-['Syne']">No scans yet</h3>
-            <p className="text-[#566070] text-sm mt-2 max-w-xs mx-auto">Run your first scan to get a launch readiness score and actionable fixes.</p>
-            <Link href="/scans/new" data-testid="button-first-scan" className="inline-flex items-center gap-2 bg-[#D4900A] text-white font-semibold px-6 py-3 rounded-xl mt-6 hover:bg-[#B47509] transition-colors text-sm">
+            <h3 className="text-white font-bold text-lg font-['Syne'] mb-2">No scans yet</h3>
+            <p className="text-white/30 text-sm max-w-xs mx-auto mb-6">
+              Run your first analysis to get a launch readiness score and actionable fixes.
+            </p>
+            <Link
+              href="/scans/new"
+              data-testid="button-first-scan"
+              className="inline-flex items-center gap-2 bg-white text-black font-semibold px-6 py-2.5 rounded-xl hover:bg-white/90 transition-colors text-sm"
+            >
               <Plus className="w-4 h-4" /> Run First Scan
             </Link>
-          </div>
+          </motion.div>
         ) : (
-          <div className="space-y-3">
-            {scans.map((scan) => (
-              <Link
+          <div className="space-y-2.5">
+            {scans.map((scan, i) => (
+              <motion.div
                 key={scan.id}
-                href={`/scans/${scan.id}`}
-                data-testid={`card-scan-${scan.id}`}
-                className="flex items-center gap-4 bg-[#131C2B] border border-[#1D2B3E] hover:border-[#D4900A]/40 rounded-2xl p-5 transition-all group"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
               >
-                <div className="shrink-0">
-                  {scan.score != null ? (
-                    <ScoreRing score={scan.score} />
-                  ) : (
-                    <div className="w-14 h-14 flex items-center justify-center">
-                      <StatusIcon status={scan.status} />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <StatusIcon status={scan.status} />
-                    <span className="text-xs text-[#566070] capitalize">{scan.status}</span>
-                    <span className="text-xs text-[#253648]">·</span>
-                    <span className="text-xs text-[#566070] capitalize">{scan.sourceType}</span>
+                <Link
+                  href={`/scans/${scan.id}`}
+                  data-testid={`card-scan-${scan.id}`}
+                  className="flex items-center gap-4 glass rounded-xl p-4 hover:bg-white/[0.07] transition-all group cursor-pointer block"
+                >
+                  <div className="shrink-0">
+                    {scan.score != null ? (
+                      <ScoreRing score={scan.score} />
+                    ) : (
+                      <div className="w-[52px] h-[52px] flex items-center justify-center">
+                        <StatusIcon status={scan.status} />
+                      </div>
+                    )}
                   </div>
-                  <p className="text-white text-sm font-medium truncate">{scan.sourceInput}</p>
-                  {scan.issueCounts && (
-                    <div className="flex items-center gap-3 mt-1.5">
-                      {scan.issueCounts.critical > 0 && <span className="text-xs text-red-400">{scan.issueCounts.critical} critical</span>}
-                      {scan.issueCounts.high > 0 && <span className="text-xs text-amber-400">{scan.issueCounts.high} high</span>}
-                      {scan.issueCounts.medium > 0 && <span className="text-xs text-yellow-400">{scan.issueCounts.medium} medium</span>}
-                      {scan.issueCounts.low > 0 && <span className="text-xs text-[#566070]">{scan.issueCounts.low} low</span>}
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <StatusIcon status={scan.status} />
+                      <span className="text-xs text-white/25 capitalize">{scan.status}</span>
+                      <span className="text-white/[0.12]">·</span>
+                      <span className="text-xs text-white/25 capitalize">{scan.sourceType}</span>
                     </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs text-[#566070]">{new Date(scan.createdAt).toLocaleDateString()}</span>
-                  <ChevronRight className="w-4 h-4 text-[#566070] group-hover:text-white transition-colors" />
-                </div>
-              </Link>
+                    <p className="text-white/85 text-sm font-medium truncate">{scan.sourceInput}</p>
+                    {scan.issueCounts && (
+                      <div className="flex items-center gap-3 mt-1.5">
+                        {scan.issueCounts.critical > 0 && <span className="text-[11px] text-red-400">{scan.issueCounts.critical} critical</span>}
+                        {scan.issueCounts.high > 0 && <span className="text-[11px] text-amber-400">{scan.issueCounts.high} high</span>}
+                        {scan.issueCounts.medium > 0 && <span className="text-[11px] text-yellow-400">{scan.issueCounts.medium} medium</span>}
+                        {scan.issueCounts.low > 0 && <span className="text-[11px] text-white/25">{scan.issueCounts.low} low</span>}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-white/20">{new Date(scan.createdAt).toLocaleDateString()}</span>
+                    <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors" />
+                  </div>
+                </Link>
+              </motion.div>
             ))}
           </div>
         )}
 
-        {user.plan === "free" && scans.length > 0 && (
-          <div className="mt-6 bg-[#D4900A]/10 border border-[#D4900A]/30 rounded-2xl p-5 flex items-center justify-between">
+        {isFreePlan && scans.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-6 glass rounded-2xl p-5 flex items-center justify-between border border-white/[0.09]"
+          >
             <div>
-              <p className="text-white font-semibold text-sm">Upgrade for unlimited scans</p>
-              <p className="text-[#B0BFD0] text-xs mt-1">Get full reports, API access, and priority analysis with Creator plan.</p>
+              <p className="text-white font-semibold text-sm">Upgrade to Creator — ₹299/mo</p>
+              <p className="text-white/35 text-xs mt-1">Unlimited scans, compliance checks, and revenue intelligence.</p>
             </div>
-            <Link href="/pricing" data-testid="link-upgrade-banner" className="flex items-center gap-2 bg-[#D4900A] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#B47509] transition-colors shrink-0">
-              <CreditCard className="w-4 h-4" /> Upgrade
+            <Link
+              href="/pricing"
+              data-testid="link-upgrade-banner"
+              className="flex items-center gap-1.5 bg-white text-black text-xs font-semibold px-4 py-2 rounded-lg hover:bg-white/90 transition-colors shrink-0"
+            >
+              <Zap className="w-3.5 h-3.5" /> Upgrade
             </Link>
-          </div>
+          </motion.div>
         )}
       </main>
     </div>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@500;600;700;800&display=swap');
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -23,7 +23,7 @@
 
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
-  
+
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
 
@@ -47,71 +47,66 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ── Obsidian Amber ─────────────────────────────────────────
-   Deep midnight blue-black + warm amber gold + teal.
-   No green. No purple. No generic black.
-   Feels like: Bloomberg Terminal × Premium Security Scanner.
-────────────────────────────────────────────────────────────── */
+/* ── iOS Black / Frosted Glass ──────────────────────────────────
+   Pure black canvas. White glass panels. Clean intelligence.
+   Feels like: Apple Intelligence × Bloomberg × Premium SaaS.
+────────────────────────────────────────────────────────────────── */
 :root {
-  /* midnight blue-black — just warm enough to feel premium */
-  --background: 222 38% 7%;      /* #0B0F1B */
-  --foreground: 210 45% 92%;     /* #DDE8F2 */
+  --background: 0 0% 2%;
+  --foreground: 0 0% 95%;
 
-  --border: 215 32% 19%;         /* #1E2C3E */
-  --input: 215 32% 19%;
-  --ring: 38 85% 54%;            /* amber focus ring */
+  --border: 0 0% 12%;
+  --input: 0 0% 8%;
+  --ring: 0 0% 100%;
 
-  --card: 222 34% 11%;           /* #131C2B */
-  --card-foreground: 210 45% 92%;
-  --card-border: 215 32% 19%;
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 95%;
+  --card-border: 0 0% 11%;
 
-  --popover: 222 38% 7%;
-  --popover-foreground: 210 45% 92%;
-  --popover-border: 215 32% 19%;
+  --popover: 0 0% 3%;
+  --popover-foreground: 0 0% 95%;
+  --popover-border: 0 0% 12%;
 
-  /* amber/gold — the core brand accent */
-  --primary: 38 85% 54%;         /* #E8A020 warm gold */
-  --primary-foreground: 222 38% 7%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
 
-  /* teal — replaces all green "pass" states */
-  --secondary: 168 80% 40%;      /* #14B89A teal */
-  --secondary-foreground: 222 38% 7%;
+  --secondary: 0 0% 8%;
+  --secondary-foreground: 0 0% 80%;
 
-  --muted: 222 30% 15%;          /* #161F2E */
-  --muted-foreground: 215 18% 52%; /* #6C7F94 */
+  --muted: 0 0% 7%;
+  --muted-foreground: 0 0% 45%;
 
-  --accent: 38 85% 54%;
-  --accent-foreground: 222 38% 7%;
+  --accent: 263 70% 60%;
+  --accent-foreground: 0 0% 100%;
 
-  /* vivid red for critical issues */
-  --destructive: 356 82% 61%;    /* #F44 */
-  --destructive-foreground: 210 45% 92%;
+  --destructive: 0 75% 58%;
+  --destructive-foreground: 0 0% 100%;
 
-  --radius: 0.75rem;
+  --radius: 0.875rem;
 }
 
 .dark {
-  --background: 222 38% 7%;
-  --foreground: 210 45% 92%;
-  --border: 215 32% 19%;
-  --input: 215 32% 19%;
-  --ring: 38 85% 54%;
-  --card: 222 34% 11%;
-  --card-foreground: 210 45% 92%;
-  --card-border: 215 32% 19%;
-  --popover: 222 38% 7%;
-  --popover-foreground: 210 45% 92%;
-  --popover-border: 215 32% 19%;
-  --primary: 38 85% 54%;
-  --primary-foreground: 222 38% 7%;
-  --secondary: 168 80% 40%;
-  --secondary-foreground: 222 38% 7%;
-  --muted: 222 30% 15%;
-  --muted-foreground: 215 18% 52%;
-  --accent: 38 85% 54%;
-  --accent-foreground: 222 38% 7%;
-  --destructive: 356 82% 61%;
-  --destructive-foreground: 210 45% 92%;
+  --background: 0 0% 2%;
+  --foreground: 0 0% 95%;
+  --border: 0 0% 12%;
+  --input: 0 0% 8%;
+  --ring: 0 0% 100%;
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 95%;
+  --card-border: 0 0% 11%;
+  --popover: 0 0% 3%;
+  --popover-foreground: 0 0% 95%;
+  --popover-border: 0 0% 12%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 8%;
+  --secondary-foreground: 0 0% 80%;
+  --muted: 0 0% 7%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 263 70% 60%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 75% 58%;
+  --destructive-foreground: 0 0% 100%;
 }
 
 @layer base {
@@ -119,29 +114,54 @@
     @apply border-border;
   }
   body {
-    @apply font-sans antialiased bg-background text-foreground selection:bg-primary/25 selection:text-primary-foreground;
+    @apply font-sans antialiased bg-background text-foreground;
+    background-color: #050505;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
   }
 }
 
-/* ── Amber glow utilities ───────────────────────────────── */
-.glow-amber {
-  box-shadow: 0 0 24px rgba(232, 160, 32, 0.25), 0 0 60px rgba(232, 160, 32, 0.1);
+/* ── Glass utilities ────────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
 }
-.glow-amber-sm {
-  box-shadow: 0 0 12px rgba(232, 160, 32, 0.3);
+.glass-sm {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
-.glow-red-sm {
-  box-shadow: 0 0 20px rgba(244, 68, 68, 0.2);
-}
-.glow-teal-sm {
-  box-shadow: 0 0 20px rgba(20, 184, 154, 0.2);
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
-/* ── Scrollbar ──────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ── Glow utilities ─────────────────────────────────────────── */
+.glow-white {
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.08), 0 0 80px rgba(255, 255, 255, 0.04);
+}
+.glow-white-sm {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+}
+.glow-violet {
+  box-shadow: 0 0 40px rgba(139, 92, 246, 0.2), 0 0 80px rgba(139, 92, 246, 0.08);
+}
+.glow-red-sm {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.18);
+}
+.glow-green-sm {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: hsl(215 32% 22%); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(38 85% 54% / 0.5); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* ── Typography ─────────────────────────────────────────────── */
+::selection { background: rgba(139, 92, 246, 0.25); color: #fff; }

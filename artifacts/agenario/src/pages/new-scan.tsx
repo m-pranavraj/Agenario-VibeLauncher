@@ -1,38 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "wouter";
 import {
-  Rocket, Github, Globe, FileText, ArrowLeft, Loader2, CheckCircle,
-  ChevronDown, FileArchive, Upload, Shield, Zap, Search, Eye, Activity,
-  Layers, Bot, CreditCard, Lock,
+  Rocket, Github, Globe, FileText, ArrowLeft, CheckCircle,
+  ChevronDown, FileArchive, Upload,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
-
-const AGENTS = [
-  "IDOR & Access Control Agent",
-  "Auth & Session Agent",
-  "Payments & Billing Agent",
-  "Input & Validation Agent",
-  "File & Upload Agent",
-  "UX Flow Agent",
-  "Performance Agent",
-  "Reliability & Observability Agent",
-  "Cleanup & Architecture Agent",
-  "AI Smell Agent",
-];
-
-const AGENT_ICONS: Record<string, React.FC<{ className?: string }>> = {
-  "IDOR & Access Control Agent": Lock,
-  "Auth & Session Agent": Shield,
-  "Payments & Billing Agent": CreditCard,
-  "Input & Validation Agent": Search,
-  "File & Upload Agent": Upload,
-  "UX Flow Agent": Eye,
-  "Performance Agent": Zap,
-  "Reliability & Observability Agent": Activity,
-  "Cleanup & Architecture Agent": Layers,
-  "AI Smell Agent": Bot,
-};
+import { motion, AnimatePresence } from "framer-motion";
 
 const SOURCE_TYPES = [
   {
@@ -41,8 +15,9 @@ const SOURCE_TYPES = [
     icon: Github,
     placeholder: "https://github.com/you/your-app",
     inputType: "url" as const,
-    hint: "Deep — reads real code, maps routes, runs static analysis + 10 AI agents",
-    hintColor: "text-teal-400",
+    hint: "Deep analysis — real code, routes, static scan + full AI review",
+    depth: "Deepest",
+    depthColor: "text-green-400",
   },
   {
     id: "zip",
@@ -50,8 +25,9 @@ const SOURCE_TYPES = [
     icon: FileArchive,
     placeholder: "",
     inputType: "file" as const,
-    hint: "Upload your project as a .zip — same deep analysis as GitHub",
-    hintColor: "text-amber-400",
+    hint: "Upload your project .zip — same deep analysis as GitHub",
+    depth: "Deep",
+    depthColor: "text-green-400",
   },
   {
     id: "url",
@@ -59,17 +35,19 @@ const SOURCE_TYPES = [
     icon: Globe,
     placeholder: "https://your-app.vercel.app",
     inputType: "url" as const,
-    hint: "Analyses your deployed app — screenshots + console error probing",
-    hintColor: "text-sky-400",
+    hint: "Analyses your deployed app via URL probing",
+    depth: "Standard",
+    depthColor: "text-amber-400",
   },
   {
     id: "description",
     label: "Describe App",
     icon: FileText,
-    placeholder: "Describe your app, tech stack, and what you are worried about…",
+    placeholder: "Describe your app, tech stack, and what you're concerned about…",
     inputType: "text" as const,
-    hint: "AI-only analysis — lower confidence, but still useful for early planning",
-    hintColor: "text-[#566070]",
+    hint: "AI-only analysis — useful for early planning",
+    depth: "Basic",
+    depthColor: "text-white/35",
   },
 ];
 
@@ -89,12 +67,166 @@ const BUSINESS_TYPES = [
   { id: "ecommerce", label: "E-commerce" },
   { id: "marketplace", label: "Marketplace" },
   { id: "ai-app", label: "AI App" },
-  { id: "booking", label: "Booking / Restaurant" },
+  { id: "booking", label: "Booking" },
   { id: "fintech", label: "Fintech" },
   { id: "internal-tool", label: "Internal Tool" },
   { id: "api-service", label: "API / Dev Tool" },
   { id: "other", label: "Other" },
 ];
+
+const ANALYSIS_PHASES = [
+  { label: "Ingesting codebase", duration: 4000 },
+  { label: "Static security scan", duration: 5000 },
+  { label: "Compliance analysis", duration: 6000 },
+  { label: "Revenue risk review", duration: 5000 },
+  { label: "Performance & UX audit", duration: 5000 },
+  { label: "Generating board memo", duration: 6000 },
+];
+
+const SCAN_DIMENSIONS = [
+  "Security & Access Control",
+  "Compliance & Regulatory",
+  "Revenue & Business Logic",
+  "Performance & Scalability",
+  "User Experience & Conversion",
+  "Reliability & Error Handling",
+  "Data Integrity & Architecture",
+  "Observability & Ops Readiness",
+  "AI Code Quality",
+  "Founder Blind Spots",
+];
+
+function ScanAnimation({ isDeep }: { isDeep: boolean }) {
+  const [phase, setPhase] = useState(0);
+  const [completedDims, setCompletedDims] = useState<number[]>([]);
+  const [activeDim, setActiveDim] = useState(0);
+
+  useEffect(() => {
+    let p = 0;
+    const advance = () => {
+      p++;
+      if (p < ANALYSIS_PHASES.length) {
+        setPhase(p);
+        schedule();
+      }
+    };
+    const schedule = () => {
+      const timer = setTimeout(advance, ANALYSIS_PHASES[p]?.duration ?? 5000);
+      return timer;
+    };
+    const timer = schedule();
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCompletedDims((prev) => {
+        if (prev.length >= SCAN_DIMENSIONS.length) return prev;
+        return [...prev, prev.length];
+      });
+      setActiveDim((prev) => Math.min(prev + 1, SCAN_DIMENSIONS.length - 1));
+    }, isDeep ? 4800 : 2200);
+    return () => clearInterval(interval);
+  }, [isDeep]);
+
+  const currentPhase = ANALYSIS_PHASES[phase] ?? ANALYSIS_PHASES[0];
+  const progress = Math.min(((phase + 1) / ANALYSIS_PHASES.length) * 100, 96);
+
+  return (
+    <div className="py-16 max-w-lg mx-auto">
+      {/* Central orb */}
+      <div className="relative flex items-center justify-center mb-12">
+        <div className="absolute w-40 h-40 rounded-full border border-white/[0.04] animate-ping" style={{ animationDuration: "3s" }} />
+        <div className="absolute w-28 h-28 rounded-full border border-white/[0.06] animate-ping" style={{ animationDuration: "2s", animationDelay: "0.5s" }} />
+        <div className="relative w-20 h-20 rounded-2xl glass flex items-center justify-center border border-white/[0.12]">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-2 rounded-xl border-2 border-t-transparent border-white/20"
+          />
+          <Rocket className="w-7 h-7 text-white/80" />
+        </div>
+      </div>
+
+      {/* Phase label */}
+      <div className="text-center mb-8">
+        <AnimatePresence mode="wait">
+          <motion.h2
+            key={phase}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3 }}
+            className="text-xl font-heading font-bold text-white mb-2"
+          >
+            {currentPhase.label}
+          </motion.h2>
+        </AnimatePresence>
+        <p className="text-sm text-white/35">
+          {isDeep ? "~60–90 seconds for deep code analysis" : "~30 seconds"}. Stay on this page.
+        </p>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden mb-10">
+        <motion.div
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="h-full bg-white/60 rounded-full"
+        />
+      </div>
+
+      {/* Dimension pills */}
+      <div className="space-y-2">
+        {SCAN_DIMENSIONS.map((dim, i) => {
+          const isDone = completedDims.includes(i);
+          const isActive = activeDim === i && !isDone;
+          return (
+            <motion.div
+              key={dim}
+              initial={{ opacity: 0.2 }}
+              animate={{
+                opacity: isDone ? 0.45 : isActive ? 1 : 0.2,
+              }}
+              transition={{ duration: 0.4 }}
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all ${
+                isActive
+                  ? "bg-white/[0.06] border-white/[0.12]"
+                  : isDone
+                    ? "bg-transparent border-transparent"
+                    : "bg-transparent border-transparent"
+              }`}
+            >
+              {isDone ? (
+                <CheckCircle className="w-3.5 h-3.5 text-green-400 shrink-0" />
+              ) : isActive ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                  className="w-3.5 h-3.5 border-2 border-t-transparent border-white/60 rounded-full shrink-0"
+                />
+              ) : (
+                <div className="w-3.5 h-3.5 rounded-full border border-white/[0.12] shrink-0" />
+              )}
+              <span className={`text-sm ${isActive ? "text-white font-medium" : isDone ? "text-white/40" : "text-white/20"}`}>
+                {dim}
+              </span>
+              {isActive && (
+                <span className="ml-auto text-[10px] text-white/30 font-medium uppercase tracking-wide animate-pulse">
+                  Running
+                </span>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+
+      <p className="text-center text-xs text-white/20 mt-8">
+        Your code is analyzed in-session and never stored.
+      </p>
+    </div>
+  );
+}
 
 export default function NewScanPage() {
   const { user, loading } = useAuth();
@@ -106,8 +238,6 @@ export default function NewScanPage() {
   const [vibeTool, setVibeTool] = useState("");
   const [businessType, setBusinessType] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
-  const [analysisPhase, setAnalysisPhase] = useState<"static" | "ai">("static");
-  const [currentAgent, setCurrentAgent] = useState(0);
   const [error, setError] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -116,29 +246,13 @@ export default function NewScanPage() {
     if (!loading && !user) setLocation("/login");
   }, [user, loading, setLocation]);
 
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (analyzing) {
-      // First 8s: "static analysis" phase, then agent phase
-      const staticTimer = setTimeout(() => setAnalysisPhase("ai"), 8000);
-      const speed = sourceType === "github" || sourceType === "zip" ? 5000 : 2500;
-      interval = setInterval(() => setCurrentAgent((p) => (p + 1) % AGENTS.length), speed);
-      return () => {
-        clearTimeout(staticTimer);
-        clearInterval(interval);
-      };
-    }
-    return () => clearInterval(interval);
-  }, [analyzing, sourceType]);
-
   const isDeep = sourceType === "github" || sourceType === "zip";
+  const selectedType = SOURCE_TYPES.find((t) => t.id === sourceType)!;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setAnalyzing(true);
-    setCurrentAgent(0);
-    setAnalysisPhase("static");
 
     try {
       if (sourceType === "zip") {
@@ -179,120 +293,47 @@ export default function NewScanPage() {
 
   if (loading || !user) return null;
 
-  const selectedType = SOURCE_TYPES.find((t) => t.id === sourceType)!;
-
   return (
-    <div className="min-h-screen bg-[#0B0F1B]">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(212,144,10,0.07)_0%,_transparent_60%)] pointer-events-none" />
+    <div className="min-h-screen bg-[#050505]">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.05)_0%,_transparent_60%)] pointer-events-none" />
 
-      <nav className="border-b border-[#1D2B3E] bg-[#0B0F1B]/90 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
-          <Link href="/dashboard" className="text-[#566070] hover:text-white transition-colors">
+      <nav className="border-b border-white/[0.07] bg-[#050505]/90 backdrop-blur-2xl sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-6 py-4 flex items-center gap-3">
+          <Link href="/dashboard" className="text-white/30 hover:text-white transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
-              <Rocket className="w-3.5 h-3.5 text-primary" />
+            <div className="w-7 h-7 rounded-xl bg-white/[0.08] border border-white/[0.12] flex items-center justify-center">
+              <Rocket className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-white font-bold font-['Syne']">New Scan</span>
+            <span className="text-white font-bold font-['Syne'] text-sm">New Analysis</span>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-3xl mx-auto px-6 py-10">
+      <main className="max-w-2xl mx-auto px-6 py-10">
         {analyzing ? (
-          <div className="text-center py-16">
-            <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 transition-all ${
-              analysisPhase === "static"
-                ? "bg-amber-500/10 border border-amber-500/30 shadow-[0_0_40px_rgba(212,144,10,0.2)]"
-                : "bg-primary/10 border border-primary/30 shadow-[0_0_40px_rgba(212,144,10,0.2)]"
-            }`}>
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            </div>
-
-            {analysisPhase === "static" ? (
-              <>
-                <h2 className="text-xl font-bold text-white font-['Syne'] mb-2">
-                  {isDeep ? "Static Analysis Running" : "Preparing Analysis"}
-                </h2>
-                <p className="text-[#566070] text-sm mb-1">
-                  {isDeep
-                    ? "Scanning for hardcoded secrets, CORS misconfigs, injection patterns, and 25+ vulnerability classes…"
-                    : "10 specialized agents are reviewing your app in parallel."}
-                </p>
-                {isDeep && (
-                  <div className="flex flex-wrap gap-2 justify-center mt-4 mb-6">
-                    {["Secrets", "CORS", "SQL Inject", "Auth gaps", "Rate limits", "XSS", "Eval", "Debug routes"].map((t) => (
-                      <span key={t} className="text-xs bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2.5 py-1 rounded-full animate-pulse">{t}</span>
-                    ))}
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <h2 className="text-xl font-bold text-white font-['Syne'] mb-2">
-                  AI Agents Running
-                </h2>
-                <p className="text-[#566070] text-sm mb-1">
-                  10 specialized agents are reviewing your app in parallel.
-                </p>
-              </>
-            )}
-
-            <p className="text-[#566070] text-xs mb-8">
-              {isDeep ? "~60–90 seconds for deep analysis." : "~30 seconds."} Stay on this page.
-            </p>
-
-            <div className="max-w-sm mx-auto space-y-2">
-              {AGENTS.map((agent, i) => {
-                const Icon = AGENT_ICONS[agent] ?? Bot;
-                return (
-                  <div
-                    key={agent}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all ${
-                      i === currentAgent
-                        ? "bg-primary/12 border border-primary/30"
-                        : i < currentAgent
-                          ? "opacity-50"
-                          : "opacity-20"
-                    }`}
-                  >
-                    {i < currentAgent ? (
-                      <CheckCircle className="w-4 h-4 text-teal-400 shrink-0" />
-                    ) : i === currentAgent ? (
-                      <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />
-                    ) : (
-                      <div className="w-4 h-4 rounded-full border border-[#1D2B3E] shrink-0" />
-                    )}
-                    <Icon className={`w-3.5 h-3.5 shrink-0 ${i === currentAgent ? "text-primary" : "text-[#566070]"}`} />
-                    <span className={`text-sm ${i === currentAgent ? "text-white" : "text-[#566070]"}`}>
-                      {agent}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <ScanAnimation isDeep={isDeep} />
         ) : (
           <>
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white font-['Syne']">Analyze Your App</h1>
-              <p className="text-[#B0BFD0] text-sm mt-1">
-                Static analysis + 10 AI agents. Every finding has file:line evidence. No vague advice.
+              <h1 className="text-2xl font-bold text-white font-['Syne'] mb-2">Analyze Your App</h1>
+              <p className="text-white/40 text-sm">
+                Multi-dimensional analysis — security, compliance, revenue, UX, and more. Every finding has evidence.
               </p>
             </div>
 
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 mb-6 text-red-400 text-sm">
+              <div className="bg-red-500/[0.08] border border-red-500/20 rounded-xl px-4 py-3 mb-6 text-red-400 text-sm">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Source type picker */}
+              {/* Source type */}
               <div>
-                <label className="block text-sm font-medium text-[#B0BFD0] mb-3">Source</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <label className="block text-xs font-medium text-white/40 mb-3 uppercase tracking-wide">Source</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   {SOURCE_TYPES.map((type) => {
                     const Icon = type.icon;
                     return (
@@ -303,18 +344,21 @@ export default function NewScanPage() {
                         data-testid={`button-source-${type.id}`}
                         className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
                           sourceType === type.id
-                            ? "bg-primary/12 border-primary/50 text-white"
-                            : "bg-[#131C2B] border-[#1D2B3E] text-[#566070] hover:border-[#253648]"
+                            ? "bg-white/[0.08] border-white/20 text-white"
+                            : "bg-white/[0.02] border-white/[0.08] text-white/35 hover:border-white/[0.14] hover:text-white/60"
                         }`}
                       >
-                        <Icon className={`w-5 h-5 ${sourceType === type.id ? "text-primary" : ""}`} />
+                        <Icon className="w-5 h-5" />
                         <span className="text-xs font-medium leading-tight text-center">{type.label}</span>
+                        <span className={`text-[9px] font-semibold uppercase tracking-wide ${sourceType === type.id ? type.depthColor : "text-white/20"}`}>
+                          {type.depth}
+                        </span>
                       </button>
                     );
                   })}
                 </div>
                 {selectedType.hint && (
-                  <p className={`text-xs mt-2 flex items-center gap-1.5 ${selectedType.hintColor}`}>
+                  <p className={`text-xs mt-2.5 flex items-center gap-1.5 ${selectedType.depthColor}`}>
                     <span className="w-1.5 h-1.5 rounded-full bg-current inline-block" />
                     {selectedType.hint}
                   </p>
@@ -324,13 +368,13 @@ export default function NewScanPage() {
               {/* Input area */}
               {sourceType === "zip" ? (
                 <div>
-                  <label className="block text-sm font-medium text-[#B0BFD0] mb-2">ZIP File</label>
+                  <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wide">ZIP File</label>
                   <div
                     onClick={() => fileInputRef.current?.click()}
                     className={`relative flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed transition-all cursor-pointer ${
                       zipFile
-                        ? "border-teal-500/40 bg-teal-500/5"
-                        : "border-[#1D2B3E] bg-[#131C2B] hover:border-[#253648] hover:bg-[#131C2B]/80"
+                        ? "border-green-500/30 bg-green-500/[0.04]"
+                        : "border-white/[0.1] bg-white/[0.02] hover:border-white/[0.18] hover:bg-white/[0.04]"
                     }`}
                     onDrop={(e) => {
                       e.preventDefault();
@@ -341,20 +385,20 @@ export default function NewScanPage() {
                   >
                     {zipFile ? (
                       <>
-                        <CheckCircle className="w-8 h-8 text-teal-400" />
+                        <CheckCircle className="w-8 h-8 text-green-400" />
                         <div className="text-center">
                           <p className="text-white font-medium text-sm">{zipFile.name}</p>
-                          <p className="text-[#566070] text-xs mt-0.5">{(zipFile.size / 1024 / 1024).toFixed(1)} MB · Click to change</p>
+                          <p className="text-white/30 text-xs mt-0.5">{(zipFile.size / 1024 / 1024).toFixed(1)} MB · Click to change</p>
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                          <Upload className="w-6 h-6 text-primary" />
+                        <div className="w-12 h-12 rounded-xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center">
+                          <Upload className="w-5 h-5 text-white/50" />
                         </div>
                         <div className="text-center">
                           <p className="text-white text-sm font-medium">Drop your .zip here or click to browse</p>
-                          <p className="text-[#566070] text-xs mt-1">Max 50 MB · Must be a .zip archive of your project</p>
+                          <p className="text-white/30 text-xs mt-1">Max 50 MB · .zip archives only</p>
                         </div>
                       </>
                     )}
@@ -363,16 +407,13 @@ export default function NewScanPage() {
                       type="file"
                       accept=".zip,application/zip"
                       className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) setZipFile(f);
-                      }}
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) setZipFile(f); }}
                     />
                   </div>
                 </div>
               ) : sourceType === "description" ? (
                 <div>
-                  <label className="block text-sm font-medium text-[#B0BFD0] mb-2">Describe Your App</label>
+                  <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wide">Describe Your App</label>
                   <textarea
                     required
                     value={sourceInput}
@@ -380,12 +421,12 @@ export default function NewScanPage() {
                     placeholder={selectedType.placeholder}
                     data-testid="input-source"
                     rows={4}
-                    className="w-full bg-[#131C2B] border border-[#1D2B3E] rounded-xl px-4 py-3 text-white placeholder-[#566070] focus:outline-none focus:border-primary/60 focus:shadow-[0_0_0_3px_rgba(212,144,10,0.1)] transition-all text-sm resize-none"
+                    className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-white/25 transition-all text-sm resize-none"
                   />
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium text-[#B0BFD0] mb-2">{selectedType.label}</label>
+                  <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wide">{selectedType.label}</label>
                   <input
                     type="url"
                     required
@@ -393,7 +434,7 @@ export default function NewScanPage() {
                     onChange={(e) => setSourceInput(e.target.value)}
                     placeholder={selectedType.placeholder}
                     data-testid="input-source"
-                    className="w-full bg-[#131C2B] border border-[#1D2B3E] rounded-xl px-4 py-3 text-white placeholder-[#566070] focus:outline-none focus:border-primary/60 focus:shadow-[0_0_0_3px_rgba(212,144,10,0.1)] transition-all text-sm"
+                    className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-white/25 transition-all text-sm"
                   />
                 </div>
               )}
@@ -402,18 +443,18 @@ export default function NewScanPage() {
               <button
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="flex items-center gap-2 text-xs text-[#566070] hover:text-[#B0BFD0] transition-colors"
+                className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/55 transition-colors"
               >
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
                 {showAdvanced ? "Hide" : "Add"} context to improve accuracy
               </button>
 
               {showAdvanced && (
-                <div className="space-y-5 bg-[#131C2B] border border-[#1D2B3E] rounded-xl p-5">
+                <div className="space-y-5 glass rounded-xl p-5">
                   {sourceType !== "description" && (
                     <div>
-                      <label className="block text-sm font-medium text-[#B0BFD0] mb-2">
-                        App Description <span className="text-[#566070] font-normal">(optional)</span>
+                      <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wide">
+                        App Description <span className="text-white/20 normal-case">(optional)</span>
                       </label>
                       <textarea
                         value={appDescription}
@@ -421,14 +462,14 @@ export default function NewScanPage() {
                         placeholder="What does the app do? Tech stack? What are you most worried about?"
                         data-testid="input-description"
                         rows={3}
-                        className="w-full bg-[#0B0F1B] border border-[#1D2B3E] rounded-xl px-4 py-3 text-white placeholder-[#566070] focus:outline-none focus:border-primary/60 transition-all text-sm resize-none"
+                        className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-white/25 transition-all text-sm resize-none"
                       />
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium text-[#B0BFD0] mb-2">
-                      Built with <span className="text-[#566070] font-normal">(unlocks tool-specific checks)</span>
+                    <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wide">
+                      Built with <span className="text-white/20 normal-case">(unlocks tool-specific checks)</span>
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {VIBE_TOOLS.map((tool) => (
@@ -438,8 +479,8 @@ export default function NewScanPage() {
                           onClick={() => setVibeTool(vibeTool === tool.id ? "" : tool.id)}
                           className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${
                             vibeTool === tool.id
-                              ? "bg-primary/15 border-primary/50 text-white"
-                              : "bg-[#0B0F1B] border-[#1D2B3E] text-[#566070] hover:border-[#253648] hover:text-[#B0BFD0]"
+                              ? "bg-white/[0.1] border-white/20 text-white"
+                              : "bg-white/[0.02] border-white/[0.08] text-white/35 hover:border-white/[0.14]"
                           }`}
                         >
                           {tool.label}
@@ -449,8 +490,8 @@ export default function NewScanPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[#B0BFD0] mb-2">
-                      App type <span className="text-[#566070] font-normal">(tailors checks per business model)</span>
+                    <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wide">
+                      App type <span className="text-white/20 normal-case">(tailors checks per business model)</span>
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {BUSINESS_TYPES.map((bt) => (
@@ -460,8 +501,8 @@ export default function NewScanPage() {
                           onClick={() => setBusinessType(businessType === bt.id ? "" : bt.id)}
                           className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${
                             businessType === bt.id
-                              ? "bg-primary/15 border-primary/50 text-white"
-                              : "bg-[#0B0F1B] border-[#1D2B3E] text-[#566070] hover:border-[#253648] hover:text-[#B0BFD0]"
+                              ? "bg-white/[0.1] border-white/20 text-white"
+                              : "bg-white/[0.02] border-white/[0.08] text-white/35 hover:border-white/[0.14]"
                           }`}
                         >
                           {bt.label}
@@ -476,10 +517,14 @@ export default function NewScanPage() {
                 type="submit"
                 disabled={sourceType === "zip" ? !zipFile : !sourceInput.trim()}
                 data-testid="button-analyze"
-                className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground font-semibold py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(212,144,10,0.35)] hover:shadow-[0_0_30px_rgba(212,144,10,0.55)] text-sm"
+                className="w-full bg-white hover:bg-white/90 disabled:opacity-40 disabled:cursor-not-allowed text-black font-semibold py-3.5 rounded-xl transition-all text-sm"
               >
-                Run Deep Analysis — Static + 10 AI Agents
+                Run Deep Analysis
               </button>
+
+              <p className="text-center text-xs text-white/25">
+                Your code is analyzed in-session and never stored on our servers.
+              </p>
             </form>
           </>
         )}

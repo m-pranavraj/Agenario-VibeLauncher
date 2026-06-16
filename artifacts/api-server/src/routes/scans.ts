@@ -28,8 +28,8 @@ async function checkScanLimit(user: { id: number; plan: string }, res: any): Pro
     .from(scansTable)
     .where(eq(scansTable.userId, user.id));
   const thisMonthScans = monthScans.filter((s) => s.createdAt >= startOfMonth);
-  if (thisMonthScans.length >= 1) {
-    res.status(403).json({ error: "Free plan limit reached. Upgrade to Creator for unlimited scans." });
+  if (thisMonthScans.length >= 5) {
+    res.status(403).json({ error: "Free plan limit reached (5 scans/month). Upgrade to Creator for unlimited scans." });
     return false;
   }
   return true;

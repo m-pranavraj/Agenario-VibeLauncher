@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Rocket, Mail, Lock, User, AlertCircle } from "lucide-react";
+import { Rocket, Mail, Lock, User, AlertCircle, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "wouter";
 
@@ -32,34 +32,34 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F1B] flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(212,144,10,0.15)_0%,_transparent_70%)] pointer-events-none" />
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(139,92,246,0.07)_0%,_transparent_60%)] pointer-events-none" />
 
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/40 flex items-center justify-center">
-              <Rocket className="w-4 h-4 text-primary" />
+            <div className="w-8 h-8 rounded-xl bg-white/[0.08] border border-white/[0.12] flex items-center justify-center">
+              <Rocket className="w-4 h-4 text-white" />
             </div>
             <span className="text-white font-bold text-lg font-['Syne']">Agenario</span>
           </Link>
-          <h1 className="text-2xl font-bold text-white font-['Syne']">Start for free</h1>
-          <p className="text-[#B0BFD0] mt-1 text-sm">1 free scan per month · No credit card</p>
+          <h1 className="text-2xl font-bold text-white font-['Syne']">Create your account</h1>
+          <p className="text-white/40 mt-1.5 text-sm">5 free scans per month · No credit card needed</p>
         </div>
 
-        <div className="bg-[#131C2B] border border-[#D4900A]/30 rounded-2xl p-8 shadow-[0_0_40px_rgba(212,144,10,0.15)]">
+        <div className="glass rounded-2xl p-7">
           {error && (
-            <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 mb-6 text-red-400 text-sm">
+            <div className="flex items-center gap-2 bg-red-500/[0.08] border border-red-500/20 rounded-xl px-4 py-3 mb-5 text-red-400 text-sm">
               <AlertCircle className="w-4 h-4 shrink-0" />
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[#B0BFD0] mb-2">Full Name</label>
+              <label className="block text-xs font-medium text-white/45 mb-2 uppercase tracking-wide">Full Name</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#566070]" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
                 <input
                   type="text"
                   required
@@ -67,15 +67,15 @@ export default function RegisterPage() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
                   data-testid="input-name"
-                  className="w-full bg-[#0B0F1B] border border-[#253648] rounded-lg pl-10 pr-4 py-3 text-white placeholder-[#566070] focus:outline-none focus:border-[#D4900A]/70 focus:shadow-[0_0_0_3px_rgba(212,144,10,0.1)] transition-all text-sm"
+                  className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-all text-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#B0BFD0] mb-2">Email</label>
+              <label className="block text-xs font-medium text-white/45 mb-2 uppercase tracking-wide">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#566070]" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
                 <input
                   type="email"
                   required
@@ -83,15 +83,15 @@ export default function RegisterPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   data-testid="input-email"
-                  className="w-full bg-[#0B0F1B] border border-[#253648] rounded-lg pl-10 pr-4 py-3 text-white placeholder-[#566070] focus:outline-none focus:border-[#D4900A]/70 focus:shadow-[0_0_0_3px_rgba(212,144,10,0.1)] transition-all text-sm"
+                  className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-all text-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#B0BFD0] mb-2">Password</label>
+              <label className="block text-xs font-medium text-white/45 mb-2 uppercase tracking-wide">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#566070]" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
                 <input
                   type="password"
                   required
@@ -100,7 +100,7 @@ export default function RegisterPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Min 8 characters"
                   data-testid="input-password"
-                  className="w-full bg-[#0B0F1B] border border-[#253648] rounded-lg pl-10 pr-4 py-3 text-white placeholder-[#566070] focus:outline-none focus:border-[#D4900A]/70 focus:shadow-[0_0_0_3px_rgba(212,144,10,0.1)] transition-all text-sm"
+                  className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-all text-sm"
                 />
               </div>
             </div>
@@ -109,15 +109,20 @@ export default function RegisterPage() {
               type="submit"
               disabled={loading}
               data-testid="button-register"
-              className="w-full bg-[#D4900A] hover:bg-[#B47509] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-all shadow-[0_0_20px_rgba(212,144,10,0.4)] hover:shadow-[0_0_30px_rgba(212,144,10,0.6)] mt-2"
+              className="w-full bg-white hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold py-3 rounded-xl transition-all mt-2 text-sm"
             >
-              {loading ? "Creating account..." : "Create Free Account"}
+              {loading ? "Creating account…" : "Create Free Account"}
             </button>
           </form>
 
-          <p className="text-center text-sm text-[#566070] mt-6">
+          <div className="flex items-center justify-center gap-1.5 mt-5 mb-4">
+            <ShieldCheck className="w-3.5 h-3.5 text-green-400/60" />
+            <p className="text-xs text-white/25">Your code is never stored. Analyzed in-session only.</p>
+          </div>
+
+          <p className="text-center text-sm text-white/30">
             Already have an account?{" "}
-            <Link href="/login" className="text-[#D4900A] hover:text-[#FDBA5A] transition-colors">
+            <Link href="/login" className="text-white/70 hover:text-white transition-colors font-medium">
               Sign in
             </Link>
           </p>
