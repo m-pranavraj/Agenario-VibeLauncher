@@ -1,0 +1,34 @@
+| Feature Layer                   | Free (₹0)                           | Creator ⭐ (₹299/mo)            | Enterprise (Custom)       |
+| ------------------------------- | ----------------------------------- | ------------------------------ | ------------------------- |
+| **Scan Volume**                 | 5 scans/month                       | Unlimited                      | Unlimited                 |
+| **Launch Verdict**              | ✅ Ready / Caution / Do Not Launch   | ✅ Advanced Verdicts            | ✅ Org-wide Policies       |
+| **Launch Readiness Score**      | ✅ Included                          | ✅ Included                     | ✅ Custom Thresholds       |
+| **Issue Detection**             | Critical + High Issues              | All Issues                     | All Issues + Custom Rules |
+| **Evidence Engine**             | File/Line References                | Full Evidence Engine           | Audit-Grade Evidence      |
+| **Visual Proofs**               | 5 Screenshots per Scan              | Unlimited Gallery              | Unlimited + Export Packs  |
+| **Confidence Scores**           | Basic (Critical Only)               | Full Confidence System         | Organization Policies     |
+| **AI Tech Lead Summary**        | Limited Summary                     | Full Technical Review          | Team Reports              |
+| **One-Click Fix Prompts**       | 5 Prompts per Scan                  | Unlimited                      | CI/CD Auto PR Suggestions |
+| **Cleanup Suggestions**         | Top 5 Opportunities                 | Full Cleanup Report            | Repo Governance           |
+| **Framework Detection**         | ✅                                   | ✅                              | ✅                         |
+| **Business Type Detection**     | SaaS / E-commerce / AI App          | Advanced Business Intelligence | Custom Playbooks          |
+| **Vibe Tool Detection**         | Cursor / Replit / Lovable Detection | Pattern Insights               | Org-wide Analytics        |
+| **Performance Checks**          | Basic                               | Advanced                       | Custom Benchmarks         |
+| **Mobile Responsiveness**       | Basic                               | Full Coverage                  | Full Coverage             |
+| **Founder Blind Spot Detector** | Top 3 Missing Items                 | Full Analysis                  | Team Compliance           |
+| **Technical Co-Founder Mode**   | Preview                             | Unlimited                      | Team Mode                 |
+| **Launch Disaster Simulator**   | Preview Risk Indicators             | Full Simulator                 | Portfolio Simulation      |
+| **Revenue Leakage Detector**    | Preview Findings                    | Full Analysis                  | Organization Reporting    |
+| **Product Hunt Launch Mode**    | ❌                                   | ✅                              | ✅                         |
+| **Regression History**          | Last 7 Days                         | Full History                   | Team History              |
+| **Benchmarking**                | Preview Ranking                     | Compare with Similar Apps      | Org-wide Benchmarking     |
+| **GitHub Integration**          | Public Repositories                 | Private GitHub Integration     | Enterprise GitHub App     |
+| **ZIP Upload**                  | ✅                                   | ✅                              | ✅                         |
+| **Scan History**                | Last 5 Scans                        | Unlimited                      | Unlimited                 |
+| **Reports Export**              | PDF Summary                         | Full Reports                   | White-Label Reports       |
+| **Team Collaboration**          | ❌                                   | ❌                              | ✅                         |
+| **SSO & Access Controls**       | ❌                                   | ❌                              | ✅                         |
+| **On-Prem Deployment**          | ❌                                   | ❌                              | ✅                         |
+| **Private Model Options**       | ❌                                   | ❌                              | ✅                         |
+| **Dedicated Support**           | Community                           | Priority Email                 | Dedicated Success Manager |
+| **SLA**                         | ❌                                   | ❌                              | ✅                         |
