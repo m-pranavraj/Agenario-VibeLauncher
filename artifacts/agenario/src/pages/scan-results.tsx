@@ -4,11 +4,16 @@ import {
   ArrowLeft, Rocket, Copy, CheckCheck, ChevronDown, ChevronUp,
   Shield, Zap, Eye, Layers, Bot, Activity, Loader2,
   AlertTriangle, XCircle, CheckCircle2, CreditCard, Upload, Lock, Search,
-  TrendingUp, Scale, Database, Cpu, Fingerprint, ShieldCheck,
+  TrendingUp, TrendingDown, Scale, Database, Cpu, Fingerprint, ShieldCheck,
   FileText, ArrowRight, BarChart3, DollarSign, Target, ChevronRight,
+  Play, Camera, Minus, Globe, GitBranch, Award, Dna, Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api, type ScanDetail, type ScanIssue, type ComplianceResult, type RiskForecast, type RevenueIntelligence } from "@/lib/api";
+import {
+  api, type ScanDetail, type ScanIssue, type ComplianceResult, type RiskForecast,
+  type RevenueIntelligence, type ProofEvidence, type RegressionDiff, type BenchmarkData,
+  type LaunchDNA, type ShadowApiFindings,
+} from "@/lib/api";
 import { motion } from "framer-motion";
 
 const SEVERITY_CONFIG = {
@@ -435,6 +440,397 @@ function RevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligence 
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+// New Feature Panels
+// ─────────────────────────────────────────────────────────────
+
+const PROOF_TYPE_CONFIG = {
+  idor: { label: "IDOR Probe", icon: Lock, color: "text-red-400", bg: "bg-red-500/[0.07] border-red-500/20" },
+  chaos: { label: "Chaos Test", icon: Zap, color: "text-amber-400", bg: "bg-amber-500/[0.07] border-amber-500/20" },
+  pii: { label: "PII Scanner", icon: Shield, color: "text-violet-400", bg: "bg-violet-500/[0.07] border-violet-500/20" },
+  "stripe-bypass": { label: "Payment Bypass", icon: CreditCard, color: "text-red-400", bg: "bg-red-500/[0.07] border-red-500/20" },
+  "shadow-api": { label: "Shadow API", icon: Globe, color: "text-sky-400", bg: "bg-sky-500/[0.07] border-sky-500/20" },
+  regression: { label: "Regression", icon: GitBranch, color: "text-amber-400", bg: "bg-amber-500/[0.07] border-amber-500/20" },
+};
+
+function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const [copied, setCopied] = useState<number | null>(null);
+
+  const copySteps = async (idx: number, steps: string[]) => {
+    await navigator.clipboard.writeText(steps.join("\n"));
+    setCopied(idx);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  return (
+    <div className="glass rounded-2xl p-6 space-y-5 aurora-card">
+      <div className="flex items-center gap-2">
+        <Camera className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm">Visual Evidence Gallery</h2>
+        <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 font-medium">
+          {evidence.length} Runtime Proof{evidence.length !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      <p className="text-xs text-white/35 leading-relaxed">
+        These findings were actively probed at runtime — not AI guesses. Each has been verified with real HTTP requests and step-by-step reproduction instructions.
+      </p>
+
+      <div className="space-y-3">
+        {evidence.map((e, i) => {
+          const pcfg = PROOF_TYPE_CONFIG[e.type] ?? PROOF_TYPE_CONFIG.chaos;
+          const Icon = pcfg.icon;
+          const sev = SEVERITY_CONFIG[e.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
+          const isOpen = openIdx === i;
+
+          return (
+            <div key={i} className={`border rounded-xl overflow-hidden ${sev.bg}`}>
+              <button
+                onClick={() => setOpenIdx(isOpen ? null : i)}
+                className="w-full flex items-center gap-3 p-4 text-left hover:bg-white/[0.02] transition-colors"
+              >
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${pcfg.bg} ${pcfg.color}`}>
+                  {pcfg.label}
+                </span>
+                <span className="text-sm font-medium text-white/90 flex-1">{e.title}</span>
+                <span className={`text-xs shrink-0 font-bold ${e.confidence >= 95 ? "text-green-400" : e.confidence >= 85 ? "text-sky-400" : "text-amber-400"}`}>
+                  {e.confidence}%
+                </span>
+                {isOpen ? <ChevronUp className="w-4 h-4 text-white/20 shrink-0" /> : <ChevronDown className="w-4 h-4 text-white/20 shrink-0" />}
+              </button>
+
+              {isOpen && (
+                <div className="px-4 pb-4 space-y-4 border-t border-white/[0.05] pt-3">
+                  {e.url && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <Globe className="w-3 h-3 text-white/25 shrink-0" />
+                      <code className="text-violet-400 font-mono break-all">{e.url}</code>
+                    </div>
+                  )}
+
+                  <div className="bg-black/30 border border-white/[0.07] rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-white/50">
+                        <Play className="w-3 h-3" />Reproduction Steps
+                      </div>
+                      <button
+                        onClick={() => copySteps(i, e.steps)}
+                        className="text-[10px] text-white/30 hover:text-white/60 transition-colors"
+                      >
+                        {copied === i ? "✓ Copied" : "Copy"}
+                      </button>
+                    </div>
+                    <ol className="space-y-2">
+                      {e.steps.map((step, si) => (
+                        <li key={si} className="flex items-start gap-2 text-xs text-white/55">
+                          <span className="text-white/20 font-mono shrink-0 mt-0.5">{si + 1}.</span>
+                          {step}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="bg-black/20 border border-white/[0.06] rounded-xl p-3">
+                      <div className="text-[10px] text-white/30 uppercase tracking-wide mb-1.5">What Was Observed</div>
+                      <p className="text-xs text-white/55 leading-relaxed whitespace-pre-line">{e.observed}</p>
+                    </div>
+                    <div className="bg-red-500/[0.05] border border-red-500/15 rounded-xl p-3">
+                      <div className="text-[10px] text-red-400/70 uppercase tracking-wide mb-1.5">Business Impact</div>
+                      <p className="text-xs text-white/55 leading-relaxed">{e.impact}</p>
+                    </div>
+                    {e.codeRef && (
+                      <div className="bg-black/30 border border-white/[0.07] rounded-xl p-3">
+                        <div className="text-[10px] text-white/30 uppercase tracking-wide mb-1.5">How to Fix</div>
+                        <p className="text-xs text-white/50 font-mono leading-relaxed">{e.codeRef}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ConfidenceBadges({ evidence }: { evidence: ProofEvidence[] }) {
+  const runtimeCount = evidence.filter((e) => e.confidence >= 95).length;
+  const codeCount = evidence.filter((e) => e.confidence >= 85 && e.confidence < 95).length;
+
+  return (
+    <div className="glass rounded-xl px-5 py-3 aurora-card">
+      <div className="flex flex-wrap gap-4 items-center text-xs">
+        <span className="text-white/20 uppercase tracking-widest font-medium">Confidence</span>
+        {runtimeCount > 0 && (
+          <span className="flex items-center gap-1.5 text-green-400">
+            <CheckCircle2 className="w-3 h-3" />
+            {runtimeCount} Runtime Proof{runtimeCount > 1 ? "s" : ""} (95–99%)
+          </span>
+        )}
+        {codeCount > 0 && (
+          <span className="text-sky-400">{codeCount} Code Evidence (85–94%)</span>
+        )}
+        <span className="text-amber-400">Pattern Match (70–84%)</span>
+        <span className="text-white/25">AI Reasoning (&lt;70%)</span>
+      </div>
+    </div>
+  );
+}
+
+function RegressionPanel({ diff }: { diff: RegressionDiff }) {
+  const hasRegressions = diff.newRegressions.length > 0;
+  const hasFixed = diff.fixedIssues.length > 0;
+
+  return (
+    <div className="glass rounded-2xl p-6 space-y-4 aurora-card aurora-card-slow">
+      <div className="flex items-center gap-2">
+        <GitBranch className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm">Regression Memory</h2>
+        {diff.previousScanId && (
+          <Link href={`/scans/${diff.previousScanId}`}>
+            <span className="ml-auto text-[10px] text-white/25 hover:text-white/50 transition-colors cursor-pointer">
+              vs Scan #{diff.previousScanId} →
+            </span>
+          </Link>
+        )}
+      </div>
+
+      <p className={`text-sm leading-relaxed ${hasRegressions ? "text-red-400" : hasFixed ? "text-green-400" : "text-white/45"}`}>
+        {diff.summary}
+      </p>
+
+      {diff.scoreDelta != null && (
+        <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-1 text-sm font-bold ${diff.scoreDelta > 0 ? "text-green-400" : diff.scoreDelta < 0 ? "text-red-400" : "text-white/30"}`}>
+            {diff.scoreDelta > 0 ? <TrendingUp className="w-4 h-4" /> : diff.scoreDelta < 0 ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+            {diff.scoreDelta > 0 ? "+" : ""}{diff.scoreDelta} points
+          </div>
+          {diff.previousScore != null && (
+            <span className="text-xs text-white/25">from {diff.previousScore} → {(diff.previousScore ?? 0) + (diff.scoreDelta ?? 0)}</span>
+          )}
+        </div>
+      )}
+
+      <div className="grid sm:grid-cols-3 gap-3">
+        <div className={`rounded-xl p-3 border text-center ${hasRegressions ? "bg-red-500/[0.07] border-red-500/20" : "bg-white/[0.03] border-white/[0.07]"}`}>
+          <div className={`text-xl font-bold font-['Syne'] ${hasRegressions ? "text-red-400" : "text-white/30"}`}>{diff.newRegressions.length}</div>
+          <div className="text-[10px] text-white/30 mt-0.5">New Regressions</div>
+        </div>
+        <div className={`rounded-xl p-3 border text-center ${hasFixed ? "bg-green-500/[0.07] border-green-500/20" : "bg-white/[0.03] border-white/[0.07]"}`}>
+          <div className={`text-xl font-bold font-['Syne'] ${hasFixed ? "text-green-400" : "text-white/30"}`}>{diff.fixedIssues.length}</div>
+          <div className="text-[10px] text-white/30 mt-0.5">Issues Fixed</div>
+        </div>
+        <div className="rounded-xl p-3 border bg-white/[0.03] border-white/[0.07] text-center">
+          <div className="text-xl font-bold font-['Syne'] text-white/30">{diff.unchanged}</div>
+          <div className="text-[10px] text-white/30 mt-0.5">Unchanged</div>
+        </div>
+      </div>
+
+      {hasRegressions && (
+        <div className="space-y-1.5">
+          <div className="text-[10px] text-red-400/70 uppercase tracking-wide font-medium">New Regressions Since Last Scan</div>
+          {diff.newRegressions.slice(0, 5).map((r, i) => {
+            const sev = SEVERITY_CONFIG[r.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
+            return (
+              <div key={i} className="flex items-center gap-2 text-xs">
+                <span className={`px-1.5 py-0.5 rounded font-bold text-[9px] uppercase ${sev.badge}`}>{r.severity}</span>
+                <span className="text-white/55">{r.title}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {hasFixed && (
+        <div className="space-y-1.5">
+          <div className="text-[10px] text-green-400/70 uppercase tracking-wide font-medium">Fixed Since Last Scan</div>
+          {diff.fixedIssues.slice(0, 4).map((r, i) => (
+            <div key={i} className="flex items-center gap-2 text-xs text-white/40">
+              <CheckCircle2 className="w-3 h-3 text-green-400/60 shrink-0" />
+              {r.title}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BenchmarkPanel({ data }: { data: BenchmarkData }) {
+  const dims = [
+    { label: "Overall", value: data.overall },
+    { label: "Security", value: data.security },
+    { label: "Performance", value: data.performance },
+    { label: "UX", value: data.ux },
+    { label: "Reliability", value: data.reliability },
+  ];
+
+  return (
+    <div className="glass rounded-2xl p-6 space-y-5 aurora-card">
+      <div className="flex items-center gap-2">
+        <Award className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm">Benchmark Percentile</h2>
+        <span className="ml-auto text-[10px] text-white/25">vs {data.totalScansCompared} apps</span>
+      </div>
+
+      {data.vibeToolRank && (
+        <div className="bg-violet-500/[0.06] border border-violet-500/15 rounded-xl px-4 py-2.5">
+          <span className="text-xs text-violet-400">{data.vibeToolRank}</span>
+        </div>
+      )}
+      {data.industryRank && (
+        <div className="bg-sky-500/[0.06] border border-sky-500/15 rounded-xl px-4 py-2.5">
+          <span className="text-xs text-sky-400">{data.industryRank}</span>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {dims.map(({ label, value }) => {
+          const color = value >= 70 ? "#4ade80" : value >= 40 ? "#f59e0b" : "#f87171";
+          return (
+            <div key={label} className="flex items-center gap-3">
+              <span className="text-xs text-white/35 w-20 shrink-0">{label}</span>
+              <div className="flex-1 h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${value}%`, backgroundColor: color }} />
+              </div>
+              <span className="text-xs font-bold w-12 text-right shrink-0" style={{ color }}>
+                {value}th %ile
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {data.totalScansCompared === 0 && (
+        <p className="text-xs text-white/25 text-center">Benchmarks will populate as more apps are scanned.</p>
+      )}
+    </div>
+  );
+}
+
+function LaunchDNAPanel({ dna }: { dna: LaunchDNA }) {
+  const profiles = [
+    { key: "risk", data: dna.riskProfile, accent: "text-red-400", bg: "bg-red-500/[0.05] border-red-500/15" },
+    { key: "growth", data: dna.growthProfile, accent: "text-green-400", bg: "bg-green-500/[0.05] border-green-500/15" },
+    { key: "tech", data: dna.techHealthProfile, accent: "text-sky-400", bg: "bg-sky-500/[0.05] border-sky-500/15" },
+  ];
+
+  return (
+    <div className="glass rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow">
+      <div className="flex items-center gap-2">
+        <Dna className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm">Launch DNA</h2>
+        <span className="ml-auto text-[10px] text-white/30 font-mono">{dna.overallDNA}</span>
+      </div>
+
+      <div className="grid sm:grid-cols-3 gap-4">
+        {profiles.map(({ key, data, accent, bg }) => {
+          const pct = data.score;
+          const color = pct >= 70 ? "#4ade80" : pct >= 45 ? "#f59e0b" : "#f87171";
+          return (
+            <div key={key} className={`rounded-2xl border p-4 space-y-3 ${bg}`}>
+              <div>
+                <div className={`text-xs font-bold ${accent} mb-0.5`}>{data.label}</div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1 bg-white/[0.08] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
+                  </div>
+                  <span className="text-xs font-bold shrink-0" style={{ color }}>{pct}</span>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {data.tags.map((tag) => (
+                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.08] text-white/40">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <p className="text-xs text-white/40 leading-relaxed">{data.insight}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CofounderNarrativePanel({ narrative }: { narrative: string }) {
+  const paragraphs = narrative.split("\n").filter((p) => p.trim().length > 0);
+
+  return (
+    <div className="glass rounded-2xl p-6 space-y-5 aurora-card">
+      <div className="flex items-center gap-2">
+        <Users className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm">Technical Co-Founder Mode</h2>
+        <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400">AI CTO</span>
+      </div>
+      <div className="border border-violet-500/10 bg-violet-500/[0.03] rounded-2xl p-5 space-y-4">
+        {paragraphs.map((p, i) => (
+          <p key={i} className="text-sm text-white/60 leading-relaxed">{p}</p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ShadowApiPanel({ findings }: { findings: ShadowApiFindings }) {
+  const hasOrphaned = findings.orphanedRoutes.length > 0;
+
+  return (
+    <div className="glass rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow">
+      <div className="flex items-center gap-2">
+        <Globe className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm">Shadow API Radar</h2>
+        <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${hasOrphaned ? "bg-amber-500/15 text-amber-400" : "bg-green-500/15 text-green-400"}`}>
+          {hasOrphaned ? `${findings.orphanedRoutes.length} orphaned` : "Clean"}
+        </span>
+      </div>
+
+      <p className="text-xs text-white/40 leading-relaxed">{findings.summary}</p>
+
+      {hasOrphaned && (
+        <div className="space-y-2">
+          <div className="text-[10px] text-white/25 uppercase tracking-widest font-medium">Orphaned Routes (live but unused)</div>
+          {findings.orphanedRoutes.map((route, i) => (
+            <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${route.risk.startsWith("HIGH") ? "bg-red-500/[0.06] border-red-500/15" : "bg-amber-500/[0.05] border-amber-500/12"}`}>
+              <span className={`text-[9px] font-bold font-mono px-1.5 py-0.5 rounded shrink-0 mt-0.5 ${route.risk.startsWith("HIGH") ? "bg-red-500/20 text-red-400" : "bg-amber-500/15 text-amber-400"}`}>
+                {route.method}
+              </span>
+              <div>
+                <code className="text-xs text-white/60 font-mono">{route.route}</code>
+                <p className="text-[10px] text-white/30 mt-0.5">{route.risk}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="grid sm:grid-cols-2 gap-3 text-xs">
+        <div className="bg-white/[0.02] border border-white/[0.07] rounded-xl p-3">
+          <div className="text-[10px] text-white/25 uppercase tracking-wide mb-2">Backend Routes Registered</div>
+          <div className="space-y-1 max-h-28 overflow-y-auto">
+            {findings.backendRegisteredRoutes.slice(0, 8).map((r, i) => (
+              <code key={i} className="block text-white/35 font-mono text-[10px]">{r}</code>
+            ))}
+          </div>
+        </div>
+        <div className="bg-white/[0.02] border border-white/[0.07] rounded-xl p-3">
+          <div className="text-[10px] text-white/25 uppercase tracking-wide mb-2">Frontend Fetch Calls</div>
+          <div className="space-y-1 max-h-28 overflow-y-auto">
+            {findings.frontendFetchRoutes.slice(0, 8).map((r, i) => (
+              <code key={i} className="block text-white/35 font-mono text-[10px]">{r}</code>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ScanResultsPage() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -589,6 +985,46 @@ export default function ScanResultsPage() {
           </div>
         </div>
 
+        {/* ── Visual Evidence Gallery (Runtime Proofs) ─────── */}
+        {scan.proofEvidence && scan.proofEvidence.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+            <ProofEvidencePanel evidence={scan.proofEvidence} />
+          </motion.div>
+        )}
+
+        {/* ── Confidence Badges ─────────────────────────────── */}
+        {scan.proofEvidence && scan.proofEvidence.length > 0 && (
+          <ConfidenceBadges evidence={scan.proofEvidence} />
+        )}
+
+        {/* ── Launch DNA ────────────────────────────────────── */}
+        {scan.launchDNA && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+            <LaunchDNAPanel dna={scan.launchDNA} />
+          </motion.div>
+        )}
+
+        {/* ── Technical Co-Founder Narrative ───────────────── */}
+        {scan.cofounderNarrative && scan.cofounderNarrative.length > 20 && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
+            <CofounderNarrativePanel narrative={scan.cofounderNarrative} />
+          </motion.div>
+        )}
+
+        {/* ── Regression Memory ────────────────────────────── */}
+        {scan.regressionDiff && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
+            <RegressionPanel diff={scan.regressionDiff} />
+          </motion.div>
+        )}
+
+        {/* ── Benchmark Percentile ─────────────────────────── */}
+        {scan.benchmarkPercentile && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <BenchmarkPanel data={scan.benchmarkPercentile} />
+          </motion.div>
+        )}
+
         {/* ── Launch Risk Forecast ──────────────────────────── */}
         {scan.riskForecast && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
@@ -607,6 +1043,13 @@ export default function ScanResultsPage() {
         {scan.revenueIntelligence && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <RevenueIntelligenceSection revenue={scan.revenueIntelligence} />
+          </motion.div>
+        )}
+
+        {/* ── Shadow API Radar ─────────────────────────────── */}
+        {scan.shadowApiFindings && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
+            <ShadowApiPanel findings={scan.shadowApiFindings} />
           </motion.div>
         )}
 

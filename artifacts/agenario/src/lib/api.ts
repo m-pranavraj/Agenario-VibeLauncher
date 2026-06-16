@@ -85,6 +85,62 @@ export interface ComplianceResult {
   riskLevel: string;
 }
 
+export interface ProofEvidence {
+  type: "idor" | "chaos" | "pii" | "stripe-bypass" | "shadow-api" | "regression";
+  title: string;
+  severity: "critical" | "high" | "medium" | "low";
+  confidence: number;
+  url?: string;
+  steps: string[];
+  observed: string;
+  impact: string;
+  screenshot?: string;
+  codeRef?: string;
+}
+
+export interface RegressionDiff {
+  previousScanId: number | null;
+  previousScore: number | null;
+  newRegressions: Array<{ title: string; severity: string; agentName: string }>;
+  fixedIssues: Array<{ title: string; severity: string }>;
+  unchanged: number;
+  scoreDelta: number | null;
+  summary: string;
+}
+
+export interface BenchmarkData {
+  overall: number;
+  security: number;
+  performance: number;
+  ux: number;
+  reliability: number;
+  totalScansCompared: number;
+  vibeToolRank?: string;
+  industryRank?: string;
+}
+
+export interface LaunchDNAProfile {
+  label: string;
+  score: number;
+  tags: string[];
+  insight: string;
+}
+
+export interface LaunchDNA {
+  riskProfile: LaunchDNAProfile;
+  growthProfile: LaunchDNAProfile;
+  techHealthProfile: LaunchDNAProfile;
+  overallDNA: string;
+}
+
+export interface ShadowApiFindings {
+  orphanedRoutes: Array<{ route: string; method: string; risk: string }>;
+  undocumentedEndpoints: string[];
+  frontendFetchRoutes: string[];
+  backendRegisteredRoutes: string[];
+  summary: string;
+}
+
 export interface Scan {
   id: number;
   userId: number;
@@ -102,6 +158,12 @@ export interface Scan {
   riskForecast: RiskForecast | null;
   revenueIntelligence: RevenueIntelligence | null;
   complianceResults: ComplianceResult[] | null;
+  proofEvidence: ProofEvidence[] | null;
+  regressionDiff: RegressionDiff | null;
+  benchmarkPercentile: BenchmarkData | null;
+  launchDNA: LaunchDNA | null;
+  cofounderNarrative: string | null;
+  shadowApiFindings: ShadowApiFindings | null;
   createdAt: string;
   completedAt: string | null;
 }
@@ -118,6 +180,19 @@ export interface RazorpayOrder {
   planName: string;
 }
 
+export interface PortfolioApp {
+  scanId: number;
+  source: string;
+  sourceType: string;
+  score: number | null;
+  verdict: string | null;
+  issueCounts: IssueCounts | null;
+  framework: string | null;
+  businessType: string | null;
+  createdAt: string;
+  riskLevel: string;
+}
+
 export const api = {
   auth: {
     register: (data: { email: string; name: string; password: string }) =>
@@ -131,7 +206,7 @@ export const api = {
   scans: {
     list: () => request<Scan[]>("/scans"),
     get: (id: number) => request<ScanDetail>(`/scans/${id}`),
-    create: (data: { sourceType: string; sourceInput: string; appDescription?: string }) =>
+    create: (data: { sourceType: string; sourceInput: string; appDescription?: string; vibeTool?: string; businessType?: string }) =>
       request<ScanDetail>("/scans", { method: "POST", body: JSON.stringify(data) }),
   },
   billing: {
@@ -152,5 +227,9 @@ export const api = {
       }),
     status: () =>
       request<{ plan: string; razorpayCustomerId: string | null }>("/billing/status"),
+  },
+  monitoring: {
+    portfolio: () => request<{ portfolio: PortfolioApp[] }>("/monitoring/portfolio"),
+    overview: () => request<{ apps: unknown[]; totalScans: number }>("/monitoring/overview"),
   },
 };

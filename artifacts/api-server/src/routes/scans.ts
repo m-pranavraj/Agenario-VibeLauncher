@@ -3,11 +3,16 @@ import fs from "fs";
 import { eq, desc } from "drizzle-orm";
 import { db, usersTable, scansTable, scanIssuesTable } from "@workspace/db";
 import { CreateScanBody } from "@workspace/api-zod";
-import { runAllAgents, type CodeContext } from "../lib/agents";
-import { ingestGitHubRepo, extractRoutesFromDir, cleanupScan } from "../lib/ingestion";
-import { ingestZipFile, cleanupZip } from "../lib/zip-ingestion";
-import { detectFramework, detectVibeTool, detectBusinessType, computeVerdict } from "../lib/detector";
-import { scanDirectory, type StaticFinding } from "../lib/scanner";
+import { runAllAgents, type CodeContext } from "../lib/agents.js";
+import { ingestGitHubRepo, extractRoutesFromDir, cleanupScan } from "../lib/ingestion.js";
+import { ingestZipFile, cleanupZip } from "../lib/zip-ingestion.js";
+import { detectFramework, detectVibeTool, detectBusinessType } from "../lib/detector.js";
+import { scanDirectory, type StaticFinding } from "../lib/scanner.js";
+import { runProofEngine } from "../lib/proof-engine.js";
+import { runShadowApiRadar } from "../lib/shadow-api-radar.js";
+import { computeRegressionDiff } from "../lib/regression.js";
+import { computeBenchmark } from "../lib/benchmark.js";
+import { generateCofounderNarrative, generateLaunchDNA } from "../lib/cofounder-agent.js";
 
 const router: IRouter = Router();
 
@@ -100,7 +105,7 @@ async function runAnalysisPipeline(opts: {
   res: any;
 }): Promise<void> {
   const {
-    scanId, sourceType, sourceInput, appDescription,
+    scanId, userId, sourceType, sourceInput, appDescription,
     dir, packageJson, fileTree, totalFiles, keyFiles, schemas, req, res,
   } = opts;
 
@@ -134,14 +139,16 @@ async function runAnalysisPipeline(opts: {
       .set({ framework, vibeTool, businessType })
       .where(eq(scansTable.id, scanId));
 
-    // ── Static Analysis (runs in parallel with AI agents) ────────
     const staticResult = scanDirectory(dir, pkg);
-    req.log.info({ scanId, findings: staticResult.findings.length, stats: staticResult.stats }, "Static scan complete");
-
+    req.log.info({ scanId, findings: staticResult.findings.length }, "Static scan complete");
     staticIssueRows = staticResult.findings.map((f) => staticFindingToIssueRow(scanId, f));
   }
 
-  const result = await runAllAgents(sourceType, sourceInput, appDescription, codeContext);
+  // ── Run core agents + proof engine in parallel ────────────────
+  const [result, proofEvidence] = await Promise.all([
+    runAllAgents(sourceType, sourceInput, appDescription, codeContext),
+    runProofEngine(sourceType, sourceInput),
+  ]);
 
   const aiIssueRows = result.agentResults.flatMap((ar) =>
     ar.issues.map((issue) => ({
@@ -156,13 +163,24 @@ async function runAnalysisPipeline(opts: {
     })),
   );
 
-  const allIssueRows = [...staticIssueRows, ...aiIssueRows];
+  // Add proof engine findings as high-confidence issues
+  const proofIssueRows = proofEvidence.map((pe) => ({
+    scanId,
+    agentName: "Runtime Proof Engine",
+    severity: pe.severity,
+    title: pe.title,
+    description: pe.observed,
+    fixPrompt: pe.codeRef ?? "See proof evidence for detailed reproduction steps and fix guidance.",
+    confidence: pe.confidence,
+    evidence: `[Runtime Proof] Steps: ${pe.steps.slice(0, 2).join(" → ")}`,
+  }));
+
+  const allIssueRows = [...staticIssueRows, ...aiIssueRows, ...proofIssueRows];
 
   if (allIssueRows.length > 0) {
     await db.insert(scanIssuesTable).values(allIssueRows);
   }
 
-  // Recalculate issue counts including static findings
   const allIssues = await db.select().from(scanIssuesTable).where(eq(scanIssuesTable.scanId, scanId));
   const issueCounts = {
     critical: allIssues.filter((i) => i.severity === "critical").length,
@@ -171,17 +189,75 @@ async function runAnalysisPipeline(opts: {
     low: allIssues.filter((i) => i.severity === "low").length,
   };
 
+  // Recalculate score including proof findings
+  const penalty =
+    Math.min(issueCounts.critical * 12, 55) +
+    Math.min(issueCounts.high * 5, 28) +
+    Math.min(issueCounts.medium * 2, 12) +
+    Math.min(issueCounts.low * 1, 5);
+  const finalScore = Math.max(0, 100 - penalty);
+
+  // ── Shadow API Radar (only for GitHub/ZIP with real code) ─────
+  let shadowApiFindings = null;
+  if (dir) {
+    try {
+      shadowApiFindings = runShadowApiRadar(dir);
+    } catch (err) {
+      req.log.warn({ err }, "Shadow API radar failed");
+    }
+  }
+
+  // ── Run enrichment in parallel ────────────────────────────────
+  const topIssues = allIssues.slice(0, 10).map((i) => ({
+    severity: i.severity,
+    title: i.title,
+    agentName: i.agentName,
+  }));
+
+  const [regressionDiff, benchmarkPercentile, launchDNA, cofounderNarrative] = await Promise.all([
+    computeRegressionDiff(scanId, userId, sourceInput, finalScore),
+    computeBenchmark(scanId, finalScore, vibeTool !== "unknown" ? vibeTool : null, businessType !== "unknown" ? businessType : null),
+    generateLaunchDNA({
+      sourceType, sourceInput,
+      score: finalScore,
+      launchVerdict: result.launchVerdict,
+      issueCounts,
+      framework: framework !== "unknown" ? framework : "unknown",
+      vibeTool: vibeTool !== "unknown" ? vibeTool : "unknown",
+      businessType: businessType !== "unknown" ? businessType : "unknown",
+      topIssues,
+      riskForecastSummary: result.riskForecast?.executiveRecommendation,
+    }),
+    generateCofounderNarrative({
+      sourceType, sourceInput,
+      score: finalScore,
+      launchVerdict: result.launchVerdict,
+      issueCounts,
+      framework: framework !== "unknown" ? framework : "unknown",
+      vibeTool: vibeTool !== "unknown" ? vibeTool : "unknown",
+      businessType: businessType !== "unknown" ? businessType : "unknown",
+      topIssues,
+      riskForecastSummary: result.riskForecast?.executiveRecommendation,
+    }),
+  ]);
+
   const [updated] = await db
     .update(scansTable)
     .set({
       status: "completed",
-      score: result.score,
+      score: finalScore,
       summary: result.summary,
       launchVerdict: result.launchVerdict,
       issueCounts,
       riskForecast: result.riskForecast ?? null,
       revenueIntelligence: result.revenueIntelligence ?? null,
       complianceResults: result.complianceResults ?? null,
+      proofEvidence: proofEvidence.length > 0 ? proofEvidence : null,
+      regressionDiff: regressionDiff ?? null,
+      benchmarkPercentile,
+      launchDNA,
+      cofounderNarrative: cofounderNarrative || null,
+      shadowApiFindings: shadowApiFindings ?? null,
       framework: framework !== "unknown" ? framework : undefined,
       vibeTool: vibeTool !== "unknown" ? vibeTool : undefined,
       businessType: businessType !== "unknown" ? businessType : undefined,
@@ -208,7 +284,9 @@ router.post("/scans", async (req, res): Promise<void> => {
     return;
   }
 
-  const { sourceType, sourceInput, appDescription, vibeTool: userVibeTool, businessType: userBusinessType } = parsed.data;
+  const { sourceType, sourceInput, appDescription } = parsed.data;
+  const userVibeTool = typeof req.body?.vibeTool === "string" ? req.body.vibeTool : undefined;
+  const userBusinessType = typeof req.body?.businessType === "string" ? req.body.businessType : undefined;
 
   const [user] = await db
     .select()

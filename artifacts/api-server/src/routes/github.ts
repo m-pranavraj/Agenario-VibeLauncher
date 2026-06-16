@@ -1,7 +1,7 @@
 import { Router } from "express";
 import crypto from "crypto";
-import { db } from "@workspace/db";
-import { scansTable as scans } from "@workspace/db/schema";
+import { db, scansTable as scans } from "@workspace/db";
+import { eq, like, desc } from "drizzle-orm";
 import { runAllAgents } from "../lib/agents.js";
 import { logger } from "../lib/logger.js";
 
@@ -107,10 +107,12 @@ router.get("/github/pr-status/:prNumber", async (req, res) => {
     return;
   }
 
-  const scan = await db.query.scans.findFirst({
-    where: (s, { like }) => like(s.appDescription, `%PR #${prNumber}%`),
-    orderBy: (s, { desc }) => [desc(s.createdAt)],
-  });
+  const [scan] = await db
+    .select()
+    .from(scans)
+    .where(like(scans.appDescription, `%PR #${prNumber}%`))
+    .orderBy(desc(scans.createdAt))
+    .limit(1);
 
   if (!scan) {
     res.status(404).json({ error: "No scan found for this PR" });
@@ -145,10 +147,12 @@ router.get("/github/ci-check", async (req, res) => {
     return;
   }
 
-  const scan = await db.query.scans.findFirst({
-    where: (s, { eq }) => eq(s.sourceInput, repo),
-    orderBy: (s, { desc }) => [desc(s.createdAt)],
-  });
+  const [scan] = await db
+    .select()
+    .from(scans)
+    .where(eq(scans.sourceInput, repo))
+    .orderBy(desc(scans.createdAt))
+    .limit(1);
 
   if (!scan) {
     res.status(404).json({ pass: false, reason: "No scan found for this repo" });

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, Link } from "wouter";
+import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
   Rocket, ArrowLeft, Plus, TrendingUp, TrendingDown, Minus,
@@ -7,235 +7,183 @@ import {
   Globe, Github, FileText, ChevronRight, Shield, RefreshCw,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, type PortfolioApp } from "@/lib/api";
 
-interface PortfolioApp {
-  scanId: number;
-  source: string;
-  sourceType: string;
-  score: number | null;
-  verdict: string | null;
-  issueCounts: { critical: number; high: number; medium: number; low: number } | null;
-  framework: string | null;
-  businessType: string | null;
-  createdAt: string;
-  riskLevel: "critical" | "high" | "medium" | "low";
-}
-
-const RISK_CONFIG = {
-  critical: { color: "text-red-400", bg: "bg-red-500/[0.07] border-red-500/20", badge: "bg-red-500/15 text-red-400", label: "Critical Risk" },
-  high: { color: "text-amber-400", bg: "bg-amber-500/[0.07] border-amber-500/18", badge: "bg-amber-500/12 text-amber-400", label: "High Risk" },
-  medium: { color: "text-yellow-400", bg: "bg-yellow-500/[0.05] border-yellow-500/15", badge: "bg-yellow-500/12 text-yellow-400", label: "Medium Risk" },
-  low: { color: "text-green-400", bg: "bg-green-500/[0.05] border-green-500/15", badge: "bg-green-500/12 text-green-400", label: "Low Risk" },
+const VERDICT_CONFIG = {
+  ready: { label: "Ready", icon: CheckCircle2, color: "text-green-400", bg: "bg-green-500/[0.07] border-green-500/20" },
+  caution: { label: "Caution", icon: AlertTriangle, color: "text-amber-400", bg: "bg-amber-500/[0.07] border-amber-500/20" },
+  "do-not-launch": { label: "Block", icon: XCircle, color: "text-red-400", bg: "bg-red-500/[0.07] border-red-500/20" },
 };
 
-const SOURCE_ICONS: Record<string, React.FC<{ className?: string }>> = {
+const RISK_COLORS = {
+  critical: "text-red-400",
+  high: "text-amber-400",
+  medium: "text-yellow-400",
+  low: "text-green-400",
+};
+
+const SOURCE_ICONS = {
   github: Github,
   url: Globe,
   zip: FileText,
   description: FileText,
 };
 
-function ScoreMini({ score, size = 40 }: { score: number; size?: number }) {
-  const color = score >= 80 ? "#4ade80" : score >= 55 ? "#f59e0b" : "#f87171";
-  const r = (size / 2) - 5;
-  const circ = 2 * Math.PI * r;
-  const dash = (score / 100) * circ;
+function ScoreBar({ score }: { score: number | null }) {
+  const pct = score ?? 0;
+  const color = pct >= 80 ? "#4ade80" : pct >= 55 ? "#f59e0b" : "#f87171";
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth="4"
-          strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round" />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-[10px] font-bold font-['Syne']" style={{ color }}>{score}</span>
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: color }} />
       </div>
+      <span className="text-sm font-bold font-['Syne'] shrink-0" style={{ color }}>
+        {score ?? "–"}
+      </span>
     </div>
   );
 }
 
 export default function PortfolioPage() {
   const { user, loading } = useAuth();
-  const [, setLocation] = useLocation();
   const [portfolio, setPortfolio] = useState<PortfolioApp[]>([]);
-  const [dataLoading, setDataLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [fetching, setFetching] = useState(true);
+  const [sortBy, setSortBy] = useState<"risk" | "score" | "date">("risk");
 
   useEffect(() => {
-    if (!loading && !user) setLocation("/login");
-  }, [user, loading, setLocation]);
-
-  useEffect(() => {
-    if (!user) return;
-    fetch("/api/monitoring/portfolio", { credentials: "include" })
-      .then((r) => r.json())
-      .then((data: { portfolio: PortfolioApp[] }) => setPortfolio(data.portfolio ?? []))
-      .catch(() => setError("Could not load portfolio"))
-      .finally(() => setDataLoading(false));
+    if (user) {
+      api.monitoring.portfolio()
+        .then((d) => setPortfolio(d.portfolio))
+        .catch(() => {})
+        .finally(() => setFetching(false));
+    }
   }, [user]);
 
-  if (loading || !user) return null;
+  if (loading) return null;
+
+  const sorted = [...portfolio].sort((a, b) => {
+    if (sortBy === "risk") return (a.score ?? 100) - (b.score ?? 100);
+    if (sortBy === "score") return (b.score ?? 0) - (a.score ?? 0);
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 
   const criticalCount = portfolio.filter((a) => a.riskLevel === "critical").length;
   const highCount = portfolio.filter((a) => a.riskLevel === "high").length;
   const avgScore = portfolio.length > 0
-    ? Math.round(portfolio.reduce((s, a) => s + (a.score ?? 50), 0) / portfolio.length)
+    ? Math.round(portfolio.reduce((s, a) => s + (a.score ?? 0), 0) / portfolio.length)
     : 0;
 
   return (
-    <div className="min-h-screen bg-[#050505]">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.04)_0%,_transparent_60%)] pointer-events-none" />
+    <div className="min-h-screen bg-[#050505] text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.05)_0%,_transparent_60%)] pointer-events-none" />
 
       <nav className="border-b border-white/[0.07] bg-[#050505]/90 backdrop-blur-2xl sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="text-white/30 hover:text-white transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-xl bg-white/[0.08] border border-white/[0.12] flex items-center justify-center">
-                <BarChart3 className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span className="text-white font-bold font-['Syne'] text-sm">Portfolio</span>
-            </div>
-            <span className="text-white/20 text-xs">Risk overview across all your apps</span>
-          </div>
-          <Link href="/scans/new">
-            <button className="flex items-center gap-1.5 bg-white text-black text-xs font-semibold px-4 py-2 rounded-xl hover:bg-white/90 transition-all">
-              <Plus className="w-3.5 h-3.5" />
-              New Scan
-            </button>
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-3">
+          <Link href="/dashboard" className="text-white/30 hover:text-white transition-colors">
+            <ArrowLeft className="w-5 h-5" />
           </Link>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-xl bg-white/[0.08] border border-white/[0.12] flex items-center justify-center">
+              <BarChart3 className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="text-white font-bold font-['Syne'] text-sm">Risk Portfolio</span>
+          </div>
+          <div className="ml-auto">
+            <Link href="/scans/new">
+              <button className="flex items-center gap-1.5 text-xs bg-white text-black font-semibold px-3 py-1.5 rounded-lg hover:bg-white/90 transition-all">
+                <Plus className="w-3 h-3" />New Scan
+              </button>
+            </Link>
+          </div>
         </div>
       </nav>
 
       <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
 
         {/* Stats row */}
-        {portfolio.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-          >
-            {[
-              { label: "Apps Tracked", value: portfolio.length, color: "text-white", icon: BarChart3 },
-              { label: "Avg Score", value: avgScore, color: avgScore >= 80 ? "text-green-400" : avgScore >= 55 ? "text-amber-400" : "text-red-400", icon: TrendingUp },
-              { label: "Critical Risk", value: criticalCount, color: criticalCount > 0 ? "text-red-400" : "text-white/30", icon: XCircle },
-              { label: "High Risk", value: highCount, color: highCount > 0 ? "text-amber-400" : "text-white/30", icon: AlertTriangle },
-            ].map(({ label, value, color, icon: Icon }) => (
-              <div key={label} className="glass rounded-2xl p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs text-white/30 uppercase tracking-wide">{label}</span>
-                  <Icon className="w-4 h-4 text-white/15" />
-                </div>
-                <div className={`text-3xl font-bold font-['Syne'] ${color}`}>{value}</div>
-              </div>
-            ))}
-          </motion.div>
-        )}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[
+            { label: "Apps Tracked", value: portfolio.length, color: "text-white" },
+            { label: "Avg Score", value: portfolio.length > 0 ? avgScore : "—", color: avgScore >= 80 ? "text-green-400" : avgScore >= 55 ? "text-amber-400" : "text-red-400" },
+            { label: "Critical Risk", value: criticalCount, color: criticalCount > 0 ? "text-red-400" : "text-green-400" },
+            { label: "High Risk", value: highCount, color: highCount > 0 ? "text-amber-400" : "text-green-400" },
+          ].map((s, i) => (
+            <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+              className="glass rounded-2xl p-5 aurora-card">
+              <div className={`text-3xl font-bold font-['Syne'] ${s.color}`}>{s.value}</div>
+              <div className="text-xs text-white/30 mt-1">{s.label}</div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Sort controls */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-white/25 uppercase tracking-widest font-medium mr-1">Sort by</span>
+          {(["risk", "score", "date"] as const).map((s) => (
+            <button key={s} onClick={() => setSortBy(s)}
+              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors capitalize ${sortBy === s ? "bg-white/[0.1] border-white/20 text-white" : "glass text-white/35 hover:text-white/60"}`}>
+              {s === "risk" ? "Highest Risk" : s === "score" ? "Best Score" : "Recent"}
+            </button>
+          ))}
+        </div>
 
         {/* Portfolio grid */}
-        {dataLoading ? (
-          <div className="flex items-center justify-center py-24">
+        {fetching ? (
+          <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
           </div>
-        ) : error ? (
-          <div className="text-center py-16 glass rounded-2xl">
-            <p className="text-white/30 text-sm">{error}</p>
-          </div>
-        ) : portfolio.length === 0 ? (
-          <div className="text-center py-24 glass rounded-2xl">
-            <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mx-auto mb-4">
-              <BarChart3 className="w-5 h-5 text-white/30" />
-            </div>
-            <h2 className="text-white font-bold font-['Syne'] mb-2">No apps in portfolio yet</h2>
-            <p className="text-white/30 text-sm mb-6">Run your first scan to start tracking your app's production readiness.</p>
+        ) : sorted.length === 0 ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="glass rounded-2xl p-16 text-center">
+            <BarChart3 className="w-10 h-10 text-white/15 mx-auto mb-4" />
+            <h3 className="text-white font-bold font-['Syne'] mb-2">No apps tracked yet</h3>
+            <p className="text-white/30 text-sm mb-6">Run your first scan to start building your risk portfolio.</p>
             <Link href="/scans/new">
-              <button className="bg-white text-black text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-white/90 transition-all">
+              <button className="bg-white text-black font-semibold text-sm px-6 py-2.5 rounded-xl hover:bg-white/90 transition-all">
                 Analyze Your First App
               </button>
             </Link>
-          </div>
+          </motion.div>
         ) : (
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-white/25 uppercase tracking-widest font-medium">
-                {portfolio.length} app{portfolio.length !== 1 ? "s" : ""} · sorted by risk
-              </p>
-            </div>
-
-            {portfolio.map((app, idx) => {
-              const riskCfg = RISK_CONFIG[app.riskLevel] ?? RISK_CONFIG.medium;
-              const SourceIcon = SOURCE_ICONS[app.sourceType] ?? FileText;
-              const shortSource = app.source.replace("https://github.com/", "").replace("https://", "").split("/").slice(0, 2).join("/");
-
+            {sorted.map((app, i) => {
+              const vc = app.verdict ? VERDICT_CONFIG[app.verdict as keyof typeof VERDICT_CONFIG] : null;
+              const VerdictIcon = vc?.icon ?? Shield;
+              const SourceIcon = SOURCE_ICONS[app.sourceType as keyof typeof SOURCE_ICONS] ?? Globe;
+              const riskColor = RISK_COLORS[app.riskLevel as keyof typeof RISK_COLORS] ?? "text-white/50";
               return (
-                <motion.div
-                  key={app.scanId}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.04 }}
-                >
+                <motion.div key={app.scanId} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                   <Link href={`/scans/${app.scanId}`}>
-                    <div className={`border rounded-2xl px-5 py-4 hover:bg-white/[0.02] transition-all cursor-pointer group ${riskCfg.bg}`}>
-                      <div className="flex items-center gap-4">
-                        {/* Risk rank */}
-                        <div className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-xs font-bold text-white/25 shrink-0">
-                          {idx + 1}
-                        </div>
-
-                        {/* Source */}
+                    <div className="glass rounded-xl p-5 hover:bg-white/[0.04] transition-all cursor-pointer scan-card-aurora">
+                      <div className="flex items-start gap-4">
+                        <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${app.riskLevel === "critical" ? "bg-red-400" : app.riskLevel === "high" ? "bg-amber-400" : app.riskLevel === "medium" ? "bg-yellow-400" : "bg-green-400"}`} />
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <SourceIcon className="w-3.5 h-3.5 text-white/30 shrink-0" />
-                            <span className="text-sm font-medium text-white/80 truncate">{shortSource}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {app.framework && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.07] text-white/30">
-                                {app.framework}
+                          <div className="flex items-center gap-2 mb-1">
+                            <SourceIcon className="w-3.5 h-3.5 text-white/25 shrink-0" />
+                            <span className="text-sm font-medium text-white/80 truncate">{app.source}</span>
+                            {vc && (
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${vc.bg} ${vc.color}`}>
+                                {vc.label}
                               </span>
                             )}
-                            {app.businessType && app.businessType !== "unknown" && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.07] text-white/30 capitalize">
-                                {app.businessType.replace("-", " ")}
-                              </span>
-                            )}
-                            <span className="text-[10px] text-white/20">
-                              {new Date(app.createdAt).toLocaleDateString()}
-                            </span>
                           </div>
+                          <div className="flex items-center gap-3 text-xs text-white/30 mb-3">
+                            {app.framework && <span>{app.framework}</span>}
+                            {app.businessType && <span>· {app.businessType.replace("-", " ")}</span>}
+                            <span>· {new Date(app.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <ScoreBar score={app.score} />
                         </div>
-
-                        {/* Issue counts */}
-                        {app.issueCounts && (
-                          <div className="hidden sm:flex items-center gap-3 shrink-0">
-                            {app.issueCounts.critical > 0 && (
-                              <div className="text-center">
-                                <div className="text-sm font-bold text-red-400">{app.issueCounts.critical}</div>
-                                <div className="text-[9px] text-white/20">Critical</div>
-                              </div>
-                            )}
-                            {app.issueCounts.high > 0 && (
-                              <div className="text-center">
-                                <div className="text-sm font-bold text-amber-400">{app.issueCounts.high}</div>
-                                <div className="text-[9px] text-white/20">High</div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Risk badge */}
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 hidden md:block ${riskCfg.badge}`}>
-                          {riskCfg.label}
-                        </span>
-
-                        {/* Score ring */}
-                        {app.score != null && <ScoreMini score={app.score} />}
-
-                        <ChevronRight className="w-4 h-4 text-white/15 group-hover:text-white/40 transition-colors shrink-0" />
+                        <div className="shrink-0 text-right">
+                          <div className={`text-xs font-semibold capitalize ${riskColor}`}>{app.riskLevel} risk</div>
+                          {app.issueCounts && (
+                            <div className="text-[10px] text-white/20 mt-1">
+                              {app.issueCounts.critical > 0 && <span className="text-red-400/70">{app.issueCounts.critical}c </span>}
+                              {app.issueCounts.high > 0 && <span className="text-amber-400/70">{app.issueCounts.high}h </span>}
+                              {app.issueCounts.medium > 0 && <span className="text-yellow-400/70">{app.issueCounts.medium}m</span>}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </Link>
@@ -245,20 +193,51 @@ export default function PortfolioPage() {
           </div>
         )}
 
-        {/* Rescan prompt */}
+        {/* Portfolio intelligence */}
         {portfolio.length > 0 && (
-          <div className="glass rounded-2xl p-5 flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-white mb-0.5">Keep your portfolio current</h3>
-              <p className="text-xs text-white/35">Run a new scan whenever you push significant changes to update risk scores.</p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+            className="glass rounded-2xl p-5 aurora-card aurora-card-slow">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="w-4 h-4 text-white/30" />
+              <h3 className="text-sm font-bold text-white font-['Syne']">Portfolio Intelligence</h3>
             </div>
-            <Link href="/scans/new">
-              <button className="flex items-center gap-2 bg-white/[0.06] border border-white/[0.1] hover:bg-white/[0.1] text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shrink-0">
-                <RefreshCw className="w-3.5 h-3.5" />
-                New Scan
-              </button>
-            </Link>
-          </div>
+            <div className="grid sm:grid-cols-3 gap-5 text-xs">
+              <div>
+                <div className="text-white/30 mb-2 uppercase tracking-wide">Risk Distribution</div>
+                {(["critical", "high", "medium", "low"] as const).map((level) => {
+                  const count = portfolio.filter((a) => a.riskLevel === level).length;
+                  if (count === 0) return null;
+                  const pct = Math.round((count / portfolio.length) * 100);
+                  return (
+                    <div key={level} className="flex items-center gap-2 mb-1.5">
+                      <div className="w-20 h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${level === "critical" ? "bg-red-400" : level === "high" ? "bg-amber-400" : level === "medium" ? "bg-yellow-400" : "bg-green-400"}`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-white/40 capitalize">{count} {level}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div>
+                <div className="text-white/30 mb-2 uppercase tracking-wide">Frameworks</div>
+                <div className="space-y-1 text-white/45">
+                  {Array.from(new Set(portfolio.map((a) => a.framework).filter(Boolean))).slice(0, 5).map((fw) => (
+                    <div key={fw}>{fw}</div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-white/30 mb-2 uppercase tracking-wide">Recommended Action</div>
+                <p className="text-white/45 leading-relaxed">
+                  {criticalCount > 0
+                    ? `${criticalCount} app${criticalCount > 1 ? "s" : ""} have critical issues and should not be live until fixed.`
+                    : highCount > 0
+                      ? `${highCount} app${highCount > 1 ? "s" : ""} have high-risk findings. Fix before scaling.`
+                      : "All apps in acceptable risk range. Keep running regular scans."}
+                </p>
+              </div>
+            </div>
+          </motion.div>
         )}
       </main>
     </div>

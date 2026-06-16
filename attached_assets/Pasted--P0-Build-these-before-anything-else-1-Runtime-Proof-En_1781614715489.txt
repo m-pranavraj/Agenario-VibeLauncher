@@ -1,0 +1,191 @@
+🚨 P0: Build these before anything else
+1. Runtime Proof Engine
+
+Current:
+
+AI says.
+
+Future:
+
+Agenario proved.
+
+Example:
+
+Issue:
+Broken access control.
+
+Proof:
+Changed /orders/123 → /orders/124
+
+Screenshot attached.
+
+Confidence:
+99%.
+
+This changes everything.
+
+2. Access Control Agent
+
+This is your killer demo.
+
+Examples:
+
+Restaurant orders
+Invoices
+Bookings
+Support tickets
+User profiles
+
+If another user's data is visible:
+
+🔴 DO NOT LAUNCH.
+3. Visual Evidence Gallery
+
+Every serious finding should have:
+
+Screenshot
+Steps to reproduce
+Impact
+Confidence
+Fix Prompt
+
+People trust visuals.
+
+4. Confidence System
+
+Every issue:
+
+99% Runtime verified
+
+90% Static proof
+
+70% Pattern match
+
+50% AI reasoning
+
+This builds credibility.
+
+⭐ P1: Features that make people pay ₹299
+5. Launch Disaster Simulator
+
+Answer:
+
+If I launch tomorrow, what happens?
+
+Show:
+
+Revenue risk
+Reputation risk
+Churn risk
+Data exposure risk
+6. Revenue Leakage Detector
+
+Detect:
+
+Coupon abuse
+Subscription loopholes
+Duplicate refunds
+Free premium access
+
+This protects money.
+
+People pay for money.
+
+7. Founder Blind Spot Detector
+
+Tell them:
+
+You forgot:
+
+Password reset
+Error monitoring
+Privacy policy
+Analytics
+Backups
+
+Feels magical.
+
+8. Technical Co-Founder Mode
+
+After scanning:
+
+Here's what your startup actually does.
+
+Here's what scares me.
+
+Here's what I'd fix first.
+
+9. Business Flow Intelligence
+
+Detect:
+
+SaaS
+E-commerce
+Restaurant
+Marketplace
+AI App
+
+Then customize checks.
+
+This makes Agenario feel intelligent.
+
+🏆 P2: The Moat
+
+These won't immediately increase conversions, but they win long-term.
+
+10. Vibe Dataset
+
+Ask:
+
+Built with?
+
+Cursor
+Replit
+Lovable
+Bolt
+Claude
+
+Learn patterns.
+
+Eventually:
+
+41% of Replit restaurant apps lacked access controls.
+
+Nobody has this data.
+
+11. Benchmark Engine
+
+Compare:
+
+Security:
+Top 20%
+
+UX:
+Bottom 30%
+
+Reliability:
+Top 10%
+
+Founders love rankings.
+
+12. Regression Memory
+
+Remember:
+
+What broke
+What got fixed
+What came back
+
+Makes Agenario sticky.
+
+13. Launch DNA
+
+Every app gets:
+
+Risk Profile
+Growth Profile
+Technical Health Profile
+
+Eventually:
+
+Agenario understands apps better than their creators.
