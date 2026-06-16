@@ -8,7 +8,7 @@
 
 import Groq from "groq-sdk";
 import { logger } from "./logger.js";
-import type { LaunchDNA } from "@workspace/db/schema";
+import type { LaunchDNA, LaunchReplayStep } from "@workspace/db/schema";
 
 const groq = new Groq({ apiKey: process.env["GROQ_API_KEY"] });
 const MODEL = "llama-3.3-70b-versatile";

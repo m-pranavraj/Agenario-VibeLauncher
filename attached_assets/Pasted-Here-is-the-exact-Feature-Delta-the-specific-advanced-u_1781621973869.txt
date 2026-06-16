@@ -1,0 +1,61 @@
+Here is the exact **Feature Delta**—the specific advanced upgrades and logic blocks that need to be added to your current Day 3 codebase to bridge the gap and complete the platform.
+
+This is the exact checklist your Replit agent needs to execute next.
+
+---
+
+## 🛠️ Phase 1: The UI/UX "FOMO" Monetization Layer (Highest Priority)
+
+Your backend runs the 4 probes, but you need to add the code that restricts the data and teases the user to upgrade to the ₹299 Creator tier.
+
+* **Add `utils/tierGate.ts` Middleware:** * An API interceptor that checks `user.planType`. If `FREE`, it runs the full scan (so you capture the data) but mutates the JSON response before sending it to the frontend.
+* It strips the exact code file/line references, hides the full text of the 1-Click Fix Prompts, and masks the detailed reproduction steps.
+
+
+* **Add "Locked" Premium Teaser Cards (Frontend):**
+* Components for the *Revenue Leakage*, *Disaster Simulator*, and *Shadow API* panels that conditionally render a blurred state if a finding is flagged as locked.
+* **The Hook:** Displays text like `🔒 2 Revenue Risks Detected` with an inline, un-redirected Razorpay checkout button.
+
+
+
+---
+
+## 🌐 Phase 2: Turning Documentation into Real Integrations
+
+Your documentation page lists amazing workflows (GitHub Actions, Vercel guards, Webhooks). Now your agent needs to build the actual backend endpoints to support them.
+
+* **Add the Vercel/Netlify Deploy Guard Endpoint (`/api/github/ci-check`):**
+* A GET endpoint that accepts a repository name and a threshold score. It queries your Postgres DB for the latest scan score of that repo. If the score is below the threshold, it returns `pass: false`, allowing the user's Vercel build to automatically block a risky deployment.
+
+
+* **Add the GitHub Webhook Receiver (`/api/github/webhook`):**
+* An Express controller that listens for incoming GitHub `pull_request` events.
+* It uses your existing server-side HMAC SHA256 verification to validate the GitHub secret.
+* It automatically triggers a new code scan whenever a developer opens a PR, parses the payload, and uses `octokit` (GitHub's library) to post the Board-Memo verdict comment directly onto the user's GitHub Pull Request.
+
+
+
+---
+
+## 🖥️ Phase 3: Upgrading the 4 Probes with Real Visual Proof
+
+Right now, your 4 reality probes run incredibly fast via direct backend fetches and regex scanning, but they lack visual proof.
+
+* **Add Lightweight Playwright Integration for Live URLs:**
+* Add `playwright` or `puppeteer-core` to the backend *specifically* for the "Live URL" input mode.
+* When a user submits a live link, the backend boots a quick headless browser, resizes the viewport to **375px** to capture a mobile layout breakpoint screenshot, captures a standard desktop screenshot, and streams those files directly into your frontend `Visual Evidence Gallery`.
+
+
+
+---
+
+## 📊 Phase 4: UI Polish for the 7 New Panels
+
+Your backend is already outputting the data structures for the new panels (Regression, Benchmarks, Shadow APIs). Your agent just needs to make them look stunning.
+
+* **Add the "Hacker-Style" Exploit Terminal Card:**
+* For the IDOR and Stripe Bypass findings, design a dark-mode UI block using a monospace font. It should display the raw simulated network request payload that caused the failure, stamped with a red `[LOGIC GAP CONFIRMED]` status badge to make the value undeniable.
+
+
+* **Add the Interactive Portfolio Dashboard (`/portfolio`):**
+* A grid view utilizing `shadcn/ui` cards that maps every single repository the user has ever scanned, sorting them dynamically from highest launch risk to lowest launch risk.

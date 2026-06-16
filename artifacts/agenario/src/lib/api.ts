@@ -141,6 +141,12 @@ export interface ShadowApiFindings {
   summary: string;
 }
 
+export interface LaunchReplayStep {
+  step: string;
+  status: "ok" | "warning" | "fail";
+  detail?: string;
+}
+
 export interface Scan {
   id: number;
   userId: number;
@@ -164,6 +170,7 @@ export interface Scan {
   launchDNA: LaunchDNA | null;
   cofounderNarrative: string | null;
   shadowApiFindings: ShadowApiFindings | null;
+  launchReplaySteps: LaunchReplayStep[] | null;
   createdAt: string;
   completedAt: string | null;
 }

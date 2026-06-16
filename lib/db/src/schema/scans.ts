@@ -66,6 +66,12 @@ export interface ShadowApiFindings {
   summary: string;
 }
 
+export interface LaunchReplayStep {
+  step: string;
+  status: "ok" | "warning" | "fail";
+  detail?: string;
+}
+
 export const scansTable = pgTable("scans", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -117,6 +123,7 @@ export const scansTable = pgTable("scans", {
   launchDNA: jsonb("launch_dna").$type<LaunchDNA>(),
   cofounderNarrative: text("cofounder_narrative"),
   shadowApiFindings: jsonb("shadow_api_findings").$type<ShadowApiFindings>(),
+  launchReplaySteps: jsonb("launch_replay_steps").$type<LaunchReplayStep[]>(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp("completed_at", { withTimezone: true }),
 });

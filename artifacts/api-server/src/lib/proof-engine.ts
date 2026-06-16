@@ -14,6 +14,7 @@
 
 import { logger } from "./logger.js";
 import type { ProofEvidence } from "@workspace/db/schema";
+import { generateProofScreenshot, generateAccessControlScreenshot } from "./proof-screenshot.js";
 
 const FETCH_TIMEOUT = 8000;
 
@@ -67,12 +68,13 @@ export async function runIDORProbe(baseUrl: string): Promise<ProofEvidence | nul
   const accessible = results.filter((r) => r.status === 200);
 
   if (exposed.length > 0) {
+    const attackUrl = `${cleanUrl}${exposed[0]!.path}`;
     return {
       type: "idor",
       title: "IDOR — User Data Accessible Without Authorization",
       severity: "critical",
       confidence: 97,
-      url: `${cleanUrl}${exposed[0]!.path}`,
+      url: attackUrl,
       steps: [
         `Navigate to ${cleanUrl}${exposed[0]!.path}`,
         `Change the numeric ID from 1 → 2: ${cleanUrl}${exposed[0]!.path.replace("/1", "/2")}`,
@@ -81,25 +83,40 @@ export async function runIDORProbe(baseUrl: string): Promise<ProofEvidence | nul
       ],
       observed: `${exposed.length} endpoint(s) returned 200 with user-identifying data (email/name/phone) without requiring authentication. Paths: ${exposed.map((e) => e.path).join(", ")}`,
       impact: "Any user can access any other user's private data. Full database enumeration possible. GDPR/CCPA violation — immediate regulatory exposure.",
-      screenshot: undefined,
+      screenshot: generateAccessControlScreenshot({
+        url: cleanUrl,
+        attackUrl,
+        verdict: "vulnerable",
+        resourceType: "User data",
+        statusCode: exposed[0]!.status,
+      }),
       codeRef: "Missing authorization middleware on API routes — add requireAuth() guard to all /api/users/:id, /api/orders/:id routes",
     };
   }
 
   if (accessible.length > 0) {
+    const attackUrl = `${cleanUrl}${accessible[0]!.path}`;
     return {
       type: "idor",
       title: "Unauthenticated API Routes Respond to Sequential ID Probing",
       severity: "high",
       confidence: 88,
-      url: `${cleanUrl}${accessible[0]!.path}`,
+      url: attackUrl,
       steps: [
-        `Send GET request to ${cleanUrl}${accessible[0]!.path} without authentication headers`,
+        `Send GET request to ${attackUrl} without authentication headers`,
         `Observe: server returns HTTP ${accessible[0]!.status} instead of 401/403`,
         `Try sequential IDs to enumerate resources`,
       ],
       observed: `${accessible.length} route(s) responded without requiring authentication. IDs are sequential/guessable.`,
       impact: "Broken access control. Attackers can enumerate and access resources belonging to other users.",
+      screenshot: generateProofScreenshot({
+        url: attackUrl,
+        status: accessible[0]!.status,
+        title: "Unauthenticated API Routes Respond to Sequential ID Probing",
+        observed: `${accessible.length} route(s) responded without requiring authentication. Status: ${accessible[0]!.status}`,
+        severity: "high",
+        proofType: "idor",
+      }),
       codeRef: "Add authentication and ownership checks to all resource routes",
     };
   }
@@ -138,12 +155,13 @@ export async function runChaosProbe(baseUrl: string): Promise<ProofEvidence | nu
   const noLoadingState = chaosResults.filter((r) => r.status === 200 && !r.hasLoadingState);
 
   if (noErrorBoundary.length > 0) {
+    const chaosUrl = `${cleanUrl}/`;
     return {
       type: "chaos",
       title: "No Error Boundaries — App Will White-Screen on API Failure",
       severity: "high",
       confidence: 86,
-      url: `${cleanUrl}/`,
+      url: chaosUrl,
       steps: [
         `Open browser DevTools → Network tab`,
         `Block or delay your database/API requests (add 10s artificial latency)`,
@@ -153,17 +171,26 @@ export async function runChaosProbe(baseUrl: string): Promise<ProofEvidence | nu
       ],
       observed: `No React Error Boundary detected in page HTML. App renders without error fallback containers. ${healthPath ? `Health endpoint found at ${healthPath}` : "No health endpoint found"}`,
       impact: "When Stripe, Supabase, or your DB goes down (and they will), users see a white screen with no explanation. Average: 3 support tickets per incident. Trust permanently damaged.",
+      screenshot: generateProofScreenshot({
+        url: chaosUrl,
+        status: 200,
+        title: "No Error Boundaries — App Will White-Screen on API Failure",
+        observed: `No React ErrorBoundary found. ${healthPath ? `Health endpoint: ${healthPath}` : "No health endpoint found."} Under API failures, users see a white screen.`,
+        severity: "high",
+        proofType: "chaos",
+      }),
       codeRef: "Wrap root App component and each page in <ErrorBoundary fallback={<ErrorFallback />}>",
     };
   }
 
   if (noLoadingState.length > 0 && !healthPath) {
+    const chaosUrl = `${cleanUrl}/`;
     return {
       type: "chaos",
       title: "Missing Loading States and Health Check Endpoint",
       severity: "medium",
       confidence: 78,
-      url: `${cleanUrl}/`,
+      url: chaosUrl,
       steps: [
         `Open app on a slow 3G connection (DevTools → Network → Slow 3G)`,
         `Observe: content jumps in without skeleton/loading placeholder`,
@@ -171,6 +198,14 @@ export async function runChaosProbe(baseUrl: string): Promise<ProofEvidence | nu
       ],
       observed: "No loading skeleton/spinner patterns detected in page HTML. No health check endpoint responds.",
       impact: "Poor perceived performance. Uptime monitoring impossible. Users may think app is broken during normal load.",
+      screenshot: generateProofScreenshot({
+        url: chaosUrl,
+        status: 200,
+        title: "Missing Loading States and Health Check Endpoint",
+        observed: "No skeleton/loading patterns found in HTML. No /healthz endpoint. On slow connections, content jumps in abruptly.",
+        severity: "medium",
+        proofType: "chaos",
+      }),
       codeRef: "Add skeleton loaders to data-fetching components and create GET /healthz endpoint returning { status: 'ok', db: 'connected' }",
     };
   }
@@ -252,6 +287,14 @@ export async function runPIIBundleProbe(baseUrl: string): Promise<ProofEvidence 
     ],
     observed: `Found ${found.length} secret(s) in client-side JavaScript bundle(s):\n${found.map((f) => `• ${f.name}: ${f.snippet} (in ${f.bundleUrl.split("/").pop()})`).join("\n")}`,
     impact: "Anyone who visits your site can steal this key. Stripe fraud bots scrape new launches within hours. A leaked service_role key gives full database admin access.",
+    screenshot: generateProofScreenshot({
+      url: worst.bundleUrl,
+      status: 200,
+      title: `Secret Leaked in Client Bundle: ${worst.name}`,
+      observed: `Found in JS bundle: ${worst.snippet}. ${found.length} total secret(s) exposed to every visitor.`,
+      severity: worst.severity,
+      proofType: "pii",
+    }),
     codeRef: "Move ALL secrets to server-side environment variables. NEVER import secret keys in any file under /src/client/ or /src/app/. Use VITE_PUBLIC_ prefix ONLY for non-secret config.",
   };
 }
