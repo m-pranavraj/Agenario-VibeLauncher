@@ -120,9 +120,22 @@ async function runAgent(
   }
 }
 
+export interface CodeContext {
+  framework: string;
+  vibeTool: string;
+  businessType: string;
+  routes: string;
+  schemas: string;
+  packageJson: Record<string, unknown>;
+  keyFiles: Array<{ path: string; content: string }>;
+  fileTree: string;
+  totalFiles: number;
+}
+
 export interface ScanAnalysisResult {
   score: number;
   summary: string;
+  launchVerdict: string;
   issueCounts: { critical: number; high: number; medium: number; low: number };
   agentResults: AgentResult[];
 }
@@ -131,6 +144,7 @@ export async function runAllAgents(
   sourceType: string,
   sourceInput: string,
   appDescription?: string | null,
+  _codeContext?: CodeContext | null,
 ): Promise<ScanAnalysisResult> {
   logger.info({ sourceType, sourceInput }, "Starting multi-agent analysis");
 
@@ -163,5 +177,8 @@ export async function runAllAgents(
         ? `Moderate launch risk. ${allIssues.length} issues detected including ${issueCounts.critical} critical blockers. Fix critical issues before launching to real users.`
         : `High launch risk — do not deploy yet. ${issueCounts.critical} critical issues could cause security breaches, data loss, or a broken user experience. Significant work needed before launch.`;
 
-  return { score, summary, issueCounts, agentResults };
+  const launchVerdict =
+    score >= 80 ? "ready" : score >= 60 ? "needs_work" : "not_ready";
+
+  return { score, summary, launchVerdict, issueCounts, agentResults };
 }

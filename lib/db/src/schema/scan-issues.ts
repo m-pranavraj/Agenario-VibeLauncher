@@ -10,6 +10,8 @@ export const scanIssuesTable = pgTable("scan_issues", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   fixPrompt: text("fix_prompt").notNull(),
+  confidence: integer("confidence"),
+  evidence: text("evidence"),
 });
 
 export const insertScanIssueSchema = createInsertSchema(scanIssuesTable).omit({ id: true });
