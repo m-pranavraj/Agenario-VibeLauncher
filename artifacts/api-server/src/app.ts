@@ -14,6 +14,9 @@ const { Pool } = pkg;
 
 const app: Express = express();
 
+// Trust Replit's reverse proxy so express-rate-limit and secure cookies work correctly
+app.set("trust proxy", 1);
+
 // ── Security headers (Helmet) ─────────────────────────────────────────────
 app.use(
   helmet({
