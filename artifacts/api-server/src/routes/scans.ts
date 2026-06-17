@@ -17,6 +17,9 @@ import { computeBenchmark } from "../lib/benchmark.js";
 import { generateCofounderNarrative, generateLaunchDNA, generateLaunchReplay } from "../lib/cofounder-agent.js";
 import { scanFilesForSecrets, scanForSecrets } from "../lib/secret-scanner-v2.js";
 import { checkPackageVulns } from "../lib/package-vulns.js";
+import { runCleanupAgent } from "../lib/cleanup-agent.js";
+import { enrichIssuesWithOwasp } from "../lib/owasp-mapper.js";
+import { enrichLeaksWithImpact } from "../lib/revenue-calculator.js";
 
 const router: IRouter = Router();
 
@@ -251,6 +254,26 @@ async function runAnalysisPipeline(opts: {
     req.log.warn({ err }, "Package vuln scan failed");
   }
 
+  // ── Cleanup Agent (static code hygiene) ───────────────────────
+  let cleanupReport = null;
+  try {
+    if (codeContext && codeContext.keyFiles.length > 0) {
+      cleanupReport = runCleanupAgent(codeContext.keyFiles, appDescription);
+      req.log.info({ scanId, findings: cleanupReport.totalFindings, score: cleanupReport.debtScore }, "Cleanup agent complete");
+    }
+  } catch (err) {
+    req.log.warn({ err }, "Cleanup agent failed");
+  }
+
+  // ── OWASP & Revenue enrichment (in-memory) ────────────────────
+  const owaspEnrichedIssues = enrichIssuesWithOwasp(allIssues);
+  const revenueWithImpact = result.revenueIntelligence
+    ? {
+        ...result.revenueIntelligence,
+        leaks: enrichLeaksWithImpact(result.revenueIntelligence.leaks ?? []),
+      }
+    : result.revenueIntelligence;
+
   // ── Run enrichment in parallel ────────────────────────────────
   const topIssues = allIssues.slice(0, 10).map((i) => ({
     severity: i.severity,
@@ -298,6 +321,7 @@ async function runAnalysisPipeline(opts: {
       launchReplaySteps: launchReplaySteps.length > 0 ? launchReplaySteps : null,
       secretScanResults: secretScanResults ?? null,
       packageVulns: packageVulns ?? null,
+      cleanupReport: cleanupReport ?? null,
       framework: framework !== "unknown" ? framework : undefined,
       vibeTool: vibeTool !== "unknown" ? vibeTool : undefined,
       businessType: businessType !== "unknown" ? businessType : undefined,
@@ -310,7 +334,7 @@ async function runAnalysisPipeline(opts: {
     ...updated,
     createdAt: updated.createdAt.toISOString(),
     completedAt: updated.completedAt?.toISOString() ?? null,
-    issues: allIssues,
+    issues: owaspEnrichedIssues,
   });
 }
 

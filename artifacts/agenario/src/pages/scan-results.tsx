@@ -219,6 +219,11 @@ function EvidenceCard({ issue, rank, scanId, isCreator }: { issue: ScanIssue; ra
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide shrink-0 ${cfg.badge}`}>
           {issue.severity}
         </span>
+        {issue.owaspMapping && (
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-red-500/[0.08] text-red-400/70 border-red-500/15 shrink-0 hidden sm:block">
+            {issue.owaspMapping.owaspId}
+          </span>
+        )}
         <span className="text-sm font-medium text-white/90 flex-1 text-left">{issue.title}</span>
         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:flex items-center gap-1 ${conf.badge}`}>
           {conf.icon} {issue.confidence ?? 60}%
@@ -1521,6 +1526,185 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
   );
 }
 
+// ── Cleanup Agent Panel ──────────────────────────────────────────────────────
+const CLEANUP_CAT_LABEL: Record<string, { label: string; icon: string; color: string }> = {
+  "debug-noise":    { label: "Debug Noise",    icon: "🔊", color: "text-amber-400" },
+  "tech-debt":      { label: "Tech Debt",      icon: "⏰", color: "text-orange-400" },
+  "dead-code":      { label: "Dead Code",      icon: "💀", color: "text-red-400" },
+  "type-safety":    { label: "Type Safety",    icon: "🔷", color: "text-blue-400" },
+  "env-hygiene":    { label: "Env Hygiene",    icon: "🌿", color: "text-green-400" },
+  "doc-clutter":    { label: "Doc Clutter",    icon: "📄", color: "text-white/40" },
+  "security-smell": { label: "Security Smell", icon: "🔥", color: "text-red-500" },
+  "file-hygiene":   { label: "File Hygiene",   icon: "🗑️", color: "text-white/35" },
+};
+
+const DEBT_COLOR = (score: number) =>
+  score >= 85 ? "text-green-400" : score >= 60 ? "text-amber-400" : "text-red-400";
+const DEBT_LABEL = (score: number) =>
+  score >= 85 ? "Clean" : score >= 60 ? "Moderate Debt" : "High Debt";
+
+function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupReport"]> }) {
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const categoryCounts = data.categories as Record<string, number>;
+  const categoryKeys = Object.keys(categoryCounts).filter((k) => categoryCounts[k] > 0);
+
+  const visibleFindings = activeCategory
+    ? data.findings.filter((f) => f.category === activeCategory)
+    : data.findings;
+
+  const copyAsTodo = () => {
+    const lines = [
+      `# Code Cleanup Report — Tech Debt Score: ${data.debtScore}/100`,
+      `# ${data.summary}`,
+      `# Estimated cleanup: ~${data.estimatedCleanupMinutes} minutes`,
+      "",
+      ...data.findings.map((f) => `- [ ] [${f.severity.toUpperCase()}] ${f.title}${f.file ? ` (${f.file})` : ""}${f.lineHint ? ` — ${f.lineHint}` : ""}\n  Fix: ${f.fixSuggestion}`),
+    ];
+    navigator.clipboard.writeText(lines.join("\n"));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
+      className="glass rounded-2xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-white/[0.05] flex items-start gap-3">
+        <div className="w-8 h-8 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0 mt-0.5">
+          <span className="text-sm">🧹</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-white font-bold font-['Syne'] text-sm">Cleanup Agent</h2>
+            <span className="text-xs text-white/25">·</span>
+            <span className="text-xs text-white/30">Tech Debt Score</span>
+            <span className={`text-sm font-bold font-['Syne'] ${DEBT_COLOR(data.debtScore)}`}>{data.debtScore}/100</span>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+              data.debtScore >= 85 ? "bg-green-500/10 text-green-400 border-green-500/20" :
+              data.debtScore >= 60 ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+              "bg-red-500/10 text-red-400 border-red-500/20"
+            }`}>{DEBT_LABEL(data.debtScore)}</span>
+          </div>
+          <p className="text-white/30 text-xs mt-0.5">{data.summary}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {data.estimatedCleanupMinutes > 0 && (
+            <span className="text-[10px] text-white/25 hidden sm:block">~{data.estimatedCleanupMinutes} min to fix</span>
+          )}
+          <button
+            onClick={copyAsTodo}
+            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 bg-white/[0.05] border border-white/[0.08] rounded-lg px-2.5 py-1.5 transition-colors"
+          >
+            {copied ? <CheckCheck className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+            <span className="hidden sm:inline">{copied ? "Copied!" : "Export TODO"}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div className="grid grid-cols-4 divide-x divide-white/[0.04] border-b border-white/[0.04]">
+        {[
+          { label: "Errors", value: data.errorCount, color: "text-red-400" },
+          { label: "Warnings", value: data.warnCount, color: "text-amber-400" },
+          { label: "Info", value: data.infoCount, color: "text-white/40" },
+          { label: "Auto-fixable", value: data.autoFixableCount, color: "text-green-400" },
+        ].map((s) => (
+          <div key={s.label} className="px-4 py-3 text-center">
+            <div className={`text-xl font-bold font-['Syne'] ${s.color}`}>{s.value}</div>
+            <div className="text-[10px] text-white/25 mt-0.5">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Category filters */}
+      {categoryKeys.length > 1 && (
+        <div className="px-6 py-3 border-b border-white/[0.04] flex items-center gap-2 overflow-x-auto">
+          <button
+            onClick={() => setActiveCategory(null)}
+            className={`text-[10px] font-bold px-2.5 py-1 rounded-full border whitespace-nowrap transition-colors ${
+              activeCategory === null ? "bg-white/10 border-white/20 text-white" : "bg-white/[0.03] border-white/[0.08] text-white/35 hover:text-white/60"
+            }`}
+          >
+            All ({data.totalFindings})
+          </button>
+          {categoryKeys.map((cat) => {
+            const meta = CLEANUP_CAT_LABEL[cat];
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                className={`text-[10px] font-bold px-2.5 py-1 rounded-full border whitespace-nowrap transition-colors ${
+                  activeCategory === cat ? "bg-white/10 border-white/20 text-white" : "bg-white/[0.03] border-white/[0.08] text-white/35 hover:text-white/60"
+                }`}
+              >
+                {meta?.icon ?? "•"} {meta?.label ?? cat} ({categoryCounts[cat]})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Findings list */}
+      {visibleFindings.length === 0 ? (
+        <div className="px-6 py-8 text-center">
+          <CheckCircle2 className="w-8 h-8 text-green-400 mx-auto mb-3" />
+          <p className="text-white/55 font-medium text-sm">No findings in this category</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-white/[0.03] max-h-96 overflow-y-auto">
+          {visibleFindings.map((finding) => {
+            const meta = CLEANUP_CAT_LABEL[finding.category];
+            const sevColor = finding.severity === "error" ? "text-red-400 border-red-500/20 bg-red-500/[0.06]" :
+              finding.severity === "warn" ? "text-amber-400 border-amber-500/20 bg-amber-500/[0.06]" :
+              "text-white/35 border-white/[0.08] bg-white/[0.03]";
+            return (
+              <div key={finding.id} className="px-6 py-3.5">
+                <div className="flex items-start gap-3">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase mt-0.5 shrink-0 ${sevColor}`}>
+                    {finding.severity}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <p className="text-sm font-semibold text-white/80">{finding.title}</p>
+                      {meta && <span className={`text-[10px] ${meta.color}`}>{meta.icon} {meta.label}</span>}
+                      {finding.autoFixable && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/15">⚡ auto-fixable</span>
+                      )}
+                    </div>
+                    {finding.lineHint && (
+                      <p className="text-[10px] text-white/25 font-mono mb-1">{finding.lineHint}</p>
+                    )}
+                    <p className="text-xs text-white/35 leading-relaxed mb-1.5">{finding.detail}</p>
+                    <div className="bg-black/30 border border-white/[0.06] rounded-lg px-3 py-2 text-[10px] font-mono text-white/30 leading-relaxed">
+                      💡 {finding.fixSuggestion}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Top offending files */}
+      {data.topFiles.length > 0 && (
+        <div className="px-6 py-4 border-t border-white/[0.04]">
+          <p className="text-[10px] text-white/25 uppercase tracking-wider font-bold mb-2">Most issues</p>
+          <div className="flex flex-wrap gap-2">
+            {data.topFiles.map((f) => (
+              <div key={f.path} className="flex items-center gap-1.5 text-[10px] bg-white/[0.03] border border-white/[0.07] rounded-lg px-2 py-1">
+                <span className="text-white/25 font-mono truncate max-w-[180px]">{f.path.split("/").slice(-2).join("/")}</span>
+                <span className="text-white/40 font-bold">{f.issueCount}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 // ── Pre-Launch Checklist ─────────────────────────────────────────────────────
 function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
   const storageKey = `checklist-${scan.id}`;
@@ -1897,6 +2081,11 @@ export default function ScanResultsPage() {
         {/* ── Dependency CVE Tracker ───────────────────────── */}
         {scan.packageVulns && (
           <PackageVulnsPanel data={scan.packageVulns} isCreator={user.plan === "creator" || user.plan === "enterprise"} />
+        )}
+
+        {/* ── Cleanup Agent ────────────────────────────────── */}
+        {scan.cleanupReport && (
+          <CleanupAgentPanel data={scan.cleanupReport} />
         )}
 
         {/* ── Top 3 Action Plan ────────────────────────────── */}

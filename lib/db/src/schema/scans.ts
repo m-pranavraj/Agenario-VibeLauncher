@@ -171,6 +171,31 @@ export const scansTable = pgTable("scans", {
       }>;
     }>;
   }>(),
+  cleanupReport: jsonb("cleanup_report").$type<{
+    totalFindings: number;
+    errorCount: number;
+    warnCount: number;
+    infoCount: number;
+    autoFixableCount: number;
+    estimatedCleanupMinutes: number;
+    hasCritical: boolean;
+    debtScore: number;
+    summary: string;
+    topFiles: Array<{ path: string; issueCount: number }>;
+    categories: Record<string, number>;
+    findings: Array<{
+      id: string;
+      category: string;
+      severity: string;
+      title: string;
+      detail: string;
+      file: string;
+      lineHint?: string;
+      count?: number;
+      fixSuggestion: string;
+      autoFixable: boolean;
+    }>;
+  }>(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp("completed_at", { withTimezone: true }),
 });

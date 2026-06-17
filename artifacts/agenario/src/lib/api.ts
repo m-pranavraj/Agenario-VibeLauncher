@@ -30,6 +30,13 @@ export interface User {
   createdAt: string;
 }
 
+export interface OwaspMapping {
+  owaspId: string;
+  owaspName: string;
+  cweIds: string[];
+  cvssBase?: number;
+}
+
 export interface ScanIssue {
   id: number;
   scanId: number;
@@ -41,6 +48,7 @@ export interface ScanIssue {
   confidence?: number;
   evidence?: string | null;
   locked?: boolean;
+  owaspMapping?: OwaspMapping;
 }
 
 export interface IssueCounts {
@@ -63,6 +71,17 @@ export interface RiskForecast {
   executiveRecommendation: string;
 }
 
+export interface RevenueImpact {
+  findingType: string;
+  impactLabel: string;
+  impactMinMonthly: number;
+  impactMaxMonthly: number;
+  confidence: "high" | "medium" | "low";
+  basis: string;
+  urgency: "immediate" | "high" | "medium";
+  recoveryTime: string;
+}
+
 export interface RevenueIntelligenceLeak {
   category: string;
   severity: string;
@@ -70,6 +89,7 @@ export interface RevenueIntelligenceLeak {
   description: string;
   fix: string;
   locked?: boolean;
+  revenueImpact?: RevenueImpact;
 }
 
 export interface RevenueIntelligence {
@@ -175,6 +195,31 @@ export interface Scan {
   cofounderNarrative: string | null;
   shadowApiFindings: ShadowApiFindings | null;
   launchReplaySteps: LaunchReplayStep[] | null;
+  cleanupReport: {
+    totalFindings: number;
+    errorCount: number;
+    warnCount: number;
+    infoCount: number;
+    autoFixableCount: number;
+    estimatedCleanupMinutes: number;
+    hasCritical: boolean;
+    debtScore: number;
+    summary: string;
+    topFiles: Array<{ path: string; issueCount: number }>;
+    categories: Record<string, number>;
+    findings: Array<{
+      id: string;
+      category: string;
+      severity: string;
+      title: string;
+      detail: string;
+      file: string;
+      lineHint?: string;
+      count?: number;
+      fixSuggestion: string;
+      autoFixable: boolean;
+    }>;
+  } | null;
   secretScanResults: {
     totalFound: number;
     criticalCount: number;

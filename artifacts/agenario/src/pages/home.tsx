@@ -7,7 +7,7 @@ import {
   BadgeCheck, Scale, Database, Fingerprint, CreditCard,
   ChevronRight, Sparkles, Menu,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import type { Variants } from "framer-motion";
 
@@ -40,6 +40,120 @@ const COMPLIANCE = [
   { label: "CCPA", color: "text-orange-400" },
   { label: "ISO 27001", color: "text-violet-400" },
 ];
+
+const CYCLE_WORDS = ["Security", "Compliance", "Revenue", "Performance", "UX & Conversion", "Reliability", "Data Safety", "Observability", "AI Code Quality", "Everything"];
+
+const INNER_ORBIT = ["OWASP", "GDPR", "PCI-DSS", "SOC 2", "ISO 27001", "HIPAA", "WCAG 2.1", "CCPA"];
+const OUTER_ORBIT = ["Secret Scan", "CVE Track", "CORS Audit", "JWT Guard", "CSRF Block", "SQL Inject", "XSS Detect", "IDOR Scan", "SSRF Block", "Auth Bypass"];
+
+type FeaturePill = { icon: string; label: string; bg: string; color: string };
+const FEATURE_ARSENAL: FeaturePill[] = [
+  { icon: "🔍", label: "Secret Scanner V2", bg: "bg-red-500/[0.06] border-red-500/15", color: "text-red-300/75" },
+  { icon: "🛡️", label: "OWASP Top 10 Mapper", bg: "bg-red-500/[0.06] border-red-500/15", color: "text-red-300/75" },
+  { icon: "💉", label: "SQL Injection Detect", bg: "bg-red-500/[0.06] border-red-500/15", color: "text-red-300/75" },
+  { icon: "🔐", label: "Auth Bypass Detection", bg: "bg-red-500/[0.06] border-red-500/15", color: "text-red-300/75" },
+  { icon: "⚡", label: "CSRF Guard", bg: "bg-red-500/[0.06] border-red-500/15", color: "text-red-300/75" },
+  { icon: "🌐", label: "CORS Misconfiguration", bg: "bg-red-500/[0.06] border-red-500/15", color: "text-red-300/75" },
+  { icon: "🔑", label: "JWT Security Audit", bg: "bg-red-500/[0.06] border-red-500/15", color: "text-red-300/75" },
+  { icon: "🕵️", label: "Session Fixation Risk", bg: "bg-red-500/[0.06] border-red-500/15", color: "text-red-300/75" },
+  { icon: "🇪🇺", label: "GDPR Compliance", bg: "bg-blue-500/[0.06] border-blue-500/15", color: "text-blue-300/75" },
+  { icon: "💳", label: "PCI-DSS Readiness", bg: "bg-blue-500/[0.06] border-blue-500/15", color: "text-blue-300/75" },
+  { icon: "🏥", label: "HIPAA Gap Analysis", bg: "bg-blue-500/[0.06] border-blue-500/15", color: "text-blue-300/75" },
+  { icon: "📋", label: "SOC 2 Posture", bg: "bg-blue-500/[0.06] border-blue-500/15", color: "text-blue-300/75" },
+  { icon: "♿", label: "WCAG 2.1 AA Audit", bg: "bg-blue-500/[0.06] border-blue-500/15", color: "text-blue-300/75" },
+  { icon: "🌴", label: "CCPA Compliance", bg: "bg-blue-500/[0.06] border-blue-500/15", color: "text-blue-300/75" },
+  { icon: "🔗", label: "CWE ID Mapping", bg: "bg-blue-500/[0.06] border-blue-500/15", color: "text-blue-300/75" },
+  { icon: "📊", label: "ISO 27001 Alignment", bg: "bg-blue-500/[0.06] border-blue-500/15", color: "text-blue-300/75" },
+  { icon: "🛒", label: "Checkout Flow Analysis", bg: "bg-green-500/[0.06] border-green-500/15", color: "text-green-300/75" },
+  { icon: "🔔", label: "Webhook Security Audit", bg: "bg-green-500/[0.06] border-green-500/15", color: "text-green-300/75" },
+  { icon: "💸", label: "Revenue Leak Detection", bg: "bg-green-500/[0.06] border-green-500/15", color: "text-green-300/75" },
+  { icon: "📉", label: "Subscription Enforcement", bg: "bg-green-500/[0.06] border-green-500/15", color: "text-green-300/75" },
+  { icon: "🎭", label: "Free Tier Abuse Guard", bg: "bg-green-500/[0.06] border-green-500/15", color: "text-green-300/75" },
+  { icon: "⚠️", label: "Billing Edge Cases", bg: "bg-green-500/[0.06] border-green-500/15", color: "text-green-300/75" },
+  { icon: "💰", label: "Revenue Impact Score", bg: "bg-green-500/[0.06] border-green-500/15", color: "text-green-300/75" },
+  { icon: "🏷️", label: "Promo Code Bypass", bg: "bg-green-500/[0.06] border-green-500/15", color: "text-green-300/75" },
+  { icon: "🐌", label: "N+1 Query Detection", bg: "bg-amber-500/[0.06] border-amber-500/15", color: "text-amber-300/75" },
+  { icon: "📦", label: "Bundle Size Analysis", bg: "bg-amber-500/[0.06] border-amber-500/15", color: "text-amber-300/75" },
+  { icon: "🗃️", label: "DB Index Audit", bg: "bg-amber-500/[0.06] border-amber-500/15", color: "text-amber-300/75" },
+  { icon: "💾", label: "Cache Strategy Review", bg: "bg-amber-500/[0.06] border-amber-500/15", color: "text-amber-300/75" },
+  { icon: "🚀", label: "Cold Start Latency", bg: "bg-amber-500/[0.06] border-amber-500/15", color: "text-amber-300/75" },
+  { icon: "🛡️", label: "Error Boundary Coverage", bg: "bg-orange-500/[0.06] border-orange-500/15", color: "text-orange-300/75" },
+  { icon: "🔄", label: "Retry Logic Gaps", bg: "bg-orange-500/[0.06] border-orange-500/15", color: "text-orange-300/75" },
+  { icon: "⏱️", label: "Timeout Configuration", bg: "bg-orange-500/[0.06] border-orange-500/15", color: "text-orange-300/75" },
+  { icon: "🌊", label: "Graceful Degradation", bg: "bg-orange-500/[0.06] border-orange-500/15", color: "text-orange-300/75" },
+  { icon: "✅", label: "Data Validation Gaps", bg: "bg-cyan-500/[0.06] border-cyan-500/15", color: "text-cyan-300/75" },
+  { icon: "🔄", label: "Transaction Safety", bg: "bg-cyan-500/[0.06] border-cyan-500/15", color: "text-cyan-300/75" },
+  { icon: "🗄️", label: "Schema Migration Risk", bg: "bg-cyan-500/[0.06] border-cyan-500/15", color: "text-cyan-300/75" },
+  { icon: "🗑️", label: "Data Retention Policy", bg: "bg-cyan-500/[0.06] border-cyan-500/15", color: "text-cyan-300/75" },
+  { icon: "🔒", label: "CVE Vulnerability Scan", bg: "bg-purple-500/[0.06] border-purple-500/15", color: "text-purple-300/75" },
+  { icon: "📦", label: "Outdated Dependencies", bg: "bg-purple-500/[0.06] border-purple-500/15", color: "text-purple-300/75" },
+  { icon: "📜", label: "License Compliance", bg: "bg-purple-500/[0.06] border-purple-500/15", color: "text-purple-300/75" },
+  { icon: "🧬", label: "Vibe Code DNA Fingerprint", bg: "bg-violet-500/[0.06] border-violet-500/15", color: "text-violet-300/75" },
+  { icon: "🤖", label: "AI Hallucination Flags", bg: "bg-violet-500/[0.06] border-violet-500/15", color: "text-violet-300/75" },
+  { icon: "🧹", label: "Cleanup Agent Report", bg: "bg-violet-500/[0.06] border-violet-500/15", color: "text-violet-300/75" },
+  { icon: "💀", label: "Dead Code Detection", bg: "bg-violet-500/[0.06] border-violet-500/15", color: "text-violet-300/75" },
+  { icon: "⏰", label: "Tech Debt Score", bg: "bg-violet-500/[0.06] border-violet-500/15", color: "text-violet-300/75" },
+];
+
+const DEEP_STATS = [
+  { value: "10", label: "AI Analysis Agents", sub: "Running in parallel on every scan", color: "text-violet-400" },
+  { value: "60+", label: "Secret Patterns", sub: "AWS keys, Stripe, JWT, DB URLs & more", color: "text-red-400" },
+  { value: "200+", label: "CVE-tracked packages", sub: "NVD + GitHub Advisory Database", color: "text-amber-400" },
+  { value: "44+", label: "Audit Dimensions", sub: "Code hygiene to compliance to revenue", color: "text-green-400" },
+];
+
+function AnimatedWordCycle({ words, interval = 2000 }: { words: string[]; interval?: number }) {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setIndex((p) => (p + 1) % words.length), interval);
+    return () => clearInterval(t);
+  }, [words.length, interval]);
+  return (
+    <AnimatePresence mode="wait">
+      <motion.span
+        key={index}
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -18 }}
+        transition={{ duration: 0.32, ease: "easeOut" }}
+        className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400 font-heading font-bold"
+      >
+        {words[index]}
+      </motion.span>
+    </AnimatePresence>
+  );
+}
+
+function OrbitRing({ items, radius, duration, clockwise = true }: {
+  items: string[];
+  radius: number;
+  duration: number;
+  clockwise?: boolean;
+}) {
+  const positioned = items.map((item, i) => {
+    const angle = (i / items.length) * 2 * Math.PI - Math.PI / 2;
+    return { item, x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+  });
+  return (
+    <motion.div
+      className="absolute inset-0"
+      animate={{ rotate: clockwise ? 360 : -360 }}
+      transition={{ duration, repeat: Infinity, ease: "linear" }}
+    >
+      {positioned.map(({ item, x, y }) => (
+        <motion.span
+          key={item}
+          className="absolute text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-white/35 whitespace-nowrap tracking-wide"
+          style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)`, transform: "translate(-50%,-50%)" }}
+          animate={{ rotate: clockwise ? -360 : 360 }}
+          transition={{ duration, repeat: Infinity, ease: "linear" }}
+        >
+          {item}
+        </motion.span>
+      ))}
+    </motion.div>
+  );
+}
 
 const PRICING = [
   {
@@ -685,6 +799,91 @@ export default function Home() {
             <p className="text-center text-xs text-white/25 mt-8">
               All prices in INR · GST applicable · Secure payments via Razorpay
             </p>
+          </div>
+        </section>
+
+        {/* ── The Intelligence Arsenal ─────────────────────── */}
+        <section className="relative py-28 overflow-hidden">
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:48px_48px]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-violet-500/[0.015] to-transparent pointer-events-none" />
+
+          <div className="relative max-w-7xl mx-auto px-6">
+            {/* Header */}
+            <motion.div className="text-center mb-16" initial="hidden" whileInView="show" viewport={{ once: true }} variants={STAGGER}>
+              <motion.div variants={FADE_UP} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-white/[0.1] text-white/50 text-xs font-medium mb-6">
+                <BrainCircuit className="w-3.5 h-3.5 text-violet-400" />
+                44+ dimensions of intelligence
+              </motion.div>
+              <motion.h2 variants={FADE_UP} className="text-4xl md:text-5xl font-heading font-bold text-white mb-5 leading-tight">
+                Every angle. Every attack vector.
+              </motion.h2>
+              <motion.div variants={FADE_UP} className="flex flex-wrap items-center justify-center gap-3 text-2xl md:text-3xl font-heading font-bold">
+                <span className="text-white/35">Now auditing</span>
+                <div className="h-9 overflow-hidden flex items-center min-w-[180px] justify-center">
+                  <AnimatedWordCycle words={CYCLE_WORDS} />
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Feature Arsenal Grid */}
+            <motion.div
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2 mb-24"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-60px" }}
+              variants={{ show: { transition: { staggerChildren: 0.022 } } }}
+            >
+              {FEATURE_ARSENAL.map((feat) => (
+                <motion.div
+                  key={feat.label}
+                  variants={{ hidden: { opacity: 0, scale: 0.9 }, show: { opacity: 1, scale: 1, transition: { duration: 0.35, ease: "easeOut" } } }}
+                  whileHover={{ scale: 1.04, y: -2, transition: { duration: 0.15 } }}
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border backdrop-blur-sm cursor-default select-none transition-shadow hover:shadow-[0_2px_16px_rgba(139,92,246,0.1)] ${feat.bg}`}
+                >
+                  <span className="text-sm shrink-0 leading-none">{feat.icon}</span>
+                  <span className={`text-[11px] font-semibold leading-tight ${feat.color}`}>{feat.label}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Orbit + Stats */}
+            <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-20">
+              {/* Compliance orbit */}
+              <div className="relative w-[320px] h-[320px] shrink-0">
+                <div className="absolute inset-0 rounded-full border border-dashed border-white/[0.06]" />
+                <div className="absolute inset-[35px] rounded-full border border-dashed border-white/[0.04]" />
+                <OrbitRing items={INNER_ORBIT} radius={98} duration={30} clockwise />
+                <OrbitRing items={OUTER_ORBIT} radius={148} duration={46} clockwise={false} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <motion.div
+                    animate={{ scale: [1, 1.07, 1], opacity: [0.75, 1, 0.75] }}
+                    transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-20 h-20 rounded-2xl bg-white/[0.04] border border-white/[0.12] flex flex-col items-center justify-center gap-1.5 shadow-[0_0_40px_rgba(139,92,246,0.15)]"
+                  >
+                    <Rocket className="w-6 h-6 text-violet-400" />
+                    <span className="text-[8px] font-bold text-white/35 tracking-widest uppercase">Agenario</span>
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Stats grid */}
+              <div className="flex-1 w-full grid grid-cols-2 gap-4">
+                {DEEP_STATS.map((stat, i) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.09, duration: 0.45 }}
+                    className="glass rounded-2xl p-5 border border-white/[0.07] hover:border-white/[0.12] transition-colors"
+                  >
+                    <div className={`text-4xl font-heading font-bold mb-2 ${stat.color}`}>{stat.value}</div>
+                    <div className="text-xs font-bold text-white/55 mb-1">{stat.label}</div>
+                    <div className="text-[10px] text-white/25 leading-relaxed">{stat.sub}</div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
