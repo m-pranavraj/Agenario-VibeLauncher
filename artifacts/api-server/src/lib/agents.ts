@@ -17,7 +17,7 @@ const FAST_MODEL = "llama-3.1-8b-instant";
 // Smart model on Groq — reserved for synthesis/forecast
 const SMART_MODEL = "llama-3.3-70b-versatile";
 // Cerebras model — full 70b at ~2000 tok/s, used as fallback/secondary
-const CEREBRAS_MODEL = "gpt-oss-120b";
+const CEREBRAS_MODEL = "llama-3.3-70b";
 
 interface AgentIssue {
   severity: "critical" | "high" | "medium" | "low";
