@@ -45,6 +45,9 @@ const PLANS = [
     id: "creator",
     name: "Creator",
     price: "₹299",
+    originalPrice: "₹499",
+    discountLabel: "40% off",
+    launchBadge: "🚀 Launch Offer",
     period: "/month",
     description: "For indie founders shipping at speed",
     icon: Zap,
@@ -61,7 +64,7 @@ const PLANS = [
     cta: "Upgrade to Creator",
     amount: 29900,
     highlight: true,
-    badge: "Most Popular",
+    badge: "Limited Time",
   },
   {
     id: "enterprise",
@@ -259,8 +262,8 @@ export default function PricingPage() {
                 }`}
               >
                 {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white text-black text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">
-                    {plan.badge}
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-[0_0_16px_rgba(139,92,246,0.5)]">
+                    ⚡ {plan.badge}
                   </div>
                 )}
 
@@ -271,11 +274,17 @@ export default function PricingPage() {
                   <h3 className="font-bold font-['Syne'] text-white text-xl mb-1">{plan.name}</h3>
                   <p className="text-white/30 text-xs mb-5">{plan.description}</p>
 
-                  <div className="flex items-baseline gap-1.5">
+                  <div className="flex items-baseline gap-2 flex-wrap">
                     {isCreator && couponResult?.valid ? (
                       <>
-                        <span className="text-xl font-bold font-['Syne'] text-white/30 line-through">{plan.price}</span>
+                        <span className="text-lg font-bold font-['Syne'] text-white/25 line-through">{"originalPrice" in plan ? plan.originalPrice : plan.price}</span>
                         <span className="text-3xl font-bold font-['Syne'] text-white">{displayPrice}</span>
+                        <span className="text-white/30 text-sm">{plan.period}</span>
+                      </>
+                    ) : isCreator && "originalPrice" in plan ? (
+                      <>
+                        <span className="text-lg font-bold font-['Syne'] text-white/25 line-through">{plan.originalPrice as string}</span>
+                        <span className="text-3xl font-bold font-['Syne'] text-white">{plan.price}</span>
                         <span className="text-white/30 text-sm">{plan.period}</span>
                       </>
                     ) : (
@@ -285,6 +294,15 @@ export default function PricingPage() {
                       </>
                     )}
                   </div>
+
+                  {isCreator && !couponResult?.valid && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/[0.1] border border-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-wide">
+                        40% off
+                      </span>
+                      <span className="text-[10px] text-white/25 font-medium">initial launch offer · limited time</span>
+                    </div>
+                  )}
 
                   {isCreator && couponResult?.valid && (
                     <div className="mt-2 flex items-center gap-1.5 text-green-400 text-xs font-medium">
