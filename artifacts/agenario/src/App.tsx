@@ -14,6 +14,7 @@ import PricingPage from "@/pages/pricing";
 import DocsPage from "@/pages/docs";
 import PortfolioPage from "@/pages/portfolio";
 import MonitoringPage from "@/pages/monitoring";
+import AboutPage from "@/pages/about";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/docs" component={DocsPage} />
       <Route path="/portfolio" component={PortfolioPage} />
       <Route path="/monitoring" component={MonitoringPage} />
+      <Route path="/about" component={AboutPage} />
       <Route component={NotFound} />
     </Switch>
   );

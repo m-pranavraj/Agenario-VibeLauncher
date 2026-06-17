@@ -38,13 +38,11 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-xl bg-white/[0.08] border border-white/[0.12] flex items-center justify-center">
-              <Rocket className="w-4 h-4 text-white" />
-            </div>
+            <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover" />
             <span className="text-white font-bold text-lg font-['Syne']">Agenario</span>
           </Link>
           <h1 className="text-2xl font-bold text-white font-['Syne']">Create your account</h1>
-          <p className="text-white/40 mt-1.5 text-sm">5 free scans per month · No credit card needed</p>
+          <p className="text-white/40 mt-1.5 text-sm">2 free scans per month · No credit card needed</p>
         </div>
 
         <div className="glass rounded-2xl p-7">

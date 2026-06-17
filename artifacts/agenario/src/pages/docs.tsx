@@ -83,9 +83,7 @@ export default function DocsPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-white/[0.08] border border-white/[0.12] flex items-center justify-center">
-              <Rocket className="w-3.5 h-3.5 text-white" />
-            </div>
+            <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover" />
             <span className="text-white font-bold font-['Syne'] text-sm">Agenario</span>
             <span className="text-white/20 mx-1">/</span>
             <span className="text-white/50 text-sm">Documentation</span>

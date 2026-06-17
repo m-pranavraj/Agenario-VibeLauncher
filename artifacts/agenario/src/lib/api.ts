@@ -40,6 +40,7 @@ export interface ScanIssue {
   fixPrompt: string;
   confidence?: number;
   evidence?: string | null;
+  locked?: boolean;
 }
 
 export interface IssueCounts {
@@ -68,6 +69,7 @@ export interface RevenueIntelligenceLeak {
   impact: string;
   description: string;
   fix: string;
+  locked?: boolean;
 }
 
 export interface RevenueIntelligence {
@@ -75,6 +77,7 @@ export interface RevenueIntelligence {
   leaks: RevenueIntelligenceLeak[];
   estimatedMonthlyImpact: string;
   quickWins: string[];
+  _lockedLeakCount?: number;
 }
 
 export interface ComplianceResult {
@@ -139,6 +142,7 @@ export interface ShadowApiFindings {
   frontendFetchRoutes: string[];
   backendRegisteredRoutes: string[];
   summary: string;
+  _lockedRouteCount?: number;
 }
 
 export interface LaunchReplayStep {
@@ -177,6 +181,7 @@ export interface Scan {
 
 export interface ScanDetail extends Scan {
   issues: ScanIssue[];
+  _lockedIssueCount?: number;
 }
 
 export interface RazorpayOrder {

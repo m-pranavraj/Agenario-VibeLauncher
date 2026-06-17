@@ -241,6 +241,111 @@ function EvidenceCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
   );
 }
 
+function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
+  const cfg = SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
+  return (
+    <div className={`relative border rounded-xl overflow-hidden ${cfg.bg}`}>
+      {/* Blurred content beneath */}
+      <div className="flex items-center gap-3 p-4 select-none pointer-events-none" style={{ filter: "blur(4px)" }}>
+        {rank && (
+          <span className="w-5 h-5 rounded-full bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-[10px] font-bold text-white/40 shrink-0">
+            {rank}
+          </span>
+        )}
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide shrink-0 ${cfg.badge}`}>
+          {issue.severity}
+        </span>
+        <span className="text-sm font-medium text-white/90 flex-1 text-left line-clamp-1">{issue.title}</span>
+      </div>
+      {/* Lock overlay */}
+      <div className="absolute inset-0 flex items-center justify-between px-4 bg-gradient-to-r from-black/50 via-black/30 to-black/50 backdrop-blur-[2px]">
+        <div className="flex items-center gap-2">
+          <Lock className="w-3.5 h-3.5 text-violet-400 shrink-0" />
+          <span className="text-xs text-white/50 font-medium">Upgrade to view this finding</span>
+        </div>
+        <Link href="/pricing">
+          <button className="flex items-center gap-1.5 text-xs bg-violet-500/80 hover:bg-violet-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30">
+            Unlock <ArrowRight className="w-3 h-3" />
+          </button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function UpgradeBanner({ count }: { count: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      className="border border-violet-500/25 bg-gradient-to-r from-violet-500/[0.08] to-indigo-500/[0.05] rounded-2xl p-5 flex items-center gap-4"
+    >
+      <div className="w-10 h-10 rounded-xl bg-violet-500/15 border border-violet-500/25 flex items-center justify-center shrink-0">
+        <Lock className="w-5 h-5 text-violet-400" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-bold text-white">
+          {count} more finding{count !== 1 ? "s" : ""} locked
+        </div>
+        <p className="text-xs text-white/40 mt-0.5">
+          Upgrade to Creator to unlock all {count} remaining issues, 1-click fix prompts, and full exploit evidence.
+        </p>
+      </div>
+      <Link href="/pricing" className="shrink-0">
+        <button className="flex items-center gap-2 bg-white text-black font-bold text-xs px-4 py-2 rounded-xl hover:bg-white/90 transition-all">
+          Upgrade — ₹299/mo <ArrowRight className="w-3.5 h-3.5" />
+        </button>
+      </Link>
+    </motion.div>
+  );
+}
+
+function ExploitTerminalCard({ issue }: { issue: ScanIssue }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    await navigator.clipboard.writeText(issue.fixPrompt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <div className="border border-red-500/30 bg-[#0d0608] rounded-2xl overflow-hidden">
+      {/* Terminal header */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-red-950/40 border-b border-red-500/20">
+        <div className="w-3 h-3 rounded-full bg-red-500" />
+        <div className="w-3 h-3 rounded-full bg-amber-500" />
+        <div className="w-3 h-3 rounded-full bg-green-500 opacity-30" />
+        <span className="text-[10px] text-red-400/70 font-mono ml-2 uppercase tracking-widest">Exploit Terminal · {issue.agentName}</span>
+        <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold uppercase">
+          {issue.severity}
+        </span>
+      </div>
+      {/* Terminal body */}
+      <div className="p-4 space-y-3 font-mono">
+        <div className="text-green-400/80 text-xs">$ exploit_scanner --target app --mode {issue.severity}</div>
+        <div className="text-red-300/90 text-xs font-semibold">[!] {issue.title}</div>
+        <div className="text-white/40 text-xs leading-relaxed whitespace-pre-wrap">{issue.description}</div>
+        {issue.evidence && (
+          <div className="bg-black/50 border border-white/[0.06] rounded-lg p-3">
+            <div className="text-[10px] text-amber-400/60 uppercase tracking-wide mb-1.5">Evidence</div>
+            <p className="text-xs text-white/30 font-mono leading-relaxed">{issue.evidence}</p>
+          </div>
+        )}
+        <div className="border-t border-white/[0.06] pt-3 flex items-start gap-3">
+          <div className="flex-1">
+            <div className="text-[10px] text-green-400/50 uppercase tracking-wide mb-1.5">1-Click Fix Prompt</div>
+            <p className="text-xs text-white/50 leading-relaxed">{issue.fixPrompt}</p>
+          </div>
+          <button
+            onClick={copy}
+            className="shrink-0 flex items-center gap-1.5 text-xs text-white/30 hover:text-white px-2 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/20 transition-all"
+          >
+            {copied ? <><CheckCheck className="w-3.5 h-3.5 text-green-400" />Copied</> : <><Copy className="w-3.5 h-3.5" />Copy</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RiskForecastSection({ forecast }: { forecast: RiskForecast }) {
   const riskColor = (r: string) =>
     r === "critical" ? "text-red-400" : r === "high" ? "text-amber-400" : r === "medium" ? "text-yellow-400" : "text-green-400";
@@ -1023,9 +1128,7 @@ export default function ScanResultsPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-white/[0.08] border border-white/[0.12] flex items-center justify-center">
-              <Rocket className="w-3.5 h-3.5 text-white" />
-            </div>
+            <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover" />
             <span className="text-white font-bold font-['Syne'] text-sm">Launch Report</span>
           </div>
           <span className="text-white/20 text-xs ml-2 truncate hidden sm:block max-w-xs">{scan.sourceInput}</span>
@@ -1263,8 +1366,34 @@ export default function ScanResultsPage() {
             <p className="text-xs text-white/20 uppercase tracking-widest font-medium">
               {activeAgent ? "All findings" : `All findings (${sortedIssues.length} total)`}
             </p>
-            {(activeAgent ? sortedIssues : remaining).map((issue) => (
-              <EvidenceCard key={issue.id} issue={issue} />
+            {(activeAgent ? sortedIssues : remaining).map((issue) =>
+              issue.locked
+                ? <LockedIssueCard key={issue.id ?? issue.title} issue={issue} />
+                : <EvidenceCard key={issue.id} issue={issue} />,
+            )}
+          </div>
+        )}
+
+        {/* ── Upgrade banner for locked issues ─────────────── */}
+        {!activeAgent && (scan as any)._lockedIssueCount > 0 && (
+          <UpgradeBanner count={(scan as any)._lockedIssueCount as number} />
+        )}
+
+        {/* ── Exploit Terminal for critical IDOR/auth issues ─ */}
+        {!activeAgent && sortedIssues.some((i) =>
+          !i.locked && i.severity === "critical" &&
+          (i.agentName.includes("Security") || i.agentName.includes("IDOR") || i.agentName.includes("Access")),
+        ) && (
+          <div className="space-y-3">
+            <p className="text-xs text-white/20 uppercase tracking-widest font-medium flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              Exploit Terminal — Critical Vectors
+            </p>
+            {sortedIssues.filter((i) =>
+              !i.locked && i.severity === "critical" &&
+              (i.agentName.includes("Security") || i.agentName.includes("IDOR") || i.agentName.includes("Access")),
+            ).slice(0, 2).map((issue) => (
+              <ExploitTerminalCard key={issue.id} issue={issue} />
             ))}
           </div>
         )}

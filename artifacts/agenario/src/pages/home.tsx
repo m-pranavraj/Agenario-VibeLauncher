@@ -48,7 +48,7 @@ const PRICING = [
     period: "forever",
     desc: "First scan for every founder",
     features: [
-      "5 scans / month",
+      "2 scans / month",
       "Launch Readiness Score",
       "Security & critical issues",
       "1-Click fix prompts",
@@ -64,7 +64,7 @@ const PRICING = [
     period: "/mo",
     desc: "Unlimited analysis for indie founders",
     features: [
-      "Unlimited scans",
+      "12 scans / month",
       "Full 10-dimension analysis",
       "Compliance checks included",
       "Revenue intelligence layer",
@@ -118,7 +118,7 @@ export default function Home() {
   const yBg = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white overflow-hidden font-sans selection:bg-violet-500/20 selection:text-white">
+    <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden font-sans selection:bg-violet-500/20 selection:text-white">
 
       {/* Ambient glow orbs */}
       <motion.div style={{ y: yBg }} className="fixed top-[-15%] left-[-5%] w-[50%] h-[50%] bg-violet-600/8 blur-[180px] rounded-full pointer-events-none z-0" />
@@ -127,12 +127,10 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 border-b border-white/[0.06] bg-[#050505]/80 backdrop-blur-2xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center">
-              <Rocket className="w-4 h-4 text-white" />
-            </div>
+          <Link href="/" className="flex items-center gap-2.5">
+            <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover" />
             <span className="font-heading font-bold text-lg text-white tracking-tight">Agenario</span>
-          </div>
+          </Link>
 
           <div className="hidden md:flex items-center gap-7 text-sm font-medium text-white/45">
             <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
@@ -140,6 +138,7 @@ export default function Home() {
             <a href="#compliance" className="hover:text-white transition-colors">Compliance</a>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
             <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
+            <Link href="/about" className="hover:text-white transition-colors">About</Link>
           </div>
 
           <div className="flex items-center gap-3">

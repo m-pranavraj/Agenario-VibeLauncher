@@ -72,9 +72,7 @@ export default function DashboardPage() {
       <nav className="border-b border-white/[0.07] bg-[#050505]/90 backdrop-blur-2xl sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-white/[0.08] border border-white/[0.12] flex items-center justify-center">
-              <Rocket className="w-3.5 h-3.5 text-white" />
-            </div>
+            <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover" />
             <span className="text-white font-bold font-['Syne'] text-sm">Agenario</span>
           </Link>
 

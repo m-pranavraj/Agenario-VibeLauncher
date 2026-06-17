@@ -4,6 +4,7 @@ import { eq, desc } from "drizzle-orm";
 import { db, usersTable, scansTable, scanIssuesTable } from "@workspace/db";
 import { CreateScanBody } from "@workspace/api-zod";
 import { runAllAgents, type CodeContext } from "../lib/agents.js";
+import { PLAN_LIMITS, applyTierGate } from "../utils/tierGate.js";
 import { ingestGitHubRepo, extractRoutesFromDir, cleanupScan } from "../lib/ingestion.js";
 import { ingestZipFile, cleanupZip } from "../lib/zip-ingestion.js";
 import { detectFramework, detectVibeTool, detectBusinessType } from "../lib/detector.js";
@@ -26,7 +27,8 @@ function requireAuth(req: any, res: any): boolean {
 }
 
 async function checkScanLimit(user: { id: number; plan: string }, res: any): Promise<boolean> {
-  if (user.plan !== "free") return true;
+  const limit = PLAN_LIMITS[user.plan] ?? 2;
+  if (!isFinite(limit)) return true;
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthScans = await db
@@ -34,8 +36,14 @@ async function checkScanLimit(user: { id: number; plan: string }, res: any): Pro
     .from(scansTable)
     .where(eq(scansTable.userId, user.id));
   const thisMonthScans = monthScans.filter((s) => s.createdAt >= startOfMonth);
-  if (thisMonthScans.length >= 5) {
-    res.status(403).json({ error: "Free plan limit reached (5 scans/month). Upgrade to Creator for unlimited scans." });
+  if (thisMonthScans.length >= limit) {
+    const planLabel = user.plan === "free" ? "Free" : "Creator";
+    const upgradeHint = user.plan === "free"
+      ? " Upgrade to Creator for 12 scans/month."
+      : " Contact support for Enterprise unlimited access.";
+    res.status(403).json({
+      error: `${planLabel} plan limit reached (${limit} scans/month).${upgradeHint}`,
+    });
     return false;
   }
   return true;
@@ -463,12 +471,21 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
     .from(scanIssuesTable)
     .where(eq(scanIssuesTable.scanId, id));
 
-  res.json({
+  const [viewingUser] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, req.session.userId!));
+  const plan = viewingUser?.plan ?? "free";
+
+  let responseData: Record<string, unknown> = {
     ...scan,
     createdAt: scan.createdAt.toISOString(),
     completedAt: scan.completedAt?.toISOString() ?? null,
     issues,
-  });
+  };
+
+  responseData = applyTierGate(responseData, plan);
+  res.json(responseData);
 });
 
 export default router;
