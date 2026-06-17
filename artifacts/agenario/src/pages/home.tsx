@@ -531,7 +531,7 @@ export default function Home() {
               </motion.h1>
 
               <motion.p variants={FADE_UP} className="text-lg text-white/50 leading-relaxed max-w-lg">
-                Your AI wrote the code. Agenario decides if it's production-ready. 25 parallel agent dimensions — security, compliance, revenue, digital twin, and predictive intelligence — before your users find the bugs.
+                Your AI wrote the code. Agenario decides if it's production-ready. 25 parallel agent dimensions — compliance, revenue, performance, UX, reliability, and predictive intelligence — before launch day surprises hit.
               </motion.p>
 
               <motion.div variants={FADE_UP} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/[0.08] border border-green-500/20 text-green-400 text-xs font-medium">
@@ -542,7 +542,7 @@ export default function Home() {
               <motion.div variants={FADE_UP} className="space-y-3 bg-white/[0.03] border border-white/[0.08] p-5 rounded-2xl">
                 <div className="flex items-center gap-3">
                   <XCircle className="w-4 h-4 text-red-400/70 shrink-0" />
-                  <span className="text-sm text-white/30 line-through">Prompt → Deploy → Users find security holes</span>
+                  <span className="text-sm text-white/30 line-through">Prompt → Deploy → Production surprises hit your users</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <CheckCircle className="w-4 h-4 text-green-400 shrink-0" />
@@ -1424,7 +1424,8 @@ export default function Home() {
             <div className="flex items-center gap-5 text-xs text-white/30">
               <Link href="/pricing" className="hover:text-white/60 transition-colors">Pricing</Link>
               <Link href="/docs" className="hover:text-white/60 transition-colors">Docs</Link>
-              <a href="mailto:hello@agenario.ai" className="hover:text-white/60 transition-colors">Contact</a>
+              <Link href="/careers" className="hover:text-white/60 transition-colors">Careers</Link>
+              <a href="mailto:hello@agenario.tech" className="hover:text-white/60 transition-colors">Contact</a>
             </div>
           </div>
         </footer>

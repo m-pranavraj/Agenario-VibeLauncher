@@ -1,0 +1,13 @@
+uploads = []
+
+[[generated]]
+id = "VKWMpLFqrJJDIm0aSTHM4"
+uri = "file://attached_assets/generated_images/dark_premium_saas_dashboard_4b57.png"
+type = "image"
+title = "generated_image"
+
+[[outputs]]
+id = "MKsKEUkgLZ0zqc3SJPmWy"
+uri = "file://artifacts/agenario/public/opengraph.jpg"
+type = "image"
+title = "OG Preview Image (1200×630) — shown when link is shared"
