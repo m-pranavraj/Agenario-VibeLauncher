@@ -1,0 +1,805 @@
+Parallel Testing Architecture
+Traditional tools: 1 test.
+Agenario: 1000+ simultaneously.
+While other scanners check one thing at a time, our agentic swarm fires 25 specialized intelligence dimensions in parallel — giving you a complete picture in minutes, not hours.
+
+1000+
+Browser Sessions
+
+Parallel UI journey simulations
+
+10M+
+API Validations
+
+Parallel endpoint security checks
+
+25
+Agent Dimensions
+
+Simultaneous AI analysis passes
+
+99%
+Detection Rate
+
+Across 50+ audit categories
+
+Live Agent Execution Simulation
+
+95%
+88%
+72%
+100%
+61%
+84%
+Compliance Intelligence
+
+Regulatory gaps cost more
+than you think.
+Every scan checks your app against the standards that matter — from GDPR to OWASP Top 10 to PCI-DSS. Ship with a compliance posture, not a compliance prayer.
+
+OWASP Top 10
+GDPR
+PCI-DSS
+HIPAA-ready
+SOC 2 posture
+WCAG 2.1 AA
+CCPA
+ISO 27001
+Sample Compliance Check
+OWASP A01: Broken Access Control
+
+3 unprotected admin endpoints detected
+
+GDPR: User data consent
+
+No consent banner or privacy policy link
+
+PCI-DSS: Card data in transit
+
+HTTPS enforced, no card data stored
+
+WCAG 2.1 AA: Keyboard navigation
+
+2 interactive elements not keyboard-accessible
+
+OWASP A03: Injection
+
+No SQL/NoSQL injection patterns found
+
+Revenue Risk Analysis
+Issues that directly threaten your MRR
+
+critical
+Webhook signature not verified
+
+~₹18,000 avg fraud loss/month
+
+high
+Subscription cancellation race condition
+
+Users downgraded before period ends
+
+high
+No dunning for failed card retries
+
+~12% involuntary churn preventable
+
+medium
+Checkout flow has 6-step friction
+
+~23% drop-off at payment step
+
+Revenue Intelligence
+
+Know the MRR at risk
+before day one.
+Most launch reviews miss the money. Agenario's revenue intelligence layer audits payment flows, billing logic, and conversion friction — and tells you what each issue costs you in MRR.
+
+Payment flow audit
+Billing edge cases
+Churn risk scoring
+Checkout friction
+Webhook security
+Digital Twin Engine
+Test every scenario.
+Before a single user sees it.
+We create a virtual production clone of your app and simulate 1000+ user journeys, chaos failures, and attack vectors — then predict consequences before you deploy.
+
+📥
+Ingest
+Clone your codebase, routes, schemas
+
+🧬
+Clone
+Build a virtual production environment
+
+👤
+Simulate
+Run 1000+ synthetic user journeys
+
+💣
+Attack
+Inject chaos: SQLi, XSS, privilege escalation
+
+🔮
+Predict
+Know consequences before you ship
+
+1,000+
+User journeys simulated
+5 layers
+Chaos scenarios tested
+99.2%
+Attack surface coverage
+< 3 min
+Full twin simulation time
+What You Get Back
+
+A board memo, not a lint report.
+Structured analysis your whole team can act on — with a 0–100 score, top 3 action plan, and copy-paste fix prompts.
+
+Executive Summary
+"The app is structurally sound for MVP traffic, but has 2 critical blockers before launch. A Stripe secret key is exposed in the client bundle and will be scraped by bots within hours of going live. Additionally, there is no GDPR consent mechanism — this creates immediate regulatory exposure for EU users. Revenue impact: ~₹35,000/mo at risk from fraud and potential €50K GDPR fine."
+
+Top 3 Action Plan
+
+1
+Move Stripe keys to server-side environment variables — critical, 15 min fix
+2
+Add cookie consent banner with opt-out before EU traffic — GDPR required
+3
+Implement webhook signature verification — prevents payment fraud
+1-Click Fix Prompt
+@workspace Move the Stripe publishable key to a VITE_ env variable. Create .env.example with VITE_STRIPE_PUBLISHABLE_KEY=pk_... Move the secret key to server-side only. Never import it in any file under /src/client/.
+Copy to Cursor / Bolt
+7 Deep Tech Layers
+Under the hood.
+No black boxes.
+Every capability that makes Agenario impossible to replicate — explained in plain terms, backed by real engineering.
+
+
+
+IDOR fuzzer probes sequential user/order IDs across live endpoints
+
+Stripe bypass: sends amount:-100 to catch server-side price validation gaps
+
+PII bundle scanner: regex-scans JS bundles for sk_live_, AKIA, service_role keys
+
+Chaos engine: tests graceful degradation when DB/auth services fail
+
+Every finding backed by reproduction steps + HTTP response evidence
+
+
+
+
+
+
+
+
+
+
+
+
+
+Your code stays private. Always.
+We analyze your code entirely in-session and never persist it to our servers. No code is stored, indexed, or used for training. Your IP stays yours.
+
+Pricing
+
+Start free. Upgrade when you need it.
+No contracts, no hidden fees. Cancel anytime.
+
+Free
+First scans for every founder
+
+₹0
+forever
+2 scans / month
+Launch Readiness Score
+Security & critical issues
+1-Click fix prompts
+Start Free
+Most Popular
+Creator
+Full intelligence for indie founders
+
+₹299
+/mo
+12 scans / month
+All 25 analysis dimensions
+Digital Twin simulation
+Predictive intelligence
+Compliance checks included
+Board-memo style reports
+Priority analysis queue
+Upgrade to Creator
+Enterprise
+For agencies, studios & funded teams
+
+Custom
+Everything in Creator
+Team workspace
+API & webhook access
+CI/CD integration
+Custom compliance rules
+Dedicated support & SLA
+Contact Sales
+All prices in INR · GST applicable · Secure payments via Razorpay
+
+50+ dimensions of intelligence
+Every angle. Every attack vector.
+Now auditing
+Everything
+Runtime Security
+8 checks
+Compliance
+8 checks
+Revenue Intelligence
+8 checks
+Performance
+5 checks
+Reliability
+4 checks
+Data Integrity
+4 checks
+Dependencies
+3 checks
+AI Code Quality
+6 checks
+Predictive Intel
+4 checks
+OWASPGDPRPCI-DSSSOC 2ISO 27001HIPAAWCAG 2.1CCPASecret ScanCVE TrackCORS AuditJWT GuardCSRF BlockSQL InjectXSS DetectIDOR ScanSSRF BlockAuth Bypass
+Agenario
+25
+AI Agent Dimensions
+Running in parallel on every scan
+60+
+Secret Patterns
+AWS keys, Stripe, JWT, DB URLs & more
+200+
+CVE-tracked packages
+NVD + GitHub Advisory Database
+50+
+Audit Dimensions
+Code hygiene to compliance to revenue
+Everything inside Agenario
+
+🔍
+Secret Scanner V2
+🛡️
+OWASP Top 10 Mapper
+💉
+SQL Injection Detect
+🔐
+Auth Bypass Detection
+⚡
+CSRF Guard
+🌐
+CORS Misconfiguration
+🔑
+JWT Security Audit
+🕵️
+Session Fixation Risk
+🇪🇺
+GDPR Compliance
+💳
+PCI-DSS Readiness
+🏥
+HIPAA Gap Analysis
+📋
+SOC 2 Posture
+♿
+WCAG 2.1 AA Audit
+🌴
+CCPA Compliance
+🔗
+CWE ID Mapping
+📊
+ISO 27001 Alignment
+🛒
+Checkout Flow Analysis
+🔔
+Webhook Security Audit
+💸
+Revenue Leak Detection
+📉
+Subscription Enforcement
+🎭
+Free Tier Abuse Guard
+⚠️
+Billing Edge Cases
+💰
+Revenue Impact Score
+🏷️
+Promo Code Bypass
+🐌
+N+1 Query Detection
+📦
+Bundle Size Analysis
+🗃️
+DB Index Audit
+💾
+Cache Strategy Review
+🚀
+Cold Start Latency
+🛡️
+Error Boundary Coverage
+🔄
+Retry Logic Gaps
+⏱️
+Timeout Configuration
+🌊
+Graceful Degradation
+✅
+Data Validation Gaps
+🔄
+Transaction Safety
+🗄️
+Schema Migration Risk
+🗑️
+Data Retention Policy
+🔒
+CVE Vulnerability Scan
+📦
+Outdated Dependencies
+📜
+License Compliance
+🧬
+Vibe Code DNA Fingerprint
+🤖
+AI Hallucination Flags
+🧹
+Cleanup Radar Agent
+💀
+Dead Code Detection
+⏰
+Tech Debt Score
+🌍
+Digital Twin Simulation
+🔮
+Predictive Intelligence
+🎯
+Root Cause Engine
+🤝
+Shadow API Radar
+📈
+Regression Memory
+🔍
+Secret Scanner V2
+🛡️
+OWASP Top 10 Mapper
+💉
+SQL Injection Detect
+🔐
+Auth Bypass Detection
+⚡
+CSRF Guard
+🌐
+CORS Misconfiguration
+🔑
+JWT Security Audit
+🕵️
+Session Fixation Risk
+🇪🇺
+GDPR Compliance
+💳
+PCI-DSS Readiness
+🏥
+HIPAA Gap Analysis
+📋
+SOC 2 Posture
+♿
+WCAG 2.1 AA Audit
+🌴
+CCPA Compliance
+🔗
+CWE ID Mapping
+📊
+ISO 27001 Alignment
+🛒
+Checkout Flow Analysis
+🔔
+Webhook Security Audit
+💸
+Revenue Leak Detection
+📉
+Subscription Enforcement
+🎭
+Free Tier Abuse Guard
+⚠️
+Billing Edge Cases
+💰
+Revenue Impact Score
+🏷️
+Promo Code Bypass
+🐌
+N+1 Query Detection
+📦
+Bundle Size Analysis
+🗃️
+DB Index Audit
+💾
+Cache Strategy Review
+🚀
+Cold Start Latency
+🛡️
+Error Boundary Coverage
+🔄
+Retry Logic Gaps
+⏱️
+Timeout Configuration
+🌊
+Graceful Degradation
+✅
+Data Validation Gaps
+🔄
+Transaction Safety
+🗄️
+Schema Migration Risk
+🗑️
+Data Retention Policy
+🔒
+CVE Vulnerability Scan
+📦
+Outdated Dependencies
+📜
+License Compliance
+🧬
+Vibe Code DNA Fingerprint
+🤖
+AI Hallucination Flags
+🧹
+Cleanup Radar Agent
+💀
+Dead Code Detection
+⏰
+Tech Debt Score
+🌍
+Digital Twin Simulation
+🔮
+Predictive Intelligence
+🎯
+Root Cause Engine
+🤝
+Shadow API Radar
+📈
+Regression Memory
+📈
+Regression Memory
+🤝
+Shadow API Radar
+🎯
+Root Cause Engine
+🔮
+Predictive Intelligence
+🌍
+Digital Twin Simulation
+⏰
+Tech Debt Score
+💀
+Dead Code Detection
+🧹
+Cleanup Radar Agent
+🤖
+AI Hallucination Flags
+🧬
+Vibe Code DNA Fingerprint
+📜
+License Compliance
+📦
+Outdated Dependencies
+🔒
+CVE Vulnerability Scan
+🗑️
+Data Retention Policy
+🗄️
+Schema Migration Risk
+🔄
+Transaction Safety
+✅
+Data Validation Gaps
+🌊
+Graceful Degradation
+⏱️
+Timeout Configuration
+🔄
+Retry Logic Gaps
+🛡️
+Error Boundary Coverage
+🚀
+Cold Start Latency
+💾
+Cache Strategy Review
+🗃️
+DB Index Audit
+📦
+Bundle Size Analysis
+🐌
+N+1 Query Detection
+🏷️
+Promo Code Bypass
+💰
+Revenue Impact Score
+⚠️
+Billing Edge Cases
+🎭
+Free Tier Abuse Guard
+📉
+Subscription Enforcement
+💸
+Revenue Leak Detection
+🔔
+Webhook Security Audit
+🛒
+Checkout Flow Analysis
+📊
+ISO 27001 Alignment
+🔗
+CWE ID Mapping
+🌴
+CCPA Compliance
+♿
+WCAG 2.1 AA Audit
+📋
+SOC 2 Posture
+🏥
+HIPAA Gap Analysis
+💳
+PCI-DSS Readiness
+🇪🇺
+GDPR Compliance
+🕵️
+Session Fixation Risk
+🔑
+JWT Security Audit
+🌐
+CORS Misconfiguration
+⚡
+CSRF Guard
+🔐
+Auth Bypass Detection
+💉
+SQL Injection Detect
+🛡️
+OWASP Top 10 Mapper
+🔍
+Secret Scanner V2
+📈
+Regression Memory
+🤝
+Shadow API Radar
+🎯
+Root Cause Engine
+🔮
+Predictive Intelligence
+🌍
+Digital Twin Simulation
+⏰
+Tech Debt Score
+💀
+Dead Code Detection
+🧹
+Cleanup Radar Agent
+🤖
+AI Hallucination Flags
+🧬
+Vibe Code DNA Fingerprint
+📜
+License Compliance
+📦
+Outdated Dependencies
+🔒
+CVE Vulnerability Scan
+🗑️
+Data Retention Policy
+🗄️
+Schema Migration Risk
+🔄
+Transaction Safety
+✅
+Data Validation Gaps
+🌊
+Graceful Degradation
+⏱️
+Timeout Configuration
+🔄
+Retry Logic Gaps
+🛡️
+Error Boundary Coverage
+🚀
+Cold Start Latency
+💾
+Cache Strategy Review
+🗃️
+DB Index Audit
+📦
+Bundle Size Analysis
+🐌
+N+1 Query Detection
+🏷️
+Promo Code Bypass
+💰
+Revenue Impact Score
+⚠️
+Billing Edge Cases
+🎭
+Free Tier Abuse Guard
+📉
+Subscription Enforcement
+💸
+Revenue Leak Detection
+🔔
+Webhook Security Audit
+🛒
+Checkout Flow Analysis
+📊
+ISO 27001 Alignment
+🔗
+CWE ID Mapping
+🌴
+CCPA Compliance
+♿
+WCAG 2.1 AA Audit
+📋
+SOC 2 Posture
+🏥
+HIPAA Gap Analysis
+💳
+PCI-DSS Readiness
+🇪🇺
+GDPR Compliance
+🕵️
+Session Fixation Risk
+🔑
+JWT Security Audit
+🌐
+CORS Misconfiguration
+⚡
+CSRF Guard
+🔐
+Auth Bypass Detection
+💉
+SQL Injection Detect
+🛡️
+OWASP Top 10 Mapper
+🔍
+Secret Scanner V2
+Free for your first scans — no credit card
+Your app deserves a
+real review before launch.
+Join founders who stopped guessing and started shipping with a documented readiness score. 25 agents. Zero guesswork. Full certainty.
+
+Analyze My App for Free
+Read the Docs
+Complete Capability Index
+
+Everything Agenario checks.
+From A to Z.
+Every dimension, every check, every agent — in one place. Sorted by category. No hidden rules.
+
+Runtime Security
+8
+🔍
+Secret Scanner V2
+🛡️
+OWASP Top 10 Mapper
+💉
+SQL Injection Detect
+🔐
+Auth Bypass Detection
+⚡
+CSRF Guard
+🌐
+CORS Misconfiguration
+🔑
+JWT Security Audit
+🕵️
+Session Fixation Risk
+Compliance
+8
+🇪🇺
+GDPR Compliance
+💳
+PCI-DSS Readiness
+🏥
+HIPAA Gap Analysis
+📋
+SOC 2 Posture
+♿
+WCAG 2.1 AA Audit
+🌴
+CCPA Compliance
+🔗
+CWE ID Mapping
+📊
+ISO 27001 Alignment
+Revenue Intelligence
+8
+🛒
+Checkout Flow Analysis
+🔔
+Webhook Security Audit
+💸
+Revenue Leak Detection
+📉
+Subscription Enforcement
+🎭
+Free Tier Abuse Guard
+⚠️
+Billing Edge Cases
+💰
+Revenue Impact Score
+🏷️
+Promo Code Bypass
+Performance
+5
+🐌
+N+1 Query Detection
+📦
+Bundle Size Analysis
+🗃️
+DB Index Audit
+💾
+Cache Strategy Review
+🚀
+Cold Start Latency
+Reliability
+4
+🛡️
+Error Boundary Coverage
+🔄
+Retry Logic Gaps
+⏱️
+Timeout Configuration
+🌊
+Graceful Degradation
+Data Integrity
+4
+✅
+Data Validation Gaps
+🔄
+Transaction Safety
+🗄️
+Schema Migration Risk
+🗑️
+Data Retention Policy
+Dependencies
+3
+🔒
+CVE Vulnerability Scan
+📦
+Outdated Dependencies
+📜
+License Compliance
+AI Code Quality
+6
+🧬
+Vibe Code DNA Fingerprint
+🤖
+AI Hallucination Flags
+🧹
+Cleanup Radar Agent
+💀
+Dead Code Detection
+⏰
+Tech Debt Score
+🌍
+Digital Twin Simulation
+Predictive Intel
+4
+🔮
+Predictive Intelligence
+🎯
+Root Cause Engine
+🤝
+Shadow API Radar
+📈
+Regression Memory
+50 checks across 9 categories · New dimensions added every sprint · Enterprise gets custom audit rules
+
+Agenario
+© 2026 Agenario · Production Review Board for AI-built Apps · Your code is never stored.
+
+Pricing
+Docs
+Contact
