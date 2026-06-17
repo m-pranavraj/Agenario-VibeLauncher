@@ -389,6 +389,62 @@
 }
 .scan-card-aurora:hover::before { opacity: 1; }
 
+/* ── Infinite marquee ───────────────────────────────────────── */
+@keyframes marquee-ltr {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes marquee-rtl {
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+.marquee-ltr {
+  display: flex;
+  width: max-content;
+  animation: marquee-ltr 38s linear infinite;
+}
+.marquee-rtl {
+  display: flex;
+  width: max-content;
+  animation: marquee-rtl 46s linear infinite;
+}
+.marquee-ltr:hover,
+.marquee-rtl:hover { animation-play-state: paused; }
+
+/* ── Pill shimmer sweep ─────────────────────────────────────── */
+@keyframes pill-shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+.pill-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.pill-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.07) 50%, transparent 100%);
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  animation: pill-shimmer 1.4s ease infinite;
+  pointer-events: none;
+}
+.pill-shimmer:hover::after { opacity: 1; }
+
+/* ── Counter glow ───────────────────────────────────────────── */
+.counter-glow {
+  text-shadow: 0 0 30px currentColor;
+}
+
+/* ── Digital twin step pulse ────────────────────────────────── */
+@keyframes twin-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0); }
+  50%       { box-shadow: 0 0 0 8px rgba(139,92,246,0.12); }
+}
+.twin-active { animation: twin-pulse 2s ease-in-out infinite; }
+
 /* ── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
