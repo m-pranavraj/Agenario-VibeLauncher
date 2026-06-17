@@ -2163,21 +2163,52 @@ function CleanupRadarPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
           {expanded && (
             <div className="divide-y divide-white/[0.04] max-h-80 overflow-y-auto">
               {data.findings.slice(0, 20).map((f) => (
-                <div key={f.id} className="px-6 py-2.5 flex items-start gap-3">
-                  <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${f.severity === "error" ? "bg-red-400" : f.severity === "warning" ? "bg-amber-400" : "bg-white/20"}`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-white/70">{f.title}</p>
-                    <p className="text-[10px] text-white/30 mt-0.5">{f.file}{f.lineHint ? `:${f.lineHint}` : ""}</p>
-                    {f.fixSuggestion && <p className="text-[10px] text-green-400/60 mt-0.5">{f.fixSuggestion}</p>}
-                  </div>
-                  {f.autoFixable && <span className="text-[9px] text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded shrink-0">Auto</span>}
-                </div>
+                <CleanupFindingRow key={f.id} finding={f} />
               ))}
             </div>
           )}
         </div>
       )}
     </motion.div>
+  );
+}
+
+function CleanupFindingRow({ finding: f }: { finding: NonNullable<ScanDetail["cleanupReport"]>["findings"][0] }) {
+  const [rmCopied, setRmCopied] = useState(false);
+
+  // Extract a git rm / npm uninstall command from fixSuggestion if auto-fixable
+  const rmCmd = f.autoFixable
+    ? f.fixSuggestion.match(/(?:git rm|npm uninstall|rm -rf?|npx rimraf)\s+\S+/)?.[0] ?? null
+    : null;
+
+  function copyRm() {
+    if (!rmCmd) return;
+    navigator.clipboard.writeText(rmCmd).catch(() => {});
+    setRmCopied(true);
+    setTimeout(() => setRmCopied(false), 2000);
+  }
+
+  return (
+    <div className="px-6 py-2.5 flex items-start gap-3">
+      <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${f.severity === "error" ? "bg-red-400" : f.severity === "warn" ? "bg-amber-400" : "bg-white/20"}`} />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-white/70">{f.title}</p>
+        <p className="text-[10px] text-white/30 mt-0.5">{f.file}{f.lineHint ? `:${f.lineHint}` : ""}</p>
+        {f.fixSuggestion && <p className="text-[10px] text-green-400/60 mt-0.5 truncate">{f.fixSuggestion}</p>}
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0">
+        {rmCmd && (
+          <button
+            onClick={copyRm}
+            title={`Copy: ${rmCmd}`}
+            className="text-[9px] font-mono text-amber-400/70 border border-amber-500/20 px-1.5 py-0.5 rounded hover:bg-amber-500/10 transition-colors"
+          >
+            {rmCopied ? "✓ Copied" : "Copy rm"}
+          </button>
+        )}
+        {f.autoFixable && <span className="text-[9px] text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded">Auto</span>}
+      </div>
+    </div>
   );
 }
 

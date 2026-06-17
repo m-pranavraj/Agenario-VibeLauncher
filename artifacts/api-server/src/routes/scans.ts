@@ -593,6 +593,55 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
   res.json(responseData);
 });
 
+// ── Shared: Re-ingest source for on-demand recompute ─────────────────────────
+async function recomputeCodeContext(scan: { sourceType: string; sourceInput: string; id: number }): Promise<CodeContext | null> {
+  if (scan.sourceType !== "github") return null;
+  try {
+    const ingested = await ingestGitHubRepo(scan.sourceInput, scan.id);
+    if (!ingested) return null;
+    const pkg = (ingested.context.packageJson ?? {}) as Record<string, unknown>;
+    return {
+      framework: detectFramework(pkg),
+      vibeTool: detectVibeTool(pkg, ingested.context.fileTree),
+      businessType: "saas",
+      routes: extractRoutesFromDir(ingested.dir, detectFramework(pkg)),
+      schemas: ingested.context.schemas ?? "",
+      packageJson: pkg,
+      keyFiles: ingested.context.keyFiles,
+      fileTree: ingested.context.fileTree,
+      totalFiles: ingested.context.totalFiles,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ── Digital Twin Engine — trigger/re-run (Creator only) ───────────────────────
+router.post("/scans/:id/digital-twin", async (req, res): Promise<void> => {
+  if (!requireAuth(req, res)) return;
+
+  const [viewingUser] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId!));
+  if (viewingUser?.plan === "free") {
+    res.status(403).json({ error: "Digital Twin Engine requires Creator plan" });
+    return;
+  }
+
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid scan id" }); return; }
+
+  const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
+  if (!scan || scan.userId !== req.session.userId) {
+    res.status(404).json({ error: "Scan not found" }); return;
+  }
+
+  const codeContext = await recomputeCodeContext(scan);
+  const digitalTwin = await runDigitalTwin(scan.sourceType, scan.sourceInput, scan.appDescription, codeContext);
+  await db.update(scansTable).set({ digitalTwin }).where(eq(scansTable.id, id));
+  if (scan.sourceType === "github") cleanupScan(id);
+  res.json(digitalTwin);
+});
+
 // ── Root Cause Engine (Creator only) ─────────────────────────────────────────
 router.get("/scans/:id/root-cause", async (req, res): Promise<void> => {
   if (!requireAuth(req, res)) return;
@@ -611,11 +660,23 @@ router.get("/scans/:id/root-cause", async (req, res): Promise<void> => {
   if (!scan || scan.userId !== req.session.userId) {
     res.status(404).json({ error: "Scan not found" }); return;
   }
-  if (!scan.rootCause) {
-    res.status(404).json({ error: "Root cause analysis not available for this scan" }); return;
+
+  // Return stored result or recompute on-demand
+  if (scan.rootCause) {
+    res.json(scan.rootCause);
+    return;
   }
 
-  res.json(scan.rootCause);
+  const codeContext = await recomputeCodeContext(scan);
+  const issues = await db.select().from(scanIssuesTable).where(eq(scanIssuesTable.scanId, id));
+  const criticalAndHigh = issues.filter((i) => i.severity === "critical" || i.severity === "high").map((i) => ({
+    id: String(i.id), title: i.title, description: i.description ?? "", severity: i.severity as "critical" | "high",
+    agentName: i.agentName, recommendation: i.fixPrompt ?? "", category: i.agentName,
+  }));
+  const rootCause = await runRootCause(criticalAndHigh, scan.sourceInput, codeContext, scan.appDescription);
+  await db.update(scansTable).set({ rootCause }).where(eq(scansTable.id, id));
+  if (scan.sourceType === "github") cleanupScan(id);
+  res.json(rootCause);
 });
 
 // ── Cleanup Details (Creator-gated full report) ───────────────────────────────
@@ -636,11 +697,22 @@ router.get("/scans/:id/cleanup", async (req, res): Promise<void> => {
   if (!scan || scan.userId !== req.session.userId) {
     res.status(404).json({ error: "Scan not found" }); return;
   }
-  if (!scan.cleanupReport) {
-    res.status(404).json({ error: "Cleanup report not available for this scan" }); return;
+
+  // Return stored result or recompute on-demand
+  if (scan.cleanupReport) {
+    res.json(scan.cleanupReport);
+    return;
   }
 
-  res.json(scan.cleanupReport);
+  const codeContext = await recomputeCodeContext(scan);
+  if (!codeContext || codeContext.keyFiles.length === 0) {
+    res.status(404).json({ error: "Cleanup report not available — source files not accessible for recompute" });
+    return;
+  }
+  const cleanupReport = runCleanupAgent(codeContext.keyFiles, scan.appDescription);
+  await db.update(scansTable).set({ cleanupReport }).where(eq(scansTable.id, id));
+  if (scan.sourceType === "github") cleanupScan(id);
+  res.json(cleanupReport);
 });
 
 // ── AI Fix Generator ──────────────────────────────────────────────────────────

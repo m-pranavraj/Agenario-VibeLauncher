@@ -27,7 +27,9 @@ export type CleanupCategory =
   | "env-hygiene"
   | "doc-clutter"
   | "security-smell"
-  | "file-hygiene";
+  | "file-hygiene"
+  | "unused-dep"
+  | "orphaned-route";
 
 export interface CleanupReport {
   totalFindings: number;
@@ -341,6 +343,104 @@ export function runCleanupAgent(
           autoFixable: false,
         });
       }
+    }
+  }
+
+  // ── Unused dependency detection ───────────────────────────────────────────
+  // Collect all import sources across all source files
+  const allImports = new Set<string>();
+  const IMPORT_RE = /(?:import|require)\s*(?:\{[^}]*\}|[\w*]+)?\s*(?:from\s*)?['"]([^'"]+)['"]/g;
+  for (const file of keyFiles) {
+    if (!file.content) continue;
+    let m: RegExpExecArray | null;
+    const re = new RegExp(IMPORT_RE.source, "g");
+    while ((m = re.exec(file.content)) !== null) {
+      const pkg = m[1];
+      // Only external packages (no relative paths or node builtins)
+      if (pkg && !pkg.startsWith(".") && !pkg.startsWith("/") && !pkg.startsWith("node:")) {
+        // Normalize: @scope/pkg or pkg (strip /subpath)
+        const parts = pkg.startsWith("@") ? pkg.split("/").slice(0, 2).join("/") : pkg.split("/")[0];
+        if (parts) allImports.add(parts);
+      }
+    }
+  }
+
+  // Find package.json to cross-reference declared dependencies
+  const pkgFile = keyFiles.find((f) => f.path.endsWith("package.json") && !f.path.includes("node_modules"));
+  if (pkgFile && pkgFile.content) {
+    try {
+      const pkgJson = JSON.parse(pkgFile.content) as Record<string, unknown>;
+      const deps = Object.keys({
+        ...(pkgJson.dependencies as Record<string, string> ?? {}),
+        ...(pkgJson.devDependencies as Record<string, string> ?? {}),
+      });
+      for (const dep of deps) {
+        if (!allImports.has(dep) && !dep.startsWith("@types/")) {
+          // Heuristic skip: build tooling & type-only packages
+          const SKIP = ["typescript", "esbuild", "vite", "drizzle-kit", "ts-node", "rimraf", "concurrently", "nodemon"];
+          if (!SKIP.some((s) => dep.includes(s))) {
+            addFinding({
+              category: "unused-dep",
+              severity: "info",
+              title: `Potentially unused dependency: ${dep}`,
+              detail: `"${dep}" is listed in package.json but no import for it was found in scanned source files. Unused dependencies bloat the install footprint and increase supply chain attack surface.`,
+              file: pkgFile.path,
+              fixSuggestion: `npm uninstall ${dep} — or verify it's used indirectly (peer dep, CLI tool, dynamic import).`,
+              autoFixable: true,
+            });
+          }
+        }
+      }
+    } catch {
+      // non-parseable package.json — skip
+    }
+  }
+
+  // ── Orphaned route detection ───────────────────────────────────────────────
+  // Detect routes defined in server files that have no corresponding import/link in frontend files
+  const ROUTE_DEF_RE = /router\.(get|post|put|patch|delete)\s*\(\s*['"`]([^'"`]+)['"`]/g;
+  const FRONTEND_LINK_RE = /fetch\s*\(\s*['"`][^'"`]*(['"`])|href\s*=\s*['"`]([^'"`]+)['"`]|to\s*=\s*['"`]([^'"`]+)['"`]/g;
+
+  const definedRoutes: Array<{ method: string; path: string; file: string }> = [];
+  const frontendLinks: Set<string> = new Set();
+
+  for (const file of keyFiles) {
+    if (!file.content) continue;
+    const isServer = file.path.includes("route") || file.path.includes("server") || file.path.includes("api");
+    const isFrontend = file.path.includes("src/") || file.path.endsWith(".tsx") || file.path.endsWith(".jsx");
+
+    if (isServer) {
+      let m: RegExpExecArray | null;
+      const re = new RegExp(ROUTE_DEF_RE.source, "g");
+      while ((m = re.exec(file.content)) !== null) {
+        if (m[1] && m[2]) definedRoutes.push({ method: m[1], path: m[2], file: file.path });
+      }
+    }
+    if (isFrontend) {
+      let m: RegExpExecArray | null;
+      const re = new RegExp(FRONTEND_LINK_RE.source, "g");
+      while ((m = re.exec(file.content)) !== null) {
+        const link = m[1] ?? m[2] ?? m[3];
+        if (link) frontendLinks.add(link);
+      }
+    }
+  }
+
+  // Flag routes with no frontend reference (exclude health/internal routes)
+  const INTERNAL_ROUTE_PREFIXES = ["/health", "/metrics", "/internal", "/admin", "/:id"];
+  for (const route of definedRoutes) {
+    const isInternal = INTERNAL_ROUTE_PREFIXES.some((p) => route.path.startsWith(p) || route.path === p);
+    const hasLink = [...frontendLinks].some((link) => link.includes(route.path) || route.path.includes(link));
+    if (!isInternal && !hasLink && route.path.length > 1) {
+      addFinding({
+        category: "orphaned-route",
+        severity: "info",
+        title: `Possibly orphaned route: ${route.method.toUpperCase()} ${route.path}`,
+        detail: `Route "${route.method.toUpperCase()} ${route.path}" is defined in ${route.file} but no frontend reference was found. Orphaned routes add attack surface and confuse maintainers.`,
+        file: route.file,
+        fixSuggestion: `Verify this route is called from the frontend or document it. If unused, remove it: git grep -r "${route.path}" to confirm.`,
+        autoFixable: false,
+      });
     }
   }
 

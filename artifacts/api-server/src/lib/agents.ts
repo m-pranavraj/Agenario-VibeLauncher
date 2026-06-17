@@ -708,20 +708,10 @@ export async function runAllAgents(
 ): Promise<ScanAnalysisResult> {
   logger.info({ sourceType, sourceInput }, "Starting deep analysis");
 
-  // Run agents in batches of 4 to avoid Groq rate limits, then compliance + revenue in parallel
-  const agentBatchSize = 4;
-  const agentResults: AgentResult[] = [];
-  for (let i = 0; i < AGENTS.length; i += agentBatchSize) {
-    const batch = AGENTS.slice(i, i + agentBatchSize);
-    const batchResults = await Promise.all(
-      batch.map((agent) => runAgent(agent, sourceType, sourceInput, appDescription, codeContext)),
-    );
-    agentResults.push(...batchResults);
-    // Small pause between batches to respect rate limits
-    if (i + agentBatchSize < AGENTS.length) {
-      await new Promise((r) => setTimeout(r, 400));
-    }
-  }
+  // Run all agents fully in parallel alongside compliance + revenue analysis
+  const agentResults = await Promise.all(
+    AGENTS.map((agent) => runAgent(agent, sourceType, sourceInput, appDescription, codeContext)),
+  );
 
   const [complianceResults, revenueIntelligence] = await Promise.all([
     runComplianceAnalysis(sourceType, sourceInput, appDescription, codeContext),
