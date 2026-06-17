@@ -458,3 +458,22 @@
 
 /* ── Typography ─────────────────────────────────────────────── */
 ::selection { background: rgba(139, 92, 246, 0.25); color: #fff; }
+
+/* ── Remove Replit Watermarks, Badges & Dev Banners ─────────── */
+replit-viewer-badge,
+#replit-badge-root,
+.replit-badge,
+.replit-watermark,
+#replit-dev-banner,
+.replit-dev-banner,
+iframe[src*="replit.com"],
+iframe[src*="replit"],
+a[href*="replit.com"] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+}
+
