@@ -1,4 +1,12 @@
-const BASE = import.meta.env.VITE_API_URL || "/api";
+const getApiUrl = () => {
+  let url = import.meta.env.VITE_API_URL || "/api";
+  if (url.startsWith("http") && !url.endsWith("/api")) {
+    url = url.replace(/\/$/, "") + "/api";
+  }
+  return url;
+};
+
+const BASE = getApiUrl();
 
 async function request<T>(
   path: string,
