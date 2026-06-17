@@ -5,6 +5,23 @@
  * Enterprise: unlimited, all content unlocked
  */
 
+function extractFileHint(evidence: string): string | null {
+  const match = evidence.match(/([a-zA-Z0-9_\-./]+\.(ts|js|jsx|tsx|py|go|rb|java|php|env|yaml|yml|json|sh))/);
+  if (!match) return null;
+  const path = match[1] as string;
+  const parts = path.split("/");
+  const filename = parts.pop() ?? "";
+  const dotIdx = filename.lastIndexOf(".");
+  const nameWithoutExt = dotIdx > 0 ? filename.slice(0, dotIdx) : filename;
+  const ext = dotIdx > 0 ? filename.slice(dotIdx) : "";
+  const redacted =
+    nameWithoutExt.length > 4
+      ? nameWithoutExt.slice(0, 3) + "_".repeat(Math.min(5, nameWithoutExt.length - 3)) + ext
+      : filename;
+  const hint = [...parts, redacted].join("/");
+  return hint.startsWith("/") ? hint : "/" + hint;
+}
+
 export const PLAN_LIMITS: Record<string, number> = {
   free: 2,
   creator: 12,
@@ -17,20 +34,27 @@ export function applyTierGate(
 ): Record<string, unknown> {
   if (plan !== "free") return data;
 
-  // ── Issues: first 3 fully unlocked, rest locked ───────────────
+  // ── Issues: first 3 fully unlocked, rest locked with partial reveal ──
   if (Array.isArray(data["issues"])) {
     const issues = data["issues"] as Array<Record<string, unknown>>;
     data["issues"] = issues.map((issue, i) => {
       if (i < 3) return issue;
+      const fileHint =
+        typeof issue["evidence"] === "string"
+          ? extractFileHint(issue["evidence"] as string)
+          : null;
+      const rawFix = typeof issue["fixPrompt"] === "string" ? (issue["fixPrompt"] as string) : "";
+      const fixPreview = rawFix.length > 0
+        ? rawFix.slice(0, 60) + "… 🔒 Upgrade to unlock full fix"
+        : "🔒 Upgrade to Creator plan to unlock this 1-Click Fix Prompt";
       return {
         ...issue,
         description:
           typeof issue["description"] === "string"
-            ? issue["description"].slice(0, 80) + "…"
+            ? (issue["description"] as string).slice(0, 80) + "…"
             : "Upgrade to view full details",
-        fixPrompt:
-          "🔒 Upgrade to Creator plan to unlock this 1-Click Fix Prompt",
-        evidence: null,
+        fixPrompt: fixPreview,
+        evidence: fileHint ? `Found in: ${fileHint}` : null,
         codeRef: null,
         locked: true,
       };

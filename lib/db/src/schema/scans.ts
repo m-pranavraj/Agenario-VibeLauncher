@@ -272,6 +272,33 @@ export const scansTable = pgTable("scans", {
     }>;
     summary: string;
   }>(),
+  launchImpact: jsonb("launch_impact").$type<{
+    totalRevenueAtRisk: string;
+    supportCostPerMonth: string;
+    trustImpact: string;
+    userImpact: string;
+    breakdown: Array<{
+      issueTitle: string;
+      severity: string;
+      revenueImpact: string;
+      trustImpact: string;
+      supportHours: string;
+    }>;
+    topRisk: string;
+    founderWarning: string;
+  }>(),
+  productHuntScore: jsonb("product_hunt_score").$type<{
+    score: number;
+    verdict: string;
+    categories: Array<{
+      name: string;
+      score: number;
+      status: "pass" | "warning" | "fail";
+      findings: string[];
+    }>;
+    topBlockers: string[];
+    readyToHunt: boolean;
+  }>(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp("completed_at", { withTimezone: true }),
 });

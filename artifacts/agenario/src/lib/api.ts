@@ -280,6 +280,33 @@ export interface Scan {
   digitalTwin: DigitalTwinResult | null;
   predictiveIntel: PredictiveIntelResult | null;
   rootCause: RootCauseResult | null;
+  launchImpact: {
+    totalRevenueAtRisk: string;
+    supportCostPerMonth: string;
+    trustImpact: string;
+    userImpact: string;
+    breakdown: Array<{
+      issueTitle: string;
+      severity: string;
+      revenueImpact: string;
+      trustImpact: string;
+      supportHours: string;
+    }>;
+    topRisk: string;
+    founderWarning: string;
+  } | null;
+  productHuntScore: {
+    score: number;
+    verdict: string;
+    categories: Array<{
+      name: string;
+      score: number;
+      status: "pass" | "warning" | "fail";
+      findings: string[];
+    }>;
+    topBlockers: string[];
+    readyToHunt: boolean;
+  } | null;
   createdAt: string;
   completedAt: string | null;
 }
@@ -407,6 +434,8 @@ export const api = {
       request<ScanDetail>("/scans", { method: "POST", body: JSON.stringify(data) }),
     generateFix: (scanId: number, data: { title: string; description: string; fixPrompt: string; agentName: string }) =>
       request<{ fix: string; language: string }>(`/scans/${scanId}/fix`, { method: "POST", body: JSON.stringify({ ...data, recommendation: data.fixPrompt }) }),
+    ask: (scanId: number, question: string) =>
+      request<{ answer: string }>(`/scans/${scanId}/ask`, { method: "POST", body: JSON.stringify({ question }) }),
   },
   billing: {
     createOrder: (plan: string) =>

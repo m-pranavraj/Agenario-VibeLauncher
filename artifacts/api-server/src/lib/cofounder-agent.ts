@@ -10,6 +10,18 @@ import Groq from "groq-sdk";
 import { logger } from "./logger.js";
 import type { LaunchDNA, LaunchReplayStep } from "@workspace/db/schema";
 
+export interface CofounderQAContext {
+  sourceInput: string;
+  score: number;
+  launchVerdict: string;
+  issueCounts: { critical: number; high: number; medium: number; low: number };
+  businessType?: string;
+  framework?: string;
+  vibeTool?: string;
+  topIssues: Array<{ title: string; severity: string; agentName: string }>;
+  riskForecast?: { executiveRecommendation?: string; revenueAtRisk?: string } | null;
+}
+
 const groq = new Groq({ apiKey: process.env["GROQ_API_KEY"] });
 const MODEL = "llama-3.3-70b-versatile";
 
@@ -241,4 +253,49 @@ export async function generateLaunchDNA(input: CofounderInput): Promise<LaunchDN
     },
     overallDNA: `${riskLabel} · ${growthLabel} · ${techLabel}`,
   };
+}
+
+export async function answerCofounderQuestion(
+  question: string,
+  ctx: CofounderQAContext,
+): Promise<string> {
+  const issuesSummary = ctx.topIssues
+    .slice(0, 8)
+    .map((i) => `- [${i.severity}] ${i.title}`)
+    .join("\n");
+
+  try {
+    const response = await groq.chat.completions.create({
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a battle-hardened technical co-founder and CTO who has built and launched 10+ products. You have access to a full security and quality audit of this app. Answer the founder's question directly, honestly, and with specific actionable advice based on the actual audit results. Be like a trusted advisor — direct, specific, no fluff. Max 150 words.",
+        },
+        {
+          role: "user",
+          content: `App: ${ctx.sourceInput}
+Score: ${ctx.score}/100 — ${ctx.launchVerdict}
+Issues: ${ctx.issueCounts.critical} critical, ${ctx.issueCounts.high} high, ${ctx.issueCounts.medium} medium, ${ctx.issueCounts.low} low
+Business Type: ${ctx.businessType ?? "unknown"}
+Framework: ${ctx.framework ?? "unknown"} | Vibe Tool: ${ctx.vibeTool ?? "unknown"}
+
+Top issues from audit:
+${issuesSummary}
+
+${ctx.riskForecast?.executiveRecommendation ? `Board recommendation: ${ctx.riskForecast.executiveRecommendation}` : ""}
+
+Founder's question: ${question}
+
+Answer directly and specifically based on this app's actual audit results.`,
+        },
+      ],
+      max_tokens: 300,
+    });
+    return response.choices[0]?.message?.content ?? "Unable to generate response. Please try again.";
+  } catch (err) {
+    logger.error({ err }, "Cofounder Q&A failed");
+    return "Unable to generate response. Please try again.";
+  }
 }

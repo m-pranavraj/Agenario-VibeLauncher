@@ -9,7 +9,7 @@ import {
   Play, Camera, Minus, Globe, GitBranch, Award, Dna, Users, Share2,
   Sparkles, ListChecks, ExternalLink, Wifi, Package, Cloud, RefreshCw,
   Network, Brain, Terminal, GitMerge, AlertCircle, ArrowUpRight, ArrowDownRight,
-  Smartphone, ShieldAlert,
+  Smartphone, ShieldAlert, Star, Flame, MessageSquare, Send, X,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -334,10 +334,15 @@ function EvidenceCard({ issue, rank, scanId, isCreator }: { issue: ScanIssue; ra
 
 function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
   const cfg = SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
+  const fileHint = issue.evidence?.startsWith("Found in:") ? issue.evidence : null;
+  const fixPreview = issue.fixPrompt && !issue.fixPrompt.startsWith("🔒")
+    ? issue.fixPrompt.slice(0, 60)
+    : null;
+
   return (
-    <div className={`relative border rounded-xl overflow-hidden ${cfg.bg}`}>
-      {/* Blurred content beneath */}
-      <div className="flex items-center gap-3 p-4 select-none pointer-events-none" style={{ filter: "blur(4px)" }}>
+    <div className={`border rounded-xl overflow-hidden ${cfg.bg}`}>
+      {/* Visible header — severity + title */}
+      <div className="flex items-center gap-3 p-4">
         {rank && (
           <span className="w-5 h-5 rounded-full bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-[10px] font-bold text-white/40 shrink-0">
             {rank}
@@ -346,20 +351,46 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide shrink-0 ${cfg.badge}`}>
           {issue.severity}
         </span>
-        <span className="text-sm font-medium text-white/90 flex-1 text-left line-clamp-1">{issue.title}</span>
+        <span className="text-sm font-medium text-white/80 flex-1 text-left line-clamp-1">{issue.title}</span>
+        <Lock className="w-3.5 h-3.5 text-violet-400/60 shrink-0" />
       </div>
-      {/* Lock overlay */}
-      <div className="absolute inset-0 flex items-center justify-between px-4 bg-gradient-to-r from-black/50 via-black/30 to-black/50 backdrop-blur-[2px]">
-        <div className="flex items-center gap-2">
-          <Lock className="w-3.5 h-3.5 text-violet-400 shrink-0" />
-          <span className="text-xs text-white/50 font-medium">Upgrade to view this finding</span>
+
+      {/* File location hint — partial reveal */}
+      {fileHint && (
+        <div className="px-4 pb-2">
+          <span className="text-[10px] font-mono text-amber-400/70 bg-amber-500/[0.06] border border-amber-500/15 px-2 py-0.5 rounded">
+            {fileHint}
+          </span>
         </div>
-        <Link href="/pricing">
-          <button className="flex items-center gap-1.5 text-xs bg-violet-500/80 hover:bg-violet-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30">
-            Unlock <ArrowRight className="w-3 h-3" />
-          </button>
-        </Link>
-      </div>
+      )}
+
+      {/* Blurred fix prompt preview */}
+      {fixPreview ? (
+        <div className="px-4 pb-4">
+          <div className="bg-black/30 border border-white/[0.07] rounded-lg px-3 py-2.5 relative overflow-hidden">
+            <div className="text-[10px] text-white/25 mb-1">1-Click Fix Prompt</div>
+            <p className="text-xs font-mono text-white/40 leading-relaxed" style={{ filter: "blur(3.5px)", userSelect: "none" }}>
+              {fixPreview}…
+            </p>
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+              <Link href="/pricing">
+                <button className="flex items-center gap-1.5 text-xs bg-violet-500/80 hover:bg-violet-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30">
+                  <Lock className="w-3 h-3" /> Unlock Fix Prompt <ArrowRight className="w-3 h-3" />
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="px-4 pb-4 flex items-center justify-between">
+          <span className="text-xs text-white/30">Upgrade to view full details and fix</span>
+          <Link href="/pricing">
+            <button className="flex items-center gap-1.5 text-xs bg-violet-500/80 hover:bg-violet-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30">
+              Unlock <ArrowRight className="w-3 h-3" />
+            </button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
@@ -2315,6 +2346,396 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
   );
 }
 
+function StickyLaunchAlertBanner({ scan }: { scan: ScanDetail }) {
+  const [dismissed, setDismissed] = useState(false);
+  const critCount = scan.issueCounts?.critical ?? 0;
+  const hasRevenueLeak =
+    scan.revenueIntelligence &&
+    scan.revenueIntelligence.overallRevenueRisk !== "low";
+
+  if (dismissed || (critCount === 0 && !hasRevenueLeak)) return null;
+  const isRevAlert = critCount === 0 && hasRevenueLeak;
+
+  return (
+    <motion.div
+      initial={{ y: 80, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 1.5, duration: 0.4 }}
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-4"
+    >
+      <div className={`rounded-2xl px-5 py-3.5 backdrop-blur-xl flex items-center gap-4 shadow-2xl border ${
+        isRevAlert ? "bg-amber-950/90 border-amber-500/30" : "bg-red-950/90 border-red-500/30"
+      }`}>
+        <AlertTriangle className={`w-5 h-5 shrink-0 ${isRevAlert ? "text-amber-400" : "text-red-400"}`} />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-white">
+            {isRevAlert ? "⚠️ Revenue Alert" : "⚠️ Launch Security Alert"}
+          </p>
+          <p className={`text-xs mt-0.5 truncate ${isRevAlert ? "text-amber-300/70" : "text-red-300/70"}`}>
+            {isRevAlert
+              ? `${scan.revenueIntelligence?.estimatedMonthlyImpact ?? "Potential revenue loss"} at risk`
+              : `${critCount} critical blocker${critCount !== 1 ? "s" : ""} — fix before going live`}
+          </p>
+        </div>
+        <Link href="/pricing" className="shrink-0">
+          <button className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-all ${
+            isRevAlert
+              ? "bg-amber-500/80 hover:bg-amber-500 text-white border border-amber-400/30"
+              : "bg-red-500/80 hover:bg-red-500 text-white border border-red-400/30"
+          }`}>
+            Fix Before Launch
+          </button>
+        </Link>
+        <button
+          onClick={() => setDismissed(true)}
+          className="shrink-0 w-7 h-7 rounded-lg bg-white/[0.07] hover:bg-white/[0.12] flex items-center justify-center transition-colors text-white/40 hover:text-white"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+function LockedInsightsPanel({ scan, plan }: { scan: ScanDetail; plan: string }) {
+  const isCreator = plan === "creator" || plan === "enterprise";
+  if (isCreator) return null;
+
+  const items: Array<{ label: string; detail: string; IconCmp: typeof Target }> = [];
+  if (scan.riskForecast) items.push({
+    label: "Launch Risk Forecast",
+    detail: `Churn risk: ${scan.riskForecast.churnRisk}`,
+    IconCmp: Target,
+  });
+  if (scan.revenueIntelligence) items.push({
+    label: `Revenue Leakage: ${scan.revenueIntelligence.leaks.length} findings`,
+    detail: scan.revenueIntelligence.estimatedMonthlyImpact ?? "Revenue at risk",
+    IconCmp: DollarSign,
+  });
+  if (scan.digitalTwin) items.push({
+    label: "Digital Twin Simulation",
+    detail: `${scan.digitalTwin.simulatedUserCount ?? "?"} user journeys simulated`,
+    IconCmp: Globe,
+  });
+  if (scan.predictiveIntel) items.push({
+    label: "Predictive Intelligence",
+    detail: `Release confidence: ${scan.predictiveIntel.releaseConfidenceScore}%`,
+    IconCmp: Brain,
+  });
+  if (scan.rootCause && scan.rootCause.chains.length > 0) items.push({
+    label: "Root Cause Engine",
+    detail: `${scan.rootCause.chains.length} issue chain${scan.rootCause.chains.length !== 1 ? "s" : ""} traced`,
+    IconCmp: Target,
+  });
+  if (scan.launchImpact) items.push({
+    label: "Launch Impact Calculator",
+    detail: scan.launchImpact.totalRevenueAtRisk,
+    IconCmp: DollarSign,
+  });
+  if (scan.productHuntScore) items.push({
+    label: "Product Hunt Readiness",
+    detail: `Score: ${scan.productHuntScore.score}/100`,
+    IconCmp: Award,
+  });
+
+  if (items.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.06] to-indigo-500/[0.03] rounded-2xl p-5 space-y-4"
+    >
+      <div className="flex items-center gap-2">
+        <Lock className="w-4 h-4 text-violet-400" />
+        <h3 className="text-sm font-bold text-white font-['Syne']">Locked Premium Insights</h3>
+        <span className="ml-auto text-[11px] text-violet-400/70 border border-violet-500/20 px-2 py-0.5 rounded-full">
+          {items.length} report{items.length !== 1 ? "s" : ""} detected
+        </span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {items.map((item, i) => (
+          <div key={i} className="flex items-start gap-2.5 p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+            <item.IconCmp className="w-3.5 h-3.5 text-violet-400/50 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-white/60 leading-tight">🔒 {item.label}</p>
+              <p className="text-[10px] text-white/25 mt-0.5 truncate">{item.detail}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Link href="/pricing">
+        <button className="w-full flex items-center justify-center gap-2 bg-white text-black font-bold text-xs py-3 rounded-xl hover:bg-white/90 transition-all">
+          Unlock All Reports — Creator ₹299/mo <ArrowRight className="w-3.5 h-3.5" />
+        </button>
+      </Link>
+    </motion.div>
+  );
+}
+
+function LaunchImpactPanel({ data }: { data: NonNullable<ScanDetail["launchImpact"]> }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="glass rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow">
+      <div className="flex items-center gap-2">
+        <DollarSign className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm">Launch Impact Calculator</h2>
+        <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">Real Cost</span>
+      </div>
+      <div className="bg-red-500/[0.06] border border-red-500/15 rounded-xl px-4 py-3.5">
+        <div className="text-[10px] text-red-400/70 uppercase tracking-wide mb-1 font-medium">Total Revenue at Risk</div>
+        <div className="text-lg font-bold text-red-400">{data.totalRevenueAtRisk}</div>
+        <div className="text-xs text-white/35 mt-0.5">{data.supportCostPerMonth}</div>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-3">
+          <div className="text-[10px] text-white/25 uppercase tracking-wide mb-1.5">Trust Impact</div>
+          <p className="text-xs text-white/55">{data.trustImpact}</p>
+        </div>
+        <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-3">
+          <div className="text-[10px] text-white/25 uppercase tracking-wide mb-1.5">User Impact</div>
+          <p className="text-xs text-white/55">{data.userImpact}</p>
+        </div>
+      </div>
+      {data.topRisk && (
+        <div className="border border-amber-500/15 bg-amber-500/[0.04] rounded-xl px-4 py-3">
+          <div className="text-[10px] text-amber-400/70 uppercase tracking-wide mb-1">Top Risk</div>
+          <p className="text-xs text-amber-300/80">{data.topRisk}</p>
+        </div>
+      )}
+      {data.founderWarning && (
+        <div className="border border-red-500/20 bg-red-500/[0.05] rounded-xl p-4">
+          <div className="text-[10px] text-red-400/70 uppercase tracking-wide mb-1.5 font-medium">⚠️ Founder Warning</div>
+          <p className="text-sm text-red-300/80 leading-relaxed">{data.founderWarning}</p>
+        </div>
+      )}
+      {data.breakdown && data.breakdown.length > 0 && (
+        <div>
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="flex items-center gap-2 text-xs text-white/30 hover:text-white/60 transition-colors"
+          >
+            {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {expanded ? "Hide" : "Show"} per-issue breakdown ({data.breakdown.length} issues)
+          </button>
+          {expanded && (
+            <div className="mt-3 space-y-2">
+              {data.breakdown.map((item, i) => {
+                const sev = SEVERITY_CONFIG[item.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
+                return (
+                  <div key={i} className={`border rounded-xl p-3 ${sev.bg}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${sev.badge}`}>{item.severity}</span>
+                      <span className="text-xs font-medium text-white/70 flex-1 line-clamp-1">{item.issueTitle}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <div className="text-[9px] text-white/20 mb-0.5">Revenue</div>
+                        <div className="text-[10px] text-red-400/80">{item.revenueImpact}</div>
+                      </div>
+                      <div>
+                        <div className="text-[9px] text-white/20 mb-0.5">Trust</div>
+                        <div className="text-[10px] text-amber-400/80 line-clamp-1">{item.trustImpact}</div>
+                      </div>
+                      <div>
+                        <div className="text-[9px] text-white/20 mb-0.5">Support</div>
+                        <div className="text-[10px] text-white/40 line-clamp-1">{item.supportHours}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProductHuntPanel({ data }: { data: NonNullable<ScanDetail["productHuntScore"]> }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const scoreColor = data.score >= 70 ? "text-green-400" : data.score >= 50 ? "text-amber-400" : "text-red-400";
+  const r = 32;
+  const circ = 2 * Math.PI * r;
+  const dash = (data.score / 100) * circ;
+  const ringColor = data.score >= 70 ? "#4ade80" : data.score >= 50 ? "#f59e0b" : "#f87171";
+
+  return (
+    <div className="glass rounded-2xl p-6 space-y-5 aurora-card">
+      <div className="flex items-center gap-2">
+        <Award className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm">Product Hunt Readiness</h2>
+        <span className={`ml-auto text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+          data.readyToHunt
+            ? "bg-green-500/15 text-green-400 border-green-500/25"
+            : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+        }`}>
+          {data.readyToHunt ? "🚀 Ready to Hunt" : "⚠️ Not Yet Ready"}
+        </span>
+      </div>
+      <div className="flex items-center gap-6">
+        <div className="relative shrink-0" style={{ width: 80, height: 80 }}>
+          <svg width="80" height="80" viewBox="0 0 80 80" className="-rotate-90">
+            <circle cx="40" cy="40" r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
+            <circle cx="40" cy="40" r={r} fill="none" stroke={ringColor} strokeWidth="6"
+              strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round" />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className={`text-xl font-bold font-['Syne'] ${scoreColor}`}>{data.score}</span>
+            <span className="text-[9px] text-white/25">/100</span>
+          </div>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-bold text-white">{data.verdict}</p>
+          {data.topBlockers && data.topBlockers.length > 0 && (
+            <div className="mt-2 space-y-1.5">
+              {data.topBlockers.slice(0, 2).map((b, i) => (
+                <div key={i} className="flex items-start gap-1.5 text-[11px] text-red-400/80">
+                  <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+                  <span>{b}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      {data.categories && data.categories.length > 0 && (
+        <div className="space-y-2">
+          {data.categories.map((cat) => {
+            const isExp = expanded === cat.name;
+            const statusColor = cat.status === "pass" ? "text-green-400" : cat.status === "warning" ? "text-amber-400" : "text-red-400";
+            const statusBg = cat.status === "pass" ? "bg-green-500/[0.07] border-green-500/15" : cat.status === "warning" ? "bg-amber-500/[0.06] border-amber-500/15" : "bg-red-500/[0.06] border-red-500/15";
+            const catR = 10;
+            const catCirc = 2 * Math.PI * catR;
+            const catDash = (cat.score / 100) * catCirc;
+            return (
+              <div key={cat.name} className={`border rounded-xl overflow-hidden ${statusBg}`}>
+                <button
+                  onClick={() => setExpanded(isExp ? null : cat.name)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
+                >
+                  <div className="w-8 h-8 shrink-0 relative">
+                    <svg width="32" height="32" viewBox="0 0 32 32" className="-rotate-90">
+                      <circle cx="16" cy="16" r={catR} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
+                      <circle cx="16" cy="16" r={catR} fill="none"
+                        stroke={cat.status === "pass" ? "#4ade80" : cat.status === "warning" ? "#f59e0b" : "#f87171"}
+                        strokeWidth="3"
+                        strokeDasharray={`${catDash} ${catCirc - catDash}`}
+                        strokeLinecap="round" />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className={`text-[8px] font-bold ${statusColor}`}>{cat.score}</span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-white/70 flex-1 text-left">{cat.name}</span>
+                  <span className={`text-[10px] font-bold uppercase ${statusColor}`}>{cat.status}</span>
+                  {isExp ? <ChevronUp className="w-3.5 h-3.5 text-white/20" /> : <ChevronDown className="w-3.5 h-3.5 text-white/20" />}
+                </button>
+                {isExp && cat.findings.length > 0 && (
+                  <div className="px-4 pb-3 pt-2 border-t border-white/[0.05] space-y-1">
+                    {cat.findings.map((f, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs text-white/45">
+                        <span className="text-white/20 mt-0.5 shrink-0">·</span>
+                        {f}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CofounderQAPanel({ scanId }: { scanId: number }) {
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [askedQ, setAskedQ] = useState("");
+
+  const PRESET_QUESTIONS = [
+    "Should I launch?",
+    "What scares you most?",
+    "What should I fix first?",
+    "What can wait?",
+  ];
+
+  const ask = async (q: string) => {
+    setLoading(true);
+    setAskedQ(q);
+    setAnswer("");
+    setQuestion("");
+    try {
+      const data = await api.scans.ask(scanId, q);
+      setAnswer(data.answer ?? "Unable to generate answer.");
+    } catch {
+      setAnswer("Failed to connect. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="glass rounded-2xl p-6 space-y-5">
+      <div className="flex items-center gap-2">
+        <Brain className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm">Ask Your Technical Co-Founder</h2>
+        <span className="ml-auto text-[10px] text-white/25">Powered by your scan data</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {PRESET_QUESTIONS.map((q) => (
+          <button
+            key={q}
+            onClick={() => ask(q)}
+            disabled={loading}
+            className="text-xs px-3 py-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] text-white/50 hover:text-white hover:bg-white/[0.08] hover:border-white/20 transition-all disabled:opacity-40"
+          >
+            {q}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && question.trim()) ask(question.trim()); }}
+          placeholder="Ask anything about your scan…"
+          className="flex-1 bg-white/[0.04] border border-white/[0.10] rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-violet-500/50 transition-all"
+        />
+        <button
+          onClick={() => question.trim() && ask(question.trim())}
+          disabled={loading || !question.trim()}
+          className="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/30 text-violet-400 disabled:opacity-40 transition-all"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+        </button>
+      </div>
+      {(loading || answer) && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-violet-500/[0.05] border border-violet-500/15 rounded-xl p-4 space-y-2"
+        >
+          {askedQ && <p className="text-[10px] text-violet-400/60 font-medium">Q: {askedQ}</p>}
+          {loading ? (
+            <div className="flex items-center gap-2 text-xs text-white/40">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Thinking…
+            </div>
+          ) : (
+            <p className="text-sm text-white/70 leading-relaxed">{answer}</p>
+          )}
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
 export default function ScanResultsPage() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -2399,6 +2820,9 @@ export default function ScanResultsPage() {
 
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-5">
 
+        {/* ── Sticky Launch Alert Banner ───────────────────── */}
+        <StickyLaunchAlertBanner scan={scan} />
+
         {/* ── Verdict banner ───────────────────────────────── */}
         {verdict && (
           <motion.div
@@ -2430,6 +2854,9 @@ export default function ScanResultsPage() {
             )}
           </motion.div>
         )}
+
+        {/* ── Locked Premium Insights (free users) ─────────── */}
+        <LockedInsightsPanel scan={scan} plan={user.plan} />
 
         {/* ── Executive summary row ────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -2481,6 +2908,19 @@ export default function ScanResultsPage() {
           </div>
         </div>
 
+        {/* ── Launch Impact Calculator — Creator only ──────── */}
+        {scan.launchImpact && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+            <CreatorGate
+              plan={user.plan}
+              feature="Launch Impact Calculator"
+              preview="Per-issue revenue risk in ₹, trust impact, support burden, and a direct founder warning"
+            >
+              <LaunchImpactPanel data={scan.launchImpact} />
+            </CreatorGate>
+          </motion.div>
+        )}
+
         {/* ── Visual Evidence Gallery (Runtime Proofs) ─────── */}
         {scan.proofEvidence && scan.proofEvidence.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
@@ -2497,6 +2937,19 @@ export default function ScanResultsPage() {
         {scan.launchDNA && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
             <LaunchDNAPanel dna={scan.launchDNA} />
+          </motion.div>
+        )}
+
+        {/* ── Product Hunt Readiness — Creator only ─────────── */}
+        {scan.productHuntScore && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.085 }}>
+            <CreatorGate
+              plan={user.plan}
+              feature="Product Hunt Readiness"
+              preview="6-category Product Hunt score covering mobile UX, onboarding, analytics, social features, error resilience, and traffic readiness"
+            >
+              <ProductHuntPanel data={scan.productHuntScore} />
+            </CreatorGate>
           </motion.div>
         )}
 
@@ -2765,6 +3218,13 @@ export default function ScanResultsPage() {
 
         {activeAgent && filteredIssues.length === 0 && (
           <div className="text-center py-12 text-white/25 text-sm">No issues in this dimension.</div>
+        )}
+
+        {/* ── Technical Co-Founder Q&A ─────────────────────── */}
+        {!activeAgent && scan.status === "completed" && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <CofounderQAPanel scanId={scan.id} />
+          </motion.div>
         )}
 
         {/* ── Privacy footer ───────────────────────────────── */}

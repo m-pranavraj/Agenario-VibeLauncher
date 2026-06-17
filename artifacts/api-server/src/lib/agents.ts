@@ -769,3 +769,176 @@ export async function runAllAgents(
     complianceResults,
   };
 }
+
+// ── Launch Impact Calculator ─────────────────────────────────────
+export interface LaunchImpact {
+  totalRevenueAtRisk: string;
+  supportCostPerMonth: string;
+  trustImpact: string;
+  userImpact: string;
+  breakdown: Array<{
+    issueTitle: string;
+    severity: string;
+    revenueImpact: string;
+    trustImpact: string;
+    supportHours: string;
+  }>;
+  topRisk: string;
+  founderWarning: string;
+}
+
+export async function runLaunchImpactCalculator(
+  issues: Array<{ title: string; severity: string; agentName: string; description: string }>,
+  businessType: string,
+  sourceInput: string,
+  appDescription?: string | null,
+): Promise<LaunchImpact> {
+  try {
+    const issueList = issues
+      .slice(0, 8)
+      .map((i, idx) => `${idx + 1}. [${i.severity.toUpperCase()}] ${i.title}: ${i.description.slice(0, 120)}`)
+      .join("\n");
+
+    const response = await groq.chat.completions.create({
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a startup financial risk analyst who translates technical security and quality issues into concrete business impact. Use realistic estimates in Indian Rupees for a typical early-stage SaaS/app. Be specific, credible, and alarming where warranted.",
+        },
+        {
+          role: "user",
+          content: `Translate these technical issues into concrete founder-level business impact.
+
+App: ${sourceInput}
+Business Type: ${businessType}
+${appDescription ? `Description: ${appDescription}` : ""}
+
+Issues found:
+${issueList}
+
+Calculate the real business cost per issue and aggregate totals.
+
+Return ONLY valid JSON:
+{
+  "totalRevenueAtRisk": "₹1,50,000–₹4,00,000/mo",
+  "supportCostPerMonth": "20–30 support hours/mo (₹15,000–₹25,000/mo)",
+  "trustImpact": "One sentence on what a breach would do to brand trust",
+  "userImpact": "e.g. 100% of users exposed if auth bypass exploited",
+  "breakdown": [
+    {
+      "issueTitle": "Exact issue title",
+      "severity": "critical",
+      "revenueImpact": "₹50,000–₹2,00,000/mo",
+      "trustImpact": "Brand-destroying — user data leak",
+      "supportHours": "10–15 hrs/mo in incident response"
+    }
+  ],
+  "topRisk": "Single sentence on the highest-risk issue and why",
+  "founderWarning": "Direct warning: what happens if they launch with this"
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 1500,
+    });
+
+    const content = response.choices[0]?.message?.content ?? "{}";
+    return JSON.parse(content) as LaunchImpact;
+  } catch (err) {
+    logger.error({ err }, "Launch impact calculator failed");
+    return {
+      totalRevenueAtRisk: "Analysis unavailable",
+      supportCostPerMonth: "Analysis unavailable",
+      trustImpact: "Run a full scan for impact analysis",
+      userImpact: "Unknown",
+      breakdown: [],
+      topRisk: "Complete analysis for specific risk assessment",
+      founderWarning: "Review all findings carefully before launching",
+    };
+  }
+}
+
+// ── Product Hunt Mode ────────────────────────────────────────────
+export interface ProductHuntScore {
+  score: number;
+  verdict: string;
+  categories: Array<{
+    name: string;
+    score: number;
+    status: "pass" | "warning" | "fail";
+    findings: string[];
+  }>;
+  topBlockers: string[];
+  readyToHunt: boolean;
+}
+
+export async function runProductHuntAudit(
+  sourceType: string,
+  sourceInput: string,
+  appDescription?: string | null,
+  codeContext?: CodeContext | null,
+): Promise<ProductHuntScore> {
+  try {
+    const response = await groq.chat.completions.create({
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a Product Hunt launch expert who has reviewed 1000+ product launches. You know exactly what makes products get featured, upvoted, and loved — and what gets them roasted in comments. Be tough — 70+ is actually Product Hunt ready.",
+        },
+        {
+          role: "user",
+          content: `Audit this app for Product Hunt launch readiness.
+
+App: ${sourceInput} (${sourceType})
+${appDescription ? `Description: ${appDescription}` : ""}
+${codeContext ? `Framework: ${codeContext.framework}, Business Type: ${codeContext.businessType}` : ""}
+${codeContext?.routes ? `Routes detected: ${codeContext.routes.slice(0, 600)}` : ""}
+
+Evaluate across 6 Product Hunt-critical categories:
+1. Mobile UX — responsive, touch-friendly, looks great on phone
+2. First Run Experience — onboarding, empty states, activation moment
+3. Analytics & Error Tracking — Mixpanel/Posthog, Sentry, feedback widget
+4. Social & Viral Features — sharing, referrals, viral loops
+5. Error Resilience — graceful errors, fallbacks, loading states
+6. Launch-Day Traffic Readiness — rate limiting, connection pooling, CDN
+
+Score 0–100 overall.
+
+Return ONLY valid JSON:
+{
+  "score": 72,
+  "verdict": "Almost Ready — 2 blockers to fix",
+  "categories": [
+    {
+      "name": "Mobile UX",
+      "score": 80,
+      "status": "pass",
+      "findings": ["Responsive layout detected", "Touch targets may be too small on checkout"]
+    }
+  ],
+  "topBlockers": ["Missing error boundary — white screen on crash is a launch-killer", "No analytics = flying blind on launch day"],
+  "readyToHunt": false
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 1500,
+    });
+
+    const content = response.choices[0]?.message?.content ?? "{}";
+    return JSON.parse(content) as ProductHuntScore;
+  } catch (err) {
+    logger.error({ err }, "Product Hunt audit failed");
+    return {
+      score: 0,
+      verdict: "Analysis unavailable",
+      categories: [],
+      topBlockers: [],
+      readyToHunt: false,
+    };
+  }
+}

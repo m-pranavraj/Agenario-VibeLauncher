@@ -3,7 +3,7 @@ import fs from "fs";
 import { eq, desc } from "drizzle-orm";
 import { db, usersTable, scansTable, scanIssuesTable } from "@workspace/db";
 import { CreateScanBody } from "@workspace/api-zod";
-import { runAllAgents, type CodeContext } from "../lib/agents.js";
+import { runAllAgents, runLaunchImpactCalculator, runProductHuntAudit, type CodeContext } from "../lib/agents.js";
 import { PLAN_LIMITS, applyTierGate } from "../utils/tierGate.js";
 import { ingestGitHubRepo, extractRoutesFromDir, cleanupScan } from "../lib/ingestion.js";
 import { ingestZipFile, cleanupZip } from "../lib/zip-ingestion.js";
@@ -14,7 +14,7 @@ import { runPlaywrightBrowserProofs } from "../lib/playwright-proof.js";
 import { runShadowApiRadar } from "../lib/shadow-api-radar.js";
 import { computeRegressionDiff } from "../lib/regression.js";
 import { computeBenchmark } from "../lib/benchmark.js";
-import { generateCofounderNarrative, generateLaunchDNA, generateLaunchReplay } from "../lib/cofounder-agent.js";
+import { generateCofounderNarrative, generateLaunchDNA, generateLaunchReplay, answerCofounderQuestion } from "../lib/cofounder-agent.js";
 import { scanFilesForSecrets, scanForSecrets } from "../lib/secret-scanner-v2.js";
 import { checkPackageVulns } from "../lib/package-vulns.js";
 import { runCleanupAgent } from "../lib/cleanup-agent.js";
@@ -338,6 +338,25 @@ async function runAnalysisPipeline(opts: {
     }),
   ]);
 
+  // ── Launch Impact Calculator + Product Hunt Mode ──────────────
+  const topIssuesForImpact = allIssues.slice(0, 8).map((i) => ({
+    title: i.title,
+    severity: i.severity,
+    agentName: i.agentName,
+    description: (i.description ?? "").slice(0, 200),
+  }));
+
+  const [launchImpact, productHuntScore] = await Promise.all([
+    runLaunchImpactCalculator(topIssuesForImpact, businessType, sourceInput, appDescription).catch((err) => {
+      req.log.warn({ err }, "Launch impact calculator failed");
+      return null;
+    }),
+    runProductHuntAudit(sourceType, sourceInput, appDescription, codeContext).catch((err) => {
+      req.log.warn({ err }, "Product Hunt audit failed");
+      return null;
+    }),
+  ]);
+
   const [updated] = await db
     .update(scansTable)
     .set({
@@ -362,6 +381,8 @@ async function runAnalysisPipeline(opts: {
       digitalTwin: digitalTwin ?? null,
       predictiveIntel: predictiveIntel ?? null,
       rootCause: rootCause ?? null,
+      launchImpact: launchImpact ?? null,
+      productHuntScore: productHuntScore ?? null,
       cleanupFindings: cleanupReport ? {
         totalFindings: cleanupReport.totalFindings,
         debtScore: cleanupReport.debtScore,
@@ -785,6 +806,59 @@ Generate a precise, copy-paste-ready code fix for this issue. Use TypeScript/Jav
   } catch (err) {
     req.log.error({ err }, "Fix generation failed");
     res.status(500).json({ error: "Fix generation failed. Please try again." });
+  }
+});
+
+// ── POST /scans/:id/ask — Technical Co-Founder Q&A ─────────────
+router.post("/scans/:id/ask", async (req, res): Promise<void> => {
+  if (!requireAuth(req, res)) return;
+
+  const scanId = Number(req.params["id"]);
+  const { question } = req.body as { question?: string };
+
+  if (!question || typeof question !== "string" || question.trim().length < 3) {
+    res.status(400).json({ error: "Question is required (min 3 characters)" });
+    return;
+  }
+
+  const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, scanId));
+  if (!scan || scan.userId !== req.session.userId) {
+    res.status(404).json({ error: "Scan not found" });
+    return;
+  }
+
+  const issues = await db
+    .select()
+    .from(scanIssuesTable)
+    .where(eq(scanIssuesTable.scanId, scanId));
+
+  const topIssues = issues.slice(0, 8).map((i) => ({
+    title: i.title,
+    severity: i.severity,
+    agentName: i.agentName,
+  }));
+
+  try {
+    const answer = await answerCofounderQuestion(question.trim(), {
+      sourceInput: scan.sourceInput,
+      score: scan.score ?? 50,
+      launchVerdict: scan.launchVerdict ?? "caution",
+      issueCounts: (scan.issueCounts as { critical: number; high: number; medium: number; low: number }) ?? {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+      },
+      businessType: scan.businessType ?? undefined,
+      framework: scan.framework ?? undefined,
+      vibeTool: scan.vibeTool ?? undefined,
+      topIssues,
+      riskForecast: scan.riskForecast as { executiveRecommendation?: string; revenueAtRisk?: string } | null ?? undefined,
+    });
+    res.json({ answer });
+  } catch (err) {
+    req.log.error({ err }, "Cofounder Q&A failed");
+    res.status(500).json({ error: "Failed to generate answer. Please try again." });
   }
 });
 
