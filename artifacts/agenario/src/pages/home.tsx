@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform, AnimatePresence, useInView } from "framer-motion";
 import {
-  Rocket, ShieldCheck, Activity, Zap, Globe, CheckCircle,
+  ShieldCheck, Activity, Zap, Globe, CheckCircle,
   AlertTriangle, Github, Lock, Eye, TrendingUp, BrainCircuit,
   ArrowRight, XCircle, Code2, FileText, BarChart,
   Check, X, ShieldAlert, Cpu, Star, Users, Building2,
@@ -109,15 +109,15 @@ const FEATURE_ARSENAL: FeaturePill[] = [
 ];
 
 const FEATURE_CATEGORIES = [
-  { label: "Runtime Security",    labelColor: "text-red-400",     dot: "bg-red-400",     items: FEATURE_ARSENAL.slice(0,  8) },
-  { label: "Compliance",          labelColor: "text-blue-400",    dot: "bg-blue-400",    items: FEATURE_ARSENAL.slice(8,  16) },
-  { label: "Revenue Intelligence",labelColor: "text-green-400",   dot: "bg-green-400",   items: FEATURE_ARSENAL.slice(16, 24) },
-  { label: "Performance",         labelColor: "text-amber-400",   dot: "bg-amber-400",   items: FEATURE_ARSENAL.slice(24, 29) },
-  { label: "Reliability",         labelColor: "text-orange-400",  dot: "bg-orange-400",  items: FEATURE_ARSENAL.slice(29, 33) },
-  { label: "Data Integrity",      labelColor: "text-cyan-400",    dot: "bg-cyan-400",    items: FEATURE_ARSENAL.slice(33, 37) },
-  { label: "Dependencies",        labelColor: "text-purple-400",  dot: "bg-purple-400",  items: FEATURE_ARSENAL.slice(37, 40) },
-  { label: "AI Code Quality",     labelColor: "text-violet-400",  dot: "bg-violet-400",  items: FEATURE_ARSENAL.slice(40, 46) },
-  { label: "Predictive Intel",    labelColor: "text-fuchsia-400", dot: "bg-fuchsia-400", items: FEATURE_ARSENAL.slice(46, 50) },
+  { label: "Runtime Security",     labelColor: "text-red-400",     dot: "bg-red-400",     iconBg: "bg-red-500/[0.15]",     headerBg: "bg-red-500/[0.03]",     items: FEATURE_ARSENAL.slice(0,  8) },
+  { label: "Compliance",           labelColor: "text-blue-400",    dot: "bg-blue-400",    iconBg: "bg-blue-500/[0.15]",    headerBg: "bg-blue-500/[0.03]",    items: FEATURE_ARSENAL.slice(8,  16) },
+  { label: "Revenue Intelligence", labelColor: "text-green-400",   dot: "bg-green-400",   iconBg: "bg-green-500/[0.15]",   headerBg: "bg-green-500/[0.03]",   items: FEATURE_ARSENAL.slice(16, 24) },
+  { label: "Performance",          labelColor: "text-amber-400",   dot: "bg-amber-400",   iconBg: "bg-amber-500/[0.15]",   headerBg: "bg-amber-500/[0.03]",   items: FEATURE_ARSENAL.slice(24, 29) },
+  { label: "Reliability",          labelColor: "text-orange-400",  dot: "bg-orange-400",  iconBg: "bg-orange-500/[0.15]",  headerBg: "bg-orange-500/[0.03]",  items: FEATURE_ARSENAL.slice(29, 33) },
+  { label: "Data Integrity",       labelColor: "text-cyan-400",    dot: "bg-cyan-400",    iconBg: "bg-cyan-500/[0.15]",    headerBg: "bg-cyan-500/[0.03]",    items: FEATURE_ARSENAL.slice(33, 37) },
+  { label: "Dependencies",         labelColor: "text-purple-400",  dot: "bg-purple-400",  iconBg: "bg-purple-500/[0.15]",  headerBg: "bg-purple-500/[0.03]",  items: FEATURE_ARSENAL.slice(37, 40) },
+  { label: "AI Code Quality",      labelColor: "text-violet-400",  dot: "bg-violet-400",  iconBg: "bg-violet-500/[0.15]",  headerBg: "bg-violet-500/[0.03]",  items: FEATURE_ARSENAL.slice(40, 47) },
+  { label: "Predictive Intel",     labelColor: "text-fuchsia-400", dot: "bg-fuchsia-400", iconBg: "bg-fuchsia-500/[0.15]", headerBg: "bg-fuchsia-500/[0.03]", items: FEATURE_ARSENAL.slice(47, 50) },
 ];
 
 const DEEP_STATS = [
@@ -1217,7 +1217,7 @@ export default function Home() {
                     transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
                     className="w-20 h-20 rounded-2xl bg-white/[0.04] border border-white/[0.12] flex flex-col items-center justify-center gap-1.5 shadow-[0_0_40px_rgba(139,92,246,0.15)]"
                   >
-                    <Rocket className="w-6 h-6 text-violet-400" />
+                    <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover object-left" />
                     <span className="text-[8px] font-bold text-white/35 tracking-widest uppercase">Agenario</span>
                   </motion.div>
                 </div>
@@ -1284,7 +1284,7 @@ export default function Home() {
         <section className="px-6 py-32 max-w-4xl mx-auto text-center">
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={STAGGER}>
             <motion.div variants={FADE_UP} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-white/[0.1] text-white/50 text-xs font-medium mb-8">
-              <Rocket className="w-3.5 h-3.5" />
+              <img src="/logo.png" alt="" className="w-3.5 h-3.5 rounded-md object-cover object-left" />
               Free for your first scans — no credit card
             </motion.div>
             <motion.h2 variants={FADE_UP} className="text-4xl md:text-5xl font-heading font-bold text-white mb-6">
@@ -1379,24 +1379,32 @@ export default function Home() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, margin: "-60px" }}
-            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
           >
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-9 gap-px bg-white/[0.04] rounded-2xl overflow-hidden border border-white/[0.06]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {FEATURE_CATEGORIES.map((cat) => (
                 <motion.div
                   key={cat.label}
-                  variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } } }}
-                  className="bg-[#070707] p-4 flex flex-col gap-2.5"
+                  variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } } }}
+                  className="relative rounded-2xl overflow-hidden bg-white/[0.025] border border-white/[0.07] hover:border-white/[0.13] hover:bg-white/[0.04] transition-all duration-300 group backdrop-blur-sm"
                 >
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cat.dot}`} />
-                    <span className={`text-[10px] font-semibold uppercase tracking-wider leading-tight ${cat.labelColor}`}>{cat.label}</span>
+                  <div className={`px-4 py-3 border-b border-white/[0.06] flex items-center gap-2.5 ${cat.headerBg}`}>
+                    <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${cat.iconBg}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${cat.dot}`} />
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-[0.15em] ${cat.labelColor}`}>{cat.label}</span>
+                    <span className="ml-auto text-[10px] font-mono text-white/15 tabular-nums">{cat.items.length}</span>
                   </div>
-                  {cat.items.map((item) => (
-                    <span key={item.label} className="text-[11px] text-white/40 leading-snug hover:text-white/70 transition-colors cursor-default">
-                      {item.label}
-                    </span>
-                  ))}
+                  <div className="px-4 py-3.5 space-y-2">
+                    {cat.items.map((item) => (
+                      <div key={item.label} className="flex items-center gap-2.5 group/row">
+                        <span className={`w-1 h-1 rounded-full shrink-0 ${cat.dot} opacity-35 group-hover/row:opacity-70 transition-opacity`} />
+                        <span className="text-[11px] text-white/40 group-hover/row:text-white/70 transition-colors leading-snug cursor-default font-medium">
+                          {item.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -1407,8 +1415,8 @@ export default function Home() {
         <footer className="border-t border-white/[0.06] px-6 py-10">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-xl bg-white/[0.07] border border-white/[0.1] flex items-center justify-center">
-                <Rocket className="w-3.5 h-3.5 text-white/60" />
+              <div className="w-7 h-7 rounded-xl overflow-hidden border border-white/[0.1]">
+                <img src="/logo.png" alt="Agenario" className="w-full h-full object-cover object-left" />
               </div>
               <span className="font-heading font-bold text-white/60 text-sm">Agenario</span>
             </div>

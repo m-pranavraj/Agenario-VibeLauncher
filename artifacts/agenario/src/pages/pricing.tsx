@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Rocket, Check, Zap, ArrowLeft, Loader2, ShieldCheck, Building2, Mail } from "lucide-react";
+import { Check, Zap, ArrowLeft, Loader2, ShieldCheck, Building2, Mail, Tag, X, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/lib/api";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 declare global {
   interface Window {
@@ -28,7 +28,8 @@ const PLANS = [
     price: "₹0",
     period: "forever",
     description: "For founders trying it out",
-    icon: Rocket,
+    icon: ShieldCheck,
+    iconColor: "text-white/40",
     features: [
       "2 scans per month",
       "Launch Readiness Score",
@@ -47,10 +48,11 @@ const PLANS = [
     period: "/month",
     description: "For indie founders shipping at speed",
     icon: Zap,
+    iconColor: "text-white",
     features: [
       "Unlimited scans",
-      "Full 15-dimension analysis",
-      "Compliance checks (GDPR, OWASP, PCI-DSS)",
+      "Full 50-dimension analysis",
+      "GDPR, OWASP, PCI-DSS compliance",
       "Revenue intelligence layer",
       "Board-memo style reports",
       "1-Click fix prompts",
@@ -68,6 +70,7 @@ const PLANS = [
     period: "",
     description: "For agencies, studios & funded teams",
     icon: Building2,
+    iconColor: "text-white/40",
     features: [
       "Everything in Creator",
       "Team workspace",
@@ -88,24 +91,79 @@ const FADE_UP = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
 };
 
+type CouponResult = {
+  valid: boolean;
+  code: string;
+  discountPercent: number;
+  finalAmount: number;
+  label: string;
+};
+
 export default function PricingPage() {
   const { user, refresh } = useAuth();
   const [, setLocation] = useLocation();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const [couponInput, setCouponInput] = useState("");
+  const [couponResult, setCouponResult] = useState<CouponResult | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
+  const [couponOpen, setCouponOpen] = useState(false);
+
+  const applyCoupon = async () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) return;
+    setCouponLoading(true);
+    setCouponError("");
+    setCouponResult(null);
+    try {
+      const res = await fetch("/api/billing/validate-coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coupon: code }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setCouponResult(data as CouponResult);
+      } else {
+        setCouponError(data.message ?? "Invalid coupon code");
+      }
+    } catch {
+      setCouponError("Could not validate coupon — try again");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCouponResult(null);
+    setCouponInput("");
+    setCouponError("");
+  };
+
   const handleUpgrade = async (planId: string, amount: number | null | undefined) => {
     if (!user) { setLocation("/register"); return; }
     if (planId === "free" || planId === user.plan) return;
     if (planId === "enterprise" || amount == null) {
-      window.open("mailto:hello@agenario.ai?subject=Enterprise Plan Inquiry", "_blank");
+      window.open("mailto:hello@agenario.tech?subject=Enterprise Plan Inquiry", "_blank");
       return;
     }
 
     setLoadingPlan(planId);
     try {
       await loadRazorpay();
-      const order = await api.billing.createOrder(planId);
+
+      const res = await fetch("/api/billing/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          plan: planId,
+          ...(couponResult?.valid ? { coupon: couponResult.code } : {}),
+        }),
+      });
+      const order = await res.json();
 
       await new Promise<void>((resolve, reject) => {
         const rzp = new window.Razorpay({
@@ -141,6 +199,14 @@ export default function PricingPage() {
     }
   };
 
+  const displayAmount = couponResult?.valid
+    ? couponResult.finalAmount
+    : PLANS.find(p => p.id === "creator")?.amount ?? 29900;
+
+  const displayPrice = couponResult?.valid
+    ? `₹${Math.round(couponResult.finalAmount / 100)}`
+    : "₹299";
+
   return (
     <div className="min-h-screen bg-[#050505]">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.06)_0%,_transparent_60%)] pointer-events-none" />
@@ -151,7 +217,7 @@ export default function PricingPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover" />
+            <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover object-left" />
             <span className="text-white font-bold font-['Syne'] text-sm">Pricing</span>
           </div>
         </div>
@@ -178,6 +244,7 @@ export default function PricingPage() {
             const isCurrent = user?.plan === plan.id;
             const isLoading = loadingPlan === plan.id;
             const Icon = plan.icon;
+            const isCreator = plan.id === "creator";
 
             return (
               <motion.div
@@ -199,17 +266,35 @@ export default function PricingPage() {
 
                 <div className="mb-6">
                   <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center mb-4">
-                    <Icon className="w-4.5 h-4.5 text-white/60" />
+                    <Icon className={`w-[18px] h-[18px] ${plan.iconColor}`} />
                   </div>
                   <h3 className="font-bold font-['Syne'] text-white text-xl mb-1">{plan.name}</h3>
                   <p className="text-white/30 text-xs mb-5">{plan.description}</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold font-['Syne'] text-white">{plan.price}</span>
-                    {plan.period && <span className="text-white/30 text-sm">{plan.period}</span>}
+
+                  <div className="flex items-baseline gap-1.5">
+                    {isCreator && couponResult?.valid ? (
+                      <>
+                        <span className="text-xl font-bold font-['Syne'] text-white/30 line-through">{plan.price}</span>
+                        <span className="text-3xl font-bold font-['Syne'] text-white">{displayPrice}</span>
+                        <span className="text-white/30 text-sm">{plan.period}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-3xl font-bold font-['Syne'] text-white">{plan.price}</span>
+                        {plan.period && <span className="text-white/30 text-sm">{plan.period}</span>}
+                      </>
+                    )}
                   </div>
+
+                  {isCreator && couponResult?.valid && (
+                    <div className="mt-2 flex items-center gap-1.5 text-green-400 text-xs font-medium">
+                      <CheckCircle2 className="w-3 h-3" />
+                      {couponResult.discountPercent}% off — {couponResult.label}
+                    </div>
+                  )}
                 </div>
 
-                <ul className="space-y-3 flex-1 mb-7">
+                <ul className="space-y-3 flex-1 mb-6">
                   {plan.features.map((feat, j) => (
                     <li key={j} className="flex items-center gap-2.5 text-sm text-white/55">
                       <Check className="w-3.5 h-3.5 text-green-400 shrink-0" />
@@ -218,8 +303,76 @@ export default function PricingPage() {
                   ))}
                 </ul>
 
+                {/* Coupon code section — Creator plan only */}
+                {isCreator && !isCurrent && (
+                  <div className="mb-5">
+                    <AnimatePresence>
+                      {!couponOpen && !couponResult && (
+                        <motion.button
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          onClick={() => setCouponOpen(true)}
+                          className="flex items-center gap-1.5 text-xs text-white/35 hover:text-white/60 transition-colors"
+                        >
+                          <Tag className="w-3 h-3" />
+                          Have a coupon code?
+                        </motion.button>
+                      )}
+
+                      {(couponOpen || couponResult) && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="overflow-hidden"
+                        >
+                          {couponResult?.valid ? (
+                            <div className="flex items-center gap-2 bg-green-500/[0.08] border border-green-500/20 rounded-xl px-3 py-2">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-green-400 shrink-0" />
+                              <span className="text-xs text-green-400 flex-1 font-mono font-bold">{couponResult.code}</span>
+                              <button
+                                onClick={removeCoupon}
+                                className="text-white/30 hover:text-white/60 transition-colors"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={couponInput}
+                                  onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(""); }}
+                                  onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
+                                  placeholder="COUPON CODE"
+                                  className="flex-1 bg-white/[0.04] border border-white/[0.1] rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-white/20 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-all uppercase"
+                                />
+                                <button
+                                  onClick={applyCoupon}
+                                  disabled={couponLoading || !couponInput.trim()}
+                                  className="px-3 py-2 rounded-xl bg-white/[0.07] border border-white/[0.12] text-white/60 hover:text-white hover:bg-white/[0.12] text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  {couponLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Apply"}
+                                </button>
+                              </div>
+                              {couponError && (
+                                <p className="text-xs text-red-400/80 flex items-center gap-1">
+                                  <X className="w-3 h-3" />
+                                  {couponError}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
                 <button
-                  onClick={() => handleUpgrade(plan.id, plan.amount)}
+                  onClick={() => handleUpgrade(plan.id, isCreator ? displayAmount : plan.amount)}
                   disabled={isCurrent || isLoading || plan.id === "free"}
                   data-testid={`button-plan-${plan.id}`}
                   className={`w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${

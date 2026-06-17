@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Mail, Lock, User, AlertCircle, ShieldCheck, Rocket } from "lucide-react";
+import { Mail, Lock, User, AlertCircle, ShieldCheck, Zap } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -129,7 +129,7 @@ export default function RegisterPage() {
                 </>
               ) : (
                 <>
-                  <Rocket className="w-4 h-4" />
+                  <Zap className="w-4 h-4" />
                   Create Account
                 </>
               )}

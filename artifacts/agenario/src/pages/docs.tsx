@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Rocket, Github, Zap, Terminal, Code2, Globe, Package,
+  Github, Zap, Terminal, Code2, Globe, Package,
   ChevronRight, CheckCircle, ArrowLeft,
   Shield, Webhook, Key, BookOpen, Lock, Menu, X,
   Copy, CheckCheck, ExternalLink, Cpu, Activity,
@@ -388,7 +388,7 @@ jobs:
           GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
         run: |
           # Submit scan
-          SCAN=$(curl -s -X POST https://your-app.replit.app/api/scans \\
+          SCAN=$(curl -s -X POST https://api.agenario.tech/api/scans \\
             -H "Authorization: Bearer $AGENARIO_API_KEY" \\
             -H "Content-Type: application/json" \\
             -d '{"sourceType":"github","sourceInput":"'$GITHUB_REPOSITORY'"}')
@@ -399,7 +399,7 @@ jobs:
           # Poll until complete (max 3 minutes)
           for i in $(seq 1 36); do
             sleep 5
-            RESULT=$(curl -s https://your-app.replit.app/api/scans/$SCAN_ID \\
+            RESULT=$(curl -s https://api.agenario.tech/api/scans/$SCAN_ID \\
               -H "Authorization: Bearer $AGENARIO_API_KEY")
             STATUS=$(echo $RESULT | jq -r '.status')
             if [ "$STATUS" = "completed" ]; then break; fi
@@ -466,7 +466,7 @@ jobs:
             <CodeBlock
               lang="bash"
               filename="Create a scan"
-              code={`curl -X POST https://your-app.replit.app/api/scans \\
+              code={`curl -X POST https://api.agenario.tech/api/scans \\
   -H "Content-Type: application/json" \\
   -H "Cookie: agn_sid=<your-session-cookie>" \\
   -d '{
@@ -593,7 +593,7 @@ checkLaunchReadiness();`}
                 <div className="space-y-2 text-sm">
                   <div className="flex gap-3">
                     <span className="text-white/25 w-24 flex-shrink-0">Payload URL</span>
-                    <code className="text-violet-400/80 font-mono text-xs">https://your-app.replit.app/api/github/webhook</code>
+                    <code className="text-violet-400/80 font-mono text-xs">https://api.agenario.tech/api/github/webhook</code>
                   </div>
                   <div className="flex gap-3">
                     <span className="text-white/25 w-24 flex-shrink-0">Content type</span>
@@ -726,7 +726,7 @@ const portfolio = await client.portfolio.ranking();`}
           {/* Footer CTA */}
           <div className="glass rounded-2xl p-8 text-center space-y-4 border border-violet-500/15">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/25 flex items-center justify-center mx-auto">
-              <Rocket className="w-6 h-6 text-violet-400" />
+              <img src="/logo.png" alt="Agenario" className="w-6 h-6 rounded-xl object-cover object-left" />
             </div>
             <h3 className="text-xl font-bold text-white font-['Syne']">Ready to ship with confidence?</h3>
             <p className="text-sm text-white/40 max-w-md mx-auto">Start with 2 free scans per month. No credit card required. Full board-memo report in under a minute.</p>

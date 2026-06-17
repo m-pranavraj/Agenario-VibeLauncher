@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { motion } from "framer-motion";
 import {
-  Rocket, ArrowLeft, Activity, CheckCircle2, AlertTriangle,
+  ArrowLeft, Activity, CheckCircle2, AlertTriangle,
   XCircle, Loader2, TrendingUp, TrendingDown, Minus,
   RefreshCw, Clock, BarChart3, Plus, ChevronRight,
 } from "lucide-react";

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
-import { Rocket, Plus, ChevronRight, Clock, CheckCircle, XCircle, Loader2, LogOut, Zap, BarChart3, Activity, BookOpen, Brain } from "lucide-react";
+import { Plus, ChevronRight, Clock, CheckCircle, XCircle, Loader2, LogOut, Zap, BarChart3, Activity, BookOpen, Brain } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { api, type Scan } from "@/lib/api";
 import { motion } from "framer-motion";
@@ -139,7 +139,7 @@ export default function DashboardPage() {
             className="text-center py-24 glass rounded-2xl"
           >
             <div className="w-14 h-14 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center mx-auto mb-4">
-              <Rocket className="w-6 h-6 text-white/50" />
+              <img src="/logo.png" alt="" className="w-6 h-6 rounded-xl object-cover object-left" />
             </div>
             <h3 className="text-white font-bold text-lg font-['Syne'] mb-2">No scans yet</h3>
             <p className="text-white/30 text-sm max-w-xs mx-auto mb-6">

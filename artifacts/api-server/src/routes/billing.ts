@@ -15,6 +15,13 @@ const PLAN_PRICES: Record<string, { amount: number; label: string }> = {
   enterprise: { amount: 0, label: "Enterprise Plan" },
 };
 
+const VALID_COUPONS: Record<string, { discount: number; label: string; code: string }> = {
+  "LAUNCH50": { discount: 0.50, label: "50% launch discount", code: "LAUNCH50" },
+  "EARLY20":  { discount: 0.20, label: "20% early bird",      code: "EARLY20"  },
+  "FOUND30":  { discount: 0.30, label: "30% founder offer",   code: "FOUND30"  },
+  "VIBECODE": { discount: 0.25, label: "25% vibe coder",      code: "VIBECODE" },
+};
+
 const router: IRouter = Router();
 
 function requireAuth(req: any, res: any): boolean {
@@ -24,6 +31,29 @@ function requireAuth(req: any, res: any): boolean {
   }
   return true;
 }
+
+router.post("/billing/validate-coupon", (req, res): void => {
+  const code = String(req.body?.coupon ?? "").trim().toUpperCase();
+  const coupon = VALID_COUPONS[code];
+
+  if (!coupon) {
+    res.status(400).json({ valid: false, message: "Invalid coupon code" });
+    return;
+  }
+
+  const baseAmount = PLAN_PRICES.creator.amount;
+  const discountedAmount = Math.round(baseAmount * (1 - coupon.discount));
+
+  res.json({
+    valid: true,
+    code: coupon.code,
+    discount: coupon.discount,
+    discountPercent: Math.round(coupon.discount * 100),
+    label: coupon.label,
+    originalAmount: baseAmount,
+    finalAmount: discountedAmount,
+  });
+});
 
 router.post("/billing/create-order", async (req, res): Promise<void> => {
   if (!requireAuth(req, res)) return;
@@ -41,22 +71,33 @@ router.post("/billing/create-order", async (req, res): Promise<void> => {
     return;
   }
 
+  let finalAmount = planInfo.amount;
+  let couponLabel = "";
+
+  const rawCoupon = String(req.body?.coupon ?? "").trim().toUpperCase();
+  if (rawCoupon && VALID_COUPONS[rawCoupon]) {
+    const coupon = VALID_COUPONS[rawCoupon];
+    finalAmount = Math.round(planInfo.amount * (1 - coupon.discount));
+    couponLabel = ` (${coupon.label})`;
+  }
+
   const order = await razorpay.orders.create({
-    amount: planInfo.amount,
+    amount: finalAmount,
     currency: "INR",
     receipt: `agenario_${req.session.userId}_${Date.now()}`,
     notes: {
       userId: String(req.session.userId),
       plan,
+      coupon: rawCoupon || "none",
     },
   });
 
   res.json({
     orderId: order.id,
     keyId: process.env["RAZORPAY_KEY_ID"],
-    amount: planInfo.amount,
+    amount: finalAmount,
     currency: "INR",
-    planName: planInfo.label,
+    planName: planInfo.label + couponLabel,
   });
 });
 

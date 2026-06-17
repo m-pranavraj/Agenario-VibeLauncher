@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "wouter";
 import {
   ArrowLeft, Github, Twitter, Linkedin, Globe, Mail,
-  Shield, Zap, Target, Code2, Star, ArrowRight, Rocket,
+  Shield, Zap, Target, Code2, Star, ArrowRight,
 } from "lucide-react";
 
 const FADE_UP = {

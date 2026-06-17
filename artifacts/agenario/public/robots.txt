@@ -1,2 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /scans/
+
+Sitemap: https://agenario.tech/sitemap.xml

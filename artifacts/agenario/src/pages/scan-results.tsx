@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useRoute, Link } from "wouter";
 import {
-  ArrowLeft, Rocket, Copy, CheckCheck, ChevronDown, ChevronUp,
+  ArrowLeft, Copy, CheckCheck, ChevronDown, ChevronUp,
   Shield, Zap, Eye, Layers, Bot, Activity, Loader2,
   AlertTriangle, XCircle, CheckCircle2, CreditCard, Upload, Lock, Search,
   TrendingUp, TrendingDown, Scale, Database, Cpu, Fingerprint, ShieldCheck,
@@ -2906,7 +2906,7 @@ export default function ScanResultsPage() {
                 <button
                   onClick={() => {
                     const text = `My app scored ${scan.score}/100 on Agenario 🔐 — ${verdict?.label}. Free AI security & launch audit:`;
-                    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent("https://agenario.replit.app")}`, "_blank");
+                    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent("https://agenario.tech")}`, "_blank");
                   }}
                   className="flex items-center gap-1 text-[11px] text-white/30 hover:text-white/60 border border-white/[0.08] hover:border-white/20 px-2.5 py-1 rounded-lg transition-all"
                 >

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "wouter";
 import {
-  Rocket, Github, Globe, FileText, ArrowLeft, CheckCircle,
+  Github, Globe, FileText, ArrowLeft, CheckCircle,
   ChevronDown, FileArchive, Upload,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -144,7 +144,7 @@ function ScanAnimation({ isDeep }: { isDeep: boolean }) {
             transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
             className="absolute inset-2 rounded-xl border-2 border-t-transparent border-white/20"
           />
-          <Rocket className="w-7 h-7 text-white/80" />
+          <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover object-left" />
         </div>
       </div>
 
