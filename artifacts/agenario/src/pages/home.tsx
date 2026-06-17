@@ -107,6 +107,18 @@ const FEATURE_ARSENAL: FeaturePill[] = [
   { icon: "📈", label: "Regression Memory", bg: "bg-fuchsia-500/[0.06] border-fuchsia-500/20", color: "text-fuchsia-300/80", glow: "hover:shadow-[0_0_12px_rgba(217,70,239,0.18)]" },
 ];
 
+const FEATURE_CATEGORIES = [
+  { label: "Runtime Security",    labelColor: "text-red-400",     dot: "bg-red-400",     items: FEATURE_ARSENAL.slice(0,  8) },
+  { label: "Compliance",          labelColor: "text-blue-400",    dot: "bg-blue-400",    items: FEATURE_ARSENAL.slice(8,  16) },
+  { label: "Revenue Intelligence",labelColor: "text-green-400",   dot: "bg-green-400",   items: FEATURE_ARSENAL.slice(16, 24) },
+  { label: "Performance",         labelColor: "text-amber-400",   dot: "bg-amber-400",   items: FEATURE_ARSENAL.slice(24, 29) },
+  { label: "Reliability",         labelColor: "text-orange-400",  dot: "bg-orange-400",  items: FEATURE_ARSENAL.slice(29, 33) },
+  { label: "Data Integrity",      labelColor: "text-cyan-400",    dot: "bg-cyan-400",    items: FEATURE_ARSENAL.slice(33, 37) },
+  { label: "Dependencies",        labelColor: "text-purple-400",  dot: "bg-purple-400",  items: FEATURE_ARSENAL.slice(37, 40) },
+  { label: "AI Code Quality",     labelColor: "text-violet-400",  dot: "bg-violet-400",  items: FEATURE_ARSENAL.slice(40, 46) },
+  { label: "Predictive Intel",    labelColor: "text-fuchsia-400", dot: "bg-fuchsia-400", items: FEATURE_ARSENAL.slice(46, 50) },
+];
+
 const DEEP_STATS = [
   { value: "25", label: "AI Agent Dimensions", sub: "Running in parallel on every scan", color: "text-violet-400" },
   { value: "60+", label: "Secret Patterns", sub: "AWS keys, Stripe, JWT, DB URLs & more", color: "text-red-400" },
@@ -562,15 +574,28 @@ export default function Home() {
 
               <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row gap-3">
                 <Link href="/register">
-                  <motion.button
-                    whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(255,255,255,0.15)" }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex items-center gap-2 bg-white text-black font-bold px-8 py-3.5 rounded-xl transition-all text-sm"
-                    data-testid="hero-analyze-btn"
+                  <motion.div
+                    className="relative rounded-xl p-[1.5px] cursor-pointer"
+                    animate={{
+                      background: [
+                        "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(139,92,246,0.5) 50%, rgba(255,255,255,0.3) 100%)",
+                        "linear-gradient(225deg, rgba(139,92,246,0.5) 0%, rgba(255,255,255,0.3) 50%, rgba(6,182,212,0.4) 100%)",
+                        "linear-gradient(315deg, rgba(6,182,212,0.4) 0%, rgba(139,92,246,0.5) 50%, rgba(255,255,255,0.3) 100%)",
+                        "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(139,92,246,0.5) 50%, rgba(255,255,255,0.3) 100%)",
+                      ],
+                    }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                   >
-                    Analyze My App for Free
-                    <ArrowRight className="w-4 h-4" />
-                  </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="relative flex items-center gap-2 bg-white text-black font-bold px-8 py-3.5 rounded-[10px] transition-all text-sm w-full"
+                      data-testid="hero-analyze-btn"
+                    >
+                      Analyze My App for Free
+                      <ArrowRight className="w-4 h-4" />
+                    </motion.button>
+                  </motion.div>
                 </Link>
                 <a href="#how-it-works">
                   <motion.button
@@ -1185,26 +1210,44 @@ export default function Home() {
               </motion.div>
             </motion.div>
 
-            {/* Feature Arsenal Grid — enhanced pills */}
-            <motion.div
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2 mb-24"
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-60px" }}
-              variants={{ show: { transition: { staggerChildren: 0.018 } } }}
-            >
-              {FEATURE_ARSENAL.map((feat) => (
+            {/* Feature Arsenal — grouped by category */}
+            <div className="space-y-8 mb-24">
+              {FEATURE_CATEGORIES.map((cat, ci) => (
                 <motion.div
-                  key={feat.label}
-                  variants={{ hidden: { opacity: 0, scale: 0.88 }, show: { opacity: 1, scale: 1, transition: { duration: 0.35, ease: "easeOut" } } }}
-                  whileHover={{ scale: 1.05, y: -2, transition: { duration: 0.15 } }}
-                  className={`pill-shimmer flex items-center gap-2 px-3 py-2.5 rounded-xl border backdrop-blur-sm cursor-default select-none transition-all ${feat.bg} ${feat.glow}`}
+                  key={cat.label}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{ delay: ci * 0.04, duration: 0.45, ease: "easeOut" }}
                 >
-                  <span className="text-sm shrink-0 leading-none">{feat.icon}</span>
-                  <span className={`text-[11px] font-semibold leading-tight ${feat.color}`}>{feat.label}</span>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className={`w-2 h-2 rounded-full ${cat.dot} shrink-0`} />
+                    <span className={`text-[11px] font-bold uppercase tracking-[0.18em] ${cat.labelColor}`}>{cat.label}</span>
+                    <div className="flex-1 h-px bg-white/[0.05]" />
+                    <span className="text-[10px] text-white/20 font-medium">{cat.items.length} checks</span>
+                  </div>
+                  <motion.div
+                    className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2"
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, margin: "-30px" }}
+                    variants={{ show: { transition: { staggerChildren: 0.025 } } }}
+                  >
+                    {cat.items.map((feat) => (
+                      <motion.div
+                        key={feat.label}
+                        variants={{ hidden: { opacity: 0, scale: 0.88 }, show: { opacity: 1, scale: 1, transition: { duration: 0.3, ease: "easeOut" } } }}
+                        whileHover={{ scale: 1.05, y: -2, transition: { duration: 0.15 } }}
+                        className={`pill-shimmer flex items-center gap-2 px-3 py-2.5 rounded-xl border backdrop-blur-sm cursor-default select-none transition-all ${feat.bg} ${feat.glow}`}
+                      >
+                        <span className="text-sm shrink-0 leading-none">{feat.icon}</span>
+                        <span className={`text-[11px] font-semibold leading-tight ${feat.color}`}>{feat.label}</span>
+                      </motion.div>
+                    ))}
+                  </motion.div>
                 </motion.div>
               ))}
-            </motion.div>
+            </div>
 
             {/* Orbit + Stats */}
             <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-20">
@@ -1297,23 +1340,28 @@ export default function Home() {
             </motion.p>
             <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/register">
-                <motion.button
-                  whileHover={{ scale: 1.04, boxShadow: "0 0 40px rgba(255,255,255,0.18), 0 0 80px rgba(139,92,246,0.1)" }}
-                  whileTap={{ scale: 0.97 }}
+                <motion.div
+                  className="relative rounded-xl p-[1.5px] cursor-pointer"
                   animate={{
-                    boxShadow: [
-                      "0 0 0px rgba(255,255,255,0)",
-                      "0 0 25px rgba(255,255,255,0.12)",
-                      "0 0 0px rgba(255,255,255,0)",
+                    background: [
+                      "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(139,92,246,0.55) 50%, rgba(255,255,255,0.35) 100%)",
+                      "linear-gradient(225deg, rgba(139,92,246,0.55) 0%, rgba(255,255,255,0.35) 50%, rgba(6,182,212,0.45) 100%)",
+                      "linear-gradient(315deg, rgba(6,182,212,0.45) 0%, rgba(139,92,246,0.55) 50%, rgba(255,255,255,0.35) 100%)",
+                      "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(139,92,246,0.55) 50%, rgba(255,255,255,0.35) 100%)",
                     ],
                   }}
-                  transition={{ boxShadow: { duration: 2.5, repeat: Infinity, ease: "easeInOut" } }}
-                  className="flex items-center gap-2 bg-white text-black font-bold px-10 py-4 rounded-xl text-sm"
-                  data-testid="cta-analyze-btn"
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                 >
-                  Analyze My App for Free
-                  <ArrowRight className="w-4 h-4" />
-                </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="relative flex items-center gap-2 bg-white text-black font-bold px-10 py-4 rounded-[10px] text-sm w-full"
+                    data-testid="cta-analyze-btn"
+                  >
+                    Analyze My App for Free
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.button>
+                </motion.div>
               </Link>
               <Link href="/docs">
                 <motion.button
@@ -1327,6 +1375,70 @@ export default function Home() {
               </Link>
             </motion.div>
           </motion.div>
+        </section>
+
+        {/* ── A to Z Features ──────────────────────────────── */}
+        <section className="px-6 py-28 bg-white/[0.012] border-t border-white/[0.05]">
+          <div className="max-w-7xl mx-auto">
+            <motion.div className="text-center mb-14" initial="hidden" whileInView="show" viewport={{ once: true }} variants={STAGGER}>
+              <motion.p variants={FADE_UP} className="text-xs text-white/30 uppercase tracking-[0.25em] font-medium mb-4">Complete Capability Index</motion.p>
+              <motion.h2 variants={FADE_UP} className="text-3xl md:text-4xl font-heading font-bold text-white mb-4">
+                Everything Agenario checks.<br />
+                <span className="text-white/35">From A to Z.</span>
+              </motion.h2>
+              <motion.p variants={FADE_UP} className="text-white/40 text-base max-w-xl mx-auto">
+                Every dimension, every check, every agent — in one place. Sorted by category. No hidden rules.
+              </motion.p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-3 gap-x-8 gap-y-10">
+              {FEATURE_CATEGORIES.map((cat, ci) => (
+                <motion.div
+                  key={cat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-30px" }}
+                  transition={{ delay: ci * 0.06, duration: 0.45, ease: "easeOut" }}
+                >
+                  <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/[0.06]">
+                    <div className={`w-2.5 h-2.5 rounded-full ${cat.dot} shrink-0`} />
+                    <span className={`text-xs font-bold uppercase tracking-[0.18em] ${cat.labelColor}`}>{cat.label}</span>
+                    <span className="ml-auto text-[10px] text-white/20 font-medium">{cat.items.length}</span>
+                  </div>
+                  <ul className="space-y-2">
+                    {cat.items.map((feat, fi) => (
+                      <motion.li
+                        key={feat.label}
+                        initial={{ opacity: 0, x: -8 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: ci * 0.04 + fi * 0.03, duration: 0.3 }}
+                        className="flex items-center gap-2.5 group"
+                      >
+                        <span className="text-[13px] shrink-0 leading-none w-5 text-center">{feat.icon}</span>
+                        <span className={`text-xs font-medium transition-colors duration-150 group-hover:opacity-100 opacity-60 ${feat.color}`}>
+                          {feat.label}
+                        </span>
+                        <CheckCircle className="w-3 h-3 text-white/10 group-hover:text-green-400/60 ml-auto shrink-0 transition-colors duration-150" />
+                      </motion.li>
+                    ))}
+                  </ul>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="mt-12 text-center"
+            >
+              <p className="text-xs text-white/20">
+                50 checks across 9 categories · New dimensions added every sprint · Enterprise gets custom audit rules
+              </p>
+            </motion.div>
+          </div>
         </section>
 
         {/* ── Footer ────────────────────────────────────────── */}
