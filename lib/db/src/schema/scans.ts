@@ -196,6 +196,16 @@ export const scansTable = pgTable("scans", {
       autoFixable: boolean;
     }>;
   }>(),
+  cleanupFindings: jsonb("cleanup_findings").$type<{
+    totalFindings: number;
+    debtScore: number;
+    autoFixableCount: number;
+    estimatedCleanupMinutes: number;
+    hasCritical: boolean;
+    summary: string;
+    categories: Record<string, number>;
+    topFiles: Array<{ path: string; issueCount: number }>;
+  }>(),
   digitalTwin: jsonb("digital_twin").$type<{
     journeys: Array<{
       name: string;

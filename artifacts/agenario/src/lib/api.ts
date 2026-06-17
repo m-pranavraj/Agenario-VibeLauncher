@@ -267,6 +267,16 @@ export interface Scan {
       }>;
     }>;
   } | null;
+  cleanupFindings: {
+    totalFindings: number;
+    debtScore: number;
+    autoFixableCount: number;
+    estimatedCleanupMinutes: number;
+    hasCritical: boolean;
+    summary: string;
+    categories: Record<string, number>;
+    topFiles: Array<{ path: string; issueCount: number }>;
+  } | null;
   digitalTwin: DigitalTwinResult | null;
   predictiveIntel: PredictiveIntelResult | null;
   rootCause: RootCauseResult | null;

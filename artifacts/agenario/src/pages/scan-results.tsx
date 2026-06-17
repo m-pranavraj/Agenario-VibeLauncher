@@ -2598,9 +2598,17 @@ export default function ScanResultsPage() {
           </motion.div>
         )}
 
-        {/* ── Cleanup Radar ─────────────────────────────────── */}
+        {/* ── Cleanup Radar — Creator only ──────────────────── */}
         {scan.cleanupReport && (
-          <CleanupRadarPanel data={scan.cleanupReport} />
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
+            <CreatorGate
+              plan={user.plan}
+              feature="Cleanup Radar"
+              preview="Tech debt score, category breakdown, hotspot files, and auto-fixable findings list"
+            >
+              <CleanupRadarPanel data={scan.cleanupReport} />
+            </CreatorGate>
+          </motion.div>
         )}
 
         {/* ── Top 3 Action Plan ────────────────────────────── */}

@@ -88,6 +88,9 @@ function categoryToAgent(cat: StaticFinding["category"]): string {
 router.get("/scans", async (req, res): Promise<void> => {
   if (!requireAuth(req, res)) return;
 
+  const [viewingUser] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId!));
+  const isCreator = viewingUser?.plan !== "free";
+
   const scans = await db
     .select()
     .from(scansTable)
@@ -95,11 +98,21 @@ router.get("/scans", async (req, res): Promise<void> => {
     .orderBy(desc(scansTable.createdAt));
 
   res.json(
-    scans.map((s) => ({
-      ...s,
-      createdAt: s.createdAt.toISOString(),
-      completedAt: s.completedAt?.toISOString() ?? null,
-    })),
+    scans.map((s) => {
+      const base: Record<string, unknown> = {
+        ...s,
+        createdAt: s.createdAt.toISOString(),
+        completedAt: s.completedAt?.toISOString() ?? null,
+      };
+      // Strip creator-only deep tech fields for free plan users on list responses
+      if (!isCreator) {
+        base["digitalTwin"] = null;
+        base["predictiveIntel"] = null;
+        base["rootCause"] = null;
+        base["cleanupFindings"] = null;
+      }
+      return base;
+    }),
   );
 });
 
@@ -349,6 +362,16 @@ async function runAnalysisPipeline(opts: {
       digitalTwin: digitalTwin ?? null,
       predictiveIntel: predictiveIntel ?? null,
       rootCause: rootCause ?? null,
+      cleanupFindings: cleanupReport ? {
+        totalFindings: cleanupReport.totalFindings,
+        debtScore: cleanupReport.debtScore,
+        autoFixableCount: cleanupReport.autoFixableCount,
+        estimatedCleanupMinutes: cleanupReport.estimatedCleanupMinutes,
+        hasCritical: cleanupReport.hasCritical,
+        summary: cleanupReport.summary,
+        categories: cleanupReport.categories,
+        topFiles: cleanupReport.topFiles,
+      } : null,
       framework: framework !== "unknown" ? framework : undefined,
       vibeTool: vibeTool !== "unknown" ? vibeTool : undefined,
       businessType: businessType !== "unknown" ? businessType : undefined,
@@ -568,6 +591,56 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
 
   responseData = applyTierGate(responseData, plan);
   res.json(responseData);
+});
+
+// ── Root Cause Engine (Creator only) ─────────────────────────────────────────
+router.get("/scans/:id/root-cause", async (req, res): Promise<void> => {
+  if (!requireAuth(req, res)) return;
+
+  const [viewingUser] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId!));
+  if (viewingUser?.plan === "free") {
+    res.status(403).json({ error: "Root Cause Engine requires Creator plan" });
+    return;
+  }
+
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid scan id" }); return; }
+
+  const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
+  if (!scan || scan.userId !== req.session.userId) {
+    res.status(404).json({ error: "Scan not found" }); return;
+  }
+  if (!scan.rootCause) {
+    res.status(404).json({ error: "Root cause analysis not available for this scan" }); return;
+  }
+
+  res.json(scan.rootCause);
+});
+
+// ── Cleanup Details (Creator-gated full report) ───────────────────────────────
+router.get("/scans/:id/cleanup", async (req, res): Promise<void> => {
+  if (!requireAuth(req, res)) return;
+
+  const [viewingUser] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId!));
+  if (viewingUser?.plan === "free") {
+    res.status(403).json({ error: "Cleanup details require Creator plan" });
+    return;
+  }
+
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid scan id" }); return; }
+
+  const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
+  if (!scan || scan.userId !== req.session.userId) {
+    res.status(404).json({ error: "Scan not found" }); return;
+  }
+  if (!scan.cleanupReport) {
+    res.status(404).json({ error: "Cleanup report not available for this scan" }); return;
+  }
+
+  res.json(scan.cleanupReport);
 });
 
 // ── AI Fix Generator ──────────────────────────────────────────────────────────
