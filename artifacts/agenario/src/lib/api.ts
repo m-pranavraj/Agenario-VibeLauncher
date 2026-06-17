@@ -207,8 +207,10 @@ export interface PortfolioApp {
 
 export const api = {
   auth: {
-    register: (data: { email: string; name: string; password: string }) =>
+    register: (data: { email: string; name: string; password: string; phone?: string; otp?: string }) =>
       request<User>("/auth/register", { method: "POST", body: JSON.stringify(data) }),
+    sendOtp: (phone: string) =>
+      request<{ sent: boolean; devOtp?: string }>("/auth/send-otp", { method: "POST", body: JSON.stringify({ phone }) }),
     login: (data: { email: string; password: string }) =>
       request<User>("/auth/login", { method: "POST", body: JSON.stringify(data) }),
     logout: () =>

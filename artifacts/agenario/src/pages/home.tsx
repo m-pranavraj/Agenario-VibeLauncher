@@ -1,12 +1,13 @@
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import {
   Rocket, ShieldCheck, Activity, Zap, Globe, CheckCircle,
   AlertTriangle, Github, Lock, Eye, TrendingUp, BrainCircuit,
   ArrowRight, XCircle, Code2, FileText, BarChart,
   Check, X, ShieldAlert, Cpu, Star, Users, Building2,
   BadgeCheck, Scale, Database, Fingerprint, CreditCard,
-  ChevronRight, Sparkles,
+  ChevronRight, Sparkles, Menu,
 } from "lucide-react";
+import { useState } from "react";
 import { Link } from "wouter";
 import type { Variants } from "framer-motion";
 
@@ -113,9 +114,19 @@ const HOW_IT_WORKS = [
   },
 ];
 
+const NAV_LINKS = [
+  { label: "How It Works", href: "#how-it-works", anchor: true },
+  { label: "Analysis", href: "#dimensions", anchor: true },
+  { label: "Compliance", href: "#compliance", anchor: true },
+  { label: "Pricing", href: "#pricing", anchor: true },
+  { label: "Docs", href: "/docs", anchor: false },
+  { label: "About", href: "/about", anchor: false },
+];
+
 export default function Home() {
   const { scrollYProgress } = useScroll();
   const yBg = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden font-sans selection:bg-violet-500/20 selection:text-white">
@@ -127,22 +138,22 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 border-b border-white/[0.06] bg-[#050505]/80 backdrop-blur-2xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5" onClick={() => setMenuOpen(false)}>
             <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover" />
             <span className="font-heading font-bold text-lg text-white tracking-tight">Agenario</span>
           </Link>
 
+          {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-7 text-sm font-medium text-white/45">
-            <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
-            <a href="#dimensions" className="hover:text-white transition-colors">Analysis</a>
-            <a href="#compliance" className="hover:text-white transition-colors">Compliance</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
-            <Link href="/about" className="hover:text-white transition-colors">About</Link>
+            {NAV_LINKS.map((l) =>
+              l.anchor
+                ? <a key={l.label} href={l.href} className="hover:text-white transition-colors">{l.label}</a>
+                : <Link key={l.label} href={l.href} className="hover:text-white transition-colors">{l.label}</Link>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-white/45 hover:text-white text-sm transition-colors" data-testid="nav-login-btn">
+            <Link href="/login" className="hidden md:block text-white/45 hover:text-white text-sm transition-colors" data-testid="nav-login-btn">
               Sign In
             </Link>
             <Link href="/register" data-testid="nav-start-btn">
@@ -150,8 +161,65 @@ export default function Home() {
                 Start Free
               </button>
             </Link>
+            {/* Hamburger — mobile only */}
+            <button
+              className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl border border-white/[0.1] bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/[0.07] transition-all"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label="Toggle menu"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="md:hidden overflow-hidden border-t border-white/[0.06] bg-[#050505]/95 backdrop-blur-2xl"
+            >
+              <div className="px-6 py-4 space-y-1">
+                {NAV_LINKS.map((l) =>
+                  l.anchor ? (
+                    <a
+                      key={l.label}
+                      href={l.href}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-white/55 hover:text-white hover:bg-white/[0.05] transition-all"
+                    >
+                      {l.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={l.label}
+                      href={l.href}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-white/55 hover:text-white hover:bg-white/[0.05] transition-all"
+                    >
+                      {l.label}
+                    </Link>
+                  )
+                )}
+                <div className="pt-3 flex flex-col gap-2 border-t border-white/[0.06] mt-2">
+                  <Link href="/login" onClick={() => setMenuOpen(false)}>
+                    <button className="w-full text-sm text-white/60 border border-white/[0.1] py-2.5 rounded-xl hover:bg-white/[0.04] transition-all">
+                      Sign In
+                    </button>
+                  </Link>
+                  <Link href="/register" onClick={() => setMenuOpen(false)}>
+                    <button className="w-full bg-white text-black text-sm font-semibold py-2.5 rounded-xl hover:bg-white/90 transition-all">
+                      Start Free
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       <main className="relative z-10 pt-16">

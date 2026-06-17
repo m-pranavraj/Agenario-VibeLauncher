@@ -67,8 +67,18 @@ const scanLimiter = rateLimit({
   message: { error: "Scan rate limit reached. Please wait before starting another analysis." },
 });
 
+const otpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 5, // Max 5 OTP sends per 10 minutes per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many OTP requests. Please wait 10 minutes before trying again." },
+  skipSuccessfulRequests: false,
+});
+
 app.use(globalLimiter);
 app.use("/api/auth", authLimiter);
+app.use("/api/auth/send-otp", otpLimiter);
 app.use("/api/scans", scanLimiter);
 
 // ── Logging ───────────────────────────────────────────────────────────────

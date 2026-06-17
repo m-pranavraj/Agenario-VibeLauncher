@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Rocket, Github, Zap, Terminal, Code2, Globe, Package,
-  ChevronRight, ChevronDown, CheckCircle, ArrowLeft,
-  Shield, Webhook, Key, BookOpen, Download, Cpu, Lock,
+  ChevronRight, CheckCircle, ArrowLeft,
+  Shield, Webhook, Key, BookOpen, Lock, Menu, X,
+  Copy, CheckCheck, ExternalLink, Cpu, Activity,
+  Database, GitBranch, Play, AlertTriangle, Sparkles,
+  ArrowRight, FileText, BarChart3, Eye, CreditCard,
 } from "lucide-react";
 
 const FADE_UP = {
@@ -14,542 +17,751 @@ const FADE_UP = {
 const STAGGER = { show: { transition: { staggerChildren: 0.06 } } };
 
 const SECTIONS = [
-  { id: "quickstart", label: "Quickstart", icon: Zap },
-  { id: "github-actions", label: "GitHub Actions", icon: Github },
-  { id: "api", label: "REST API", icon: Terminal },
-  { id: "vscode", label: "VS Code / Cursor", icon: Code2 },
-  { id: "vercel", label: "Vercel / Netlify", icon: Globe },
-  { id: "webhook", label: "GitHub Webhook", icon: Webhook },
-  { id: "security", label: "Security & Privacy", icon: Shield },
+  { id: "quickstart", label: "Quickstart", icon: Zap, badge: "5 min" },
+  { id: "github-actions", label: "GitHub Actions", icon: Github, badge: "CI/CD" },
+  { id: "api", label: "REST API", icon: Terminal, badge: "Reference" },
+  { id: "vscode", label: "VS Code / Cursor", icon: Code2, badge: "IDE" },
+  { id: "vercel", label: "Vercel / Netlify", icon: Globe, badge: "Deploy" },
+  { id: "webhook", label: "GitHub Webhook", icon: Webhook, badge: "Auto" },
+  { id: "sdk", label: "Node.js SDK", icon: Package, badge: "New" },
+  { id: "security", label: "Security & Privacy", icon: Shield, badge: "" },
 ];
 
-function CodeBlock({ code, lang = "bash" }: { code: string; lang?: string }) {
+const FEATURES_OVERVIEW = [
+  { icon: Lock, label: "Security Audit", desc: "OWASP Top 10, secrets, auth gaps" },
+  { icon: CreditCard, label: "Revenue Intelligence", desc: "Payment flows, churn risks" },
+  { icon: Shield, label: "8 Compliance Frameworks", desc: "GDPR, PCI-DSS, HIPAA, SOC2..." },
+  { icon: Activity, label: "Launch Risk Forecast", desc: "AI-powered incident prediction" },
+  { icon: Eye, label: "UX & Conversion", desc: "Drop-offs, accessibility, mobile" },
+  { icon: BarChart3, label: "Benchmark Percentile", desc: "vs 1000+ vibe-coded apps" },
+];
+
+function useActiveSection(sectionIds: string[]) {
+  const [active, setActive] = useState(sectionIds[0]);
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActive(id); },
+        { rootMargin: "-20% 0px -60% 0px" },
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach((o) => o.disconnect());
+  }, [sectionIds]);
+  return active;
+}
+
+function CodeBlock({ code, lang = "bash", filename }: { code: string; lang?: string; filename?: string }) {
   const [copied, setCopied] = useState(false);
+
+  const langColors: Record<string, string> = {
+    bash: "text-emerald-400/70",
+    yaml: "text-amber-400/70",
+    javascript: "text-yellow-400/70",
+    typescript: "text-blue-400/70",
+    json: "text-violet-400/70",
+    python: "text-green-400/70",
+  };
+
+  const langDot: Record<string, string> = {
+    bash: "bg-emerald-500",
+    yaml: "bg-amber-500",
+    javascript: "bg-yellow-500",
+    typescript: "bg-blue-500",
+    json: "bg-violet-500",
+    python: "bg-green-500",
+  };
+
   return (
-    <div className="relative rounded-xl bg-black/60 border border-white/[0.08] overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.06]">
-        <span className="text-[11px] text-white/25 font-mono">{lang}</span>
-        <button
-          onClick={async () => {
-            await navigator.clipboard.writeText(code);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-          }}
-          className="text-[11px] text-white/30 hover:text-white/60 transition-colors"
-        >
-          {copied ? "✓ Copied" : "Copy"}
-        </button>
+    <div className="rounded-2xl overflow-hidden border border-white/[0.08] bg-gradient-to-b from-white/[0.03] to-black/40 shadow-2xl">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.07] bg-white/[0.02]">
+        <div className="flex items-center gap-2.5">
+          <div className="flex gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500/70" />
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+          </div>
+          {filename && (
+            <span className="text-[11px] text-white/35 font-mono ml-1">{filename}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <span className={`text-[10px] font-mono font-semibold uppercase tracking-wider flex items-center gap-1.5 ${langColors[lang] ?? "text-white/25"}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${langDot[lang] ?? "bg-white/20"}`} />
+            {lang}
+          </span>
+          <button
+            onClick={async () => {
+              await navigator.clipboard.writeText(code);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="flex items-center gap-1.5 text-[11px] text-white/25 hover:text-white/60 transition-colors px-2 py-1 rounded-lg hover:bg-white/[0.05]"
+          >
+            {copied ? <><CheckCheck className="w-3 h-3 text-green-400" /><span className="text-green-400">Copied</span></> : <><Copy className="w-3 h-3" />Copy</>}
+          </button>
+        </div>
       </div>
-      <pre className="p-4 text-sm text-white/70 font-mono leading-relaxed overflow-x-auto whitespace-pre-wrap">{code}</pre>
+      <pre className="p-5 text-sm text-white/65 font-mono leading-relaxed overflow-x-auto whitespace-pre">{code}</pre>
     </div>
   );
 }
 
-function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
+function SectionHeader({ number, title, desc }: { number: string; title: string; desc?: string }) {
   return (
-    <section id={id} className="scroll-mt-24 space-y-5">
-      <h2 className="text-xl font-bold text-white font-['Syne']">{title}</h2>
-      {children}
-    </section>
+    <div className="flex items-start gap-4 pb-2">
+      <span className="flex-shrink-0 w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/25 flex items-center justify-center text-xs font-bold text-violet-400 font-mono">
+        {number}
+      </span>
+      <div>
+        <h2 className="text-xl font-bold text-white font-['Syne'] tracking-tight">{title}</h2>
+        {desc && <p className="text-sm text-white/40 mt-0.5 leading-relaxed">{desc}</p>}
+      </div>
+    </div>
   );
 }
 
-function Callout({ type, children }: { type: "info" | "warning" | "tip"; children: React.ReactNode }) {
-  const styles = {
-    info: "bg-blue-500/[0.06] border-blue-500/20 text-blue-300",
-    warning: "bg-amber-500/[0.06] border-amber-500/20 text-amber-300",
-    tip: "bg-green-500/[0.06] border-green-500/20 text-green-300",
+function Callout({ type, children }: { type: "info" | "warning" | "tip" | "success"; children: React.ReactNode }) {
+  const configs = {
+    info: { cls: "bg-blue-500/[0.06] border-blue-500/20 text-blue-300", icon: "ℹ️" },
+    warning: { cls: "bg-amber-500/[0.06] border-amber-500/20 text-amber-300", icon: "⚠️" },
+    tip: { cls: "bg-violet-500/[0.06] border-violet-500/20 text-violet-300", icon: "💡" },
+    success: { cls: "bg-green-500/[0.06] border-green-500/20 text-green-300", icon: "✅" },
   };
-  const icons = { info: "ℹ️", warning: "⚠️", tip: "💡" };
+  const { cls, icon } = configs[type];
   return (
-    <div className={`border rounded-xl px-4 py-3 text-sm ${styles[type]}`}>
-      <span className="mr-2">{icons[type]}</span>
-      {children}
+    <div className={`flex gap-3 rounded-xl border p-4 text-sm leading-relaxed ${cls}`}>
+      <span className="text-base flex-shrink-0">{icon}</span>
+      <span>{children}</span>
+    </div>
+  );
+}
+
+function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-4">
+      <div className="flex flex-col items-center">
+        <span className="w-7 h-7 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center text-xs font-bold text-white/60 flex-shrink-0">{n}</span>
+        <div className="w-px flex-1 bg-white/[0.06] mt-2" />
+      </div>
+      <div className="pb-6 flex-1">
+        <h3 className="text-sm font-bold text-white mb-2">{title}</h3>
+        <div className="space-y-3">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function EndpointRow({ method, path, desc }: { method: "GET" | "POST" | "DELETE"; path: string; desc: string }) {
+  const colors = { GET: "text-green-400 bg-green-500/10 border-green-500/20", POST: "text-blue-400 bg-blue-500/10 border-blue-500/20", DELETE: "text-red-400 bg-red-500/10 border-red-500/20" };
+  return (
+    <div className="flex items-start gap-3 py-3 border-b border-white/[0.05] last:border-0">
+      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border font-mono flex-shrink-0 ${colors[method]}`}>{method}</span>
+      <code className="text-sm text-white/70 font-mono flex-1">{path}</code>
+      <span className="text-xs text-white/30 text-right max-w-[180px] hidden sm:block">{desc}</span>
     </div>
   );
 }
 
 export default function DocsPage() {
-  const [activeSection, setActiveSection] = useState("quickstart");
+  const activeSection = useActiveSection(SECTIONS.map((s) => s.id));
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#050505] text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(139,92,246,0.05)_0%,_transparent_60%)] pointer-events-none" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(139,92,246,0.06)_0%,_transparent_55%)] pointer-events-none" />
 
-      {/* Navbar */}
-      <nav className="border-b border-white/[0.07] bg-[#050505]/90 backdrop-blur-2xl sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
-          <Link href="/" className="text-white/30 hover:text-white transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover" />
-            <span className="text-white font-bold font-['Syne'] text-sm">Agenario</span>
-            <span className="text-white/20 mx-1">/</span>
-            <span className="text-white/50 text-sm">Documentation</span>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <Link href="/register" className="text-xs bg-white text-black font-semibold px-4 py-1.5 rounded-lg hover:bg-white/90 transition-all">
-              Get Started Free
+      {/* Top navbar */}
+      <nav className="fixed top-0 w-full z-50 border-b border-white/[0.06] bg-[#050505]/85 backdrop-blur-2xl">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2 text-white/40 hover:text-white transition-colors">
+              <ArrowLeft className="w-4 h-4" />
             </Link>
+            <div className="w-px h-4 bg-white/[0.1]" />
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/logo.png" alt="Agenario" className="w-6 h-6 rounded-lg object-cover" />
+              <span className="text-white font-bold text-sm font-['Syne']">Agenario</span>
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-white/20" />
+            <span className="text-sm text-white/40 hidden sm:block">Documentation</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:flex items-center gap-1.5 text-[11px] text-green-400/70 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              API Online
+            </span>
+            <span className="hidden sm:block text-[11px] px-2 py-1 rounded-lg bg-white/[0.05] border border-white/[0.08] text-white/30 font-mono">v2.1</span>
+            <Link href="/register">
+              <button className="bg-white text-black text-xs font-bold px-4 py-2 rounded-xl hover:bg-white/90 transition-all">
+                Get Started Free
+              </button>
+            </Link>
+            {/* Mobile nav toggle */}
+            <button
+              className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-white/[0.1] bg-white/[0.04] text-white/60"
+              onClick={() => setMobileNavOpen((v) => !v)}
+            >
+              {mobileNavOpen ? <X className="w-3.5 h-3.5" /> : <Menu className="w-3.5 h-3.5" />}
+            </button>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-6 py-10 flex gap-10">
-        {/* Sidebar */}
-        <aside className="hidden lg:block w-52 shrink-0 sticky top-24 h-fit">
-          <nav className="space-y-0.5">
-            {SECTIONS.map(({ id, label, icon: Icon }) => (
-              <a
-                key={id}
-                href={`#${id}`}
-                onClick={() => setActiveSection(id)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-                  activeSection === id
-                    ? "bg-white/[0.08] text-white"
-                    : "text-white/35 hover:text-white/70 hover:bg-white/[0.04]"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {label}
-              </a>
-            ))}
+      <div className="flex pt-14 max-w-7xl mx-auto">
+        {/* Sidebar — desktop */}
+        <aside className="hidden md:flex w-64 flex-col flex-shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-8 pr-4 pl-6 border-r border-white/[0.05]">
+          <div className="mb-6">
+            <p className="text-[10px] text-white/20 uppercase tracking-widest font-semibold mb-3">Getting Started</p>
+          </div>
+          <nav className="space-y-1">
+            {SECTIONS.map((s) => {
+              const Icon = s.icon;
+              const isActive = activeSection === s.id;
+              return (
+                <a
+                  key={s.id}
+                  href={`#${s.id}`}
+                  className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
+                    isActive
+                      ? "bg-white/[0.07] text-white border border-white/[0.1]"
+                      : "text-white/40 hover:text-white/70 hover:bg-white/[0.03]"
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${isActive ? "text-violet-400" : "text-white/25 group-hover:text-white/40"}`} />
+                  <span className="flex-1 font-medium">{s.label}</span>
+                  {s.badge && (
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide ${
+                      s.badge === "New" ? "bg-violet-500/20 text-violet-400" : "bg-white/[0.06] text-white/25"
+                    }`}>{s.badge}</span>
+                  )}
+                  {isActive && <div className="w-1 h-1 rounded-full bg-violet-400" />}
+                </a>
+              );
+            })}
           </nav>
 
-          <div className="mt-8 p-4 rounded-xl bg-white/[0.03] border border-white/[0.07]">
-            <p className="text-xs text-white/40 mb-3 font-medium">API Base URL</p>
-            <code className="text-xs text-violet-400 font-mono break-all">
-              https://your-app.replit.app/api
-            </code>
+          <div className="mt-8 pt-6 border-t border-white/[0.06]">
+            <p className="text-[10px] text-white/20 uppercase tracking-widest font-semibold mb-3">Analysis Dimensions</p>
+            <div className="space-y-2">
+              {FEATURES_OVERVIEW.map((f) => {
+                const Icon = f.icon;
+                return (
+                  <div key={f.label} className="flex items-center gap-2.5 px-3 py-1.5">
+                    <Icon className="w-3.5 h-3.5 text-white/20 flex-shrink-0" />
+                    <div>
+                      <p className="text-[11px] text-white/40 font-medium">{f.label}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </aside>
 
-        {/* Content */}
-        <main className="flex-1 max-w-3xl space-y-16">
-          <motion.div initial="hidden" animate="show" variants={STAGGER}>
-            <motion.div variants={FADE_UP} className="mb-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-white/60 text-xs font-medium mb-4">
-                <BookOpen className="w-3 h-3" />
-                Documentation
-              </div>
-              <h1 className="text-3xl font-bold text-white font-['Syne'] mb-3">Integrate Agenario</h1>
-              <p className="text-white/45 leading-relaxed">
-                Add production-readiness analysis to your workflow — GitHub Actions, Vercel, Cursor, or via REST API. Your code is analyzed in-session and never stored.
-              </p>
+        {/* Mobile sidebar overlay */}
+        <AnimatePresence>
+          {mobileNavOpen && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="md:hidden fixed inset-0 top-14 z-40 bg-[#050505]/95 backdrop-blur-xl p-6 overflow-y-auto"
+            >
+              <p className="text-[10px] text-white/20 uppercase tracking-widest font-semibold mb-4">Jump to Section</p>
+              <nav className="space-y-1">
+                {SECTIONS.map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <a
+                      key={s.id}
+                      href={`#${s.id}`}
+                      onClick={() => setMobileNavOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-white/50 hover:text-white hover:bg-white/[0.05] transition-all"
+                    >
+                      <Icon className="w-4 h-4 text-white/25" />
+                      {s.label}
+                      {s.badge && <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-white/[0.06] text-white/25 uppercase">{s.badge}</span>}
+                    </a>
+                  );
+                })}
+              </nav>
             </motion.div>
+          )}
+        </AnimatePresence>
 
-            {/* Quickstart */}
-            <motion.div variants={FADE_UP}>
-              <Section id="quickstart" title="Quickstart">
-                <p className="text-white/50 text-sm leading-relaxed">
-                  The fastest way to use Agenario is through the web app. Create a free account, paste your GitHub URL, and get your launch readiness report in minutes.
-                </p>
-                <div className="grid sm:grid-cols-3 gap-3">
-                  {[
-                    { step: "1", title: "Create Account", desc: "Free — 5 scans/month, no card required", href: "/register" },
-                    { step: "2", title: "Submit Your App", desc: "GitHub repo, ZIP, URL, or description" },
-                    { step: "3", title: "Get Your Report", desc: "Score, verdict, action plan, fix prompts" },
-                  ].map(({ step, title, desc, href }) => (
-                    <div key={step} className="glass rounded-xl p-4">
-                      <div className="text-xs font-bold text-white/25 mb-2 font-mono">STEP {step}</div>
-                      <div className="font-semibold text-white text-sm mb-1">{title}</div>
-                      <p className="text-white/35 text-xs">{desc}</p>
-                      {href && (
-                        <Link href={href} className="inline-flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 mt-2 transition-colors">
-                          Start <ChevronRight className="w-3 h-3" />
-                        </Link>
-                      )}
-                    </div>
-                  ))}
+        {/* Main content */}
+        <main className="flex-1 min-w-0 px-6 md:px-10 py-10 space-y-20 max-w-3xl">
+
+          {/* Docs hero */}
+          <motion.div initial="hidden" animate="show" variants={STAGGER} className="space-y-5">
+            <motion.div variants={FADE_UP} className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400">
+                <Sparkles className="w-3 h-3" /> Developer Documentation
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-white/30">
+                REST API · Webhooks · CI/CD
+              </span>
+            </motion.div>
+            <motion.h1 variants={FADE_UP} className="text-4xl font-bold text-white font-['Syne'] leading-tight">
+              Integrate Agenario<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-indigo-400 to-blue-400">
+                everywhere you ship.
+              </span>
+            </motion.h1>
+            <motion.p variants={FADE_UP} className="text-base text-white/45 leading-relaxed max-w-xl">
+              Connect Agenario to your CI/CD pipeline, IDE, deployment platform, or custom toolchain. Full REST API with HMAC webhook support.
+            </motion.p>
+            <motion.div variants={FADE_UP} className="grid sm:grid-cols-3 gap-3">
+              {[
+                { label: "API Endpoints", value: "12+", color: "text-violet-400" },
+                { label: "Compliance Frameworks", value: "8", color: "text-blue-400" },
+                { label: "Analysis Dimensions", value: "10", color: "text-emerald-400" },
+              ].map((stat) => (
+                <div key={stat.label} className="glass rounded-xl p-4 border border-white/[0.07]">
+                  <div className={`text-2xl font-bold font-['Syne'] ${stat.color}`}>{stat.value}</div>
+                  <div className="text-xs text-white/30 mt-0.5">{stat.label}</div>
                 </div>
-                <Callout type="tip">
-                  For the most accurate analysis, submit a GitHub repo URL. Agenario will clone it, read your actual code, and provide evidence-based findings tied to specific files.
-                </Callout>
-              </Section>
+              ))}
             </motion.div>
+          </motion.div>
 
-            {/* GitHub Actions */}
-            <motion.div variants={FADE_UP}>
-              <Section id="github-actions" title="GitHub Actions CI/CD">
-                <p className="text-white/50 text-sm leading-relaxed">
-                  Add Agenario to your CI pipeline to automatically scan every pull request. Scans run on PR open and push events, and post a verdict comment directly on the PR.
-                </p>
+          {/* ── Quickstart ───────────────────────────────── */}
+          <section id="quickstart" className="scroll-mt-20 space-y-6">
+            <SectionHeader number="01" title="Quickstart" desc="From zero to your first scan report in under 5 minutes." />
 
-                <div className="space-y-3">
-                  <p className="text-white/40 text-sm font-medium">1. Add to <code className="text-violet-400 font-mono">.github/workflows/agenario.yml</code></p>
-                  <CodeBlock lang="yaml" code={`name: Agenario Launch Check
+            <Step n={1} title="Create your account">
+              <p className="text-sm text-white/45">Sign up at <Link href="/register" className="text-violet-400 hover:underline">agenario.app/register</Link> — free plan includes 2 scans/month with no credit card required.</p>
+            </Step>
 
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-  push:
-    branches: [main]
+            <Step n={2} title="Submit your app for analysis">
+              <p className="text-sm text-white/45 mb-3">Paste a GitHub URL, upload a ZIP, enter a live URL, or describe your stack. Agenario works with any framework or language.</p>
+              <Callout type="tip">
+                <strong>Best accuracy:</strong> Provide a GitHub repo URL. Agenario can analyze your full codebase including package.json, .env examples, and API route definitions.
+              </Callout>
+            </Step>
+
+            <Step n={3} title="Read your board-memo report">
+              <p className="text-sm text-white/45">You get a 0–100 Launch Readiness Score, top 3 action plan, 8-framework compliance audit, revenue intelligence, and 1-click fix prompts ready to paste into Cursor, Bolt, or Lovable.</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {["Launch Score 0-100", "10 Analysis Dimensions", "8 Compliance Frameworks", "Revenue Leak Detector", "1-Click Fix Prompts", "Risk Forecast"].map((f) => (
+                  <div key={f} className="flex items-center gap-2 text-xs text-white/45 bg-white/[0.03] border border-white/[0.07] rounded-xl px-3 py-2">
+                    <CheckCircle className="w-3 h-3 text-green-400/60 flex-shrink-0" />
+                    {f}
+                  </div>
+                ))}
+              </div>
+            </Step>
+
+            <Callout type="success">
+              First scan? Try submitting <code className="bg-white/[0.07] px-1.5 py-0.5 rounded text-xs font-mono text-violet-300">github.com/your-username/your-app</code> — results arrive in ~45 seconds.
+            </Callout>
+          </section>
+
+          {/* ── GitHub Actions ───────────────────────────── */}
+          <section id="github-actions" className="scroll-mt-20 space-y-6">
+            <SectionHeader number="02" title="GitHub Actions CI/CD" desc="Block risky deployments automatically. Add Agenario as a required check." />
+
+            <Callout type="info">
+              Requires a Creator or Enterprise plan API key. Get yours from <strong>Dashboard → Settings → API Keys</strong>.
+            </Callout>
+
+            <CodeBlock
+              filename=".github/workflows/agenario.yml"
+              lang="yaml"
+              code={`name: Agenario Launch Gate
+on: [push, pull_request]
 
 jobs:
   agenario-scan:
-    name: Production Readiness Scan
     runs-on: ubuntu-latest
     steps:
-      - name: Run Agenario Analysis
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const repo = context.payload.repository.html_url;
-            const apiKey = process.env.AGENARIO_API_KEY;
-            
-            // Trigger scan
-            const scanRes = await fetch('https://your-app.replit.app/api/scans', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-API-Key': apiKey
-              },
-              body: JSON.stringify({
-                sourceType: 'github',
-                sourceInput: repo
-              })
-            });
-            const scan = await scanRes.json();
-            
-            // Post PR comment with verdict
-            if (context.payload.pull_request) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-                body: \`## Agenario Launch Report 🚀
-                
-**Score:** \${scan.score}/100  
-**Verdict:** \${scan.launchVerdict}  
-**Critical Issues:** \${scan.issueCounts?.critical ?? 0}  
+      - uses: actions/checkout@v4
 
-[View Full Report](https://your-app.replit.app/scans/\${scan.id})\`
-              });
-            }
-            
-            // Fail CI if verdict is do-not-launch
-            if (scan.launchVerdict === 'do-not-launch') {
-              core.setFailed(\`Agenario: DO NOT MERGE — \${scan.issueCounts?.critical} critical issues found.\`);
-            }
+      - name: Run Agenario Scan
         env:
-          AGENARIO_API_KEY: \${{ secrets.AGENARIO_API_KEY }}`} />
+          AGENARIO_API_KEY: \${{ secrets.AGENARIO_API_KEY }}
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Submit scan
+          SCAN=$(curl -s -X POST https://your-app.replit.app/api/scans \\
+            -H "Authorization: Bearer $AGENARIO_API_KEY" \\
+            -H "Content-Type: application/json" \\
+            -d '{"sourceType":"github","sourceInput":"'$GITHUB_REPOSITORY'"}')
 
-                  <p className="text-white/40 text-sm font-medium">2. Add your API key to GitHub Secrets</p>
-                  <CodeBlock lang="bash" code={`# In your GitHub repo → Settings → Secrets → Actions
-# Add: AGENARIO_API_KEY = your-api-key-here`} />
-                </div>
+          SCAN_ID=$(echo $SCAN | jq -r '.id')
+          echo "Scan ID: $SCAN_ID"
 
-                <Callout type="info">
-                  Webhook integration (automatic PR scanning without GitHub Actions) is available on the Enterprise plan. The GitHub App posts verdict comments with zero configuration.
-                </Callout>
-              </Section>
-            </motion.div>
+          # Poll until complete (max 3 minutes)
+          for i in $(seq 1 36); do
+            sleep 5
+            RESULT=$(curl -s https://your-app.replit.app/api/scans/$SCAN_ID \\
+              -H "Authorization: Bearer $AGENARIO_API_KEY")
+            STATUS=$(echo $RESULT | jq -r '.status')
+            if [ "$STATUS" = "completed" ]; then break; fi
+          done
 
-            {/* REST API */}
-            <motion.div variants={FADE_UP}>
-              <Section id="api" title="REST API Reference">
-                <p className="text-white/50 text-sm leading-relaxed">
-                  All endpoints require session authentication via cookie. Start a session with <code className="text-violet-400 font-mono">POST /api/auth/login</code>.
-                </p>
+          # Check score threshold
+          SCORE=$(echo $RESULT | jq -r '.score')
+          VERDICT=$(echo $RESULT | jq -r '.launchVerdict')
+          echo "Launch Score: $SCORE | Verdict: $VERDICT"
 
-                <div className="space-y-4">
-                  {[
-                    {
-                      method: "POST", path: "/api/auth/register",
-                      desc: "Create a new account",
-                      body: `{ "name": "Alice", "email": "alice@example.com", "password": "secure123" }`,
-                    },
-                    {
-                      method: "POST", path: "/api/auth/login",
-                      desc: "Authenticate and start session",
-                      body: `{ "email": "alice@example.com", "password": "secure123" }`,
-                    },
-                    {
-                      method: "POST", path: "/api/scans",
-                      desc: "Start a new analysis scan",
-                      body: `{
-  "sourceType": "github",
-  "sourceInput": "https://github.com/you/your-app",
-  "appDescription": "SaaS with Stripe payments",
-  "vibeTool": "cursor",
-  "businessType": "saas"
-}`,
-                    },
-                    {
-                      method: "GET", path: "/api/scans/:id",
-                      desc: "Get scan results with full issue list",
-                      body: null,
-                    },
-                    {
-                      method: "GET", path: "/api/scans",
-                      desc: "List all your scans",
-                      body: null,
-                    },
-                    {
-                      method: "GET", path: "/api/monitoring/portfolio",
-                      desc: "Get all apps ranked by risk score",
-                      body: null,
-                    },
-                  ].map(({ method, path, desc, body }) => (
-                    <div key={path} className="glass rounded-xl overflow-hidden">
-                      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06]">
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded font-mono ${
-                          method === "GET" ? "bg-green-500/15 text-green-400" : "bg-blue-500/15 text-blue-400"
-                        }`}>
-                          {method}
-                        </span>
-                        <code className="text-sm text-white/80 font-mono">{path}</code>
-                        <span className="text-xs text-white/30 ml-auto">{desc}</span>
-                      </div>
-                      {body && (
-                        <pre className="px-4 py-3 text-xs text-white/45 font-mono overflow-x-auto">{body}</pre>
-                      )}
+          if [ "$VERDICT" = "do-not-launch" ]; then
+            echo "::error::Launch blocked — critical issues found (score: $SCORE)"
+            exit 1
+          fi`}
+            />
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[
+                { label: "Blocks on do-not-launch", desc: "Auto-fails CI when critical issues are detected", icon: Shield },
+                { label: "Score threshold", desc: "Customizable — e.g. fail if score < 70", icon: BarChart3 },
+                { label: "PR comments", desc: "Posts verdict + top issues as PR comment", icon: GitBranch },
+                { label: "Works with any CI", desc: "GitLab, CircleCI, Jenkins, Bitbucket", icon: Activity },
+              ].map((f) => {
+                const Icon = f.icon;
+                return (
+                  <div key={f.label} className="glass rounded-xl p-4 flex items-start gap-3">
+                    <Icon className="w-4 h-4 text-violet-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-white">{f.label}</p>
+                      <p className="text-xs text-white/35 mt-0.5">{f.desc}</p>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
 
-                <div className="glass rounded-xl p-5">
-                  <h3 className="text-sm font-bold text-white mb-3">Response: Scan with Issues</h3>
-                  <CodeBlock lang="json" code={`{
+          {/* ── REST API ─────────────────────────────────── */}
+          <section id="api" className="scroll-mt-20 space-y-6">
+            <SectionHeader number="03" title="REST API Reference" desc="Full programmatic access to scan submission, results, and portfolio data." />
+
+            <div className="glass rounded-2xl overflow-hidden border border-white/[0.08]">
+              <div className="px-5 py-3.5 border-b border-white/[0.07] flex items-center gap-3">
+                <Terminal className="w-4 h-4 text-white/30" />
+                <span className="text-sm font-bold text-white">Endpoints</span>
+                <span className="ml-auto text-[10px] text-white/25 font-mono">Base: /api</span>
+              </div>
+              <div className="px-5 divide-y divide-white/[0.04]">
+                <EndpointRow method="POST" path="/auth/register" desc="Create account" />
+                <EndpointRow method="POST" path="/auth/login" desc="Authenticate" />
+                <EndpointRow method="GET"  path="/auth/me" desc="Current user" />
+                <EndpointRow method="POST" path="/scans" desc="Start new scan" />
+                <EndpointRow method="GET"  path="/scans" desc="List all scans" />
+                <EndpointRow method="GET"  path="/scans/:id" desc="Scan result by ID" />
+                <EndpointRow method="GET"  path="/monitoring/overview" desc="Dashboard overview" />
+                <EndpointRow method="GET"  path="/monitoring/portfolio" desc="Portfolio risk ranking" />
+                <EndpointRow method="POST" path="/monitoring/rescan" desc="Trigger rescan" />
+                <EndpointRow method="POST" path="/billing/create-order" desc="Razorpay order" />
+                <EndpointRow method="POST" path="/billing/verify" desc="Verify payment" />
+                <EndpointRow method="POST" path="/github/webhook" desc="GitHub webhook" />
+              </div>
+            </div>
+
+            <CodeBlock
+              lang="bash"
+              filename="Create a scan"
+              code={`curl -X POST https://your-app.replit.app/api/scans \\
+  -H "Content-Type: application/json" \\
+  -H "Cookie: agn_sid=<your-session-cookie>" \\
+  -d '{
+    "sourceType": "github",
+    "sourceInput": "github.com/your-org/your-app",
+    "framework": "nextjs",
+    "vibeTool": "cursor",
+    "businessType": "saas"
+  }'`}
+            />
+
+            <CodeBlock
+              lang="json"
+              filename="Response"
+              code={`{
   "id": 42,
+  "status": "completed",
   "score": 73,
   "launchVerdict": "caution",
-  "summary": "Moderate risk — 2 critical issues require attention.",
-  "issueCounts": { "critical": 2, "high": 3, "medium": 5, "low": 2 },
+  "summary": "Strong security posture with 3 critical compliance gaps...",
+  "issueCounts": { "critical": 2, "high": 5, "medium": 8, "low": 3 },
   "riskForecast": {
-    "churnRisk": "high",
-    "revenueAtRisk": "₹50,000-₹2,00,000/mo",
-    "topFailureModes": ["Auth breakage", "Checkout failures"]
+    "churnRisk": "medium",
+    "revenueAtRisk": "~₹45,000/mo",
+    "topFailureModes": ["Missing GDPR consent flow", "Checkout timeout not handled"]
   },
   "complianceResults": [
-    { "framework": "GDPR", "score": 45, "status": "fail" }
-  ],
-  "issues": [
-    {
-      "severity": "critical",
-      "title": "Stripe key exposed in client bundle",
-      "description": "...",
-      "fixPrompt": "In Cursor: Remove the sk_live_ key from src/config.ts...",
-      "confidence": 98,
-      "evidence": "src/config.ts:12"
-    }
+    { "framework": "GDPR", "score": 58, "status": "partial" },
+    { "framework": "OWASP Top 10", "score": 71, "status": "partial" }
   ]
-}`} />
+}`}
+            />
+          </section>
+
+          {/* ── VS Code / Cursor ──────────────────────────── */}
+          <section id="vscode" className="scroll-mt-20 space-y-6">
+            <SectionHeader number="04" title="VS Code & Cursor Integration" desc="Use Agenario fix prompts directly in your AI-powered editor." />
+
+            <div className="glass rounded-2xl p-6 border border-violet-500/15">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-violet-400" />
                 </div>
-              </Section>
-            </motion.div>
-
-            {/* VS Code / Cursor */}
-            <motion.div variants={FADE_UP}>
-              <Section id="vscode" title="VS Code & Cursor Integration">
-                <p className="text-white/50 text-sm leading-relaxed">
-                  Use Agenario directly from your editor. Copy fix prompts from the report and paste them directly into Cursor, Copilot Chat, or any AI editor.
-                </p>
-
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="glass rounded-xl p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Code2 className="w-4 h-4 text-violet-400" />
-                      <h3 className="text-sm font-bold text-white">Cursor Workflow</h3>
-                    </div>
-                    <ol className="space-y-2 text-sm text-white/45">
-                      {[
-                        "Run Agenario scan on your repo",
-                        "Open the report and click any finding",
-                        "Click \"1-Click Fix Prompt\" to copy",
-                        "Open Cursor Chat (⌘K or Ctrl+K)",
-                        "Paste the prompt — Cursor applies the fix",
-                      ].map((step, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="text-white/20 font-mono text-xs mt-0.5">{i + 1}.</span>
-                          {step}
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-
-                  <div className="glass rounded-xl p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Package className="w-4 h-4 text-blue-400" />
-                      <h3 className="text-sm font-bold text-white">VS Code Extension</h3>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 font-medium">Coming Soon</span>
-                    </div>
-                    <p className="text-sm text-white/45 mb-3">The Agenario VS Code extension will let you:</p>
-                    <ul className="space-y-1.5 text-sm text-white/40">
-                      {[
-                        "Scan current workspace from the sidebar",
-                        "See inline issue highlights in files",
-                        "Apply fix prompts without leaving the editor",
-                        "Get alerts when new issues are detected",
-                      ].map((item, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <CheckCircle className="w-3.5 h-3.5 text-green-400/60 shrink-0 mt-0.5" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                <div>
+                  <p className="text-sm font-bold text-white">1-Click Fix Prompts</p>
+                  <p className="text-xs text-white/35">Each finding ships with a paste-ready fix prompt for Cursor, Bolt, or Lovable</p>
                 </div>
+              </div>
+              <div className="bg-black/40 rounded-xl p-4 border border-white/[0.06] font-mono text-xs leading-relaxed">
+                <p className="text-amber-400/80 mb-1.5">// Agenario Fix Prompt — CRITICAL: SQL Injection in /api/search</p>
+                <p className="text-white/55">Fix the SQL injection vulnerability in the search endpoint.</p>
+                <p className="text-white/55 mt-1">Replace raw string interpolation with parameterized queries.</p>
+                <p className="text-white/55 mt-1">Add input validation using zod before reaching the DB layer.</p>
+                <p className="text-white/55 mt-1">Return 400 for malformed inputs instead of passing them through.</p>
+              </div>
+            </div>
 
-                <Callout type="tip">
-                  The 1-Click Fix Prompt is designed to be pasted directly into any AI editor. It includes the exact file path, problem description, and solution instructions — no editing needed.
-                </Callout>
-              </Section>
-            </motion.div>
+            <Callout type="tip">
+              <strong>VS Code Extension</strong> coming soon — inline issue highlights, severity badges, and 1-click fix buttons directly in your editor sidebar.
+            </Callout>
 
-            {/* Vercel / Netlify */}
-            <motion.div variants={FADE_UP}>
-              <Section id="vercel" title="Vercel & Netlify Deploy Guard">
-                <p className="text-white/50 text-sm leading-relaxed">
-                  Block risky deployments automatically. Add a pre-deploy check that runs Agenario and fails if the score is below your threshold.
-                </p>
+            <CodeBlock
+              lang="bash"
+              filename="Open fix prompt in Cursor"
+              code={`# Copy the fix prompt from your scan report
+# Paste it into Cursor's chat with Cmd+K / Ctrl+K
+# Or use the Agent mode for automatic file edits
 
-                <div className="space-y-3">
-                  <p className="text-white/40 text-sm font-medium">Vercel — <code className="text-violet-400 font-mono">vercel.json</code></p>
-                  <CodeBlock lang="json" code={`{
-  "buildCommand": "npm run agenario-check && npm run build",
-  "env": {
-    "AGENARIO_THRESHOLD": "70"
-  }
-}`} />
+# Example workflow:
+# 1. Run scan on your repo
+# 2. Copy fix prompt for critical issue
+# 3. Open Cursor → Cmd+K → paste prompt
+# 4. Review diff → Accept → Re-scan to verify`}
+            />
+          </section>
 
-                  <p className="text-white/40 text-sm font-medium">Pre-deploy script — <code className="text-violet-400 font-mono">scripts/agenario-check.js</code></p>
-                  <CodeBlock lang="javascript" code={`#!/usr/bin/env node
-const threshold = Number(process.env.AGENARIO_THRESHOLD ?? 70);
-const repo = process.env.VERCEL_GIT_REPO_SLUG;
+          {/* ── Vercel / Netlify ──────────────────────────── */}
+          <section id="vercel" className="scroll-mt-20 space-y-6">
+            <SectionHeader number="05" title="Vercel & Netlify Deploy Guard" desc="Block risky deploys before they reach production." />
 
-async function run() {
-  const res = await fetch(\`https://your-app.replit.app/api/github/ci-check?repo=\${repo}&threshold=\${threshold}\`);
-  const data = await res.json();
+            <CodeBlock
+              lang="javascript"
+              filename="agenario-check.js (pre-deploy script)"
+              code={`const fetch = require('node-fetch');
 
-  console.log(\`Agenario Score: \${data.score}/100 (threshold: \${threshold})\`);
-  
-  if (!data.pass) {
-    console.error(\`❌ Deploy blocked: \${data.reason ?? 'Score below threshold'}\`);
+async function checkLaunchReadiness() {
+  const res = await fetch(process.env.AGENARIO_SCAN_URL, {
+    headers: { Cookie: \`agn_sid=\${process.env.AGENARIO_SESSION}\` }
+  });
+  const scan = await res.json();
+
+  console.log(\`Agenario Score: \${scan.score}/100\`);
+  console.log(\`Verdict: \${scan.launchVerdict}\`);
+
+  if (scan.score < 60 || scan.launchVerdict === 'do-not-launch') {
+    console.error('Deploy blocked — fix critical issues first');
     process.exit(1);
   }
-  console.log('✅ Agenario check passed');
 }
 
-run().catch(err => { console.error(err); process.exit(1); });`} />
+checkLaunchReadiness();`}
+            />
 
-                  <p className="text-white/40 text-sm font-medium">Netlify — <code className="text-violet-400 font-mono">netlify.toml</code></p>
-                  <CodeBlock lang="toml" code={`[build]
-  command = "node scripts/agenario-check.js && npm run build"
-
-[build.environment]
-  AGENARIO_THRESHOLD = "70"`} />
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[
+                { label: "Vercel", cmd: "vercel.json → buildCommand → node agenario-check.js" },
+                { label: "Netlify", cmd: "netlify.toml → [build] → command = 'node agenario-check.js && ...'" },
+              ].map((p) => (
+                <div key={p.label} className="glass rounded-xl p-4 border border-white/[0.07]">
+                  <p className="text-sm font-bold text-white mb-2">{p.label}</p>
+                  <code className="text-[11px] text-white/40 font-mono leading-relaxed block">{p.cmd}</code>
                 </div>
-              </Section>
-            </motion.div>
+              ))}
+            </div>
+          </section>
 
-            {/* GitHub Webhook */}
-            <motion.div variants={FADE_UP}>
-              <Section id="webhook" title="GitHub Webhook (Auto PR Scanning)">
-                <p className="text-white/50 text-sm leading-relaxed">
-                  Configure Agenario as a GitHub webhook to automatically scan every PR and post a verdict comment. No GitHub Actions YAML required.
-                </p>
+          {/* ── GitHub Webhook ───────────────────────────── */}
+          <section id="webhook" className="scroll-mt-20 space-y-6">
+            <SectionHeader number="06" title="GitHub Webhook (Auto PR Scanning)" desc="Auto-scan every PR without GitHub Actions. Direct webhook integration." />
 
-                <div className="space-y-3">
-                  <p className="text-white/40 text-sm font-medium">1. Register the webhook in your GitHub repo</p>
-                  <div className="glass rounded-xl p-4 space-y-2 text-sm text-white/50">
-                    <div className="flex items-center gap-2">
-                      <span className="text-white/25 font-mono w-28 shrink-0">Payload URL:</span>
-                      <code className="text-violet-400 font-mono text-xs">https://your-app.replit.app/api/github/webhook</code>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-white/25 font-mono w-28 shrink-0">Content type:</span>
-                      <code className="text-violet-400 font-mono text-xs">application/json</code>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-white/25 font-mono w-28 shrink-0">Events:</span>
-                      <code className="text-violet-400 font-mono text-xs">Pull requests</code>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-white/25 font-mono w-28 shrink-0">Secret:</span>
-                      <code className="text-violet-400 font-mono text-xs">GITHUB_WEBHOOK_SECRET env var</code>
-                    </div>
+            <div className="glass rounded-2xl p-5 space-y-4">
+              <Step n={1} title="Add webhook in GitHub">
+                <p className="text-sm text-white/45">Go to <code className="bg-white/[0.07] px-1.5 rounded text-xs font-mono">Settings → Webhooks → Add webhook</code></p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex gap-3">
+                    <span className="text-white/25 w-24 flex-shrink-0">Payload URL</span>
+                    <code className="text-violet-400/80 font-mono text-xs">https://your-app.replit.app/api/github/webhook</code>
                   </div>
-
-                  <p className="text-white/40 text-sm font-medium">2. Check PR status via API</p>
-                  <CodeBlock lang="bash" code={`# Check verdict for PR #42
-curl https://your-app.replit.app/api/github/pr-status/42
-
-# Response:
-{
-  "pr": 42,
-  "score": 67,
-  "verdict": "caution",
-  "blocked": false,
-  "message": "⚠️ Agenario: Launch with Caution — Score 67/100",
-  "reportUrl": "https://your-app.replit.app/scans/99"
-}`} />
-                </div>
-
-                <Callout type="info">
-                  Webhook secret verification uses HMAC SHA256. Set <code className="text-blue-300 font-mono">GITHUB_WEBHOOK_SECRET</code> in your environment to enable signature verification.
-                </Callout>
-              </Section>
-            </motion.div>
-
-            {/* Security */}
-            <motion.div variants={FADE_UP}>
-              <Section id="security" title="Security & Privacy">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {[
-                    {
-                      icon: Lock,
-                      title: "Code Never Stored",
-                      desc: "Your source code is analyzed in-session only. It is never stored on our servers, never logged, and never used for training.",
-                    },
-                    {
-                      icon: Shield,
-                      title: "HMAC-Verified Webhooks",
-                      desc: "GitHub webhooks use SHA256 HMAC signature verification. Reject any unverified requests automatically.",
-                    },
-                    {
-                      icon: Key,
-                      title: "Session Security",
-                      desc: "Sessions are PostgreSQL-backed with httpOnly cookies, Secure flag in production, and 7-day expiry. Named cookies prevent fingerprinting.",
-                    },
-                    {
-                      icon: Cpu,
-                      title: "Rate Limited",
-                      desc: "Global: 200 req/15min. Auth: 20 attempts/15min. Scans: 30/hour. Prevents brute force and abuse.",
-                    },
-                  ].map(({ icon: Icon, title, desc }) => (
-                    <div key={title} className="glass rounded-xl p-5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/[0.1] flex items-center justify-center">
-                          <Icon className="w-3.5 h-3.5 text-white/60" />
-                        </div>
-                        <h3 className="text-sm font-bold text-white">{title}</h3>
-                      </div>
-                      <p className="text-xs text-white/40 leading-relaxed">{desc}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="glass rounded-xl p-5">
-                  <h3 className="text-sm font-bold text-white mb-3">Security Headers (Helmet.js)</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      "Content-Security-Policy", "Strict-Transport-Security",
-                      "X-Content-Type-Options", "X-Frame-Options",
-                      "Referrer-Policy", "Cross-Origin-Resource-Policy",
-                    ].map((header) => (
-                      <div key={header} className="flex items-center gap-2 text-xs">
-                        <CheckCircle className="w-3 h-3 text-green-400/70 shrink-0" />
-                        <code className="text-white/40 font-mono">{header}</code>
-                      </div>
-                    ))}
+                  <div className="flex gap-3">
+                    <span className="text-white/25 w-24 flex-shrink-0">Content type</span>
+                    <code className="text-white/50 font-mono text-xs">application/json</code>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-white/25 w-24 flex-shrink-0">Events</span>
+                    <code className="text-white/50 font-mono text-xs">Pull requests, Push</code>
                   </div>
                 </div>
-              </Section>
-            </motion.div>
-          </motion.div>
+              </Step>
+              <Step n={2} title="Set webhook secret">
+                <p className="text-sm text-white/45">Copy your secret from <strong className="text-white/70">Dashboard → Settings</strong> and paste it as the webhook secret in GitHub.</p>
+                <Callout type="info">All webhook payloads are verified via HMAC-SHA256 signature. Invalid signatures are rejected with 401.</Callout>
+              </Step>
+            </div>
+          </section>
+
+          {/* ── Node.js SDK ──────────────────────────────── */}
+          <section id="sdk" className="scroll-mt-20 space-y-6">
+            <SectionHeader number="07" title="Node.js SDK" desc="Type-safe client for all Agenario API operations." />
+
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-semibold">
+              <Sparkles className="w-3 h-3" />
+              SDK — Coming Q3 2025
+            </div>
+
+            <CodeBlock
+              lang="bash"
+              filename="Install (preview)"
+              code={`npm install @agenario/sdk
+# or
+pnpm add @agenario/sdk`}
+            />
+
+            <CodeBlock
+              lang="typescript"
+              filename="Usage"
+              code={`import { Agenario } from '@agenario/sdk';
+
+const client = new Agenario({ apiKey: process.env.AGENARIO_API_KEY });
+
+// Submit a scan
+const scan = await client.scans.create({
+  sourceType: 'github',
+  sourceInput: 'github.com/your-org/your-app',
+  framework: 'nextjs',
+});
+
+// Wait for completion
+const result = await client.scans.waitFor(scan.id);
+
+console.log(\`Score: \${result.score}/100\`);
+console.log(\`Verdict: \${result.launchVerdict}\`);
+
+// Get portfolio risk ranking
+const portfolio = await client.portfolio.ranking();`}
+            />
+
+            <Callout type="warning">
+              SDK is in preview. Subscribe to the <strong>Creator plan</strong> to get early access when it ships.
+            </Callout>
+          </section>
+
+          {/* ── Security & Privacy ───────────────────────── */}
+          <section id="security" className="scroll-mt-20 space-y-6">
+            <SectionHeader number="08" title="Security & Privacy" desc="How we keep your code safe." />
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[
+                {
+                  icon: Shield,
+                  title: "Code Never Stored",
+                  desc: "Your source code is analyzed in-session and immediately discarded. Nothing is persisted to our database.",
+                  color: "text-green-400",
+                  bg: "border-green-500/15 bg-green-500/[0.04]",
+                },
+                {
+                  icon: Lock,
+                  title: "HMAC-Verified Webhooks",
+                  desc: "All webhook payloads are verified with SHA-256 HMAC. Invalid signatures return 401 immediately.",
+                  color: "text-blue-400",
+                  bg: "border-blue-500/15 bg-blue-500/[0.04]",
+                },
+                {
+                  icon: Key,
+                  title: "Encrypted Sessions",
+                  desc: "Sessions use httpOnly cookies with SameSite=None in production. Session secrets are env-level secrets.",
+                  color: "text-violet-400",
+                  bg: "border-violet-500/15 bg-violet-500/[0.04]",
+                },
+                {
+                  icon: Activity,
+                  title: "Rate Limiting",
+                  desc: "Auth: 20 req/15min. Scans: 30 req/hr. Global: 200 req/15min. Backed by Helmet.js security headers.",
+                  color: "text-amber-400",
+                  bg: "border-amber-500/15 bg-amber-500/[0.04]",
+                },
+              ].map((f) => {
+                const Icon = f.icon;
+                return (
+                  <div key={f.title} className={`rounded-2xl border p-5 ${f.bg}`}>
+                    <Icon className={`w-5 h-5 mb-3 ${f.color}`} />
+                    <p className="text-sm font-bold text-white mb-1.5">{f.title}</p>
+                    <p className="text-xs text-white/40 leading-relaxed">{f.desc}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="glass rounded-2xl p-6 space-y-3 border border-white/[0.07]">
+              <p className="text-sm font-bold text-white">Security Headers (Helmet.js)</p>
+              <div className="space-y-2">
+                {[
+                  ["Content-Security-Policy", "Enforced on all responses"],
+                  ["Strict-Transport-Security", "max-age=31536000, preload"],
+                  ["X-Content-Type-Options", "nosniff"],
+                  ["X-Frame-Options", "SAMEORIGIN"],
+                  ["Referrer-Policy", "no-referrer"],
+                ].map(([header, value]) => (
+                  <div key={header} className="flex items-center gap-3 text-xs font-mono">
+                    <code className="text-violet-400/80 w-52 flex-shrink-0">{header}</code>
+                    <span className="text-white/30">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Footer CTA */}
+          <div className="glass rounded-2xl p-8 text-center space-y-4 border border-violet-500/15">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/25 flex items-center justify-center mx-auto">
+              <Rocket className="w-6 h-6 text-violet-400" />
+            </div>
+            <h3 className="text-xl font-bold text-white font-['Syne']">Ready to ship with confidence?</h3>
+            <p className="text-sm text-white/40 max-w-md mx-auto">Start with 2 free scans per month. No credit card required. Full board-memo report in under a minute.</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+              <Link href="/register">
+                <button className="flex items-center gap-2 bg-white text-black font-bold text-sm px-6 py-3 rounded-xl hover:bg-white/90 transition-all">
+                  Get Started Free <ArrowRight className="w-4 h-4" />
+                </button>
+              </Link>
+              <Link href="/pricing">
+                <button className="flex items-center gap-2 border border-white/[0.12] text-white/60 hover:text-white font-semibold text-sm px-6 py-3 rounded-xl hover:border-white/25 transition-all">
+                  View Pricing
+                </button>
+              </Link>
+            </div>
+          </div>
         </main>
+
+        {/* Right TOC — large screens */}
+        <div className="hidden xl:block w-52 flex-shrink-0 py-10 px-4">
+          <p className="text-[10px] text-white/20 uppercase tracking-widest font-semibold mb-4 px-2">On this page</p>
+          <nav className="space-y-1">
+            {SECTIONS.map((s) => (
+              <a
+                key={s.id}
+                href={`#${s.id}`}
+                className={`block text-xs px-2 py-1.5 rounded-lg transition-colors ${
+                  activeSection === s.id ? "text-white font-semibold" : "text-white/25 hover:text-white/50"
+                }`}
+              >
+                {s.label}
+              </a>
+            ))}
+          </nav>
+        </div>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import {
   AlertTriangle, XCircle, CheckCircle2, CreditCard, Upload, Lock, Search,
   TrendingUp, TrendingDown, Scale, Database, Cpu, Fingerprint, ShieldCheck,
   FileText, ArrowRight, BarChart3, DollarSign, Target, ChevronRight,
-  Play, Camera, Minus, Globe, GitBranch, Award, Dna, Users,
+  Play, Camera, Minus, Globe, GitBranch, Award, Dna, Users, Share2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -266,6 +266,37 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
         <Link href="/pricing">
           <button className="flex items-center gap-1.5 text-xs bg-violet-500/80 hover:bg-violet-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30">
             Unlock <ArrowRight className="w-3 h-3" />
+          </button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function CreatorGate({ plan, feature, preview, children }: {
+  plan: string;
+  feature: string;
+  preview?: string;
+  children: React.ReactNode;
+}) {
+  const isUnlocked = plan === "creator" || plan === "enterprise";
+  if (isUnlocked) return <>{children}</>;
+  return (
+    <div className="relative rounded-2xl overflow-hidden">
+      <div className="pointer-events-none select-none" style={{ filter: "blur(7px)", opacity: 0.45, userSelect: "none" }}>
+        {children}
+      </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-black/40 via-black/60 to-black/40 backdrop-blur-[2px] rounded-2xl">
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/30 flex items-center justify-center">
+          <Lock className="w-5 h-5 text-violet-400" />
+        </div>
+        <div className="text-center px-6 space-y-1">
+          <p className="text-white font-bold text-sm font-['Syne']">{feature}</p>
+          <p className="text-white/40 text-xs max-w-xs">{preview ?? "Detailed analysis available on Creator plan"}</p>
+        </div>
+        <Link href="/pricing">
+          <button className="flex items-center gap-2 bg-white text-black font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all shadow-lg">
+            Upgrade to Creator — ₹299/mo <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </Link>
       </div>
@@ -1063,6 +1094,58 @@ function ShadowApiPanel({ findings }: { findings: ShadowApiFindings }) {
   );
 }
 
+function ShareBadgeButton({ scan }: { scan: ScanDetail }) {
+  const [copied, setCopied] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
+  const score = scan.score ?? 0;
+  const color = score >= 80 ? "brightgreen" : score >= 55 ? "yellow" : "red";
+  const label = scan.launchVerdict === "ready" ? "launch-ready" : scan.launchVerdict === "do-not-launch" ? "do-not-launch" : "launch-with-caution";
+
+  const badgeUrl = `https://img.shields.io/badge/Agenario-${score}%2F100_${encodeURIComponent(label)}-${color}?style=flat-square`;
+  const markdownBadge = `[![Agenario Score](${badgeUrl})](https://agenario.app)`;
+  const htmlBadge = `<a href="https://agenario.app"><img src="${badgeUrl}" alt="Agenario Score ${score}/100" /></a>`;
+
+  const options = [
+    { label: "Markdown badge", value: markdownBadge, hint: "For GitHub README" },
+    { label: "HTML badge", value: htmlBadge, hint: "For websites" },
+    { label: "Score only", value: `Agenario score: ${score}/100 (${label}) — ${scan.sourceInput}`, hint: "Plain text" },
+  ];
+
+  const handleCopy = (value: string) => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setShowMenu(false);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setShowMenu((v) => !v)}
+        className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/15"
+      >
+        {copied ? <CheckCheck className="w-3 h-3 text-green-400" /> : <Share2 className="w-3 h-3" />}
+        {copied ? "Copied!" : "Share"}
+      </button>
+      {showMenu && (
+        <div className="absolute right-0 top-9 z-50 bg-[#111] border border-white/[0.1] rounded-xl shadow-2xl py-1 min-w-[180px]">
+          {options.map((opt) => (
+            <button
+              key={opt.label}
+              onClick={() => handleCopy(opt.value)}
+              className="w-full text-left px-4 py-2.5 hover:bg-white/[0.05] transition-colors"
+            >
+              <div className="text-xs font-medium text-white/80">{opt.label}</div>
+              <div className="text-[10px] text-white/30 mt-0.5">{opt.hint}</div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ScanResultsPage() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -1133,6 +1216,9 @@ export default function ScanResultsPage() {
           </div>
           <span className="text-white/20 text-xs ml-2 truncate hidden sm:block max-w-xs">{scan.sourceInput}</span>
           <div className="ml-auto flex items-center gap-2">
+            {scan.score != null && (
+              <ShareBadgeButton scan={scan} />
+            )}
             <Link href="/portfolio">
               <button className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/15">
                 <BarChart3 className="w-3 h-3" />Portfolio
@@ -1262,31 +1348,55 @@ export default function ScanResultsPage() {
           </motion.div>
         )}
 
-        {/* ── Launch Risk Forecast ──────────────────────────── */}
+        {/* ── Launch Risk Forecast — Creator only ──────────── */}
         {scan.riskForecast && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <RiskForecastSection forecast={scan.riskForecast} />
+            <CreatorGate
+              plan={user.plan}
+              feature="Launch Risk Forecast"
+              preview="AI-powered churn risk, checkout failure probability, and revenue-at-risk estimates"
+            >
+              <RiskForecastSection forecast={scan.riskForecast} />
+            </CreatorGate>
           </motion.div>
         )}
 
-        {/* ── Compliance Audit ─────────────────────────────── */}
+        {/* ── Compliance Audit — Creator only ──────────────── */}
         {scan.complianceResults && scan.complianceResults.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <ComplianceSection results={scan.complianceResults} />
+            <CreatorGate
+              plan={user.plan}
+              feature="8-Framework Compliance Audit"
+              preview="Full scoring across GDPR, OWASP, PCI-DSS, HIPAA, SOC2, ISO 27001, CCPA & WCAG 2.1"
+            >
+              <ComplianceSection results={scan.complianceResults} />
+            </CreatorGate>
           </motion.div>
         )}
 
-        {/* ── Revenue Intelligence ─────────────────────────── */}
+        {/* ── Revenue Intelligence — Creator only ──────────── */}
         {scan.revenueIntelligence && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <RevenueIntelligenceSection revenue={scan.revenueIntelligence} />
+            <CreatorGate
+              plan={user.plan}
+              feature="Revenue Intelligence"
+              preview="Payment flow leaks, billing edge cases, churn risk factors, and monthly revenue impact estimates"
+            >
+              <RevenueIntelligenceSection revenue={scan.revenueIntelligence} />
+            </CreatorGate>
           </motion.div>
         )}
 
-        {/* ── Shadow API Radar ─────────────────────────────── */}
+        {/* ── Shadow API Radar — Creator only ──────────────── */}
         {scan.shadowApiFindings && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
-            <ShadowApiPanel findings={scan.shadowApiFindings} />
+            <CreatorGate
+              plan={user.plan}
+              feature="Shadow API Radar"
+              preview="Orphaned endpoints, undocumented routes, and API surface attack vector analysis"
+            >
+              <ShadowApiPanel findings={scan.shadowApiFindings} />
+            </CreatorGate>
           </motion.div>
         )}
 

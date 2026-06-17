@@ -43,6 +43,7 @@ const RESOURCE_PATHS = [
 
 async function launchBrowser(): Promise<{ browser: any; available: boolean }> {
   try {
+    // @ts-ignore — playwright-core types not declared at package level; resolved at runtime
     const { chromium } = await import("playwright-core");
     const browser = await chromium.launch({
       headless: true,
