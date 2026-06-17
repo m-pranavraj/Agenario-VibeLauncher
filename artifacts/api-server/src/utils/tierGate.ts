@@ -92,5 +92,34 @@ export function applyTierGate(
     }
   }
 
+  // ── Secret Scan: show summary counts, hide exact findings ──────
+  const secrets = data["secretScanResults"] as Record<string, unknown> | null | undefined;
+  if (secrets && typeof secrets["totalFound"] === "number" && secrets["totalFound"] > 0) {
+    const findings = Array.isArray(secrets["findings"]) ? (secrets["findings"] as unknown[]) : [];
+    data["secretScanResults"] = {
+      ...secrets,
+      findings: findings.slice(0, 1).map((f) => ({
+        ...(f as Record<string, unknown>),
+        context: "🔒 Upgrade to Creator to see exact code location",
+        maskedValue: "🔒 Hidden",
+      })),
+      _lockedFindingCount: Math.max(0, findings.length - 1),
+    };
+  }
+
+  // ── Package Vulns: show first finding, lock the rest ──────────
+  const pkgVulns = data["packageVulns"] as Record<string, unknown> | null | undefined;
+  if (pkgVulns && typeof pkgVulns["vulnerableCount"] === "number" && pkgVulns["vulnerableCount"] > 0) {
+    const findings = Array.isArray(pkgVulns["findings"]) ? (pkgVulns["findings"] as unknown[]) : [];
+    data["packageVulns"] = {
+      ...pkgVulns,
+      findings: findings.slice(0, 1).map((f) => ({
+        ...(f as Record<string, unknown>),
+        vulns: [{ cveId: "🔒 Upgrade", cvssScore: 0, severity: "locked", title: "Upgrade to see CVE details", description: "Creator plan unlocks all package vulnerability details", affectedRange: "?", fixedIn: "?", attackVector: "?", exploitAvailable: false, cvssVector: "" }],
+      })),
+      _lockedCount: Math.max(0, findings.length - 1),
+    };
+  }
+
   return data;
 }

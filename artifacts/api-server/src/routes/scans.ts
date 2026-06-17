@@ -15,6 +15,8 @@ import { runShadowApiRadar } from "../lib/shadow-api-radar.js";
 import { computeRegressionDiff } from "../lib/regression.js";
 import { computeBenchmark } from "../lib/benchmark.js";
 import { generateCofounderNarrative, generateLaunchDNA, generateLaunchReplay } from "../lib/cofounder-agent.js";
+import { scanFilesForSecrets, scanForSecrets } from "../lib/secret-scanner-v2.js";
+import { checkPackageVulns } from "../lib/package-vulns.js";
 
 const router: IRouter = Router();
 
@@ -222,6 +224,33 @@ async function runAnalysisPipeline(opts: {
     }
   }
 
+  // ── Secret Scanner (deterministic, regex-based) ───────────────
+  let secretScanResults = null;
+  try {
+    if (codeContext && codeContext.keyFiles.length > 0) {
+      secretScanResults = scanFilesForSecrets(codeContext.keyFiles, appDescription);
+    } else if (sourceType === "description" && appDescription) {
+      secretScanResults = scanForSecrets(appDescription);
+    } else {
+      secretScanResults = scanForSecrets(sourceInput);
+    }
+    req.log.info({ scanId, found: secretScanResults.totalFound }, "Secret scan complete");
+  } catch (err) {
+    req.log.warn({ err }, "Secret scan failed");
+  }
+
+  // ── Package Vulnerability Check ───────────────────────────────
+  let packageVulns = null;
+  try {
+    const pkg = (codeContext?.packageJson as Record<string, unknown> | undefined) ?? {};
+    if (Object.keys(pkg).length > 0) {
+      packageVulns = checkPackageVulns(pkg);
+      req.log.info({ scanId, vulns: packageVulns.vulnerableCount }, "Package vuln scan complete");
+    }
+  } catch (err) {
+    req.log.warn({ err }, "Package vuln scan failed");
+  }
+
   // ── Run enrichment in parallel ────────────────────────────────
   const topIssues = allIssues.slice(0, 10).map((i) => ({
     severity: i.severity,
@@ -267,6 +296,8 @@ async function runAnalysisPipeline(opts: {
       cofounderNarrative: cofounderNarrative || null,
       shadowApiFindings: shadowApiFindings ?? null,
       launchReplaySteps: launchReplaySteps.length > 0 ? launchReplaySteps : null,
+      secretScanResults: secretScanResults ?? null,
+      packageVulns: packageVulns ?? null,
       framework: framework !== "unknown" ? framework : undefined,
       vibeTool: vibeTool !== "unknown" ? vibeTool : undefined,
       businessType: businessType !== "unknown" ? businessType : undefined,
@@ -486,6 +517,79 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
 
   responseData = applyTierGate(responseData, plan);
   res.json(responseData);
+});
+
+// ── AI Fix Generator ──────────────────────────────────────────────────────────
+router.post("/scans/:id/fix", async (req, res): Promise<void> => {
+  if (!requireAuth(req, res)) return;
+
+  const scanId = parseInt(req.params.id as string, 10);
+  if (isNaN(scanId)) {
+    res.status(400).json({ error: "Invalid scan id" });
+    return;
+  }
+
+  const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, scanId));
+  if (!scan || scan.userId !== req.session.userId) {
+    res.status(404).json({ error: "Scan not found" });
+    return;
+  }
+
+  const { title, description, recommendation, agentName } = req.body as {
+    title: string;
+    description: string;
+    recommendation: string;
+    agentName: string;
+  };
+
+  if (!title || !description) {
+    res.status(400).json({ error: "title and description are required" });
+    return;
+  }
+
+  try {
+    const groq = (await import("groq-sdk")).default;
+    const client = new groq({ apiKey: process.env["GROQ_API_KEY"] });
+
+    const response = await client.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "system",
+          content: `You are a senior software engineer generating precise, production-ready code fixes for vibe-coded apps.
+Generate ONLY the code fix — no explanations, no markdown prose, no preamble.
+Output format:
+\`\`\`<language>
+// <filename or location hint>
+<exact code fix>
+\`\`\`
+Keep fixes minimal and surgical — change only what is needed to fix the specific issue.`,
+        },
+        {
+          role: "user",
+          content: `Issue: ${title}
+Category: ${agentName ?? "General"}
+Description: ${description}
+Recommendation: ${recommendation ?? "Fix the issue"}
+
+Generate a precise, copy-paste-ready code fix for this issue. Use TypeScript/JavaScript unless the issue clearly suggests another language. Include a filename comment.`,
+        },
+      ],
+      max_tokens: 1200,
+      temperature: 0.2,
+    });
+
+    const fix = response.choices[0]?.message?.content ?? "// Could not generate fix";
+
+    // Detect language from code fence
+    const langMatch = fix.match(/```(\w+)/);
+    const language = langMatch?.[1] ?? "typescript";
+
+    res.json({ fix, language });
+  } catch (err) {
+    req.log.error({ err }, "Fix generation failed");
+    res.status(500).json({ error: "Fix generation failed. Please try again." });
+  }
 });
 
 export default router;

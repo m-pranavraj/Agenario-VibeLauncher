@@ -124,6 +124,53 @@ export const scansTable = pgTable("scans", {
   cofounderNarrative: text("cofounder_narrative"),
   shadowApiFindings: jsonb("shadow_api_findings").$type<ShadowApiFindings>(),
   launchReplaySteps: jsonb("launch_replay_steps").$type<LaunchReplayStep[]>(),
+  secretScanResults: jsonb("secret_scan_results").$type<{
+    totalFound: number;
+    criticalCount: number;
+    highCount: number;
+    mediumCount: number;
+    hasCritical: boolean;
+    scannedChars: number;
+    findings: Array<{
+      id: string;
+      name: string;
+      category: string;
+      risk: "critical" | "high" | "medium";
+      maskedValue: string;
+      context: string;
+      lineHint: string;
+      recommendation: string;
+    }>;
+  }>(),
+  packageVulns: jsonb("package_vulns").$type<{
+    totalPackages: number;
+    vulnerableCount: number;
+    criticalCount: number;
+    highCount: number;
+    mediumCount: number;
+    hasCritical: boolean;
+    topCveId?: string;
+    topCvssScore?: number;
+    findings: Array<{
+      name: string;
+      installedVersion: string;
+      highestSeverity: string;
+      highestCvss: number;
+      fixVersion: string;
+      vulns: Array<{
+        cveId: string;
+        cvssScore: number;
+        severity: string;
+        title: string;
+        description: string;
+        affectedRange: string;
+        fixedIn: string;
+        attackVector: string;
+        exploitAvailable: boolean;
+        cvssVector: string;
+      }>;
+    }>;
+  }>(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp("completed_at", { withTimezone: true }),
 });

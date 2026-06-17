@@ -7,6 +7,7 @@ import {
   TrendingUp, TrendingDown, Scale, Database, Cpu, Fingerprint, ShieldCheck,
   FileText, ArrowRight, BarChart3, DollarSign, Target, ChevronRight,
   Play, Camera, Minus, Globe, GitBranch, Award, Dna, Users, Share2,
+  Sparkles, ListChecks, ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -161,9 +162,13 @@ function ComplianceRing({ score, status }: { score: number; status: string }) {
   );
 }
 
-function EvidenceCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
+function EvidenceCard({ issue, rank, scanId, isCreator }: { issue: ScanIssue; rank?: number; scanId?: number; isCreator?: boolean }) {
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [fixCode, setFixCode] = useState("");
+  const [generatingFix, setGeneratingFix] = useState(false);
+  const [fixCopied, setFixCopied] = useState(false);
+  const [fixError, setFixError] = useState("");
   const cfg = SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
   const conf = getConfidenceStyle(issue.confidence ?? 60);
 
@@ -171,6 +176,32 @@ function EvidenceCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
     await navigator.clipboard.writeText(issue.fixPrompt);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copyFix = async () => {
+    const clean = fixCode.replace(/```\w*\n?/g, "").replace(/```/g, "");
+    await navigator.clipboard.writeText(clean);
+    setFixCopied(true);
+    setTimeout(() => setFixCopied(false), 2000);
+  };
+
+  const handleGenerateFix = async () => {
+    if (!scanId) return;
+    setGeneratingFix(true);
+    setFixError("");
+    try {
+      const result = await api.scans.generateFix(scanId, {
+        title: issue.title,
+        description: issue.description,
+        fixPrompt: issue.fixPrompt,
+        agentName: issue.agentName,
+      });
+      setFixCode(result.fix);
+    } catch {
+      setFixError("Could not generate fix. Please try again.");
+    } finally {
+      setGeneratingFix(false);
+    }
   };
 
   return (
@@ -235,6 +266,53 @@ function EvidenceCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
             </div>
             <p className="text-xs text-white/45 font-mono leading-relaxed">{issue.fixPrompt}</p>
           </div>
+
+          {/* ── AI Fix Generator ─────────────────── */}
+          {scanId && (
+            isCreator ? (
+              <div className="space-y-2">
+                {!fixCode ? (
+                  <button
+                    onClick={handleGenerateFix}
+                    disabled={generatingFix}
+                    className="flex items-center gap-1.5 text-xs bg-violet-500/15 hover:bg-violet-500/25 disabled:opacity-50 text-violet-300 font-semibold px-3 py-2 rounded-lg transition-all border border-violet-500/30 w-full justify-center"
+                  >
+                    {generatingFix
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Generating patch…</>
+                      : <><Sparkles className="w-3.5 h-3.5" />⚡ Generate Code Fix</>}
+                  </button>
+                ) : (
+                  <div className="bg-black/50 border border-violet-500/25 rounded-lg overflow-hidden">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-violet-500/15">
+                      <span className="text-xs font-semibold text-violet-400 flex items-center gap-1.5">
+                        <Sparkles className="w-3 h-3" />AI-Generated Code Fix
+                      </span>
+                      <button onClick={copyFix} className="flex items-center gap-1 text-xs text-white/30 hover:text-white transition-colors">
+                        {fixCopied ? <><CheckCheck className="w-3 h-3 text-green-400" />Copied!</> : <><Copy className="w-3 h-3" />Copy</>}
+                      </button>
+                    </div>
+                    <pre className="text-xs text-green-300/90 font-mono p-3 whitespace-pre-wrap leading-relaxed overflow-x-auto max-h-64">
+                      {fixCode.replace(/```\w*\n?/g, "").replace(/```$/, "").trim()}
+                    </pre>
+                    <button
+                      onClick={() => setFixCode("")}
+                      className="w-full text-center text-[10px] text-white/20 hover:text-white/40 py-1.5 border-t border-white/[0.05] transition-colors"
+                    >
+                      Regenerate
+                    </button>
+                  </div>
+                )}
+                {fixError && <p className="text-xs text-red-400">{fixError}</p>}
+              </div>
+            ) : (
+              <button
+                onClick={() => window.location.href = "/pricing"}
+                className="flex items-center gap-1.5 text-xs text-violet-400/50 border border-violet-500/20 px-3 py-2 rounded-lg w-full justify-center hover:bg-violet-500/5 transition-colors"
+              >
+                <Lock className="w-3 h-3" />⚡ Generate Code Fix — Creator Plan
+              </button>
+            )
+          )}
         </div>
       )}
     </div>
@@ -1146,6 +1224,406 @@ function ShareBadgeButton({ scan }: { scan: ScanDetail }) {
   );
 }
 
+// ── Secret & API Key Leakage Panel ───────────────────────────────────────────
+const RISK_CONFIG = {
+  critical: { bg: "bg-red-500/[0.08] border-red-500/20", badge: "bg-red-500/15 text-red-400 border-red-500/25", dot: "bg-red-500" },
+  high: { bg: "bg-amber-500/[0.06] border-amber-500/18", badge: "bg-amber-500/15 text-amber-400 border-amber-500/25", dot: "bg-amber-500" },
+  medium: { bg: "bg-yellow-500/[0.05] border-yellow-500/15", badge: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20", dot: "bg-yellow-500" },
+};
+
+const CATEGORY_LABEL: Record<string, string> = {
+  payment: "💳 Payment",
+  "cloud-credentials": "☁️ Cloud",
+  database: "🗄️ Database",
+  cryptographic: "🔑 Cryptographic",
+  auth: "🔐 Auth",
+  "ai-api": "🤖 AI API",
+  email: "📧 Email",
+  communication: "💬 Comms",
+  vcs: "📦 VCS",
+  credentials: "🔓 Credentials",
+  generic: "⚠️ Generic",
+};
+
+function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["secretScanResults"]>; isCreator: boolean }) {
+  const lockedCount = (data as Record<string, unknown>)["_lockedFindingCount"] as number | undefined;
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}
+      className="glass rounded-2xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-white/[0.05] flex items-center gap-3">
+        <div className="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+          <span className="text-sm">🔍</span>
+        </div>
+        <div className="flex-1">
+          <h2 className="text-white font-bold font-['Syne'] text-sm">Secret & API Key Scanner</h2>
+          <p className="text-white/30 text-xs mt-0.5">Deterministic regex scan — 60+ credential patterns</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {data.criticalCount > 0 && (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/15 text-red-400 border border-red-500/25">
+              {data.criticalCount} CRITICAL
+            </span>
+          )}
+          {data.highCount > 0 && (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25">
+              {data.highCount} HIGH
+            </span>
+          )}
+          {data.totalFound === 0 && (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/25">
+              ✓ No secrets found
+            </span>
+          )}
+        </div>
+      </div>
+
+      {data.totalFound === 0 ? (
+        <div className="px-6 py-8 text-center">
+          <CheckCircle2 className="w-8 h-8 text-green-400 mx-auto mb-3" />
+          <p className="text-white/60 font-medium text-sm">Clean — no hardcoded secrets detected</p>
+          <p className="text-white/25 text-xs mt-1">Scanned {(data.scannedChars / 1000).toFixed(0)}KB of source code across 60+ credential patterns</p>
+        </div>
+      ) : (
+        <>
+          {data.hasCritical && (
+            <div className="px-6 py-3 bg-red-500/[0.06] border-b border-red-500/15 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+              <p className="text-red-400 text-xs font-semibold">
+                {data.criticalCount} critical secret{data.criticalCount !== 1 ? "s" : ""} found — rotate these credentials immediately before deployment
+              </p>
+            </div>
+          )}
+          <div className="divide-y divide-white/[0.04]">
+            {data.findings.map((finding) => {
+              const rc = RISK_CONFIG[finding.risk as keyof typeof RISK_CONFIG] ?? RISK_CONFIG.medium;
+              return (
+                <div key={finding.id} className={`px-6 py-4 ${rc.bg} border-l-0`}>
+                  <div className="flex items-start gap-3">
+                    <span className={`w-2 h-2 rounded-full ${rc.dot} mt-1.5 shrink-0`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${rc.badge}`}>
+                          {finding.risk}
+                        </span>
+                        <span className="text-xs text-white/30">{CATEGORY_LABEL[finding.category] ?? finding.category}</span>
+                        <span className="text-xs text-white/20 hidden sm:block">{finding.lineHint}</span>
+                      </div>
+                      <p className="text-sm font-semibold text-white/85 mb-1">{finding.name}</p>
+                      {isCreator ? (
+                        <>
+                          <div className="flex items-center gap-2 mb-2">
+                            <code className="text-xs font-mono bg-black/40 px-2 py-0.5 rounded text-amber-300/80 border border-white/[0.07]">
+                              {finding.maskedValue}
+                            </code>
+                          </div>
+                          <p className="text-xs text-white/35 font-mono bg-black/20 rounded px-2 py-1.5 leading-relaxed border border-white/[0.04] truncate">
+                            {finding.context}
+                          </p>
+                          <p className="text-xs text-white/40 mt-2 leading-relaxed">{finding.recommendation}</p>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <Lock className="w-3 h-3 text-violet-400 shrink-0" />
+                          <span className="text-xs text-white/35">{finding.context}</span>
+                          <Link href="/pricing">
+                            <span className="text-xs text-violet-400 hover:text-violet-300 font-semibold ml-auto cursor-pointer">Unlock →</span>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {lockedCount && lockedCount > 0 && !isCreator && (
+            <div className="px-6 py-3 bg-violet-500/[0.05] border-t border-violet-500/15 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Lock className="w-3.5 h-3.5 text-violet-400" />
+                <span className="text-xs text-white/40">{lockedCount} more secret{lockedCount !== 1 ? "s" : ""} found — upgrade to see all</span>
+              </div>
+              <Link href="/pricing">
+                <button className="text-xs bg-violet-500/80 hover:bg-violet-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30 flex items-center gap-1">
+                  Unlock All <ArrowRight className="w-3 h-3" />
+                </button>
+              </Link>
+            </div>
+          )}
+        </>
+      )}
+    </motion.div>
+  );
+}
+
+// ── Package CVE Vulnerability Panel ─────────────────────────────────────────
+const CVSS_COLOR = (score: number) =>
+  score >= 9 ? "text-red-400" : score >= 7 ? "text-amber-400" : score >= 4 ? "text-yellow-400" : "text-white/40";
+
+const CVSS_BG = (score: number) =>
+  score >= 9 ? "bg-red-500/15 border-red-500/25" : score >= 7 ? "bg-amber-500/15 border-amber-500/25" : "bg-yellow-500/10 border-yellow-500/20";
+
+function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["packageVulns"]>; isCreator: boolean }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const lockedCount = (data as Record<string, unknown>)["_lockedCount"] as number | undefined;
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}
+      className="glass rounded-2xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-white/[0.05] flex items-center gap-3">
+        <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+          <span className="text-sm">📦</span>
+        </div>
+        <div className="flex-1">
+          <h2 className="text-white font-bold font-['Syne'] text-sm">Dependency CVE Tracker</h2>
+          <p className="text-white/30 text-xs mt-0.5">{data.totalPackages} packages scanned · NVD + GitHub Advisory DB</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {data.hasCritical && (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/15 text-red-400 border border-red-500/25">
+              {data.criticalCount} CRITICAL
+            </span>
+          )}
+          {data.highCount > 0 && !data.hasCritical && (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25">
+              {data.highCount} HIGH
+            </span>
+          )}
+          {data.vulnerableCount === 0 && (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/25">
+              ✓ No known CVEs
+            </span>
+          )}
+          {data.topCvssScore && (
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${CVSS_BG(data.topCvssScore)}`}>
+              Top CVSS {data.topCvssScore.toFixed(1)}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {data.vulnerableCount === 0 ? (
+        <div className="px-6 py-8 text-center">
+          <CheckCircle2 className="w-8 h-8 text-green-400 mx-auto mb-3" />
+          <p className="text-white/60 font-medium text-sm">No known CVEs in your dependency tree</p>
+          <p className="text-white/25 text-xs mt-1">Checked {data.totalPackages} packages against NVD and GitHub Advisory Database</p>
+        </div>
+      ) : (
+        <>
+          {data.topCveId && (
+            <div className="px-6 py-3 bg-amber-500/[0.05] border-b border-amber-500/15 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+              <p className="text-amber-400 text-xs font-semibold">
+                Highest: {data.topCveId} (CVSS {data.topCvssScore?.toFixed(1)}) — update affected packages before launch
+              </p>
+            </div>
+          )}
+          <div className="divide-y divide-white/[0.04]">
+            {data.findings.map((pkg) => {
+              const isExpanded = expanded === pkg.name;
+              const sev = pkg.highestSeverity;
+              const sevCfg = sev === "critical" ? RISK_CONFIG.critical : sev === "high" ? RISK_CONFIG.high : RISK_CONFIG.medium;
+              return (
+                <div key={pkg.name}>
+                  <button
+                    onClick={() => setExpanded(isExpanded ? null : pkg.name)}
+                    className="w-full px-6 py-4 flex items-center gap-4 hover:bg-white/[0.02] transition-colors text-left"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-bold text-white font-mono">{pkg.name}</span>
+                        <span className="text-xs text-white/30">v{pkg.installedVersion}</span>
+                        <span className="text-xs text-white/20">→</span>
+                        <span className="text-xs text-green-400/70 font-mono">v{pkg.fixVersion}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${sevCfg.badge}`}>{sev}</span>
+                      </div>
+                      <p className="text-xs text-white/30 mt-0.5">{pkg.vulns.length} CVE{pkg.vulns.length !== 1 ? "s" : ""} · CVSS {pkg.highestCvss.toFixed(1)}</p>
+                    </div>
+                    <div className={`text-xl font-bold font-['Syne'] shrink-0 ${CVSS_COLOR(pkg.highestCvss)}`}>
+                      {pkg.highestCvss.toFixed(1)}
+                    </div>
+                    {isExpanded ? <ChevronUp className="w-4 h-4 text-white/25 shrink-0" /> : <ChevronDown className="w-4 h-4 text-white/25 shrink-0" />}
+                  </button>
+                  {isExpanded && isCreator && (
+                    <div className="px-6 pb-4 space-y-3">
+                      {pkg.vulns.map((vuln) => (
+                        <div key={vuln.cveId} className="bg-black/30 border border-white/[0.07] rounded-xl p-4">
+                          <div className="flex items-start gap-3 mb-2">
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full border shrink-0 ${CVSS_BG(vuln.cvssScore)}`}>
+                              {vuln.cveId}
+                            </span>
+                            <span className={`text-sm font-bold ${CVSS_COLOR(vuln.cvssScore)}`}>CVSS {vuln.cvssScore.toFixed(1)}</span>
+                            {vuln.exploitAvailable && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 shrink-0">
+                                ⚡ EXPLOIT PUBLIC
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs font-semibold text-white/80 mb-1">{vuln.title}</p>
+                          <p className="text-xs text-white/45 leading-relaxed mb-3">{vuln.description}</p>
+                          <div className="bg-black/20 rounded-lg p-2.5 text-xs space-y-1">
+                            <div className="flex gap-2">
+                              <span className="text-white/25 w-20 shrink-0">Attack</span>
+                              <span className="text-white/55">{vuln.attackVector}</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <span className="text-white/25 w-20 shrink-0">Affected</span>
+                              <span className="text-amber-400/70 font-mono">{vuln.affectedRange}</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <span className="text-white/25 w-20 shrink-0">Fixed in</span>
+                              <span className="text-green-400/70 font-mono">{vuln.fixedIn}</span>
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-white/20 mt-2 font-mono">{vuln.cvssVector}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {isExpanded && !isCreator && (
+                    <div className="px-6 pb-4">
+                      <div className="bg-violet-500/[0.06] border border-violet-500/20 rounded-xl p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Lock className="w-4 h-4 text-violet-400" />
+                          <div>
+                            <p className="text-xs font-semibold text-white/60">Full CVE details locked</p>
+                            <p className="text-xs text-white/30">Upgrade to see CVE IDs, CVSS vectors, exploit status, and exact fix versions</p>
+                          </div>
+                        </div>
+                        <Link href="/pricing">
+                          <button className="text-xs bg-violet-500/80 hover:bg-violet-500 text-white font-semibold px-3 py-2 rounded-lg transition-all border border-violet-400/30 shrink-0 flex items-center gap-1">
+                            Unlock <ArrowRight className="w-3 h-3" />
+                          </button>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {lockedCount && lockedCount > 0 && !isCreator && (
+            <div className="px-6 py-3 bg-violet-500/[0.05] border-t border-violet-500/15 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Lock className="w-3.5 h-3.5 text-violet-400" />
+                <span className="text-xs text-white/40">{lockedCount} more vulnerable package{lockedCount !== 1 ? "s" : ""} — upgrade to see all</span>
+              </div>
+              <Link href="/pricing">
+                <button className="text-xs bg-violet-500/80 hover:bg-violet-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30 flex items-center gap-1">
+                  Unlock All <ArrowRight className="w-3 h-3" />
+                </button>
+              </Link>
+            </div>
+          )}
+        </>
+      )}
+    </motion.div>
+  );
+}
+
+// ── Pre-Launch Checklist ─────────────────────────────────────────────────────
+function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
+  const storageKey = `checklist-${scan.id}`;
+  const [checked, setChecked] = useState<Record<number, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem(storageKey) ?? "{}"); } catch { return {}; }
+  });
+  const [copied, setCopied] = useState(false);
+
+  const unlockedIssues = scan.issues.filter((i) => !i.locked);
+  if (unlockedIssues.length === 0) return null;
+
+  const groups: Array<{ label: string; color: string; dot: string; items: typeof unlockedIssues }> = [
+    { label: "Critical — Fix before launch", color: "text-red-400", dot: "bg-red-500", items: unlockedIssues.filter((i) => i.severity === "critical") },
+    { label: "High — Fix this week", color: "text-amber-400", dot: "bg-amber-500", items: unlockedIssues.filter((i) => i.severity === "high") },
+    { label: "Medium — Fix this month", color: "text-yellow-400", dot: "bg-yellow-500", items: unlockedIssues.filter((i) => i.severity === "medium") },
+    { label: "Low — When time allows", color: "text-white/35", dot: "bg-white/20", items: unlockedIssues.filter((i) => i.severity === "low") },
+  ].filter((g) => g.items.length > 0);
+
+  const total = unlockedIssues.length;
+  const done = Object.values(checked).filter(Boolean).length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  const toggle = (id: number) => {
+    const next = { ...checked, [id]: !checked[id] };
+    setChecked(next);
+    localStorage.setItem(storageKey, JSON.stringify(next));
+  };
+
+  const copyMarkdown = async () => {
+    const lines = [`# Pre-Launch Checklist — ${scan.sourceInput}`, `Score: ${scan.score ?? "??"}/100`, ""];
+    for (const g of groups) {
+      lines.push(`## ${g.label}`);
+      for (const item of g.items) {
+        lines.push(`- [${checked[item.id] ? "x" : " "}] **${item.title}** — ${item.description.slice(0, 120)}…`);
+      }
+      lines.push("");
+    }
+    await navigator.clipboard.writeText(lines.join("\n"));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+      className="glass rounded-2xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-white/[0.05] flex items-center gap-3">
+        <ListChecks className="w-4 h-4 text-white/30" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm flex-1">Pre-Launch Checklist</h2>
+        <span className="text-xs text-white/30">{done}/{total} resolved</span>
+        <button onClick={copyMarkdown}
+          className="flex items-center gap-1.5 text-xs text-white/25 hover:text-white/60 border border-white/[0.07] hover:border-white/15 px-3 py-1.5 rounded-lg transition-all">
+          {copied ? <><CheckCheck className="w-3 h-3 text-green-400" />Copied!</> : <><Copy className="w-3 h-3" />Copy MD</>}
+        </button>
+      </div>
+
+      {/* Progress bar */}
+      <div className="px-6 py-3 border-b border-white/[0.05]">
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${pct === 100 ? "bg-green-500" : pct >= 50 ? "bg-amber-500" : "bg-red-500"}`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <span className={`text-xs font-bold ${pct === 100 ? "text-green-400" : "text-white/40"}`}>{pct}%</span>
+          {pct === 100 && <span className="text-xs text-green-400 font-semibold">Launch ready! 🚀</span>}
+        </div>
+      </div>
+
+      <div className="divide-y divide-white/[0.04]">
+        {groups.map((g) => (
+          <div key={g.label} className="px-6 py-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className={`w-1.5 h-1.5 rounded-full ${g.dot}`} />
+              <span className={`text-[11px] font-bold uppercase tracking-wide ${g.color}`}>{g.label}</span>
+            </div>
+            <div className="space-y-2">
+              {g.items.map((item) => (
+                <label key={item.id} className="flex items-start gap-3 cursor-pointer group">
+                  <div className={`w-4 h-4 mt-0.5 rounded shrink-0 border flex items-center justify-center transition-all ${
+                    checked[item.id]
+                      ? "bg-green-500 border-green-500"
+                      : "bg-white/[0.04] border-white/[0.12] group-hover:border-white/25"
+                  }`}
+                    onClick={() => toggle(item.id)}>
+                    {checked[item.id] && <CheckCheck className="w-2.5 h-2.5 text-white" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium transition-colors ${checked[item.id] ? "text-white/25 line-through" : "text-white/75"}`}>
+                      {item.title}
+                    </p>
+                    <p className="text-xs text-white/30 mt-0.5 leading-relaxed line-clamp-2">{item.description}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 export default function ScanResultsPage() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -1243,9 +1721,20 @@ export default function ScanResultsPage() {
               <p className="text-sm text-white/40 mt-0.5">{verdict.sublabel}</p>
             </div>
             {scan.score != null && (
-              <div className="shrink-0 text-right">
-                <div className={`text-3xl font-bold font-['Syne'] ${verdict.scoreColor}`}>{scan.score}</div>
-                <div className="text-xs text-white/25">Launch Score</div>
+              <div className="shrink-0 flex flex-col items-end gap-2">
+                <div className="text-right">
+                  <div className={`text-3xl font-bold font-['Syne'] ${verdict.scoreColor}`}>{scan.score}</div>
+                  <div className="text-xs text-white/25">Launch Score</div>
+                </div>
+                <button
+                  onClick={() => {
+                    const text = `My app scored ${scan.score}/100 on Agenario 🔐 — ${verdict?.label}. Free AI security & launch audit:`;
+                    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent("https://agenario.replit.app")}`, "_blank");
+                  }}
+                  className="flex items-center gap-1 text-[11px] text-white/30 hover:text-white/60 border border-white/[0.08] hover:border-white/20 px-2.5 py-1 rounded-lg transition-all"
+                >
+                  𝕏 Share
+                </button>
               </div>
             )}
           </motion.div>
@@ -1400,6 +1889,16 @@ export default function ScanResultsPage() {
           </motion.div>
         )}
 
+        {/* ── Secret & API Key Scanner ──────────────────────── */}
+        {scan.secretScanResults && (
+          <SecretScanPanel data={scan.secretScanResults} isCreator={user.plan === "creator" || user.plan === "enterprise"} />
+        )}
+
+        {/* ── Dependency CVE Tracker ───────────────────────── */}
+        {scan.packageVulns && (
+          <PackageVulnsPanel data={scan.packageVulns} isCreator={user.plan === "creator" || user.plan === "enterprise"} />
+        )}
+
         {/* ── Top 3 Action Plan ────────────────────────────── */}
         {topThree.length > 0 && (
           <div className="glass rounded-2xl p-6">
@@ -1410,10 +1909,15 @@ export default function ScanResultsPage() {
             </div>
             <div className="space-y-3">
               {topThree.map((issue, i) => (
-                <EvidenceCard key={issue.id} issue={issue} rank={i + 1} />
+                <EvidenceCard key={issue.id} issue={issue} rank={i + 1} scanId={scan.id} isCreator={user.plan === "creator"} />
               ))}
             </div>
           </div>
+        )}
+
+        {/* ── Pre-Launch Checklist ─────────────────────────── */}
+        {!activeAgent && scan.issues.length > 0 && (
+          <PreLaunchChecklist scan={scan} />
         )}
 
         {/* ── Confidence legend ────────────────────────────── */}
@@ -1479,7 +1983,7 @@ export default function ScanResultsPage() {
             {(activeAgent ? sortedIssues : remaining).map((issue) =>
               issue.locked
                 ? <LockedIssueCard key={issue.id ?? issue.title} issue={issue} />
-                : <EvidenceCard key={issue.id} issue={issue} />,
+                : <EvidenceCard key={issue.id} issue={issue} scanId={scan.id} isCreator={user.plan === "creator"} />,
             )}
           </div>
         )}
