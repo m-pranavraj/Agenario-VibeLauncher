@@ -1357,15 +1357,34 @@ export default function Home() {
             </div>
           ))}
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.6 }}
-            className="text-center text-xs text-white/20 mt-10 px-6"
+          {/* ── Capability Matrix Grid ── */}
+          <motion.div
+            className="mt-14 px-6 max-w-7xl mx-auto w-full"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-60px" }}
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
           >
-            50+ checks · 9 categories · new dimensions added every sprint
-          </motion.p>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-9 gap-px bg-white/[0.04] rounded-2xl overflow-hidden border border-white/[0.06]">
+              {FEATURE_CATEGORIES.map((cat) => (
+                <motion.div
+                  key={cat.label}
+                  variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } } }}
+                  className="bg-[#070707] p-4 flex flex-col gap-2.5"
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cat.dot}`} />
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider leading-tight ${cat.labelColor}`}>{cat.label}</span>
+                  </div>
+                  {cat.items.map((item) => (
+                    <span key={item.label} className="text-[11px] text-white/40 leading-snug hover:text-white/70 transition-colors cursor-default">
+                      {item.label}
+                    </span>
+                  ))}
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </section>
 
         {/* ── Footer ────────────────────────────────────────── */}
