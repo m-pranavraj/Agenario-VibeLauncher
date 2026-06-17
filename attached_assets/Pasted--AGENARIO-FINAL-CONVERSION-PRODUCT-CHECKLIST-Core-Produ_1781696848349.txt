@@ -1,0 +1,325 @@
+# 🚀 AGENARIO FINAL CONVERSION + PRODUCT CHECKLIST
+
+## Core Product (Already Built)
+
+* GitHub Repo Scan
+* ZIP Upload Scan
+* Live URL Scan
+* Description Scan
+* 10 Parallel AI Analysis Dimensions
+* Launch Readiness Score
+* Ready / Caution / Do Not Launch Verdict
+* Board Memo Report
+* Technical Co-Founder Narrative
+* Secret Scanner V2
+* Dependency CVE Tracker
+* Shadow API Radar
+* Launch DNA
+* Benchmark Engine
+* Regression Memory
+* Revenue Intelligence
+* Compliance Intelligence
+* Portfolio Dashboard
+* Razorpay Billing
+
+---
+
+# P0 — MUST BUILD BEFORE PUBLIC LAUNCH
+
+## 1. Real Browser Proof Engine (Playwright)
+
+For GitHub repos and ZIP uploads:
+
+* Install dependencies
+* Boot app locally
+* Detect localhost automatically
+* Open browser
+
+For Live URLs:
+
+* Open directly
+
+Capture:
+
+* Screenshots
+* DOM snapshots
+* Network responses
+* Console errors
+
+Store as evidence.
+
+---
+
+## 2. Access Control Proofs
+
+Test:
+
+* Order access
+* Profile access
+* Booking access
+* Invoice access
+* Admin route access
+
+Examples:
+
+* /orders/123 → /orders/124
+* /profile/userA → userB
+
+If successful:
+
+Severity:
+Critical
+
+Confidence:
+99%
+
+Screenshot required.
+
+---
+
+## 3. Visual Evidence Gallery
+
+Every issue must include:
+
+* Screenshot
+* Reproduction Steps
+* URL
+* Confidence
+* Impact
+* Fix Prompt
+
+Evidence-first UI.
+
+---
+
+## 4. Launch Replay
+
+Generate:
+
+User Journey
+↓
+Failure Point
+↓
+Impact
+
+Timeline format.
+
+Future:
+GIF export.
+
+---
+
+## 5. Confidence System
+
+99% = Runtime + Screenshot
+90% = Runtime HTTP Proof
+75% = Static Evidence
+50% = AI Reasoning
+
+Display everywhere.
+
+---
+
+# P1 — BUSINESS IMPACT LAYER
+
+## 6. Launch Impact Calculator
+
+Show:
+
+Revenue Risk
+Trust Risk
+Compliance Risk
+Churn Risk
+Support Burden
+
+Translate technical issues into founder language.
+
+---
+
+## 7. Technical Co-Founder Mode
+
+Answer:
+
+* Should I launch?
+* What scares you most?
+* What should I fix first?
+* What can wait?
+
+Generate CTO-style guidance.
+
+---
+
+## 8. Business Flow Intelligence
+
+Detect:
+
+* SaaS
+* E-commerce
+* Marketplace
+* Restaurant
+* AI App
+* Booking App
+
+Run specialized checks.
+
+---
+
+## 9. Product Hunt Mode
+
+Check:
+
+* Mobile UX
+* Onboarding
+* Analytics
+* Feedback loops
+* Empty states
+* Error handling
+
+Output:
+Product Hunt Readiness Score.
+
+---
+
+# P2 — CONVERSION & WTP OPTIMIZATION
+
+## 10. Partial Reveal Gating
+
+Do NOT fully hide findings.
+
+Reveal:
+
+Location:
+/src/api/routes/pay_____.ts
+
+Issue:
+Stripe Payment Bypass Detected
+
+Then lock full details.
+
+Creates curiosity.
+
+---
+
+## 11. Blurred Fix Prompt
+
+Show:
+
+"Act as a senior security engineer and rewrite the checkout validation to..."
+
+Blur remaining content.
+
+CTA:
+Unlock Full Fix Prompt.
+
+---
+
+## 12. Sticky Launch Alert Banner
+
+Persistent floating warning.
+
+Examples:
+
+⚠️ Launch Security Alert
+This app contains 3 critical launch blockers.
+
+OR
+
+⚠️ Revenue Alert
+Potential payment manipulation vulnerability detected.
+
+CTA:
+Fix Before Launch.
+
+---
+
+## 13. Locked Premium Insights
+
+Show detected counts:
+
+🔒 Revenue Leakage Findings: 2
+🔒 Disaster Simulator: High Risk
+🔒 Benchmark Rank Available
+🔒 Launch DNA Insights Available
+
+Do not hide existence.
+
+---
+
+## 14. Premium Confidence Unlock
+
+Free:
+Show issue exists.
+
+Creator:
+Show:
+
+* screenshot
+* confidence
+* reproduction
+* impact
+
+This increases perceived value.
+
+---
+
+# P3 — MOAT FEATURES
+
+## 15. Tool Fingerprinting
+
+Detect:
+
+* Cursor
+* Replit
+* Bolt
+* Lovable
+* Claude
+
+Store patterns.
+
+---
+
+## 16. Vibe Coding Dataset
+
+Learn:
+
+Common Replit mistakes
+Common Cursor mistakes
+Common Lovable mistakes
+
+Future reports.
+
+---
+
+## 17. Benchmark Engine Expansion
+
+Compare against:
+
+Framework
+Business Type
+Vibe Tool
+
+Show percentile rankings.
+
+---
+
+## 18. State of Vibe Coding Reports
+
+Publish:
+
+Top vulnerabilities
+Top launch failures
+Most common mistakes
+
+Marketing moat.
+
+---
+
+# FINAL POSITIONING
+
+Agenario is not a code scanner.
+
+Agenario is a Launch Intelligence Platform.
+
+It recreates how real users experience your app, proves what breaks using runtime evidence and screenshots, estimates business impact, and tells founders whether their AI-built product deserves to launch.
+
+Before users discover what AI forgot to test, Agenario does.
