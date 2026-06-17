@@ -11,7 +11,7 @@ import {
   Network, Brain, Terminal, GitMerge, AlertCircle, ArrowUpRight, ArrowDownRight,
   Smartphone, ShieldAlert,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import {
   api, type ScanDetail, type ScanIssue, type ComplianceResult, type RiskForecast,
   type RevenueIntelligence, type ProofEvidence, type RegressionDiff, type BenchmarkData,

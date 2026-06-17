@@ -4,7 +4,7 @@ import {
   Rocket, Github, Globe, FileText, ArrowLeft, CheckCircle,
   ChevronDown, FileArchive, Upload,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 

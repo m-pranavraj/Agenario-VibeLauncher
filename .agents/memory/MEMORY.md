@@ -3,3 +3,5 @@
 - [Tier gate & scan limits](tier-gate.md) — free=2 scans/mo, creator=12, enterprise=∞; applyTierGate() gates issue 4+ and revenue leaks 3+; applied in GET /scans/:id.
 - [Groq rate limits fix](groq-rate-limits.md) — 10 agents + compliance + revenue = 12+ parallel calls caused scan failures; batched to groups of 4 with 400ms pause.
 - [Logo & About page](logo-about.md) — logo at /public/logo.png, founder photo at /public/founder-photo.jpeg (MOGANTI PRANAV RAJ); /about route added; logo replaces Rocket icon in all page navbars.
+- [Session table must exist](session-table.md) — `session` table in PostgreSQL must be created via raw SQL before app starts; missing table causes all authenticated requests to return 500.
+- [AuthContext Fast Refresh](auth-fast-refresh.md) — split into auth-context.ts (context+types), AuthContext.tsx (AuthProvider only), hooks/use-auth.ts (useAuth); all pages import useAuth from @/hooks/use-auth.

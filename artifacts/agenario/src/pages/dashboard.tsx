@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { Rocket, Plus, ChevronRight, Clock, CheckCircle, XCircle, Loader2, LogOut, Zap, BarChart3, Activity, BookOpen, Brain } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { api, type Scan } from "@/lib/api";
 import { motion } from "framer-motion";
 

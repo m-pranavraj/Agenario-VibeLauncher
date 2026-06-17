@@ -94,7 +94,7 @@ export default function AboutPage() {
           </motion.h1>
           <motion.p variants={FADE_UP} className="text-base sm:text-lg text-white/45 leading-relaxed max-w-2xl mx-auto">
             Agenario is an AI-powered production review board built for the vibe-coded era.
-            10 parallel analysis dimensions — security, compliance, revenue, UX, performance, and more.
+            15 parallel analysis dimensions — security, compliance, revenue, UX, performance, and more.
           </motion.p>
         </motion.div>
 

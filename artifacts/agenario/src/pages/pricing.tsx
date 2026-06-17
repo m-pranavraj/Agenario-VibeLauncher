@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Rocket, Check, Zap, ArrowLeft, Loader2, ShieldCheck, Building2, Mail } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/lib/api";
 import { motion } from "framer-motion";
 
@@ -49,7 +49,7 @@ const PLANS = [
     icon: Zap,
     features: [
       "Unlimited scans",
-      "Full 10-dimension analysis",
+      "Full 15-dimension analysis",
       "Compliance checks (GDPR, OWASP, PCI-DSS)",
       "Revenue intelligence layer",
       "Board-memo style reports",

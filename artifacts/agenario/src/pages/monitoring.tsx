@@ -6,7 +6,7 @@ import {
   XCircle, Loader2, TrendingUp, TrendingDown, Minus,
   RefreshCw, Clock, BarChart3, Plus, ChevronRight,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 
 interface AppOverview {
   source: string;

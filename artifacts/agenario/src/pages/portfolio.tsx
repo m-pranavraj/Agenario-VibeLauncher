@@ -6,7 +6,7 @@ import {
   AlertTriangle, CheckCircle2, XCircle, Loader2, BarChart3,
   Globe, Github, FileText, ChevronRight, Shield, RefreshCw,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { api, type PortfolioApp } from "@/lib/api";
 
 const VERDICT_CONFIG = {

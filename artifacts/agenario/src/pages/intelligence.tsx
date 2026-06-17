@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { api, type Scan } from "@/lib/api";
 import { motion } from "framer-motion";
 import {
@@ -9,7 +9,6 @@ import {
   AlertTriangle, CheckCircle2, Target, Network,
   GitMerge, Layers, RefreshCw,
 } from "lucide-react";
-import { Link as NavLink } from "wouter";
 
 function ScoreSparkline({ scores }: { scores: number[] }) {
   if (scores.length < 2) return null;
@@ -369,7 +368,7 @@ export default function IntelligencePage() {
                 {completed.slice(0, 15).map((scan, i) => {
                   const sc = scan.score ?? 0;
                   const color = sc >= 80 ? "text-green-400" : sc >= 55 ? "text-amber-400" : "text-red-400";
-                  const pi = (scan as any).predictiveIntel;
+                  const pi = scan.predictiveIntel;
                   return (
                     <Link key={scan.id} href={`/scans/${scan.id}`}>
                       <div className="px-6 py-3 flex items-center gap-4 hover:bg-white/[0.02] transition-colors cursor-pointer">
