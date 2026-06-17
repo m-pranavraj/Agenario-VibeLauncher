@@ -116,7 +116,7 @@ export default function DashboardPage() {
               Welcome back, {user.name.split(" ")[0]}
             </h1>
             <p className="text-white/30 text-sm mt-1">
-              {isFreePlan ? "Free plan · 5 scans/month" : `${plan.label} plan · Unlimited scans`}
+              {isFreePlan ? "Free plan · 2 scans/month" : `${plan.label} plan · Unlimited scans`}
             </p>
           </div>
           <Link

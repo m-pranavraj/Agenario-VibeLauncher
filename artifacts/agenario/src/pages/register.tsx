@@ -48,7 +48,7 @@ export default function RegisterPage() {
             <span className="text-white font-bold text-lg font-['Syne']">Agenario</span>
           </Link>
           <h1 className="text-2xl font-bold text-white font-['Syne']">Create your account</h1>
-          <p className="text-white/40 mt-1.5 text-sm">5 free scans per month · No credit card needed</p>
+          <p className="text-white/40 mt-1.5 text-sm">2 free scans per month · No credit card needed</p>
         </div>
 
         <div className="glass rounded-2xl p-7">

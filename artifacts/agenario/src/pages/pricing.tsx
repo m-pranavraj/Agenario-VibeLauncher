@@ -30,7 +30,7 @@ const PLANS = [
     description: "For founders trying it out",
     icon: Rocket,
     features: [
-      "5 scans per month",
+      "2 scans per month",
       "Launch Readiness Score",
       "Security & critical issue checks",
       "1-Click fix prompts",

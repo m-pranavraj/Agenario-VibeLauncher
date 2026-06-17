@@ -10,7 +10,8 @@ import {
   Target, Flame, Bug, BarChart2, Shield,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 import type { Variants } from "framer-motion";
 
 /* ── Animation variants ─────────────────────────────────────── */
@@ -402,6 +403,8 @@ export default function Home() {
   const { scrollYProgress } = useScroll();
   const yBg = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
 
   const doubledPills = [...FEATURE_ARSENAL, ...FEATURE_ARSENAL];
   const row1 = doubledPills.slice(0, Math.ceil(doubledPills.length / 2));
@@ -418,7 +421,7 @@ export default function Home() {
       <nav className="fixed top-0 w-full z-50 border-b border-white/[0.06] bg-[#050505]/80 backdrop-blur-2xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 -ml-1" onClick={() => setMenuOpen(false)}>
-            <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover" />
+            <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover object-left" />
             <span className="font-heading font-bold text-lg text-white tracking-tight">Agenario</span>
           </Link>
 
@@ -432,18 +435,31 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link href="/login" className="hidden md:block text-white/45 hover:text-white text-sm transition-colors" data-testid="nav-login-btn">
-              Sign In
-            </Link>
-            <Link href="/register" data-testid="nav-start-btn">
+            {user ? (
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
+                onClick={() => setLocation("/dashboard")}
                 className="bg-white text-black text-sm font-semibold px-5 py-2 rounded-xl hover:bg-white/90 transition-all"
               >
-                Start Free
+                Dashboard
               </motion.button>
-            </Link>
+            ) : (
+              <>
+                <Link href="/login" className="hidden md:block text-white/45 hover:text-white text-sm transition-colors" data-testid="nav-login-btn">
+                  Sign In
+                </Link>
+                <Link href="/register" data-testid="nav-start-btn">
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="bg-white text-black text-sm font-semibold px-5 py-2 rounded-xl hover:bg-white/90 transition-all"
+                  >
+                    Start Free
+                  </motion.button>
+                </Link>
+              </>
+            )}
             <button
               className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl border border-white/[0.1] bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/[0.07] transition-all"
               onClick={() => setMenuOpen((v) => !v)}
@@ -1241,7 +1257,7 @@ export default function Home() {
                   key={i}
                   className={`flex items-center gap-2 px-3 py-2 rounded-xl border mx-1.5 shrink-0 whitespace-nowrap ${feat.bg}`}
                 >
-                  <span className="text-sm leading-none">{feat.icon}</span>
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${feat.color.replace("text-", "bg-").replace("/80", "")}`} />
                   <span className={`text-[11px] font-semibold ${feat.color}`}>{feat.label}</span>
                 </div>
               ))}
@@ -1256,7 +1272,7 @@ export default function Home() {
                   key={i}
                   className={`flex items-center gap-2 px-3 py-2 rounded-xl border mx-1.5 shrink-0 whitespace-nowrap ${feat.bg}`}
                 >
-                  <span className="text-sm leading-none">{feat.icon}</span>
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${feat.color.replace("text-", "bg-").replace("/80", "")}`} />
                   <span className={`text-[11px] font-semibold ${feat.color}`}>{feat.label}</span>
                 </div>
               ))}
@@ -1349,7 +1365,7 @@ export default function Home() {
                     key={fi}
                     className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full border ${feat.bg} ${feat.glow} transition-all duration-200 shrink-0 cursor-default select-none`}
                   >
-                    <span className="text-sm leading-none">{feat.icon}</span>
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${feat.color.replace("text-", "bg-").replace("/80", "")}`} />
                     <span className={`text-xs font-medium ${feat.color}`}>{feat.label}</span>
                   </div>
                 ))}

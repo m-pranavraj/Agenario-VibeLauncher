@@ -405,10 +405,10 @@ function CreatorGate({ plan, feature, preview, children }: {
   if (isUnlocked) return <>{children}</>;
   return (
     <div className="relative rounded-2xl overflow-hidden">
-      <div className="pointer-events-none select-none" style={{ filter: "blur(7px)", opacity: 0.45, userSelect: "none" }}>
+      <div className="pointer-events-none select-none" style={{ filter: "blur(4px)", opacity: 0.6, userSelect: "none" }}>
         {children}
       </div>
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-black/40 via-black/60 to-black/40 backdrop-blur-[2px] rounded-2xl">
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-black/20 via-black/45 to-black/20 rounded-2xl">
         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/30 flex items-center justify-center">
           <Lock className="w-5 h-5 text-violet-400" />
         </div>
@@ -1351,7 +1351,7 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
                           {finding.risk}
                         </span>
                         <span className="text-xs text-white/30">{CATEGORY_LABEL[finding.category] ?? finding.category}</span>
-                        <span className="text-xs text-white/20 hidden sm:block">{finding.lineHint}</span>
+                        {finding.lineHint && <span className="text-[10px] font-mono text-amber-400/50 bg-amber-400/[0.06] px-1.5 py-0.5 rounded border border-amber-400/10">{finding.lineHint}</span>}
                       </div>
                       <p className="text-sm font-semibold text-white/85 mb-1">{finding.name}</p>
                       {isCreator ? (
@@ -1712,7 +1712,7 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
                       )}
                     </div>
                     {finding.lineHint && (
-                      <p className="text-[10px] text-white/25 font-mono mb-1">{finding.lineHint}</p>
+                      <p className="text-[10px] font-mono text-amber-400/50 bg-amber-400/[0.06] px-1.5 py-0.5 rounded border border-amber-400/10 mb-1 inline-block">{finding.lineHint}</p>
                     )}
                     <p className="text-xs text-white/35 leading-relaxed mb-1.5">{finding.detail}</p>
                     <div className="bg-black/30 border border-white/[0.06] rounded-lg px-3 py-2 text-[10px] font-mono text-white/30 leading-relaxed">
