@@ -6,8 +6,128 @@ uri = "file://attached_assets/generated_images/dark_premium_saas_dashboard_4b57.
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "ZQLbWtk1i826XOb_vyMW5"
+uri = "file://attached_assets/generated_images/pure_black_background_giant_1944.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "aRFiX9mY_i0-P_jyAPxTU"
+uri = "file://attached_assets/generated_images/dark_terminal_dashboard_ui_1eeb.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "V5tfB0FgB_aeB_5FxWY8b"
+uri = "file://attached_assets/generated_images/ultra_minimal_poster_pure_8945.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "UKA-eG-PznV2-jUL3QvEj"
+uri = "file://attached_assets/generated_images/cinematic_dark_poster_pure_6f28.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "1QHingV4aPKR_kvl37s29"
+uri = "file://attached_assets/generated_images/aggressive_bold_typographic_poster_915b.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "ieHDi095JxhM7Jf98FmLJ"
+uri = "file://attached_assets/generated_images/minimal_dark_poster_black_e19e.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "7iLYDfHefWJB05UB-rGjS"
+uri = "file://attached_assets/generated_images/elegant_dark_poster_pure_13bc.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "1Ox67FycA6WoesO5LfGoU"
+uri = "file://attached_assets/generated_images/bright_bold_conversion_ad_cf17.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "-pgJDUzeR_mz5AKKS5nPg"
+uri = "file://attached_assets/generated_images/split_screen_vertical_poster_1303.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "MPbbT5FMpu07H0LrryfQA"
+uri = "file://attached_assets/generated_images/dark_comedy_meme_style_3e3a.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "MKsKEUkgLZ0zqc3SJPmWy"
 uri = "file://artifacts/agenario/public/opengraph.jpg"
 type = "image"
 title = "OG Preview Image (1200×630) — shown when link is shared"
+
+[[outputs]]
+id = "cb4aPNkQkUBVDxdozsFoW"
+uri = "file://ads/9x16/story-01.jpg"
+type = "image"
+title = "Story 1 — 'Your AI wrote it. We review it.'"
+
+[[outputs]]
+id = "HQoQNuhvRmjWLedvfsuwI"
+uri = "file://ads/9x16/story-02.jpg"
+type = "image"
+title = "Story 2 — CRITICAL Alert UI"
+
+[[outputs]]
+id = "yo9nXDsamv5hFeLDR11WP"
+uri = "file://ads/9x16/story-03.jpg"
+type = "image"
+title = "Story 3 — 76/100 Score Card"
+
+[[outputs]]
+id = "oGbIsjXyxDVUBESXJog2a"
+uri = "file://ads/9x16/story-04.jpg"
+type = "image"
+title = "Story 4 — 'Vibe Coded? Ship Smart.'"
+
+[[outputs]]
+id = "qk0vFxRM6NT2oEWxx1by6"
+uri = "file://ads/9x16/story-05.jpg"
+type = "image"
+title = "Story 5 — 'Before your users find the bugs'"
+
+[[outputs]]
+id = "9hLbp6Sxlasv0PXdIbvJx"
+uri = "file://ads/9x16/story-06.jpg"
+type = "image"
+title = "Story 6 — '50 Agents. 60 Seconds. 1 Decision.'"
+
+[[outputs]]
+id = "TTP8n-kkIqw5peVm8aAUS"
+uri = "file://ads/9x16/story-07.jpg"
+type = "image"
+title = "Story 7 — 'FREE. No credit card.' CTA"
+
+[[outputs]]
+id = "74TOhZsAISGStZasinh40"
+uri = "file://ads/9x16/story-08.jpg"
+type = "image"
+title = "Story 8 — Compliance Badges (GDPR · OWASP · PCI-DSS)"
+
+[[outputs]]
+id = "cnwm26LX6ZXZdT9VJX_v-"
+uri = "file://ads/9x16/story-09.jpg"
+type = "image"
+title = "Story 9 — 'Did you check? ...no. WE GOTCHU'"
+
+[[outputs]]
+id = "dRLhl19K3F7FuBacwoyRE"
+uri = "file://ads/9x16/story-010.jpg"
+type = "image"
+title = "Story 10 — Blind Launch vs Reviewed Launch split"
