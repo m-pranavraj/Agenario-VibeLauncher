@@ -1,5 +1,6 @@
 import express, { Router, type IRouter } from "express";
 import fs from "fs";
+import { logger } from "../lib/logger.js";
 import { eq, desc } from "drizzle-orm";
 import { db, usersTable, scansTable, scanIssuesTable } from "@workspace/db";
 import { CreateScanBody } from "@workspace/api-zod";
@@ -131,12 +132,10 @@ async function runAnalysisPipeline(opts: {
   totalFiles?: number;
   keyFiles?: Array<{ path: string; content: string }>;
   schemas?: string;
-  req: any;
-  res: any;
 }): Promise<void> {
   const {
     scanId, userId, sourceType, sourceInput, appDescription,
-    dir, packageJson, fileTree, totalFiles, keyFiles, schemas, req, res,
+    dir, packageJson, fileTree, totalFiles, keyFiles, schemas,
   } = opts;
 
   let codeContext: CodeContext | null = null;
@@ -170,7 +169,7 @@ async function runAnalysisPipeline(opts: {
       .where(eq(scansTable.id, scanId));
 
     const staticResult = scanDirectory(dir, pkg);
-    req.log.info({ scanId, findings: staticResult.findings.length }, "Static scan complete");
+    logger.info({ scanId, findings: staticResult.findings.length }, "Static scan complete");
     staticIssueRows = staticResult.findings.map((f) => staticFindingToIssueRow(scanId, f));
   }
 
@@ -239,7 +238,7 @@ async function runAnalysisPipeline(opts: {
     try {
       shadowApiFindings = runShadowApiRadar(dir);
     } catch (err) {
-      req.log.warn({ err }, "Shadow API radar failed");
+      logger.warn({ err }, "Shadow API radar failed");
     }
   }
 
@@ -253,9 +252,9 @@ async function runAnalysisPipeline(opts: {
     } else {
       secretScanResults = scanForSecrets(sourceInput);
     }
-    req.log.info({ scanId, found: secretScanResults.totalFound }, "Secret scan complete");
+    logger.info({ scanId, found: secretScanResults.totalFound }, "Secret scan complete");
   } catch (err) {
-    req.log.warn({ err }, "Secret scan failed");
+    logger.warn({ err }, "Secret scan failed");
   }
 
   // ── Package Vulnerability Check ───────────────────────────────
@@ -264,10 +263,10 @@ async function runAnalysisPipeline(opts: {
     const pkg = (codeContext?.packageJson as Record<string, unknown> | undefined) ?? {};
     if (Object.keys(pkg).length > 0) {
       packageVulns = checkPackageVulns(pkg);
-      req.log.info({ scanId, vulns: packageVulns.vulnerableCount }, "Package vuln scan complete");
+      logger.info({ scanId, vulns: packageVulns.vulnerableCount }, "Package vuln scan complete");
     }
   } catch (err) {
-    req.log.warn({ err }, "Package vuln scan failed");
+    logger.warn({ err }, "Package vuln scan failed");
   }
 
   // ── Cleanup Agent (static code hygiene) ───────────────────────
@@ -275,10 +274,10 @@ async function runAnalysisPipeline(opts: {
   try {
     if (codeContext && codeContext.keyFiles.length > 0) {
       cleanupReport = runCleanupAgent(codeContext.keyFiles, appDescription);
-      req.log.info({ scanId, findings: cleanupReport.totalFindings, score: cleanupReport.debtScore }, "Cleanup agent complete");
+      logger.info({ scanId, findings: cleanupReport.totalFindings, score: cleanupReport.debtScore }, "Cleanup agent complete");
     }
   } catch (err) {
-    req.log.warn({ err }, "Cleanup agent failed");
+    logger.warn({ err }, "Cleanup agent failed");
   }
 
   // ── OWASP & Revenue enrichment (in-memory) ────────────────────
@@ -325,15 +324,15 @@ async function runAnalysisPipeline(opts: {
 
   const [digitalTwin, predictiveIntel, rootCause] = await Promise.all([
     runDigitalTwin(sourceType, sourceInput, appDescription, codeContext).catch((err) => {
-      req.log.warn({ err }, "Digital twin failed");
+      logger.warn({ err }, "Digital twin failed");
       return null;
     }),
     runPredictiveIntel(finalScore, issueCounts, topIssues, sourceInput, appDescription).catch((err) => {
-      req.log.warn({ err }, "Predictive intel failed");
+      logger.warn({ err }, "Predictive intel failed");
       return null;
     }),
     runRootCause(criticalAndHighIssues, sourceInput, codeContext, appDescription).catch((err) => {
-      req.log.warn({ err }, "Root cause engine failed");
+      logger.warn({ err }, "Root cause engine failed");
       return null;
     }),
   ]);
@@ -348,11 +347,11 @@ async function runAnalysisPipeline(opts: {
 
   const [launchImpact, productHuntScore] = await Promise.all([
     runLaunchImpactCalculator(topIssuesForImpact, businessType, sourceInput, appDescription).catch((err) => {
-      req.log.warn({ err }, "Launch impact calculator failed");
+      logger.warn({ err }, "Launch impact calculator failed");
       return null;
     }),
     runProductHuntAudit(sourceType, sourceInput, appDescription, codeContext).catch((err) => {
-      req.log.warn({ err }, "Product Hunt audit failed");
+      logger.warn({ err }, "Product Hunt audit failed");
       return null;
     }),
   ]);
@@ -401,12 +400,7 @@ async function runAnalysisPipeline(opts: {
     .where(eq(scansTable.id, scanId))
     .returning();
 
-  res.status(201).json({
-    ...updated,
-    createdAt: updated.createdAt.toISOString(),
-    completedAt: updated.completedAt?.toISOString() ?? null,
-    issues: owaspEnrichedIssues,
-  });
+  logger.info({ scanId }, "Analysis pipeline complete");
 }
 
 // ── POST /scans (JSON — GitHub URL / live URL / description) ─────
@@ -448,48 +442,49 @@ router.post("/scans", async (req, res): Promise<void> => {
     })
     .returning();
 
-  req.log.info({ scanId: scan.id, sourceType }, "Scan started");
+  // Return immediately — client polls for results
+  res.status(202).json({ id: scan.id, status: "running" });
 
-  try {
-    let dir: string | undefined;
-    let packageJson: Record<string, unknown> | undefined;
-    let fileTree: string | undefined;
-    let totalFiles: number | undefined;
-    let keyFiles: Array<{ path: string; content: string }> | undefined;
-    let schemas: string | undefined;
+  // Fire-and-forget background pipeline
+  void (async () => {
+    try {
+      let dir: string | undefined;
+      let packageJson: Record<string, unknown> | undefined;
+      let fileTree: string | undefined;
+      let totalFiles: number | undefined;
+      let keyFiles: Array<{ path: string; content: string }> | undefined;
+      let schemas: string | undefined;
 
-    if (sourceType === "github") {
-      const ingested = await ingestGitHubRepo(sourceInput, scan.id);
-      if (ingested) {
-        dir = ingested.dir;
-        packageJson = (ingested.context.packageJson ?? {}) as Record<string, unknown>;
-        fileTree = ingested.context.fileTree;
-        totalFiles = ingested.context.totalFiles;
-        keyFiles = ingested.context.keyFiles;
-        schemas = ingested.context.schemas;
+      if (sourceType === "github") {
+        logger.info({ scanId: scan.id, sourceType }, "Scan started — cloning repo");
+        const ingested = await ingestGitHubRepo(sourceInput, scan.id);
+        if (ingested) {
+          dir = ingested.dir;
+          packageJson = (ingested.context.packageJson ?? {}) as Record<string, unknown>;
+          fileTree = ingested.context.fileTree;
+          totalFiles = ingested.context.totalFiles;
+          keyFiles = ingested.context.keyFiles;
+          schemas = ingested.context.schemas;
+        }
       }
-    }
 
-    await runAnalysisPipeline({
-      scanId: scan.id,
-      userId: user.id,
-      sourceType,
-      sourceInput,
-      appDescription,
-      vibeTool: userVibeTool,
-      businessType: userBusinessType,
-      dir, packageJson, fileTree, totalFiles, keyFiles, schemas,
-      req, res,
-    });
-  } catch (err) {
-    req.log.error({ err, scanId: scan.id }, "Analysis failed");
-    await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, scan.id));
-    if (!res.headersSent) {
-      res.status(500).json({ error: "Analysis failed. Please try again." });
+      await runAnalysisPipeline({
+        scanId: scan.id,
+        userId: user.id,
+        sourceType,
+        sourceInput,
+        appDescription,
+        vibeTool: userVibeTool,
+        businessType: userBusinessType,
+        dir, packageJson, fileTree, totalFiles, keyFiles, schemas,
+      });
+    } catch (err) {
+      logger.error({ err, scanId: scan.id }, "Analysis failed");
+      await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, scan.id));
+    } finally {
+      if (parsed.data.sourceType === "github") cleanupScan(scan.id);
     }
-  } finally {
-    if (parsed.data.sourceType === "github") cleanupScan(scan.id);
-  }
+  })();
 });
 
 // ── POST /scans/upload (ZIP file upload) ──────────────────────
@@ -533,12 +528,9 @@ router.post(
       })
       .returning();
 
-    req.log.info({ scanId: scan.id, bytes: req.body.length }, "ZIP scan started");
-
     const tmpZipPath = `/tmp/upload-${scan.id}.zip`;
     try {
       fs.writeFileSync(tmpZipPath, req.body);
-
       const ingested = await ingestZipFile(tmpZipPath, scan.id);
       if (!ingested) {
         await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, scan.id));
@@ -546,7 +538,11 @@ router.post(
         return;
       }
 
-      await runAnalysisPipeline({
+      // Return immediately — client polls for results
+      res.status(202).json({ id: scan.id, status: "running" });
+
+      // Run pipeline in background
+      void runAnalysisPipeline({
         scanId: scan.id,
         userId: user.id,
         sourceType: "zip",
@@ -560,15 +556,17 @@ router.post(
         totalFiles: ingested.context.totalFiles,
         keyFiles: ingested.context.keyFiles,
         schemas: ingested.context.schemas,
-        req, res,
+      }).catch(async (err) => {
+        logger.error({ err, scanId: scan.id }, "ZIP analysis failed");
+        await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, scan.id));
+      }).finally(() => {
+        cleanupZip(scan.id);
+        try { fs.unlinkSync(tmpZipPath); } catch { /* ignore */ }
       });
     } catch (err) {
-      req.log.error({ err, scanId: scan.id }, "ZIP analysis failed");
+      logger.error({ err, scanId: scan.id }, "ZIP ingestion failed");
       await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, scan.id));
-      if (!res.headersSent) {
-        res.status(500).json({ error: "Analysis failed. Please try again." });
-      }
-    } finally {
+      if (!res.headersSent) res.status(500).json({ error: "Analysis failed. Please try again." });
       cleanupZip(scan.id);
       try { fs.unlinkSync(tmpZipPath); } catch { /* ignore */ }
     }
@@ -804,7 +802,7 @@ Generate a precise, copy-paste-ready code fix for this issue. Use TypeScript/Jav
 
     res.json({ fix, language });
   } catch (err) {
-    req.log.error({ err }, "Fix generation failed");
+    logger.error({ err }, "Fix generation failed");
     res.status(500).json({ error: "Fix generation failed. Please try again." });
   }
 });
@@ -857,7 +855,7 @@ router.post("/scans/:id/ask", async (req, res): Promise<void> => {
     });
     res.json({ answer });
   } catch (err) {
-    req.log.error({ err }, "Cofounder Q&A failed");
+    logger.error({ err }, "Cofounder Q&A failed");
     res.status(500).json({ error: "Failed to generate answer. Please try again." });
   }
 });

@@ -2749,9 +2749,26 @@ export default function ScanResultsPage() {
   }, [user, loading, setLocation]);
 
   useEffect(() => {
-    if (user && params?.id) {
-      api.scans.get(Number(params.id)).then(setScan).finally(() => setScanLoading(false));
-    }
+    if (!user || !params?.id) return;
+    const id = Number(params.id);
+    let active = true;
+
+    const load = async () => {
+      const result = await api.scans.get(id).catch(() => null);
+      if (!active) return;
+      if (result) {
+        setScan(result);
+        setScanLoading(false);
+        if (result.status === "running") {
+          setTimeout(load, 3000);
+        }
+      } else {
+        setScanLoading(false);
+      }
+    };
+
+    load();
+    return () => { active = false; };
   }, [user, params?.id]);
 
   if (loading || !user) return null;
@@ -2770,6 +2787,51 @@ export default function ScanResultsPage() {
   if (!scan) return (
     <div className="min-h-screen bg-[#050505] flex items-center justify-center">
       <p className="text-white/25">Report not found</p>
+    </div>
+  );
+
+  if (scan.status === "running") return (
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+      <div className="text-center space-y-6 max-w-sm px-6">
+        <div className="w-16 h-16 rounded-3xl glass flex items-center justify-center mx-auto relative">
+          <Loader2 className="w-7 h-7 text-white/60 animate-spin" />
+          <div className="absolute inset-0 rounded-3xl bg-white/[0.03] animate-pulse" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-white/90 text-lg font-semibold tracking-tight">Analysing your app</h2>
+          <p className="text-white/35 text-sm leading-relaxed">
+            Running multi-dimensional review across security, compliance, revenue, performance, and more.
+            This takes 1–3 minutes.
+          </p>
+        </div>
+        <div className="flex items-center justify-center gap-1.5">
+          {["Security", "Compliance", "Revenue", "UX", "Reliability"].map((label) => (
+            <span key={label} className="text-[10px] text-white/25 bg-white/[0.04] border border-white/[0.07] rounded-full px-2 py-0.5">
+              {label}
+            </span>
+          ))}
+        </div>
+        <p className="text-white/20 text-xs">Updating automatically…</p>
+      </div>
+    </div>
+  );
+
+  if (scan.status === "failed") return (
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+      <div className="text-center space-y-4 max-w-sm px-6">
+        <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
+          <XCircle className="w-6 h-6 text-red-400" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-white/80 text-base font-semibold">Analysis failed</h2>
+          <p className="text-white/35 text-sm">Something went wrong during the review. Please try again.</p>
+        </div>
+        <Link href="/new-scan">
+          <button className="text-sm text-white/50 hover:text-white/70 underline underline-offset-2 transition-colors">
+            Start a new scan
+          </button>
+        </Link>
+      </div>
     </div>
   );
 
