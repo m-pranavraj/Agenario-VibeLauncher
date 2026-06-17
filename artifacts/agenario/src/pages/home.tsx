@@ -627,31 +627,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Stats Bar ─────────────────────────────────────── */}
-        <section className="border-y border-white/[0.05] bg-white/[0.015] py-8">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              {[
-                { v: "72%+", l: "ship with AI code daily", c: "text-violet-400" },
-                { v: "83%", l: "skip proper security review", c: "text-red-400" },
-                { v: "₹8.4L+", l: "avg compliance fine avoided", c: "text-green-400" },
-                { v: "6 min", l: "avg time to full report", c: "text-cyan-400" },
-              ].map((s, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.07 }}
-                >
-                  <div className={`text-2xl font-heading font-bold ${s.c}`}>{s.v}</div>
-                  <div className="text-xs text-white/35 mt-1">{s.l}</div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ── How It Works ──────────────────────────────────── */}
         <section id="how-it-works" className="px-6 py-28 max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -680,8 +655,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Analysis Dimensions ───────────────────────────── */}
-        <section id="dimensions" className="px-6 py-28 bg-white/[0.015] border-y border-white/[0.06]">
+        {false && <><section id="dimensions" className="px-6 py-28 bg-white/[0.015] border-y border-white/[0.06]">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <p className="text-xs text-white/35 uppercase tracking-widest mb-4 font-medium">Analysis Engine</p>
@@ -1082,6 +1056,7 @@ export default function Home() {
             </p>
           </motion.div>
         </section>
+        </>}
 
         {/* ── Pricing ───────────────────────────────────────── */}
         <section id="pricing" className="px-6 py-28 bg-white/[0.015] border-y border-white/[0.06]">
@@ -1149,6 +1124,8 @@ export default function Home() {
             </p>
           </div>
         </section>
+
+        {false && <><section className="hidden-arsenal-placeholder" />
 
         {/* ── The Intelligence Arsenal ──────────────────────── */}
         <section className="relative py-28 overflow-hidden">
@@ -1338,6 +1315,7 @@ export default function Home() {
             </motion.div>
           </motion.div>
         </section>
+        </>}
 
         {/* ── Capability Marquee ───────────────────────────── */}
         <section className="py-24 bg-white/[0.012] border-t border-white/[0.05] overflow-hidden">

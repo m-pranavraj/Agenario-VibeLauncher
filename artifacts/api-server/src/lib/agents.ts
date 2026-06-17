@@ -3,7 +3,10 @@ import { logger } from "./logger.js";
 
 const groq = new Groq({ apiKey: process.env["GROQ_API_KEY"] });
 
-const MODEL = "llama-3.3-70b-versatile";
+// Fast small model — higher TPM, same free tier. Used for all per-agent analysis.
+const FAST_MODEL = "llama-3.1-8b-instant";
+// Smart large model — reserved for final synthesis/forecast calls only.
+const SMART_MODEL = "llama-3.3-70b-versatile";
 
 interface AgentIssue {
   severity: "critical" | "high" | "medium" | "low";
@@ -452,7 +455,7 @@ async function runAgentWithRetry(
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const response = await groq.chat.completions.create({
-        model: MODEL,
+        model: FAST_MODEL,
         messages: [
           { role: "system", content: agent.role },
           {
@@ -529,7 +532,7 @@ async function runLaunchRiskForecast(
 
   try {
     const response = await groq.chat.completions.create({
-      model: MODEL,
+      model: SMART_MODEL,
       messages: [
         {
           role: "system",
@@ -593,7 +596,7 @@ async function runRevenueIntelligence(
 ): Promise<RevenueIntelligence> {
   try {
     const response = await groq.chat.completions.create({
-      model: MODEL,
+      model: FAST_MODEL,
       messages: [
         {
           role: "system",
@@ -662,7 +665,7 @@ async function runComplianceAnalysis(
 
   try {
     const response = await groq.chat.completions.create({
-      model: MODEL,
+      model: FAST_MODEL,
       messages: [
         {
           role: "system",
@@ -843,7 +846,7 @@ export async function runLaunchImpactCalculator(
       .join("\n");
 
     const response = await groq.chat.completions.create({
-      model: MODEL,
+      model: SMART_MODEL,
       messages: [
         {
           role: "system",
@@ -925,7 +928,7 @@ export async function runProductHuntAudit(
 ): Promise<ProductHuntScore> {
   try {
     const response = await groq.chat.completions.create({
-      model: MODEL,
+      model: FAST_MODEL,
       messages: [
         {
           role: "system",
