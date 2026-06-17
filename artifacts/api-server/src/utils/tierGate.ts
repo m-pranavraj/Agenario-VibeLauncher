@@ -121,5 +121,38 @@ export function applyTierGate(
     };
   }
 
+  // ── Digital Twin: hide attack vectors on free plan ─────────────
+  const twin = data["digitalTwin"] as Record<string, unknown> | null | undefined;
+  if (twin) {
+    data["digitalTwin"] = {
+      ...twin,
+      attackSimulations: [],
+      _lockedAttackCount: Array.isArray(twin["attackSimulations"])
+        ? (twin["attackSimulations"] as unknown[]).length
+        : 0,
+    };
+  }
+
+  // ── Predictive Intel: hide root-cause narrative ────────────────
+  const pred = data["predictiveIntel"] as Record<string, unknown> | null | undefined;
+  if (pred) {
+    data["predictiveIntel"] = {
+      ...pred,
+      narrative: "🔒 Upgrade to Creator to unlock the AI predictive narrative and full forecasts.",
+    };
+  }
+
+  // ── Root Cause: hide fix PR bodies ────────────────────────────
+  const rc = data["rootCause"] as Record<string, unknown> | null | undefined;
+  if (rc && Array.isArray(rc["chains"])) {
+    data["rootCause"] = {
+      ...rc,
+      chains: (rc["chains"] as Array<Record<string, unknown>>).map((c) => ({
+        ...c,
+        fixPR: "🔒 Upgrade to Creator to unlock auto-generated fix PR descriptions.",
+      })),
+    };
+  }
+
   return data;
 }

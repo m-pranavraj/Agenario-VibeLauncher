@@ -20,6 +20,9 @@ import { checkPackageVulns } from "../lib/package-vulns.js";
 import { runCleanupAgent } from "../lib/cleanup-agent.js";
 import { enrichIssuesWithOwasp } from "../lib/owasp-mapper.js";
 import { enrichLeaksWithImpact } from "../lib/revenue-calculator.js";
+import { runDigitalTwin } from "../lib/digital-twin.js";
+import { runPredictiveIntel } from "../lib/predictive-intelligence.js";
+import { runRootCause } from "../lib/root-cause.js";
 
 const router: IRouter = Router();
 
@@ -301,6 +304,27 @@ async function runAnalysisPipeline(opts: {
     generateLaunchReplay(cofounderInput),
   ]);
 
+  // ── Deep Tech Engines (Digital Twin, Predictive Intel, Root Cause) ─
+  const criticalAndHighIssues = allIssues
+    .filter((i) => i.severity === "critical" || i.severity === "high")
+    .slice(0, 3)
+    .map((i) => ({ title: i.title, severity: i.severity, agentName: i.agentName, description: i.description }));
+
+  const [digitalTwin, predictiveIntel, rootCause] = await Promise.all([
+    runDigitalTwin(sourceType, sourceInput, appDescription, codeContext).catch((err) => {
+      req.log.warn({ err }, "Digital twin failed");
+      return null;
+    }),
+    runPredictiveIntel(finalScore, issueCounts, topIssues, sourceInput, appDescription).catch((err) => {
+      req.log.warn({ err }, "Predictive intel failed");
+      return null;
+    }),
+    runRootCause(criticalAndHighIssues, sourceInput, codeContext, appDescription).catch((err) => {
+      req.log.warn({ err }, "Root cause engine failed");
+      return null;
+    }),
+  ]);
+
   const [updated] = await db
     .update(scansTable)
     .set({
@@ -322,6 +346,9 @@ async function runAnalysisPipeline(opts: {
       secretScanResults: secretScanResults ?? null,
       packageVulns: packageVulns ?? null,
       cleanupReport: cleanupReport ?? null,
+      digitalTwin: digitalTwin ?? null,
+      predictiveIntel: predictiveIntel ?? null,
+      rootCause: rootCause ?? null,
       framework: framework !== "unknown" ? framework : undefined,
       vibeTool: vibeTool !== "unknown" ? vibeTool : undefined,
       businessType: businessType !== "unknown" ? businessType : undefined,

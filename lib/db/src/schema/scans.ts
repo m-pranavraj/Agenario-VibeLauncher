@@ -196,6 +196,72 @@ export const scansTable = pgTable("scans", {
       autoFixable: boolean;
     }>;
   }>(),
+  digitalTwin: jsonb("digital_twin").$type<{
+    journeys: Array<{
+      name: string;
+      route: string;
+      status: "pass" | "degraded" | "fail";
+      steps: string[];
+      finding?: string;
+      latencyMs?: number;
+    }>;
+    chaosResults: Array<{
+      service: string;
+      scenario: string;
+      graceful: boolean;
+      impact: string;
+      severity: string;
+    }>;
+    attackSimulations: Array<{
+      type: string;
+      blocked: boolean;
+      detail: string;
+      severity: string;
+      vector?: string;
+    }>;
+    twinConfidenceScore: number;
+    journeyPassRate: number;
+    attackBlockRate: number;
+    simulatedUserCount: number;
+    summary: string;
+  }>(),
+  predictiveIntel: jsonb("predictive_intel").$type<{
+    releaseConfidenceScore: number;
+    outageProbability: number;
+    churnRiskPercent: number;
+    revenueAtRiskMonthly: string;
+    userFrustrationIndex: number;
+    customerTrustScore: number;
+    rollbackProbability: number;
+    forecasts: Array<{
+      metric: string;
+      value: string;
+      numericValue: number;
+      unit: string;
+      trend: string;
+      trendLabel: string;
+      detail: string;
+      color: string;
+    }>;
+    narrative: string;
+    confidenceLabel: string;
+  }>(),
+  rootCause: jsonb("root_cause").$type<{
+    chains: Array<{
+      issueTitle: string;
+      issueSeverity: string;
+      hops: Array<{
+        layer: string;
+        status: "clean" | "implicated" | "unknown";
+        finding: string;
+        evidence?: string;
+      }>;
+      blastRadius: string;
+      originLayer: string;
+      fixPR: string;
+    }>;
+    summary: string;
+  }>(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp("completed_at", { withTimezone: true }),
 });

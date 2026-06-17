@@ -267,8 +267,89 @@ export interface Scan {
       }>;
     }>;
   } | null;
+  digitalTwin: DigitalTwinResult | null;
+  predictiveIntel: PredictiveIntelResult | null;
+  rootCause: RootCauseResult | null;
   createdAt: string;
   completedAt: string | null;
+}
+
+export interface DigitalTwinJourney {
+  name: string;
+  route: string;
+  status: "pass" | "degraded" | "fail";
+  steps: string[];
+  finding?: string;
+  latencyMs?: number;
+}
+
+export interface DigitalTwinResult {
+  journeys: DigitalTwinJourney[];
+  chaosResults: Array<{
+    service: string;
+    scenario: string;
+    graceful: boolean;
+    impact: string;
+    severity: string;
+  }>;
+  attackSimulations: Array<{
+    type: string;
+    blocked: boolean;
+    detail: string;
+    severity: string;
+    vector?: string;
+  }>;
+  twinConfidenceScore: number;
+  journeyPassRate: number;
+  attackBlockRate: number;
+  simulatedUserCount: number;
+  summary: string;
+  _lockedAttackCount?: number;
+}
+
+export interface PredictiveForecast {
+  metric: string;
+  value: string;
+  numericValue: number;
+  unit: string;
+  trend: string;
+  trendLabel: string;
+  detail: string;
+  color: string;
+}
+
+export interface PredictiveIntelResult {
+  releaseConfidenceScore: number;
+  outageProbability: number;
+  churnRiskPercent: number;
+  revenueAtRiskMonthly: string;
+  userFrustrationIndex: number;
+  customerTrustScore: number;
+  rollbackProbability: number;
+  forecasts: PredictiveForecast[];
+  narrative: string;
+  confidenceLabel: string;
+}
+
+export interface RootCauseHop {
+  layer: string;
+  status: "clean" | "implicated" | "unknown";
+  finding: string;
+  evidence?: string;
+}
+
+export interface RootCauseChain {
+  issueTitle: string;
+  issueSeverity: string;
+  hops: RootCauseHop[];
+  blastRadius: string;
+  originLayer: string;
+  fixPR: string;
+}
+
+export interface RootCauseResult {
+  chains: RootCauseChain[];
+  summary: string;
 }
 
 export interface ScanDetail extends Scan {

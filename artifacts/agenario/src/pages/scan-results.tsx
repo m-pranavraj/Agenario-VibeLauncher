@@ -7,13 +7,16 @@ import {
   TrendingUp, TrendingDown, Scale, Database, Cpu, Fingerprint, ShieldCheck,
   FileText, ArrowRight, BarChart3, DollarSign, Target, ChevronRight,
   Play, Camera, Minus, Globe, GitBranch, Award, Dna, Users, Share2,
-  Sparkles, ListChecks, ExternalLink,
+  Sparkles, ListChecks, ExternalLink, Wifi, Package, Cloud, RefreshCw,
+  Network, Brain, Terminal, GitMerge, AlertCircle, ArrowUpRight, ArrowDownRight,
+  Smartphone, ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   api, type ScanDetail, type ScanIssue, type ComplianceResult, type RiskForecast,
   type RevenueIntelligence, type ProofEvidence, type RegressionDiff, type BenchmarkData,
   type LaunchDNA, type ShadowApiFindings, type LaunchReplayStep,
+  type DigitalTwinResult, type PredictiveIntelResult, type RootCauseResult,
 } from "@/lib/api";
 import { motion } from "framer-motion";
 
@@ -73,6 +76,11 @@ const AGENT_ICONS: Record<string, React.FC<{ className?: string }>> = {
   "Reliability & Observability Agent": Activity,
   "Cleanup & Architecture Agent": Layers,
   "AI Smell Agent": Bot,
+  "Mobile & PWA Audit": Smartphone,
+  "i18n & Accessibility Deep Scan": Globe,
+  "Supply Chain Security": Package,
+  "Cloud Cost Efficiency": Cloud,
+  "Competitive Gap Analysis": Target,
 };
 
 const VERDICT_CONFIG = {
@@ -1705,6 +1713,474 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
   );
 }
 
+// ── Digital Twin Panel ───────────────────────────────────────────────────────
+function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCreator: boolean }) {
+  const [openSection, setOpenSection] = useState<"journeys" | "chaos" | "attacks">("journeys");
+
+  const statusConfig = {
+    pass: { color: "text-green-400", bg: "bg-green-500/10 border-green-500/20", dot: "bg-green-400", label: "Pass" },
+    degraded: { color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", dot: "bg-amber-400", label: "Degraded" },
+    fail: { color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", dot: "bg-red-400", label: "Fail" },
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
+      className="glass rounded-2xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-white/[0.05] flex items-center gap-3">
+        <Network className="w-4 h-4 text-violet-400" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm flex-1">Digital Twin Simulation</h2>
+        <div className="flex items-center gap-3 text-xs">
+          <span className="text-white/25">{data.simulatedUserCount?.toLocaleString() ?? "1,000"} virtual users</span>
+          <span className="px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 font-semibold">
+            {data.twinConfidenceScore}/100 confidence
+          </span>
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div className="grid grid-cols-3 border-b border-white/[0.05]">
+        {[
+          { label: "Journey Pass Rate", value: `${data.journeyPassRate}%`, color: data.journeyPassRate >= 70 ? "text-green-400" : data.journeyPassRate >= 50 ? "text-amber-400" : "text-red-400" },
+          { label: "Attack Block Rate", value: `${data.attackBlockRate}%`, color: data.attackBlockRate >= 70 ? "text-green-400" : data.attackBlockRate >= 50 ? "text-amber-400" : "text-red-400" },
+          { label: "Chaos Scenarios", value: `${data.chaosResults.length}`, color: "text-white/60" },
+        ].map((s) => (
+          <div key={s.label} className="px-6 py-3 text-center border-r border-white/[0.05] last:border-0">
+            <div className={`text-xl font-bold font-['Syne'] ${s.color}`}>{s.value}</div>
+            <div className="text-[10px] text-white/25 mt-0.5">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tab selector */}
+      <div className="flex border-b border-white/[0.05]">
+        {([
+          { key: "journeys", label: `Journeys (${data.journeys.length})`, icon: Play },
+          { key: "chaos", label: `Chaos (${data.chaosResults.length})`, icon: RefreshCw },
+          { key: "attacks", label: `Attacks (${isCreator ? data.attackSimulations.length : (data._lockedAttackCount ?? data.attackSimulations.length)})`, icon: ShieldAlert },
+        ] as const).map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setOpenSection(key)}
+            className={`flex items-center gap-1.5 px-4 py-2.5 text-xs border-b-2 transition-colors ${
+              openSection === key
+                ? "border-violet-500 text-white"
+                : "border-transparent text-white/30 hover:text-white/60"
+            }`}
+          >
+            <Icon className="w-3 h-3" />{label}
+          </button>
+        ))}
+      </div>
+
+      {/* Journeys */}
+      {openSection === "journeys" && (
+        <div className="divide-y divide-white/[0.04]">
+          {data.journeys.map((j, i) => {
+            const sc = statusConfig[j.status];
+            return (
+              <div key={i} className="px-6 py-3 flex items-start gap-4">
+                <span className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${sc.dot}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-medium text-white/80">{j.name}</span>
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${sc.bg} ${sc.color}`}>{sc.label}</span>
+                    <span className="text-white/20 font-mono text-[10px] ml-auto">{j.route}</span>
+                    {j.latencyMs && <span className="text-white/20 text-[10px]">{j.latencyMs}ms</span>}
+                  </div>
+                  {j.finding && (
+                    <p className="text-xs text-amber-400/80 mt-0.5 flex items-start gap-1">
+                      <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />{j.finding}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {j.steps.slice(0, 4).map((s, si) => (
+                      <span key={si} className="text-[10px] text-white/30 bg-white/[0.03] border border-white/[0.06] px-1.5 py-0.5 rounded">
+                        {si + 1}. {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Chaos */}
+      {openSection === "chaos" && (
+        <div className="divide-y divide-white/[0.04]">
+          {data.chaosResults.map((c, i) => (
+            <div key={i} className="px-6 py-3 flex items-start gap-4">
+              <span className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${c.graceful ? "bg-green-400" : "bg-red-400"}`} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm font-medium text-white/80">{c.service}</span>
+                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${c.graceful ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
+                    {c.graceful ? "Graceful" : "Crashes"}
+                  </span>
+                  <span className={`text-[10px] ml-auto ${SEVERITY_CONFIG[c.severity as keyof typeof SEVERITY_CONFIG]?.color ?? "text-white/40"}`}>{c.severity}</span>
+                </div>
+                <p className="text-xs text-white/40">{c.scenario}</p>
+                <p className="text-xs text-white/60 mt-0.5">{c.impact}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Attacks */}
+      {openSection === "attacks" && (
+        <div>
+          {!isCreator && (data._lockedAttackCount ?? 0) > 0 && (
+            <div className="px-6 py-3 border-b border-white/[0.05] bg-amber-500/[0.03]">
+              <p className="text-xs text-amber-400/70 flex items-center gap-1.5">
+                <Lock className="w-3 h-3" />
+                {data._lockedAttackCount} attack vectors hidden — upgrade to Creator to see full exploit map
+              </p>
+            </div>
+          )}
+          {isCreator && data.attackSimulations.length === 0 && (
+            <div className="px-6 py-6 text-center text-white/25 text-sm">No attack simulations available</div>
+          )}
+          <div className="divide-y divide-white/[0.04]">
+            {data.attackSimulations.map((a, i) => (
+              <div key={i} className="px-6 py-3 flex items-start gap-4">
+                <span className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${a.blocked ? "bg-green-400" : "bg-red-400"}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-mono font-bold text-white/70 bg-white/[0.05] px-1.5 py-0.5 rounded">{a.type}</span>
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${a.blocked ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
+                      {a.blocked ? "Blocked" : "Unblocked"}
+                    </span>
+                    <span className={`text-[10px] ml-auto ${SEVERITY_CONFIG[a.severity as keyof typeof SEVERITY_CONFIG]?.color ?? "text-white/40"}`}>{a.severity}</span>
+                  </div>
+                  <p className="text-xs text-white/60">{a.detail}</p>
+                  {a.vector && <p className="text-[10px] font-mono text-white/25 mt-1 truncate">{a.vector}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="px-6 py-3 border-t border-white/[0.05]">
+        <p className="text-xs text-white/25">{data.summary}</p>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Predictive Intelligence Panel ────────────────────────────────────────────
+function PredictiveIntelPanel({ data, isCreator }: { data: PredictiveIntelResult; isCreator: boolean }) {
+  const colorMap: Record<string, string> = {
+    red: "text-red-400",
+    amber: "text-amber-400",
+    green: "text-green-400",
+    blue: "text-sky-400",
+  };
+  const bgMap: Record<string, string> = {
+    red: "bg-red-500/[0.06] border-red-500/15",
+    amber: "bg-amber-500/[0.06] border-amber-500/15",
+    green: "bg-green-500/[0.06] border-green-500/15",
+    blue: "bg-sky-500/[0.06] border-sky-500/15",
+  };
+
+  const ReleaseGauge = ({ score }: { score: number }) => {
+    const color = score >= 70 ? "#4ade80" : score >= 45 ? "#f59e0b" : "#f87171";
+    const r = 36;
+    const circ = Math.PI * r;
+    const dash = (score / 100) * circ;
+    return (
+      <div className="relative flex flex-col items-center justify-center" style={{ width: 100, height: 60 }}>
+        <svg width="100" height="60" viewBox="0 0 100 60">
+          <path d={`M 14 50 A ${r} ${r} 0 0 1 86 50`} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" strokeLinecap="round" />
+          <path d={`M 14 50 A ${r} ${r} 0 0 1 86 50`} fill="none" stroke={color} strokeWidth="8" strokeLinecap="round"
+            strokeDasharray={`${dash} ${circ - dash}`} style={{ transition: "stroke-dasharray 1.2s ease" }} />
+        </svg>
+        <div className="absolute bottom-0 flex flex-col items-center">
+          <span className="text-2xl font-bold font-['Syne']" style={{ color }}>{score}</span>
+          <span className="text-[9px] text-white/25">Release Confidence</span>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}
+      className="glass rounded-2xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-white/[0.05] flex items-center gap-3">
+        <Brain className="w-4 h-4 text-sky-400" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm flex-1">Predictive Intelligence</h2>
+        <span className="text-xs text-white/25">{data.confidenceLabel}</span>
+      </div>
+
+      <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-3 gap-6 border-b border-white/[0.05]">
+        <div className="flex flex-col items-center justify-center gap-2">
+          <ReleaseGauge score={data.releaseConfidenceScore} />
+        </div>
+        <div className="sm:col-span-2">
+          <p className="text-sm text-white/55 leading-relaxed">
+            {isCreator ? data.narrative : data.narrative}
+          </p>
+          {!isCreator && data.narrative.startsWith("🔒") && (
+            <Link href="/pricing" className="inline-flex items-center gap-1 mt-2 text-xs text-violet-400 hover:underline">
+              <Zap className="w-3 h-3" />Upgrade to unlock full narrative
+            </Link>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-5">
+        {(data.forecasts ?? []).map((f, i) => (
+          <div key={i} className={`rounded-xl border p-3 ${bgMap[f.color] ?? bgMap.amber}`}>
+            <div className={`text-lg font-bold font-['Syne'] ${colorMap[f.color] ?? "text-white/60"}`}>{f.value}</div>
+            <div className="text-[11px] text-white/50 font-medium mt-0.5">{f.metric}</div>
+            <div className={`flex items-center gap-0.5 mt-1 text-[10px] ${colorMap[f.color] ?? "text-white/40"}`}>
+              {f.trend === "up" ? <ArrowUpRight className="w-2.5 h-2.5" /> : f.trend === "down" ? <ArrowDownRight className="w-2.5 h-2.5" /> : <Minus className="w-2.5 h-2.5" />}
+              {f.trendLabel}
+            </div>
+            <div className="text-[9px] text-white/20 mt-1 leading-relaxed">{f.detail}</div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Root Cause Panel ──────────────────────────────────────────────────────────
+function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator: boolean }) {
+  const [expandedChain, setExpandedChain] = useState<number | null>(0);
+  const [copiedPR, setCopiedPR] = useState<number | null>(null);
+
+  const LAYERS = ["Source Code", "API Layer", "DB Layer", "Infrastructure", "Network", "Third Party"];
+  const hopConfig = {
+    clean: { color: "text-green-400", bg: "bg-green-500/10 border-green-500/25", dot: "bg-green-400", label: "Clean" },
+    implicated: { color: "text-red-400", bg: "bg-red-500/10 border-red-500/25", dot: "bg-red-400", label: "Implicated" },
+    unknown: { color: "text-white/30", bg: "bg-white/[0.03] border-white/[0.08]", dot: "bg-white/20", label: "Unknown" },
+  };
+
+  const copyPR = async (pr: string, i: number) => {
+    await navigator.clipboard.writeText(pr);
+    setCopiedPR(i);
+    setTimeout(() => setCopiedPR(null), 2000);
+  };
+
+  if (data.chains.length === 0) return null;
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}
+      className="glass rounded-2xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-white/[0.05] flex items-center gap-3">
+        <GitMerge className="w-4 h-4 text-red-400" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm flex-1">Root Cause Engine</h2>
+        <span className="text-xs text-white/25">{data.chains.length} issue{data.chains.length !== 1 ? "s" : ""} traced</span>
+      </div>
+
+      <div className="px-6 py-3 border-b border-white/[0.05]">
+        <p className="text-xs text-white/40">{data.summary}</p>
+      </div>
+
+      <div className="divide-y divide-white/[0.04]">
+        {data.chains.map((chain, ci) => (
+          <div key={ci}>
+            <button
+              onClick={() => setExpandedChain(expandedChain === ci ? null : ci)}
+              className="w-full px-6 py-4 flex items-center gap-3 hover:bg-white/[0.02] transition-colors text-left"
+            >
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${chain.issueSeverity === "critical" ? "bg-red-400" : "bg-amber-400"}`} />
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium text-white/80 truncate block">{chain.issueTitle}</span>
+                <span className="text-[10px] text-white/30">Origin: {chain.originLayer} · {chain.hops.filter(h => h.status === "implicated").length} layers implicated</span>
+              </div>
+              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${chain.issueSeverity === "critical" ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400"}`}>
+                {chain.issueSeverity}
+              </span>
+              {expandedChain === ci ? <ChevronUp className="w-3.5 h-3.5 text-white/30 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-white/30 shrink-0" />}
+            </button>
+
+            {expandedChain === ci && (
+              <div className="px-6 pb-5 space-y-4">
+                {/* Hop chain */}
+                <div className="overflow-x-auto">
+                  <div className="flex items-center gap-0 min-w-max">
+                    {LAYERS.map((layer, li) => {
+                      const hop = chain.hops.find(h => h.layer === layer);
+                      const status = hop?.status ?? "unknown";
+                      const hc = hopConfig[status];
+                      return (
+                        <div key={layer} className="flex items-center">
+                          <div className={`rounded-xl border px-3 py-2 text-center w-28 ${hc.bg}`}>
+                            <div className={`flex items-center justify-center gap-1 mb-1`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${hc.dot}`} />
+                              <span className={`text-[9px] font-bold ${hc.color}`}>{hc.label}</span>
+                            </div>
+                            <div className="text-[10px] text-white/50 font-medium leading-tight">{layer}</div>
+                            {hop?.evidence && (
+                              <div className="text-[9px] text-white/30 mt-1 leading-tight line-clamp-2">{hop.evidence}</div>
+                            )}
+                          </div>
+                          {li < LAYERS.length - 1 && (
+                            <div className="w-4 h-px bg-white/10 mx-0.5" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Blast radius */}
+                <div className="bg-red-500/[0.04] border border-red-500/15 rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                    <span className="text-xs font-bold text-red-400">Blast Radius</span>
+                  </div>
+                  <p className="text-xs text-white/50 leading-relaxed">{chain.blastRadius}</p>
+                </div>
+
+                {/* Fix PR */}
+                <div className="border border-white/[0.07] rounded-xl overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-2 border-b border-white/[0.05] bg-white/[0.02]">
+                    <Terminal className="w-3 h-3 text-green-400" />
+                    <span className="text-[11px] font-bold text-white/50 flex-1">Auto-Generated Fix PR</span>
+                    {!chain.fixPR.startsWith("🔒") ? (
+                      <button onClick={() => copyPR(chain.fixPR, ci)}
+                        className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white/60 transition-colors">
+                        {copiedPR === ci ? <><CheckCheck className="w-2.5 h-2.5 text-green-400" />Copied!</> : <><Copy className="w-2.5 h-2.5" />Copy</>}
+                      </button>
+                    ) : (
+                      <Link href="/pricing" className="text-[10px] text-violet-400 hover:underline">Upgrade</Link>
+                    )}
+                  </div>
+                  <pre className="px-4 py-3 text-[10px] text-white/40 leading-relaxed overflow-x-auto whitespace-pre-wrap font-mono max-h-40 overflow-y-auto">
+                    {chain.fixPR}
+                  </pre>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Cleanup Radar Panel ───────────────────────────────────────────────────────
+function CleanupRadarPanel({ data }: { data: NonNullable<ScanDetail["cleanupReport"]> }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const debtColor = data.debtScore >= 70 ? "text-red-400" : data.debtScore >= 40 ? "text-amber-400" : "text-green-400";
+  const debtBg = data.debtScore >= 70 ? "bg-red-500/10 border-red-500/20" : data.debtScore >= 40 ? "bg-amber-500/10 border-amber-500/20" : "bg-green-500/10 border-green-500/20";
+
+  const categoryColors: Record<string, string> = {
+    security: "bg-red-500",
+    performance: "bg-orange-500",
+    typescript: "bg-blue-500",
+    react: "bg-cyan-500",
+    "dead-code": "bg-white/30",
+    architecture: "bg-violet-500",
+    "error-handling": "bg-amber-500",
+    logging: "bg-yellow-500",
+    testing: "bg-green-500",
+    accessibility: "bg-emerald-500",
+  };
+
+  const cats = Object.entries(data.categories ?? {}).sort((a, b) => b[1] - a[1]);
+  const total = cats.reduce((s, [, v]) => s + v, 0) || 1;
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.13 }}
+      className="glass rounded-2xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-white/[0.05] flex items-center gap-3">
+        <Layers className="w-4 h-4 text-amber-400" />
+        <h2 className="text-white font-bold font-['Syne'] text-sm flex-1">Cleanup Radar</h2>
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${debtBg} ${debtColor}`}>
+          Tech Debt {data.debtScore}/100
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 border-b border-white/[0.05]">
+        {[
+          { label: "Total Findings", value: data.totalFindings, color: "text-white/70" },
+          { label: "Errors", value: data.errorCount, color: "text-red-400" },
+          { label: "Auto-Fixable", value: data.autoFixableCount, color: "text-green-400" },
+          { label: "Est. Fix Time", value: `${data.estimatedCleanupMinutes}m`, color: "text-sky-400" },
+        ].map((s) => (
+          <div key={s.label} className="px-5 py-3 text-center border-r border-white/[0.05] last:border-0">
+            <div className={`text-xl font-bold font-['Syne'] ${s.color}`}>{s.value}</div>
+            <div className="text-[10px] text-white/25 mt-0.5">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Category bar chart */}
+      {cats.length > 0 && (
+        <div className="px-6 py-4 border-b border-white/[0.05]">
+          <div className="text-[10px] text-white/25 uppercase tracking-widest mb-3">Debt by Category</div>
+          <div className="space-y-2">
+            {cats.slice(0, 6).map(([cat, count]) => (
+              <div key={cat} className="flex items-center gap-3">
+                <span className="text-[11px] text-white/40 w-28 capitalize shrink-0">{cat}</span>
+                <div className="flex-1 h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${categoryColors[cat] ?? "bg-white/30"}`}
+                    style={{ width: `${(count / total) * 100}%` }}
+                  />
+                </div>
+                <span className="text-[11px] text-white/30 w-6 text-right">{count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Summary */}
+      <div className="px-6 py-3 border-b border-white/[0.05]">
+        <p className="text-xs text-white/40 leading-relaxed">{data.summary}</p>
+      </div>
+
+      {/* Top files */}
+      {data.topFiles && data.topFiles.length > 0 && (
+        <div className="px-6 py-3 border-b border-white/[0.05]">
+          <div className="text-[10px] text-white/25 uppercase tracking-widest mb-2">Hotspot Files</div>
+          <div className="flex flex-wrap gap-1.5">
+            {data.topFiles.slice(0, 6).map((f) => (
+              <span key={f.path} className="text-[10px] font-mono text-white/40 bg-white/[0.03] border border-white/[0.07] px-2 py-0.5 rounded">
+                {f.path.split("/").pop()} <span className="text-red-400">{f.issueCount}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Findings toggle */}
+      {data.findings && data.findings.length > 0 && (
+        <div>
+          <button onClick={() => setExpanded(!expanded)}
+            className="w-full px-6 py-3 flex items-center gap-2 text-xs text-white/30 hover:text-white/60 transition-colors">
+            {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {expanded ? "Hide" : "Show"} {data.findings.length} findings
+          </button>
+          {expanded && (
+            <div className="divide-y divide-white/[0.04] max-h-80 overflow-y-auto">
+              {data.findings.slice(0, 20).map((f) => (
+                <div key={f.id} className="px-6 py-2.5 flex items-start gap-3">
+                  <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${f.severity === "error" ? "bg-red-400" : f.severity === "warning" ? "bg-amber-400" : "bg-white/20"}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-white/70">{f.title}</p>
+                    <p className="text-[10px] text-white/30 mt-0.5">{f.file}{f.lineHint ? `:${f.lineHint}` : ""}</p>
+                    {f.fixSuggestion && <p className="text-[10px] text-green-400/60 mt-0.5">{f.fixSuggestion}</p>}
+                  </div>
+                  {f.autoFixable && <span className="text-[9px] text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded shrink-0">Auto</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 // ── Pre-Launch Checklist ─────────────────────────────────────────────────────
 function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
   const storageKey = `checklist-${scan.id}`;
@@ -2083,9 +2559,48 @@ export default function ScanResultsPage() {
           <PackageVulnsPanel data={scan.packageVulns} isCreator={user.plan === "creator" || user.plan === "enterprise"} />
         )}
 
-        {/* ── Cleanup Agent ────────────────────────────────── */}
+        {/* ── Digital Twin Simulation — Creator only ────────── */}
+        {scan.digitalTwin && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.23 }}>
+            <CreatorGate
+              plan={user.plan}
+              feature="Digital Twin Simulation"
+              preview="Virtual user journeys, chaos engineering probes, and attack vector simulations across your app"
+            >
+              <DigitalTwinPanel data={scan.digitalTwin} isCreator={user.plan === "creator" || user.plan === "enterprise"} />
+            </CreatorGate>
+          </motion.div>
+        )}
+
+        {/* ── Predictive Intelligence — Creator only ────────── */}
+        {scan.predictiveIntel && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+            <CreatorGate
+              plan={user.plan}
+              feature="Predictive Intelligence"
+              preview="Release confidence score, outage probability, churn risk, and revenue-at-risk forecasts"
+            >
+              <PredictiveIntelPanel data={scan.predictiveIntel} isCreator={user.plan === "creator" || user.plan === "enterprise"} />
+            </CreatorGate>
+          </motion.div>
+        )}
+
+        {/* ── Root Cause Engine — Creator only ──────────────── */}
+        {scan.rootCause && scan.rootCause.chains.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.27 }}>
+            <CreatorGate
+              plan={user.plan}
+              feature="Root Cause Engine"
+              preview="6-layer architectural blast radius tracing with auto-generated fix PR descriptions"
+            >
+              <RootCausePanel data={scan.rootCause} isCreator={user.plan === "creator" || user.plan === "enterprise"} />
+            </CreatorGate>
+          </motion.div>
+        )}
+
+        {/* ── Cleanup Radar ─────────────────────────────────── */}
         {scan.cleanupReport && (
-          <CleanupAgentPanel data={scan.cleanupReport} />
+          <CleanupRadarPanel data={scan.cleanupReport} />
         )}
 
         {/* ── Top 3 Action Plan ────────────────────────────── */}
