@@ -16,8 +16,9 @@ function generateOtp(): string {
 // ── Send OTP (mock — replace with Twilio/MSG91 for production) ────────────
 router.post("/auth/send-otp", async (req, res): Promise<void> => {
   const phone = typeof req.body?.phone === "string" ? req.body.phone.trim() : "";
-  if (!phone || phone.length < 10 || phone.length > 15) {
-    res.status(400).json({ error: "Invalid phone number" });
+  // E.164 international format: + followed by 7–15 digits
+  if (!phone || !/^\+[1-9]\d{6,14}$/.test(phone)) {
+    res.status(400).json({ error: "Invalid phone number. Use international format e.g. +911234567890" });
     return;
   }
 

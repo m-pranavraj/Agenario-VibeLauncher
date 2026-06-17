@@ -164,10 +164,14 @@ test.describe("Register Page", () => {
     console.log("✅ Form validation prevents empty submission");
   });
 
-  test("shows OTP country prefix +91", async ({ page }) => {
+  test("shows country code picker with default country", async ({ page }) => {
+    // Country picker button should be visible
+    const picker = page.locator('[data-testid="input-phone"]').locator("..").locator("..");
+    await expect(picker).toBeVisible();
+    // Default should show India +91
     await expect(page.locator("text=+91")).toBeVisible();
     await screenshot(page, "13-register-phone-field");
-    console.log("✅ Phone field shows +91 India prefix");
+    console.log("✅ Phone field shows international country code picker (default: India +91)");
   });
 });
 
