@@ -439,6 +439,57 @@ Rules:
 - Reference exact file paths in evidence when you have real code context.`;
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function runAgentWithRetry(
+  agent: (typeof AGENTS)[0],
+  sourceType: string,
+  sourceInput: string,
+  appDescription?: string | null,
+  codeContext?: CodeContext | null,
+  retries = 3,
+): Promise<AgentResult> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await groq.chat.completions.create({
+        model: MODEL,
+        messages: [
+          { role: "system", content: agent.role },
+          {
+            role: "user",
+            content: buildUserPrompt(sourceType, sourceInput, appDescription, codeContext, agent.name),
+          },
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 1500,
+      });
+
+      const content = response.choices[0]?.message?.content ?? "{}";
+      const parsed = JSON.parse(content) as { issues?: AgentIssue[] };
+      return {
+        agentName: agent.name,
+        issues: (parsed.issues ?? []).map((issue) => ({
+          ...issue,
+          confidence: issue.confidence ?? 65,
+          evidence: issue.evidence ?? undefined,
+        })),
+      };
+    } catch (err: unknown) {
+      const isRateLimit =
+        err instanceof Error && (err.message.includes("429") || err.message.includes("Rate limit"));
+      if (isRateLimit && attempt < retries) {
+        const waitMs = 15000 * (attempt + 1);
+        logger.warn({ agent: agent.name, attempt, waitMs }, "Rate limited — retrying after wait");
+        await sleep(waitMs);
+        continue;
+      }
+      logger.error({ err, agent: agent.name }, "Agent failed");
+      return { agentName: agent.name, issues: [] };
+    }
+  }
+  return { agentName: agent.name, issues: [] };
+}
+
 async function runAgent(
   agent: (typeof AGENTS)[0],
   sourceType: string,
@@ -446,34 +497,24 @@ async function runAgent(
   appDescription?: string | null,
   codeContext?: CodeContext | null,
 ): Promise<AgentResult> {
-  try {
-    const response = await groq.chat.completions.create({
-      model: MODEL,
-      messages: [
-        { role: "system", content: agent.role },
-        {
-          role: "user",
-          content: buildUserPrompt(sourceType, sourceInput, appDescription, codeContext, agent.name),
-        },
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 2048,
-    });
+  return runAgentWithRetry(agent, sourceType, sourceInput, appDescription, codeContext);
+}
 
-    const content = response.choices[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(content) as { issues?: AgentIssue[] };
-    return {
-      agentName: agent.name,
-      issues: (parsed.issues ?? []).map((issue) => ({
-        ...issue,
-        confidence: issue.confidence ?? 65,
-        evidence: issue.evidence ?? undefined,
-      })),
-    };
-  } catch (err) {
-    logger.error({ err, agent: agent.name }, "Agent failed");
-    return { agentName: agent.name, issues: [] };
+async function runBatched<T>(
+  tasks: Array<() => Promise<T>>,
+  batchSize: number,
+  delayMs: number,
+): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < tasks.length; i += batchSize) {
+    const batch = tasks.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map((fn) => fn()));
+    results.push(...batchResults);
+    if (i + batchSize < tasks.length) {
+      await sleep(delayMs);
+    }
   }
+  return results;
 }
 
 async function runLaunchRiskForecast(
@@ -708,15 +749,17 @@ export async function runAllAgents(
 ): Promise<ScanAnalysisResult> {
   logger.info({ sourceType, sourceInput }, "Starting deep analysis");
 
-  // Run all agents fully in parallel alongside compliance + revenue analysis
-  const agentResults = await Promise.all(
-    AGENTS.map((agent) => runAgent(agent, sourceType, sourceInput, appDescription, codeContext)),
+  // Run agents in batches of 3 with 5s delay between batches to stay within Groq TPM limits
+  const agentTasks = AGENTS.map(
+    (agent) => () => runAgent(agent, sourceType, sourceInput, appDescription, codeContext),
   );
+  const agentResults = await runBatched(agentTasks, 3, 5000);
 
-  const [complianceResults, revenueIntelligence] = await Promise.all([
-    runComplianceAnalysis(sourceType, sourceInput, appDescription, codeContext),
-    runRevenueIntelligence(sourceType, sourceInput, appDescription, codeContext),
-  ]);
+  // Run compliance + revenue after agents (sequential to avoid bursting TPM)
+  await sleep(3000);
+  const complianceResults = await runComplianceAnalysis(sourceType, sourceInput, appDescription, codeContext);
+  await sleep(3000);
+  const revenueIntelligence = await runRevenueIntelligence(sourceType, sourceInput, appDescription, codeContext);
 
   const allIssues = agentResults.flatMap((r) => r.issues);
   const issueCounts = {

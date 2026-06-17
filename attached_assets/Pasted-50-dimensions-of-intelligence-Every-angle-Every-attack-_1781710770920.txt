@@ -1,0 +1,439 @@
+50+ dimensions of intelligence
+Every angle. Every attack vector.
+Now auditing
+Everything
+Runtime Security
+8 checks
+Compliance
+8 checks
+Revenue Intelligence
+8 checks
+Performance
+5 checks
+Reliability
+4 checks
+Data Integrity
+4 checks
+Dependencies
+3 checks
+AI Code Quality
+6 checks
+Predictive Intel
+4 checks
+OWASPGDPRPCI-DSSSOC 2ISO 27001HIPAAWCAG 2.1CCPASecret ScanCVE TrackCORS AuditJWT GuardCSRF BlockSQL InjectXSS DetectIDOR ScanSSRF BlockAuth Bypass
+Agenario
+25
+AI Agent Dimensions
+Running in parallel on every scan
+60+
+Secret Patterns
+AWS keys, Stripe, JWT, DB URLs & more
+200+
+CVE-tracked packages
+NVD + GitHub Advisory Database
+50+
+Audit Dimensions
+Code hygiene to compliance to revenue
+Everything inside Agenario
+
+🔍
+Secret Scanner V2
+🛡️
+OWASP Top 10 Mapper
+💉
+SQL Injection Detect
+🔐
+Auth Bypass Detection
+⚡
+CSRF Guard
+🌐
+CORS Misconfiguration
+🔑
+JWT Security Audit
+🕵️
+Session Fixation Risk
+🇪🇺
+GDPR Compliance
+💳
+PCI-DSS Readiness
+🏥
+HIPAA Gap Analysis
+📋
+SOC 2 Posture
+♿
+WCAG 2.1 AA Audit
+🌴
+CCPA Compliance
+🔗
+CWE ID Mapping
+📊
+ISO 27001 Alignment
+🛒
+Checkout Flow Analysis
+🔔
+Webhook Security Audit
+💸
+Revenue Leak Detection
+📉
+Subscription Enforcement
+🎭
+Free Tier Abuse Guard
+⚠️
+Billing Edge Cases
+💰
+Revenue Impact Score
+🏷️
+Promo Code Bypass
+🐌
+N+1 Query Detection
+📦
+Bundle Size Analysis
+🗃️
+DB Index Audit
+💾
+Cache Strategy Review
+🚀
+Cold Start Latency
+🛡️
+Error Boundary Coverage
+🔄
+Retry Logic Gaps
+⏱️
+Timeout Configuration
+🌊
+Graceful Degradation
+✅
+Data Validation Gaps
+🔄
+Transaction Safety
+🗄️
+Schema Migration Risk
+🗑️
+Data Retention Policy
+🔒
+CVE Vulnerability Scan
+📦
+Outdated Dependencies
+📜
+License Compliance
+🧬
+Vibe Code DNA Fingerprint
+🤖
+AI Hallucination Flags
+🧹
+Cleanup Radar Agent
+💀
+Dead Code Detection
+⏰
+Tech Debt Score
+🌍
+Digital Twin Simulation
+🔮
+Predictive Intelligence
+🎯
+Root Cause Engine
+🤝
+Shadow API Radar
+📈
+Regression Memory
+🔍
+Secret Scanner V2
+🛡️
+OWASP Top 10 Mapper
+💉
+SQL Injection Detect
+🔐
+Auth Bypass Detection
+⚡
+CSRF Guard
+🌐
+CORS Misconfiguration
+🔑
+JWT Security Audit
+🕵️
+Session Fixation Risk
+🇪🇺
+GDPR Compliance
+💳
+PCI-DSS Readiness
+🏥
+HIPAA Gap Analysis
+📋
+SOC 2 Posture
+♿
+WCAG 2.1 AA Audit
+🌴
+CCPA Compliance
+🔗
+CWE ID Mapping
+📊
+ISO 27001 Alignment
+🛒
+Checkout Flow Analysis
+🔔
+Webhook Security Audit
+💸
+Revenue Leak Detection
+📉
+Subscription Enforcement
+🎭
+Free Tier Abuse Guard
+⚠️
+Billing Edge Cases
+💰
+Revenue Impact Score
+🏷️
+Promo Code Bypass
+🐌
+N+1 Query Detection
+📦
+Bundle Size Analysis
+🗃️
+DB Index Audit
+💾
+Cache Strategy Review
+🚀
+Cold Start Latency
+🛡️
+Error Boundary Coverage
+🔄
+Retry Logic Gaps
+⏱️
+Timeout Configuration
+🌊
+Graceful Degradation
+✅
+Data Validation Gaps
+🔄
+Transaction Safety
+🗄️
+Schema Migration Risk
+🗑️
+Data Retention Policy
+🔒
+CVE Vulnerability Scan
+📦
+Outdated Dependencies
+📜
+License Compliance
+🧬
+Vibe Code DNA Fingerprint
+🤖
+AI Hallucination Flags
+🧹
+Cleanup Radar Agent
+💀
+Dead Code Detection
+⏰
+Tech Debt Score
+🌍
+Digital Twin Simulation
+🔮
+Predictive Intelligence
+🎯
+Root Cause Engine
+🤝
+Shadow API Radar
+📈
+Regression Memory
+📈
+Regression Memory
+🤝
+Shadow API Radar
+🎯
+Root Cause Engine
+🔮
+Predictive Intelligence
+🌍
+Digital Twin Simulation
+⏰
+Tech Debt Score
+💀
+Dead Code Detection
+🧹
+Cleanup Radar Agent
+🤖
+AI Hallucination Flags
+🧬
+Vibe Code DNA Fingerprint
+📜
+License Compliance
+📦
+Outdated Dependencies
+🔒
+CVE Vulnerability Scan
+🗑️
+Data Retention Policy
+🗄️
+Schema Migration Risk
+🔄
+Transaction Safety
+✅
+Data Validation Gaps
+🌊
+Graceful Degradation
+⏱️
+Timeout Configuration
+🔄
+Retry Logic Gaps
+🛡️
+Error Boundary Coverage
+🚀
+Cold Start Latency
+💾
+Cache Strategy Review
+🗃️
+DB Index Audit
+📦
+Bundle Size Analysis
+🐌
+N+1 Query Detection
+🏷️
+Promo Code Bypass
+💰
+Revenue Impact Score
+⚠️
+Billing Edge Cases
+🎭
+Free Tier Abuse Guard
+📉
+Subscription Enforcement
+💸
+Revenue Leak Detection
+🔔
+Webhook Security Audit
+🛒
+Checkout Flow Analysis
+📊
+ISO 27001 Alignment
+🔗
+CWE ID Mapping
+🌴
+CCPA Compliance
+♿
+WCAG 2.1 AA Audit
+📋
+SOC 2 Posture
+🏥
+HIPAA Gap Analysis
+💳
+PCI-DSS Readiness
+🇪🇺
+GDPR Compliance
+🕵️
+Session Fixation Risk
+🔑
+JWT Security Audit
+🌐
+CORS Misconfiguration
+⚡
+CSRF Guard
+🔐
+Auth Bypass Detection
+💉
+SQL Injection Detect
+🛡️
+OWASP Top 10 Mapper
+🔍
+Secret Scanner V2
+📈
+Regression Memory
+🤝
+Shadow API Radar
+🎯
+Root Cause Engine
+🔮
+Predictive Intelligence
+🌍
+Digital Twin Simulation
+⏰
+Tech Debt Score
+💀
+Dead Code Detection
+🧹
+Cleanup Radar Agent
+🤖
+AI Hallucination Flags
+🧬
+Vibe Code DNA Fingerprint
+📜
+License Compliance
+📦
+Outdated Dependencies
+🔒
+CVE Vulnerability Scan
+🗑️
+Data Retention Policy
+🗄️
+Schema Migration Risk
+🔄
+Transaction Safety
+✅
+Data Validation Gaps
+🌊
+Graceful Degradation
+⏱️
+Timeout Configuration
+🔄
+Retry Logic Gaps
+🛡️
+Error Boundary Coverage
+🚀
+Cold Start Latency
+💾
+Cache Strategy Review
+🗃️
+DB Index Audit
+📦
+Bundle Size Analysis
+🐌
+N+1 Query Detection
+🏷️
+Promo Code Bypass
+💰
+Revenue Impact Score
+⚠️
+Billing Edge Cases
+🎭
+Free Tier Abuse Guard
+📉
+Subscription Enforcement
+💸
+Revenue Leak Detection
+🔔
+Webhook Security Audit
+🛒
+Checkout Flow Analysis
+📊
+ISO 27001 Alignment
+🔗
+CWE ID Mapping
+🌴
+CCPA Compliance
+♿
+WCAG 2.1 AA Audit
+📋
+SOC 2 Posture
+🏥
+HIPAA Gap Analysis
+💳
+PCI-DSS Readiness
+🇪🇺
+GDPR Compliance
+🕵️
+Session Fixation Risk
+🔑
+JWT Security Audit
+🌐
+CORS Misconfiguration
+⚡
+CSRF Guard
+🔐
+Auth Bypass Detection
+💉
+SQL Injection Detect
+🛡️
+OWASP Top 10 Mapper
+🔍
+Secret Scanner V2
+Free for your first scans — no credit card

@@ -1339,68 +1339,55 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* ── A to Z Features ──────────────────────────────── */}
-        <section className="px-6 py-28 bg-white/[0.012] border-t border-white/[0.05]">
-          <div className="max-w-7xl mx-auto">
-            <motion.div className="text-center mb-14" initial="hidden" whileInView="show" viewport={{ once: true }} variants={STAGGER}>
-              <motion.p variants={FADE_UP} className="text-xs text-white/30 uppercase tracking-[0.25em] font-medium mb-4">Complete Capability Index</motion.p>
-              <motion.h2 variants={FADE_UP} className="text-3xl md:text-4xl font-heading font-bold text-white mb-4">
-                Everything Agenario checks.<br />
-                <span className="text-white/35">From A to Z.</span>
-              </motion.h2>
-              <motion.p variants={FADE_UP} className="text-white/40 text-base max-w-xl mx-auto">
-                Every dimension, every check, every agent — in one place. Sorted by category. No hidden rules.
-              </motion.p>
-            </motion.div>
+        {/* ── Capability Marquee ───────────────────────────── */}
+        <section className="py-24 bg-white/[0.012] border-t border-white/[0.05] overflow-hidden">
+          <motion.div
+            className="text-center mb-14 px-6"
+            initial="hidden" whileInView="show" viewport={{ once: true }} variants={STAGGER}
+          >
+            <motion.p variants={FADE_UP} className="text-xs text-white/30 uppercase tracking-[0.25em] font-medium mb-4">What gets checked</motion.p>
+            <motion.h2 variants={FADE_UP} className="text-3xl md:text-4xl font-heading font-bold text-white mb-4">
+              Every angle. Every attack vector.<br />
+              <span className="text-white/35">Nothing hidden.</span>
+            </motion.h2>
+          </motion.div>
 
-            <div className="grid md:grid-cols-3 gap-x-8 gap-y-10">
-              {FEATURE_CATEGORIES.map((cat, ci) => (
-                <motion.div
-                  key={cat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-30px" }}
-                  transition={{ delay: ci * 0.06, duration: 0.45, ease: "easeOut" }}
-                >
-                  <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/[0.06]">
-                    <div className={`w-2.5 h-2.5 rounded-full ${cat.dot} shrink-0`} />
-                    <span className={`text-xs font-bold uppercase tracking-[0.18em] ${cat.labelColor}`}>{cat.label}</span>
-                    <span className="ml-auto text-[10px] text-white/20 font-medium">{cat.items.length}</span>
+          {/* Three marquee rows with different speeds and directions */}
+          {[
+            { items: FEATURE_ARSENAL.slice(0, 18), dir: 1, speed: 35 },
+            { items: FEATURE_ARSENAL.slice(16, 36), dir: -1, speed: 28 },
+            { items: FEATURE_ARSENAL.slice(32, 50), dir: 1, speed: 40 },
+          ].map((row, ri) => (
+            <div key={ri} className="relative mb-3 last:mb-0">
+              <div className="pointer-events-none absolute inset-y-0 left-0 w-24 z-10 bg-gradient-to-r from-black to-transparent" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-24 z-10 bg-gradient-to-l from-black to-transparent" />
+              <motion.div
+                className="flex gap-3 whitespace-nowrap"
+                animate={{ x: row.dir === 1 ? ["0%", "-50%"] : ["-50%", "0%"] }}
+                transition={{ duration: row.speed, ease: "linear", repeat: Infinity }}
+              >
+                {[...row.items, ...row.items, ...row.items, ...row.items].map((feat, fi) => (
+                  <div
+                    key={fi}
+                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full border ${feat.bg} ${feat.glow} transition-all duration-200 shrink-0 cursor-default select-none`}
+                  >
+                    <span className="text-sm leading-none">{feat.icon}</span>
+                    <span className={`text-xs font-medium ${feat.color}`}>{feat.label}</span>
                   </div>
-                  <ul className="space-y-2">
-                    {cat.items.map((feat, fi) => (
-                      <motion.li
-                        key={feat.label}
-                        initial={{ opacity: 0, x: -8 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: ci * 0.04 + fi * 0.03, duration: 0.3 }}
-                        className="flex items-center gap-2.5 group"
-                      >
-                        <span className="text-[13px] shrink-0 leading-none w-5 text-center">{feat.icon}</span>
-                        <span className={`text-xs font-medium transition-colors duration-150 group-hover:opacity-100 opacity-60 ${feat.color}`}>
-                          {feat.label}
-                        </span>
-                        <CheckCircle className="w-3 h-3 text-white/10 group-hover:text-green-400/60 ml-auto shrink-0 transition-colors duration-150" />
-                      </motion.li>
-                    ))}
-                  </ul>
-                </motion.div>
-              ))}
+                ))}
+              </motion.div>
             </div>
+          ))}
 
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
-              className="mt-12 text-center"
-            >
-              <p className="text-xs text-white/20">
-                50 checks across 9 categories · New dimensions added every sprint · Enterprise gets custom audit rules
-              </p>
-            </motion.div>
-          </div>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.6 }}
+            className="text-center text-xs text-white/20 mt-10 px-6"
+          >
+            50+ checks · 9 categories · new dimensions added every sprint
+          </motion.p>
         </section>
 
         {/* ── Footer ────────────────────────────────────────── */}
