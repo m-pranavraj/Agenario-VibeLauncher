@@ -1,12 +1,23 @@
 import Groq from "groq-sdk";
 import { logger } from "./logger.js";
 
+// Primary: Groq (fast, high TPM free tier)
 const groq = new Groq({ apiKey: process.env["GROQ_API_KEY"] });
 
-// Fast small model — higher TPM, same free tier. Used for all per-agent analysis.
+// Secondary: Cerebras (OpenAI-compatible endpoint, llama-3.3-70b on wafer-scale silicon)
+const cerebras = process.env["CEREBRAS_API_KEY"]
+  ? new Groq({
+      apiKey: process.env["CEREBRAS_API_KEY"],
+      baseURL: "https://api.cerebras.ai/v1",
+    })
+  : null;
+
+// Fast small model on Groq — for all 10 parallel per-agent calls
 const FAST_MODEL = "llama-3.1-8b-instant";
-// Smart large model — reserved for final synthesis/forecast calls only.
+// Smart model on Groq — reserved for synthesis/forecast
 const SMART_MODEL = "llama-3.3-70b-versatile";
+// Cerebras model — full 70b at ~2000 tok/s, used as fallback/secondary
+const CEREBRAS_MODEL = "llama-3.3-70b";
 
 interface AgentIssue {
   severity: "critical" | "high" | "medium" | "low";
@@ -444,6 +455,44 @@ Rules:
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+async function callWithFallback(
+  messages: { role: "system" | "user"; content: string }[],
+  opts: { model: string; cerebrasModel?: string; maxTokens?: number },
+): Promise<string> {
+  const messages_typed = messages as Parameters<typeof groq.chat.completions.create>[0]["messages"];
+  // Try primary (Groq)
+  try {
+    const response = await groq.chat.completions.create({
+      model: opts.model,
+      messages: messages_typed,
+      response_format: { type: "json_object" },
+      max_tokens: opts.maxTokens ?? 1500,
+    });
+    return response.choices[0]?.message?.content ?? "{}";
+  } catch (primaryErr: unknown) {
+    const isRateLimit =
+      primaryErr instanceof Error &&
+      (primaryErr.message.includes("429") || primaryErr.message.includes("Rate limit"));
+
+    // On rate limit, immediately try Cerebras before waiting
+    if (isRateLimit && cerebras) {
+      try {
+        logger.info("Groq rate limited — falling back to Cerebras");
+        const response = await cerebras.chat.completions.create({
+          model: opts.cerebrasModel ?? CEREBRAS_MODEL,
+          messages: messages_typed,
+          response_format: { type: "json_object" },
+          max_tokens: opts.maxTokens ?? 1500,
+        });
+        return response.choices[0]?.message?.content ?? "{}";
+      } catch (cerebrasErr) {
+        logger.warn({ cerebrasErr }, "Cerebras fallback also failed");
+      }
+    }
+    throw primaryErr;
+  }
+}
+
 async function runAgentWithRetry(
   agent: (typeof AGENTS)[0],
   sourceType: string,
@@ -452,22 +501,14 @@ async function runAgentWithRetry(
   codeContext?: CodeContext | null,
   retries = 3,
 ): Promise<AgentResult> {
+  const messages = [
+    { role: "system" as const, content: agent.role },
+    { role: "user" as const, content: buildUserPrompt(sourceType, sourceInput, appDescription, codeContext, agent.name) },
+  ];
+
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const response = await groq.chat.completions.create({
-        model: FAST_MODEL,
-        messages: [
-          { role: "system", content: agent.role },
-          {
-            role: "user",
-            content: buildUserPrompt(sourceType, sourceInput, appDescription, codeContext, agent.name),
-          },
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 1500,
-      });
-
-      const content = response.choices[0]?.message?.content ?? "{}";
+      const content = await callWithFallback(messages, { model: FAST_MODEL });
       const parsed = JSON.parse(content) as { issues?: AgentIssue[] };
       return {
         agentName: agent.name,
@@ -481,8 +522,8 @@ async function runAgentWithRetry(
       const isRateLimit =
         err instanceof Error && (err.message.includes("429") || err.message.includes("Rate limit"));
       if (isRateLimit && attempt < retries) {
-        const waitMs = 15000 * (attempt + 1);
-        logger.warn({ agent: agent.name, attempt, waitMs }, "Rate limited — retrying after wait");
+        const waitMs = 10000 * (attempt + 1);
+        logger.warn({ agent: agent.name, attempt, waitMs }, "Both providers rate limited — waiting");
         await sleep(waitMs);
         continue;
       }
