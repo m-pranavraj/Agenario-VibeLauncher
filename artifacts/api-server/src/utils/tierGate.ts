@@ -34,11 +34,34 @@ export function applyTierGate(
 ): Record<string, unknown> {
   if (plan !== "free") return data;
 
-  // ── Issues: first 3 fully unlocked, rest locked with partial reveal ──
+  // ── Issues: first 3 fully unlocked, issues 4-5 fix-prompt visible but
+  //    description/evidence locked, issues 6+ fully locked ──────────────
   if (Array.isArray(data["issues"])) {
     const issues = data["issues"] as Array<Record<string, unknown>>;
     data["issues"] = issues.map((issue, i) => {
+      // First 3: fully visible
       if (i < 3) return issue;
+
+      // Issues 4-5: show fix prompt, lock description + evidence
+      if (i < 5) {
+        const fileHint =
+          typeof issue["evidence"] === "string"
+            ? extractFileHint(issue["evidence"] as string)
+            : null;
+        return {
+          ...issue,
+          description:
+            typeof issue["description"] === "string"
+              ? (issue["description"] as string).slice(0, 100) + "… (upgrade for full details)"
+              : "Upgrade to view full details",
+          evidence: fileHint ? `Found in: ${fileHint}` : null,
+          codeRef: null,
+          locked: true,
+          promptUnlocked: true, // fix prompt stays visible
+        };
+      }
+
+      // Issues 6+: fully locked with blurred preview
       const fileHint =
         typeof issue["evidence"] === "string"
           ? extractFileHint(issue["evidence"] as string)
@@ -57,9 +80,10 @@ export function applyTierGate(
         evidence: fileHint ? `Found in: ${fileHint}` : null,
         codeRef: null,
         locked: true,
+        promptUnlocked: false,
       };
     });
-    data["_lockedIssueCount"] = Math.max(0, issues.length - 3);
+    data["_lockedIssueCount"] = Math.max(0, issues.length - 5);
   }
 
   // ── Revenue Intelligence: first 2 leaks visible ───────────────

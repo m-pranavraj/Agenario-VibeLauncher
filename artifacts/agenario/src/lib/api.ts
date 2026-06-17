@@ -48,6 +48,7 @@ export interface ScanIssue {
   confidence?: number;
   evidence?: string | null;
   locked?: boolean;
+  promptUnlocked?: boolean;
   owaspMapping?: OwaspMapping;
 }
 
