@@ -66,6 +66,66 @@ uri = "file://attached_assets/generated_images/dark_comedy_meme_style_3e3a.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "M2NOGlA88H4XnU0DV1QcR"
+uri = "file://attached_assets/generated_images/2d_flat_vector_character_95eb.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "cWsfUH8RAIavMz319q4xg"
+uri = "file://attached_assets/generated_images/3d_render_character_powerful_0061.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "tEds_SGtE41vb3DZ8Q-e2"
+uri = "file://attached_assets/generated_images/2d_cartoon_character_cool_e1d1.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "5NnZWo1va84HH-7MnunAo"
+uri = "file://attached_assets/generated_images/3d_sculpt_character_sleek_7aac.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "7MKbzTB-pYkMZMSmgKeBn"
+uri = "file://attached_assets/generated_images/2d_pixel_art_character_d153.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "1NUfOblVDT8UONz7S9Zqg"
+uri = "file://attached_assets/generated_images/3d_render_character_giant_1995.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "yREB523zrFSeCS_SjGQq-"
+uri = "file://attached_assets/generated_images/2d_anime_style_character_b938.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "hf6zZQ1vK5iqGg22SEIQh"
+uri = "file://attached_assets/generated_images/3d_abstract_character_swirling_5f83.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Fy8Frf2OmU4UlxDBvnOM1"
+uri = "file://attached_assets/generated_images/2d_flat_sticker_character_f159.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "BdqbApa1zGb8XUqNFMpOp"
+uri = "file://attached_assets/generated_images/3d_render_character_majestic_e282.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "MKsKEUkgLZ0zqc3SJPmWy"
 uri = "file://artifacts/agenario/public/opengraph.jpg"
@@ -131,3 +191,63 @@ id = "dRLhl19K3F7FuBacwoyRE"
 uri = "file://ads/9x16/story-010.jpg"
 type = "image"
 title = "Story 10 — Blind Launch vs Reviewed Launch split"
+
+[[outputs]]
+id = "nh9oUjirnWhk-CHNgmeOH"
+uri = "file://ads/characters/char-01-bugbot-2d.jpg"
+type = "image"
+title = "Bug Bot — 2D flat sticker robot"
+
+[[outputs]]
+id = "BbFPijUxp9e8SuQnmhUwZ"
+uri = "file://ads/characters/char-02-codequeen-3d.jpg"
+type = "image"
+title = "Code Queen — 3D crystal warrior"
+
+[[outputs]]
+id = "jj8Ff7l6yhVtvyYIGMuYz"
+uri = "file://ads/characters/char-03-hackcat-2d.jpg"
+type = "image"
+title = "Hack Cat — 2D cartoon hacker"
+
+[[outputs]]
+id = "-0zfpsHVtFRq7lrHHTal2"
+uri = "file://ads/characters/char-04-chromeguard-3d.jpg"
+type = "image"
+title = "Chrome Guard — 3D shield robot"
+
+[[outputs]]
+id = "Qm_0Tq3Gt-8zOhuiXpNHg"
+uri = "file://ads/characters/char-05-pixelghost-2d.jpg"
+type = "image"
+title = "Pixel Ghost — 2D glitchy mascot"
+
+[[outputs]]
+id = "JwRPdImZk2N4bZL-zVAz2"
+uri = "file://ads/characters/char-06-neurabrain-3d.jpg"
+type = "image"
+title = "Neura Brain — 3D AI brain character"
+
+[[outputs]]
+id = "80GAa5WTA02t2_c026MiZ"
+uri = "file://ads/characters/char-07-cyberpunk-girl-2d.jpg"
+type = "image"
+title = "Cyber Coder — 2D anime girl"
+
+[[outputs]]
+id = "DultjAGnjNR0qhDrYxiCy"
+uri = "file://ads/characters/char-08-vortex-3d.jpg"
+type = "image"
+title = "Vortex — 3D code tornado entity"
+
+[[outputs]]
+id = "-CA64DwjzOdcj5VPJDohQ"
+uri = "file://ads/characters/char-09-tinysheriff-2d.jpg"
+type = "image"
+title = "Tiny Sheriff — 2D chip cowboy"
+
+[[outputs]]
+id = "HxbCAQPOy8IsdC92IB-93"
+uri = "file://ads/characters/char-10-dragoncode-3d.jpg"
+type = "image"
+title = "Dragon Code — 3D neon code dragon"
