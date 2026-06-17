@@ -134,11 +134,11 @@ const PARALLEL_STATS = [
 ];
 
 const DIGITAL_TWIN_STEPS = [
-  { icon: "📥", label: "Ingest", desc: "Clone your codebase, routes, schemas", color: "violet" },
-  { icon: "🧬", label: "Clone", desc: "Build a virtual production environment", color: "blue" },
-  { icon: "👤", label: "Simulate", desc: "Run 1000+ synthetic user journeys", color: "cyan" },
-  { icon: "💣", label: "Attack", desc: "Inject chaos: SQLi, XSS, privilege escalation", color: "red" },
-  { icon: "🔮", label: "Predict", desc: "Know consequences before you ship", color: "fuchsia" },
+  { icon: "📥", label: "Ingest", desc: "Codebase, routes, schemas", color: "violet" },
+  { icon: "🧬", label: "Clone", desc: "Virtual production environment", color: "blue" },
+  { icon: "👤", label: "Simulate", desc: "Synthetic user journeys", color: "cyan" },
+  { icon: "💣", label: "Attack", desc: "Chaos & attack scenarios", color: "red" },
+  { icon: "🔮", label: "Predict", desc: "Consequences before launch", color: "fuchsia" },
 ];
 
 const DEEP_TECH_LAYERS = [
@@ -148,14 +148,8 @@ const DEEP_TECH_LAYERS = [
     bg: "bg-violet-500/[0.08]",
     border: "border-violet-500/20",
     label: "Runtime Proof Engine",
-    tagline: "Real HTTP evidence, not theory",
-    bullets: [
-      "IDOR fuzzer probes sequential user/order IDs across live endpoints",
-      "Stripe bypass: sends amount:-100 to catch server-side price validation gaps",
-      "PII bundle scanner: regex-scans JS bundles for sk_live_, AKIA, service_role keys",
-      "Chaos engine: tests graceful degradation when DB/auth services fail",
-      "Every finding backed by reproduction steps + HTTP response evidence",
-    ],
+    tagline: "Real evidence, not theory",
+    keywords: ["Access control proofs", "Payment bypass detection", "PII exposure scan", "Chaos injection", "HTTP evidence chain"],
   },
   {
     icon: Layers,
@@ -163,14 +157,8 @@ const DEEP_TECH_LAYERS = [
     bg: "bg-cyan-500/[0.08]",
     border: "border-cyan-500/20",
     label: "Parallel Agent Swarm",
-    tagline: "25 specialized AI agents firing simultaneously",
-    bullets: [
-      "Security, compliance, revenue, performance, UX, reliability — all in parallel",
-      "Mobile & PWA audit, i18n/a11y deep scan, supply chain security",
-      "Cloud cost efficiency + competitive gap analysis",
-      "Founder blind spots + AI code quality hallucination detector",
-      "No bottleneck — full report in seconds, not minutes",
-    ],
+    tagline: "All dimensions fire simultaneously",
+    keywords: ["Security & compliance", "Revenue intelligence", "Mobile & PWA", "Supply chain", "Founder blind spots"],
   },
   {
     icon: Telescope,
@@ -179,13 +167,7 @@ const DEEP_TECH_LAYERS = [
     border: "border-fuchsia-500/20",
     label: "Predictive Intelligence",
     tagline: "Know failures before users do",
-    bullets: [
-      "Release Confidence Score: 0–100 composite of all agent findings",
-      "Outage probability forecast based on reliability findings",
-      "Churn risk % computed from UX + performance degradation signals",
-      "Revenue at risk $ quantified per finding in your billing currency",
-      "Customer Trust Score: security + compliance composite index",
-    ],
+    keywords: ["Release confidence score", "Outage probability", "Churn risk %", "Revenue at risk", "Customer trust index"],
   },
   {
     icon: Globe,
@@ -193,14 +175,8 @@ const DEEP_TECH_LAYERS = [
     bg: "bg-blue-500/[0.08]",
     border: "border-blue-500/20",
     label: "Digital Twin Testing",
-    tagline: "Simulate production before deployment",
-    bullets: [
-      "Virtual clone of your app with all routes, schemas, and auth flows",
-      "1000+ synthetic user journeys through real endpoints",
-      "Chaos injection: DB slow, third-party down, auth service failures",
-      "Attack simulation: SQLi, XSS, CSRF, privilege escalation attempts",
-      "Predict consequences — white-screen, data corruption, revenue loss",
-    ],
+    tagline: "Simulate production before you ship",
+    keywords: ["Virtual production clone", "Synthetic user journeys", "Chaos scenarios", "Attack simulation", "Consequence prediction"],
   },
   {
     icon: Target,
@@ -208,14 +184,8 @@ const DEEP_TECH_LAYERS = [
     bg: "bg-red-500/[0.08]",
     border: "border-red-500/20",
     label: "Root Cause Engine",
-    tagline: "Trace failures to their origin layer",
-    bullets: [
-      "When a critical issue fires, traces it: Source → API → DB → Infra → Network → Third-party",
-      "Evidence chain visualization — each hop marked clean or implicated",
-      "Auto-generates a PR description with exact code fix",
-      "Blast radius analysis: which other features are affected",
-      "Fix confidence score: how certain the root cause is",
-    ],
+    tagline: "Trace failures to their origin",
+    keywords: ["Layer-by-layer trace", "Blast radius analysis", "Auto fix PR", "Evidence chain", "Fix confidence score"],
   },
   {
     icon: Bug,
@@ -223,14 +193,8 @@ const DEEP_TECH_LAYERS = [
     bg: "bg-amber-500/[0.08]",
     border: "border-amber-500/20",
     label: "Cleanup Radar",
-    tagline: "Delete what kills your velocity",
-    bullets: [
-      "Stale MD files, TODO/FIXME/HACK comments with exact file locations",
-      "console.log/debugger statements left in production code",
-      "Unused npm dependencies cross-referenced against actual imports",
-      "Dead component files with no imports anywhere in the codebase",
-      "Orphaned API routes — live attack surface with no UI trigger",
-    ],
+    tagline: "Kill what slows your velocity",
+    keywords: ["Dead code detection", "Debug artifacts", "Unused dependencies", "Orphaned routes", "Tech debt score"],
   },
   {
     icon: Wand2,
@@ -238,14 +202,8 @@ const DEEP_TECH_LAYERS = [
     bg: "bg-green-500/[0.08]",
     border: "border-green-500/20",
     label: "Autonomous Repair System",
-    tagline: "Not just detect — recommend exact fixes",
-    bullets: [
-      "Auto-generated fix prompts for every finding — copy into Cursor/Bolt",
-      "1-click PR description with diff-ready code changes",
-      "Ranked by impact × effort — fix the highest-value issue first",
-      "Regression pack: auto-generated test cases to prevent re-introduction",
-      "Post-fix re-validation score: how much your score improves",
-    ],
+    tagline: "Detect and fix, not just report",
+    keywords: ["1-click fix prompts", "Cursor / Bolt ready", "Ranked by impact", "Regression guard", "Post-fix score"],
   },
 ];
 
@@ -307,7 +265,7 @@ const PRICING = [
     desc: "For agencies, studios & funded teams",
     features: ["Everything in Creator", "Team workspace", "API & webhook access", "CI/CD integration", "Custom compliance rules", "Dedicated support & SLA"],
     cta: "Contact Sales",
-    href: "mailto:hello@agenario.ai?subject=Enterprise Plan",
+    href: "/contact",
     highlight: false,
   },
 ];
@@ -420,13 +378,17 @@ function DeepTechLayer({ layer, index }: { layer: typeof DEEP_TECH_LAYERS[0]; in
             transition={{ duration: 0.28, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="px-6 pb-5 space-y-2 border-t border-white/[0.06] pt-4">
-              {layer.bullets.map((b, i) => (
-                <div key={i} className="flex items-start gap-2.5">
-                  <div className={`w-1.5 h-1.5 rounded-full ${layer.color} opacity-70 mt-1.5 shrink-0`} style={{ backgroundColor: "currentColor" }} />
-                  <p className="text-xs text-white/50 leading-relaxed">{b}</p>
-                </div>
-              ))}
+            <div className="px-6 pb-5 border-t border-white/[0.06] pt-4">
+              <div className="flex flex-wrap gap-2">
+                {layer.keywords.map((kw, i) => (
+                  <span
+                    key={i}
+                    className={`text-[11px] font-semibold px-3 py-1.5 rounded-full border ${layer.bg} ${layer.border} ${layer.color} opacity-80`}
+                  >
+                    {kw}
+                  </span>
+                ))}
+              </div>
             </div>
           </motion.div>
         )}
