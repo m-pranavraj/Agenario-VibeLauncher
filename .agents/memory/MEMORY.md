@@ -6,3 +6,6 @@
 - [Logo & About page](logo-about.md) — logo at /public/logo.png, founder photo at /public/founder-photo.jpeg (MOGANTI PRANAV RAJ); /about route added; logo replaces Rocket icon in all page navbars.
 - [Session table must exist](session-table.md) — `session` table in PostgreSQL must be created via raw SQL before app starts; missing table causes all authenticated requests to return 500.
 - [AuthContext Fast Refresh](auth-fast-refresh.md) — split into auth-context.ts (context+types), AuthContext.tsx (AuthProvider only), hooks/use-auth.ts (useAuth); all pages import useAuth from @/hooks/use-auth.
+- [Async scan pipeline](async-scan-pipeline.md) — POST /api/scans returns 202 immediately; pipeline runs fire-and-forget; scan-results.tsx polls every 3s while status==="running".
+- [Cerebras available models](cerebras-models.md) — only "zai-glm-4.7" and "gpt-oss-120b" are available; llama model names cause 404. Use gpt-oss-120b as CEREBRAS_MODEL.
+- [scanLimiter scope](scan-rate-limiter.md) — app.use("/api/scans", scanLimiter) applies to GETs too; must gate only POST methods or GET polling exhausts the 30/hr limit instantly.

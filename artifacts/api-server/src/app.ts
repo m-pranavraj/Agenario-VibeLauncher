@@ -79,7 +79,10 @@ const otpLimiter = rateLimit({
 app.use(globalLimiter);
 app.use("/api/auth", authLimiter);
 app.use("/api/auth/send-otp", otpLimiter);
-app.use("/api/scans", scanLimiter);
+app.use("/api/scans", (req, res, next) => {
+  if (req.method === "POST") return scanLimiter(req, res, next);
+  next();
+});
 
 // ── Logging ───────────────────────────────────────────────────────────────
 app.use(
