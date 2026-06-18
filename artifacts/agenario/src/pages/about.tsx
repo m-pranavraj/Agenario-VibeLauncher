@@ -50,6 +50,14 @@ export default function AboutPage() {
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] blur-3xl rounded-full ${isLight ? "bg-rose-200/[0.40]" : "bg-violet-600/[0.04]"}`} />
         <div className={`absolute bottom-1/4 right-0 w-[500px] h-[500px] blur-3xl rounded-full ${isLight ? "bg-purple-200/[0.30]" : "bg-indigo-600/[0.03]"}`} />
+        {isLight && <>
+          <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.12]" viewBox="0 0 1440 180" preserveAspectRatio="none">
+            <path fill="#ec4899" d="M0,80 C240,160 480,0 720,80 S1200,160 1440,80 V180 H0 Z" />
+          </svg>
+          <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.07]" viewBox="0 0 1440 180" preserveAspectRatio="none">
+            <path fill="#a855f7" d="M0,120 C360,40 720,160 1080,120 S1440,40 1440,120 V180 H0 Z" />
+          </svg>
+        </>}
       </div>
 
       <nav className={`border-b backdrop-blur-2xl sticky top-0 z-20 ${isLight ? "border-pink-100/80 bg-white/90" : "border-white/[0.07] bg-[#050505]/90"}`}>

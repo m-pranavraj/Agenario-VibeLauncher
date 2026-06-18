@@ -93,6 +93,14 @@ export default function DashboardPage() {
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className={`absolute top-[-15%] left-[-5%] w-[50%] h-[50%] blur-[180px] rounded-full ${isLight ? "bg-rose-200/[0.40]" : "bg-violet-600/[0.05]"}`} />
         <div className={`absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] blur-[160px] rounded-full ${isLight ? "bg-purple-200/[0.30]" : "bg-blue-500/[0.04]"}`} />
+        {isLight && <>
+          <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.12]" viewBox="0 0 1440 180" preserveAspectRatio="none">
+            <path fill="#ec4899" d="M0,80 C240,160 480,0 720,80 S1200,160 1440,80 V180 H0 Z" />
+          </svg>
+          <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.07]" viewBox="0 0 1440 180" preserveAspectRatio="none" style={{ marginBottom: "-48px" }}>
+            <path fill="#a855f7" d="M0,120 C360,40 720,160 1080,120 S1440,40 1440,120 V180 H0 Z" />
+          </svg>
+        </>}
       </div>
 
       <nav className={`sticky top-0 z-50 ${t.nav}`}>

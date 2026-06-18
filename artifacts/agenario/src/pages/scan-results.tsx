@@ -5761,8 +5761,8 @@ export default function ScanResultsPage() {
     tabActive: isLight ? "bg-gray-900 text-white shadow-sm" : "bg-white/[0.1] border border-white/20 text-white",
     tabInactive: isLight ? "text-gray-500 hover:text-gray-900 hover:bg-gray-100" : "text-white/35 hover:text-white/60 hover:bg-white/[0.04]",
     tabCountActive:   "bg-white/15 text-white/80",
-    tabCountInactive: `bg-white/[0.07] \${isLight ? "text-gray-400" : "text-white/30"}`,
-    navBtn:           `flex items-center gap-1.5 text-xs \${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border \${isLight ? "border-gray-200" : "border-white/[0.07]"} hover:border-white/15`,
+    tabCountInactive: isLight ? "bg-pink-100/40 text-gray-500" : "bg-white/[0.07] text-white/30",
+    navBtn:           isLight ? "flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors px-3 py-1.5 rounded-lg border border-pink-100/80 hover:border-pink-300" : "flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/15",
     ambient:          isLight ? "absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(252,231,243,0.75)_0%,_transparent_55%)] pointer-events-none" : "absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.04)_0%,_transparent_60%)] pointer-events-none",
   };
 
@@ -5904,6 +5904,14 @@ export default function ScanResultsPage() {
     <div className={`min-h-screen ${t.page}`}>
       <div className={t.ambient} />
       <div className={`absolute bottom-0 left-0 w-[600px] h-[400px] rounded-full blur-[150px] pointer-events-none ${isLight ? "bg-purple-200/[0.20]" : "bg-indigo-600/[0.03]"}`} />
+      {isLight && <div className="absolute bottom-0 left-0 right-0 overflow-hidden pointer-events-none">
+        <svg className="w-full opacity-[0.12]" viewBox="0 0 1440 180" preserveAspectRatio="none">
+          <path fill="#ec4899" d="M0,80 C240,160 480,0 720,80 S1200,160 1440,80 V180 H0 Z" />
+        </svg>
+        <svg className="w-full opacity-[0.07] -mt-24" viewBox="0 0 1440 180" preserveAspectRatio="none">
+          <path fill="#a855f7" d="M0,120 C360,40 720,160 1080,120 S1440,40 1440,120 V180 H0 Z" />
+        </svg>
+      </div>}
 
       <nav className={`border-b sticky top-0 z-10 ${t.nav}`}>
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-3">

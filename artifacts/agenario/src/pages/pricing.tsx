@@ -217,6 +217,11 @@ export default function PricingPage() {
     <div className={`min-h-screen ${isLight ? "bg-[#fdf4f8]" : "bg-[#050505]"}`}>
       <div className={`absolute inset-0 ${isLight ? "bg-[radial-gradient(ellipse_at_top_right,_rgba(252,231,243,0.8)_0%,_transparent_55%)]" : "bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.06)_0%,_transparent_60%)]"} pointer-events-none`} />
       <div className={`absolute bottom-0 left-0 w-[600px] h-[400px] rounded-full blur-[150px] pointer-events-none ${isLight ? "bg-purple-200/[0.20]" : "bg-indigo-600/[0.03]"}`} />
+      {isLight && <div className="absolute bottom-0 left-0 right-0 overflow-hidden pointer-events-none">
+        <svg className="w-full opacity-[0.12]" viewBox="0 0 1440 180" preserveAspectRatio="none">
+          <path fill="#ec4899" d="M0,80 C240,160 480,0 720,80 S1200,160 1440,80 V180 H0 Z" />
+        </svg>
+      </div>}
 
       <nav className={`border-b ${isLight ? "bg-white/90 border-pink-100/80" : "bg-[#050505]/90 border-white/[0.07]"} backdrop-blur-2xl sticky top-0 z-10`}>
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-3">
@@ -263,7 +268,7 @@ export default function PricingPage() {
                 className={`relative rounded-2xl p-7 flex flex-col aurora-card ${
                   plan.highlight
                     ? isLight ? "bg-violet-600 border-violet-600 shadow-xl shadow-violet-200" : "bg-white/[0.07] border border-white/20 aurora-card-intense"
-                    : isLight ? "bg-white border-gray-200 shadow-sm" : "glass"
+                    : isLight ? "bg-white border border-pink-100/80 shadow-sm" : "glass"
                 }`}
               >
                 {plan.badge && (
