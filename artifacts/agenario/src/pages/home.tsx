@@ -12,6 +12,7 @@ import {
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "next-themes";
 import type { Variants } from "framer-motion";
 
 /* ── Animation variants ─────────────────────────────────────── */
@@ -197,7 +198,10 @@ export default function Home() {
   const { scrollYProgress } = useScroll();
   const yBg = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isLight, setIsLight] = useState(false);
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const isLight = mounted ? resolvedTheme === "light" : false;
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
@@ -281,7 +285,7 @@ export default function Home() {
             <motion.button
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.93 }}
-              onClick={() => setIsLight((v) => !v)}
+              onClick={() => setTheme(isLight ? "dark" : "light")}
               className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all ${t.toggleBg}`}
               aria-label="Toggle theme"
             >

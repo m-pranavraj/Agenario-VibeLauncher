@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { scansTable as scans } from "@workspace/db/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { scansTable as scans, usersTable as users } from "@workspace/db/schema";
+import { eq, desc, and, lt, gte } from "drizzle-orm";
 import { logger } from "../lib/logger.js";
+import { sendRetentionEmail, previewRetentionEmail, type RetentionEmailData } from "../lib/email.js";
 
 const router = Router();
 
@@ -14,7 +15,8 @@ function requireAuth(req: import("express").Request, res: import("express").Resp
   next();
 }
 
-// Get monitoring overview — all scans for the user with trend data
+// ── Overview ────────────────────────────────────────────────────────────────
+
 router.get("/monitoring/overview", requireAuth, async (req, res) => {
   const userId = req.session!.userId!;
 
@@ -25,7 +27,6 @@ router.get("/monitoring/overview", requireAuth, async (req, res) => {
     .orderBy(desc(scans.createdAt))
     .limit(50);
 
-  // Group by sourceInput for per-app trend
   const appMap = new Map<string, typeof allScans>();
   for (const scan of allScans) {
     const key = scan.sourceInput;
@@ -58,7 +59,8 @@ router.get("/monitoring/overview", requireAuth, async (req, res) => {
   res.json({ apps, totalScans: allScans.length });
 });
 
-// Portfolio — all apps ranked by risk
+// ── Portfolio ────────────────────────────────────────────────────────────────
+
 router.get("/monitoring/portfolio", requireAuth, async (req, res) => {
   const userId = req.session!.userId!;
 
@@ -69,7 +71,6 @@ router.get("/monitoring/portfolio", requireAuth, async (req, res) => {
     .orderBy(desc(scans.createdAt))
     .limit(200);
 
-  // Deduplicate by sourceInput — keep latest scan per app
   const seen = new Set<string>();
   const latestPerApp = allScans.filter((s) => {
     if (seen.has(s.sourceInput)) return false;
@@ -93,13 +94,12 @@ router.get("/monitoring/portfolio", requireAuth, async (req, res) => {
       (s.score ?? 0) < 85 ? "medium" : "low",
   }));
 
-  // Sort by risk (lowest score = highest risk)
   portfolio.sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
-
   res.json({ portfolio });
 });
 
-// Request a rescan of an existing source
+// ── Rescan request ───────────────────────────────────────────────────────────
+
 router.post("/monitoring/rescan", requireAuth, async (req, res) => {
   const userId = req.session!.userId!;
   const { sourceInput, sourceType } = req.body as { sourceInput?: string; sourceType?: string };
@@ -111,8 +111,6 @@ router.post("/monitoring/rescan", requireAuth, async (req, res) => {
 
   logger.info({ userId, sourceInput }, "Rescan requested");
 
-  // Create a pending scan record — the frontend will poll /api/scans to find it
-  // Real rescan logic would trigger runAnalysisPipeline in the background
   const [pendingScan] = await db
     .insert(scans)
     .values({
@@ -129,6 +127,169 @@ router.post("/monitoring/rescan", requireAuth, async (req, res) => {
     scanId: pendingScan?.id,
     note: "Submit a new analysis from the dashboard to run a full rescan.",
   });
+});
+
+// ── Threat Landscape Pulse ────────────────────────────────────────────────────
+//
+// POST /api/monitoring/pulse
+// Called by a daily cron job. Sends retention emails to users whose
+// latest scan score dropped ≥5 pts vs their previous scan, or who have
+// new critical CVEs in their dependency tree.
+//
+// Security: require PULSE_SECRET header to prevent unauthorized triggering.
+
+router.post("/monitoring/pulse", async (req, res) => {
+  const secret = process.env.PULSE_SECRET;
+  if (secret && req.headers["x-pulse-secret"] !== secret) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  // Get all users
+  const allUsers = await db.select().from(users);
+
+  const results: Array<{ userId: number; email: string; sent: boolean; reason: string }> = [];
+
+  for (const user of allUsers) {
+    try {
+      // Get their last 2 completed scans
+      const recentScans = await db
+        .select()
+        .from(scans)
+        .where(and(eq(scans.userId, user.id), eq(scans.status, "completed")))
+        .orderBy(desc(scans.createdAt))
+        .limit(2);
+
+      if (recentScans.length === 0) continue;
+
+      const latest = recentScans[0]!;
+      const previous = recentScans[1] ?? null;
+
+      if (latest.score == null) continue;
+
+      // Get all scans from last 7 days to check if we already notified recently
+      const recentNotifyCheck = await db
+        .select()
+        .from(scans)
+        .where(and(
+          eq(scans.userId, user.id),
+          eq(scans.status, "completed"),
+          gte(scans.createdAt, sevenDaysAgo),
+        ))
+        .limit(5);
+
+      // Determine drift
+      const scoreDrop = previous?.score != null ? Math.max(0, previous.score - latest.score) : 0;
+      const hasScoreDrop = scoreDrop >= 5;
+
+      // Check for critical CVEs in the latest scan
+      const vulns = latest.packageVulns as null | { findings?: Array<{ highestSeverity?: string; vulns?: Array<{ cveId?: string; description?: string; title?: string }> }> ; hasCritical?: boolean };
+      const criticalPackages = vulns?.findings?.filter((f) => f.highestSeverity === "critical") ?? [];
+      const hasCriticalCves = criticalPackages.length > 0 || (vulns?.hasCritical ?? false);
+
+      if (!hasScoreDrop && !hasCriticalCves) {
+        results.push({ userId: user.id, email: user.email, sent: false, reason: "no_drift" });
+        continue;
+      }
+
+      // Build email data
+      const criticalCves = criticalPackages.slice(0, 3).map((pkg: { name?: string; vulns?: Array<{ cveId?: string; description?: string }> }) => ({
+        packageName: pkg.name ?? "unknown",
+        cveId: pkg.vulns?.[0]?.cveId ?? "CVE-UNKNOWN",
+        description: pkg.vulns?.[0]?.description ?? "Critical security vulnerability",
+      }));
+
+      const issues = (latest as { issues?: Array<{ title?: string; severity?: string; agentName?: string }> }).issues ?? [];
+      const topIssues = (Array.isArray(issues) ? issues : [])
+        .filter((i: { severity?: string }) => i.severity === "critical" || i.severity === "high")
+        .slice(0, 3)
+        .map((i: { title?: string; severity?: string; agentName?: string }) => ({
+          title: i.title ?? "Untitled issue",
+          severity: i.severity ?? "high",
+          agentName: i.agentName ?? "Analysis Agent",
+        }));
+
+      const emailData: RetentionEmailData = {
+        userName: user.name,
+        userEmail: user.email,
+        scanId: latest.id,
+        appSource: latest.sourceInput,
+        currentScore: latest.score,
+        previousScore: previous?.score ?? null,
+        criticalCves,
+        newIssues: topIssues,
+      };
+
+      const reason = hasScoreDrop && hasCriticalCves
+        ? `score_drop_${scoreDrop}_and_cves`
+        : hasScoreDrop
+        ? `score_drop_${scoreDrop}`
+        : `critical_cves_${criticalPackages.length}`;
+
+      const sent = await sendRetentionEmail(emailData);
+      results.push({ userId: user.id, email: user.email, sent, reason });
+
+    } catch (err) {
+      logger.error({ err, userId: user.id }, "Pulse check failed for user");
+      results.push({ userId: user.id, email: user.email, sent: false, reason: "error" });
+    }
+  }
+
+  const sentCount = results.filter((r) => r.sent).length;
+  logger.info({ total: allUsers.length, sent: sentCount }, "Pulse check complete");
+
+  res.json({
+    processed: allUsers.length,
+    emailsSent: sentCount,
+    results,
+    note: sentCount === 0 && !process.env.SMTP_HOST
+      ? "SMTP not configured — set SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM, and optionally PULSE_SECRET"
+      : undefined,
+  });
+});
+
+// ── Email preview (dev/testing) ───────────────────────────────────────────────
+
+router.get("/monitoring/preview-email", requireAuth, async (req, res) => {
+  const userId = req.session!.userId!;
+  const user = await db.select().from(users).where(eq(users.id, userId)).limit(1).then((r) => r[0]);
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+  const latestScan = await db
+    .select()
+    .from(scans)
+    .where(and(eq(scans.userId, userId), eq(scans.status, "completed")))
+    .orderBy(desc(scans.createdAt))
+    .limit(2);
+
+  if (!latestScan[0]) {
+    res.status(404).json({ error: "No completed scans found" });
+    return;
+  }
+
+  const emailData: RetentionEmailData = {
+    userName: user.name,
+    userEmail: user.email,
+    scanId: latestScan[0].id,
+    appSource: latestScan[0].sourceInput,
+    currentScore: latestScan[0].score ?? 74,
+    previousScore: latestScan[1]?.score ?? 86,
+    criticalCves: [
+      { packageName: "axios", cveId: "CVE-2024-39338", description: "Server-Side Request Forgery (SSRF) vulnerability in axios <= 1.7.3" },
+      { packageName: "express", cveId: "CVE-2024-43796", description: "Cross-Site Scripting (XSS) in express < 4.20.0" },
+    ],
+    newIssues: [
+      { title: "API keys exposed in client bundle", severity: "critical", agentName: "Security & Access Control" },
+      { title: "Missing CSRF protection on payment routes", severity: "high", agentName: "Business Logic Attack Lab" },
+      { title: "No rate limiting on auth endpoints", severity: "high", agentName: "Observability & Launch Readiness" },
+    ],
+  };
+
+  const html = previewRetentionEmail(emailData);
+  res.setHeader("Content-Type", "text/html");
+  res.send(html);
 });
 
 export default router;

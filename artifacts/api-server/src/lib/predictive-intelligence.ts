@@ -194,7 +194,7 @@ export async function runPredictiveIntel(
     .join(", ");
 
   try {
-    const response = await groq.chat.completions.create({
+    const response = await getClient().chat.completions.create({
       model: MODEL,
       messages: [
         {

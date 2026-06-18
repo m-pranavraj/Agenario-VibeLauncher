@@ -58,7 +58,7 @@ export async function generateCofounderNarrative(input: CofounderInput): Promise
     .join("\n");
 
   try {
-    const response = await groq.chat.completions.create({
+    const response = await getClient().chat.completions.create({
       model: MODEL,
       messages: [
         {
@@ -119,7 +119,7 @@ export async function generateLaunchReplay(input: CofounderInput): Promise<Launc
   ];
 
   try {
-    const response = await groq.chat.completions.create({
+    const response = await getClient().chat.completions.create({
       model: MODEL,
       messages: [
         {
@@ -274,7 +274,7 @@ export async function answerCofounderQuestion(
     .join("\n");
 
   try {
-    const response = await groq.chat.completions.create({
+    const response = await getClient().chat.completions.create({
       model: MODEL,
       messages: [
         {

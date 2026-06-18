@@ -539,7 +539,7 @@ async function callWithFallback(
   messages: { role: "system" | "user"; content: string }[],
   opts: { model: string; cerebrasModel?: string; maxTokens?: number },
 ): Promise<string> {
-  const messages_typed = messages as Groq.ChatCompletionMessageParam[];
+  const messages_typed = messages as { role: "system" | "user" | "assistant"; content: string }[];
 
   // Try OpenRouter first (multiple free models, no rate limits on individual)
   if (openrouter) {

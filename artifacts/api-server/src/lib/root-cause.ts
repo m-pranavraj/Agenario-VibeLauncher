@@ -154,7 +154,7 @@ export async function runRootCause(
       const routes = codeContext?.routes?.slice(0, 600) ?? "";
       const schemas = codeContext?.schemas?.slice(0, 400) ?? "";
 
-      const response = await groq.chat.completions.create({
+      const response = await getClient().chat.completions.create({
         model: MODEL,
         messages: [
           {

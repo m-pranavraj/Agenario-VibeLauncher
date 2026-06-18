@@ -102,7 +102,7 @@ export async function runDigitalTwin(
     const keyFile = codeContext?.keyFiles?.[0];
     const sampleCode = keyFile ? `\n\nSample code (${keyFile.path}):\n${keyFile.content.slice(0, 600)}` : "";
 
-    const response = await groq.chat.completions.create({
+    const response = await getClient().chat.completions.create({
       model: MODEL,
       messages: [
         {
