@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { api, type Scan } from "@/lib/api";
 import { motion } from "framer-motion";
 import {
@@ -174,6 +175,7 @@ export default function IntelligencePage() {
             <span className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Intelligence Hub</span>
           </div>
           <div className="ml-auto flex items-center gap-3">
+            <ThemeToggle />
             <Link href="/scans/new">
               <button className={`flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl transition-colors ${isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white text-black hover:bg-white/90"}`}>
                 <Zap className="w-3.5 h-3.5" /> New Scan

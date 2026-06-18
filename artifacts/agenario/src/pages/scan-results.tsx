@@ -1,27 +1,92 @@
 import { useEffect, useState } from "react";
 import { useLocation, useRoute, Link } from "wouter";
 import {
-  ArrowLeft, Copy, CheckCheck, ChevronDown, ChevronUp,
-  Shield, Zap, Eye, Layers, Bot, Activity, Loader2,
-  AlertTriangle, XCircle, CheckCircle2, CreditCard, Upload, Lock, Search,
-  TrendingUp, TrendingDown, Scale, Database, Cpu, Fingerprint, ShieldCheck,
-  FileText, ArrowRight, BarChart3, DollarSign, Target, ChevronRight,
-  Play, Camera, Minus, Globe, GitBranch, Award, Dna, Users, Share2,
-  Sparkles, ListChecks, ExternalLink, Wifi, Package, Cloud, RefreshCw,
-  Network, Brain, Terminal, GitMerge, AlertCircle, ArrowUpRight, ArrowDownRight,
-  Smartphone, ShieldAlert, Star, Flame, MessageSquare, Send, X,
+  ArrowLeft,
+  Copy,
+  CheckCheck,
+  ChevronDown,
+  ChevronUp,
+  Shield,
+  Zap,
+  Eye,
+  Layers,
+  Bot,
+  Activity,
+  Loader2,
+  AlertTriangle,
+  XCircle,
+  CheckCircle2,
+  CreditCard,
+  Upload,
+  Lock,
+  Search,
+  TrendingUp,
+  TrendingDown,
+  Scale,
+  Database,
+  Cpu,
+  Fingerprint,
+  ShieldCheck,
+  FileText,
+  ArrowRight,
+  BarChart3,
+  DollarSign,
+  Target,
+  ChevronRight,
+  Play,
+  Camera,
+  Minus,
+  Globe,
+  GitBranch,
+  Award,
+  Dna,
+  Users,
+  Share2,
+  Sparkles,
+  ListChecks,
+  ExternalLink,
+  Wifi,
+  Package,
+  Cloud,
+  RefreshCw,
+  Network,
+  Brain,
+  Terminal,
+  GitMerge,
+  AlertCircle,
+  ArrowUpRight,
+  ArrowDownRight,
+  Smartphone,
+  ShieldAlert,
+  Star,
+  Flame,
+  MessageSquare,
+  Send,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
-  api, type ScanDetail, type ScanIssue, type ComplianceResult, type RiskForecast,
-  type RevenueIntelligence, type ProofEvidence, type RegressionDiff, type BenchmarkData,
-  type LaunchDNA, type ShadowApiFindings, type LaunchReplayStep,
-  type DigitalTwinResult, type PredictiveIntelResult, type RootCauseResult,
+  api,
+  type ScanDetail,
+  type ScanIssue,
+  type ComplianceResult,
+  type RiskForecast,
+  type RevenueIntelligence,
+  type ProofEvidence,
+  type RegressionDiff,
+  type BenchmarkData,
+  type LaunchDNA,
+  type ShadowApiFindings,
+  type LaunchReplayStep,
+  type DigitalTwinResult,
+  type PredictiveIntelResult,
+  type RootCauseResult,
 } from "@/lib/api";
 import { motion } from "framer-motion";
 
-// Theme-agnostic severity styles — work on both light and dark backgrounds.
+// Theme-agnostic severity styles - work on both light and dark backgrounds.
 // The app uses JS-conditional `isLight ? "..." : "..."` everywhere, NOT Tailwind
 // dark: prefix (incompatible with this Tailwind v4 + next-themes class setup).
 const SEVERITY_CONFIG = {
@@ -51,12 +116,46 @@ const SEVERITY_CONFIG = {
   },
 };
 
-function getConfidenceStyle(c: number): { label: string; color: string; badge: string; icon: string } {
-  if (c >= 99) return { label: `${c}% — Browser Runtime Proof`, color: "text-green-400", badge: "bg-green-500/15 text-green-400 border border-green-500/25", icon: "🟢" };
-  if (c >= 90) return { label: `${c}% — HTTP Runtime Proof`, color: "text-green-400", badge: "bg-green-500/10 text-green-400 border border-green-500/20", icon: "🔵" };
-  if (c >= 75) return { label: `${c}% — Static Code Evidence`, color: "text-sky-400", badge: "bg-sky-500/10 text-sky-400 border border-sky-500/20", icon: "🔵" };
-  if (c >= 60) return { label: `${c}% — Pattern Match`, color: "text-amber-400", badge: "bg-amber-500/10 text-amber-400 border border-amber-500/20", icon: "🟡" };
-  return { label: `${c}% — AI Reasoning`, color: "text-white/35", badge: "bg-white/[0.05] text-white/35 border border-white/[0.08]", icon: "⚪" };
+function getConfidenceStyle(c: number): {
+  label: string;
+  color: string;
+  badge: string;
+  icon: string;
+} {
+  if (c >= 99)
+    return {
+      label: `${c}% - Browser Runtime Proof`,
+      color: "text-green-400",
+      badge: "bg-green-500/15 text-green-400 border border-green-500/25",
+      icon: "🟢",
+    };
+  if (c >= 90)
+    return {
+      label: `${c}% - HTTP Runtime Proof`,
+      color: "text-green-400",
+      badge: "bg-green-500/10 text-green-400 border border-green-500/20",
+      icon: "🔵",
+    };
+  if (c >= 75)
+    return {
+      label: `${c}% - Static Code Evidence`,
+      color: "text-sky-400",
+      badge: "bg-sky-500/10 text-sky-400 border border-sky-500/20",
+      icon: "🔵",
+    };
+  if (c >= 60)
+    return {
+      label: `${c}% - Pattern Match`,
+      color: "text-amber-400",
+      badge: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+      icon: "🟡",
+    };
+  return {
+    label: `${c}% - AI Reasoning`,
+    color: "text-white/35",
+    badge: "bg-white/[0.05] text-white/35 border border-white/[0.08]",
+    icon: "⚪",
+  };
 }
 
 const AGENT_ICONS: Record<string, React.FC<{ className?: string }>> = {
@@ -107,7 +206,8 @@ const VERDICT_CONFIG = {
   },
   "do-not-launch": {
     label: "Do Not Launch",
-    sublabel: "Critical issues pose serious security, compliance, or revenue risk",
+    sublabel:
+      "Critical issues pose serious security, compliance, or revenue risk",
     icon: XCircle,
     color: "text-red-400",
     bg: "border-red-500/15 bg-red-500/[0.04]",
@@ -124,17 +224,18 @@ const VERDICT_CONFIG = {
 };
 
 const COMPLIANCE_COLORS: Record<string, string> = {
-  "GDPR": "text-blue-400",
+  GDPR: "text-blue-400",
   "OWASP Top 10": "text-red-400",
   "PCI-DSS": "text-green-400",
-  "HIPAA": "text-purple-400",
+  HIPAA: "text-purple-400",
   "SOC 2": "text-amber-400",
   "WCAG 2.1": "text-cyan-400",
-  "CCPA": "text-orange-400",
+  CCPA: "text-orange-400",
   "ISO 27001": "text-violet-400",
 };
 
 function ScoreRing({ score }: { score: number }) {
+  const isLight = useIsLight();
   const color = score >= 80 ? "#4ade80" : score >= 55 ? "#f59e0b" : "#f87171";
   const r = 48;
   const circ = 2 * Math.PI * r;
@@ -142,14 +243,40 @@ function ScoreRing({ score }: { score: number }) {
   return (
     <div className="flex flex-col items-center">
       <div className="relative" style={{ width: 120, height: 120 }}>
-        <svg width="120" height="120" viewBox="0 0 120 120" className="-rotate-90">
-          <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-          <circle cx="60" cy="60" r={r} fill="none" stroke={color} strokeWidth="8"
-            strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round" />
+        <svg
+          width="120"
+          height="120"
+          viewBox="0 0 120 120"
+          className="-rotate-90"
+        >
+          <circle
+            cx="60"
+            cy="60"
+            r={r}
+            fill="none"
+            stroke="rgba(255,255,255,0.05)"
+            strokeWidth="8"
+          />
+          <circle
+            cx="60"
+            cy="60"
+            r={r}
+            fill="none"
+            stroke={color}
+            strokeWidth="8"
+            strokeDasharray={`${dash} ${circ - dash}`}
+            strokeLinecap="round"
+          />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold font-['Syne']" style={{ color }}>{score}</span>
-          <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"}`}>/100</span>
+          <span className="text-2xl font-bold font-['Syne']" style={{ color }}>
+            {score}
+          </span>
+          <span
+            className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"}`}
+          >
+            /100
+          </span>
         </div>
       </div>
     </div>
@@ -157,32 +284,67 @@ function ScoreRing({ score }: { score: number }) {
 }
 
 function ComplianceRing({ score, status }: { score: number; status: string }) {
-  const color = status === "pass" ? "#4ade80" : status === "partial" ? "#f59e0b" : "#f87171";
+  const color =
+    status === "pass"
+      ? "#4ade80"
+      : status === "partial"
+        ? "#f59e0b"
+        : "#f87171";
   const r = 20;
   const circ = 2 * Math.PI * r;
   const dash = (score / 100) * circ;
   return (
     <div className="relative shrink-0" style={{ width: 50, height: 50 }}>
       <svg width="50" height="50" viewBox="0 0 50 50" className="-rotate-90">
-        <circle cx="25" cy="25" r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
-        <circle cx="25" cy="25" r={r} fill="none" stroke={color} strokeWidth="4"
-          strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round" />
+        <circle
+          cx="25"
+          cy="25"
+          r={r}
+          fill="none"
+          stroke="rgba(255,255,255,0.05)"
+          strokeWidth="4"
+        />
+        <circle
+          cx="25"
+          cy="25"
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="4"
+          strokeDasharray={`${dash} ${circ - dash}`}
+          strokeLinecap="round"
+        />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-[9px] font-bold font-['Syne']" style={{ color }}>{score}</span>
+        <span className="text-[9px] font-bold font-['Syne']" style={{ color }}>
+          {score}
+        </span>
       </div>
     </div>
   );
 }
 
-function EvidenceCard({ issue, rank, scanId, isCreator }: { issue: ScanIssue; rank?: number; scanId?: number; isCreator?: boolean }) {
+function EvidenceCard({
+  issue,
+  rank,
+  scanId,
+  isCreator,
+}: {
+  issue: ScanIssue;
+  rank?: number;
+  scanId?: number;
+  isCreator?: boolean;
+}) {
+  const isLight = useIsLight();
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [fixCode, setFixCode] = useState("");
   const [generatingFix, setGeneratingFix] = useState(false);
   const [fixCopied, setFixCopied] = useState(false);
   const [fixError, setFixError] = useState("");
-  const cfg = SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
+  const cfg =
+    SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ??
+    SEVERITY_CONFIG.low;
   const conf = getConfidenceStyle(issue.confidence ?? 60);
 
   const copy = async () => {
@@ -218,14 +380,2263 @@ function EvidenceCard({ issue, rank, scanId, isCreator }: { issue: ScanIssue; ra
   };
 
   return (
-    <div className={`border rounded-xl overflow-hidden transition-all ${cfg.bg}`}>
+    <div
+      className={`border rounded-xl overflow-hidden transition-all ${cfg.bg}`}
+    >
       <button
         onClick={() => setExpanded(!expanded)}
-        className={`w-full flex items-center gap-3 p-4 text-left hover:${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"} transition-colors`}
+        className={`w-full flex items-center gap-3 p-4 text-left 
+           
+         
+        
+         
+        
+          
+        
+         
+        
+         
+        ? (
+          <ChevronUp
+ 
+              ) : (
+  
+           
+         
+        )
+         
+        
+           
+          
+            
+          
+           
+           
+           
+                      
+                    
+                        
+                      
+                                     
+                    
+                       
+                       
+                         
+                         
+                             
+                    
+                       
+                       
+                      
+                    (
+                      
+                        
+                      
+                    )
+                 
+                
+                      
+                    
+                     
+                    
+                      
+                    
+                   
+                  
+                    
+                  
+                      
+                    
+                   
+                  
+                    
+                  
+           
+           
+               
+                 
+                
+                  
+                    
+           
+          
+               
+              
+                
+               ? (
+                    
+                    
+                  )(
+                  
+                    
+                    
+                  
+                )
+             
+            
+              
+            ( ? (
+                        
+                        
+                      ) : (
+                   
+                        
+                      
+                    )
+                        
+                       
+                       
+                      (
+                          
+                            
+                            
+                          
+                        )(
+                          
+                            
+                            
+                          
+                        )
+                        
+                        
+                        ()
+   
+   
+   
+   
+       
+           
+         
+        
+         
+        
+          
+        
+             
+            
+              
+            
+           
+          
+               
+              
+                
+               ? (
+                    
+                    
+                   ) : (
+              
+                    
+                    
+                  
+                )
+             
+            
+              
+            
+             
+            
+              
+            
+           
+          
+             
+            
+              
+            
+             
+             
+            >      <button 
+                {" "}
+                 
+           
+          
+            
+          >  <button 
+            
+ 
+ 
+ 
+ 
+ ,
+
+ 
+ 
+ 
+ 
+       
+       
+      
+       
+                  
+        
+     
+         
+                    
+          
+        
+           
+              
+               
+               
+            
+          
+            
+          
+           
+              
+               
+               
+            
+          
+            
+          
+           
+                      
+            
+          {" "}
+           
+ 
+ ,
+
+ 
+ ;
+
+     
+            
+      
+       
+                  
+        
+      
+         
+            
+             
+             
+          
+        
+         
+            
+             
+             
+          
+        
+         
+         
+                    
+          
+        
+          
+        
+          
+        
+          
+        
+         >
+        
+        
+           
+          
+              
+            
+               
+              
+            
+         
+        
+              
+            
+             
+            
+              
+            (
+              
+                
+                
+              
+            )(
+              
+                
+                
+              
+            )
+     
+     
+       
+       
+         
+         
+     
+  :
+       
+   : 
+               : 
+     
+    
+         
+       
+         
+        
+          
+        
+          
+        
+           
+           
+           ,
+         
+           
+           
+           ,
+         
+           
+           
+           ,
+         
+           
+           
+          
+               
+              
+            
+               
+              
+               
+              
+                
+              
+         
+        
+           
+          
+            
+          
+           
+          
+            
+          
+         
+           
+            
+          
+           
+          
+            
+          
+         
+        
+           
+          
+            
+          
+               
+               
+              
+                 
+                
+                  
+                
+            
+          
+           
+          
+            
+          
+     
+    
+         
+       
+         
+        
+          
+        
+         
+        
+          (){" "}
+         
+        
+           
+             
+             
+               
+               
+           
+             
+             
+               
+               
+           
+             
+             
+            
+                 
+                
+                      
+                    
+                     
+                    
+                      
+                    
+                   
+                  
+                    (
+                  
+                   
+                 
+                )(
+                  
+                   
+                 
+                )
+                 
+                
+                     
+                     
+                    
+                       
+                      
+                        
+                      
+ ,
+
+ ;
+
+   
+     
+     
+       
+       
+     
+    
+         
+       
+         
+        
+          
+        
+            
+          
+            
+          
+            
+          
+           
+          
+            
+          
+             
+             
+               
+               
+              
+                   
+                  
+                    
+                  
+                   
+                  
+                    
+                  
+                   
+                  
+                    
+                  >          
+                  (
+                    
+                     
+                   
+                  )(
+                    
+                     
+                   
+                  )
+                   
+                  
+                               
+                      
+                    
+                       
+                      
+                                       
+                          
+                        
+                         
+                        
+                          
+                        
+            
+          
+               
+               
+              
+   
+   
+   
+   ,
+ 
+   
+   
+   
+   ,
+ 
+   
+   
+   
+   ,
+ 
+   
+   
+   
+   ,
+ 
+   
+   
+   
+   ,
+ 
+   
+   
+   
+   ,
+ 
+     
+    
+         
+       
+         
+        
+          
+        
+       
+      
+       
+       
+           
+           
+             
+             
+            
+                 
+                
+                 
+                
+                  
+                
+                 
+                (
+                  
+                   
+                 
+                )(
+                  
+                   
+                 
+                )
+                 
+                
+                       
+                     
+                        
+                      
+                     
+                    
+                       
+                      
+                         
+                        
+                          
+                   
+                  
+                       
+                      
+                        
+                         
+                         
+                        
+                           
+                          
+                            
+                          
+                     
+                    
+                       
+                      
+                        
+                      
+                       
+                      
+                        
+                      
+                        
+                      
+                       
+                      
+                        
+                      
+                       
+                      
+                         
+                        
+                          
+                        
+                         
+                        
+                          
+                        
+    ,
+  
+    ,
+  
+     
+    
+         
+        
+          
+        
+         
+        
+     
+    
+         
+       
+         
+        
+          
+        
+             
+            
+       
+      
+           
+           (
+             
+            )(
+              
+            )(
+              
+            )
+            
+             
+            
+              {" "}
+             
+            
+         
+        
+           
+          
+            
+          
+           
+          
+            
+          
+         
+        
+           
+          
+            
+          
+           
+          
+            
+          
+         
+        
+           
+            
+          
+           
+          
+            
+          
+            
+          
+             
+             
+                 
+                
+                  
+                
+                 
+                
+                  
+                
+            
+          
+             
+             
+            
+     
+    
+         
+       
+         
+        
+          
+        
+         
+        
+          
+        
+           
+               
+              
+                
+              
+               
+              
+                 
+                 
+               
+               
+               
+              
+         
+        
+          
+        
+  
+                 
+""
+ 
+ 
+ ,
+
+    ,
+  
+     
+    
+       
+      
+             
+            
+              
+            
+             
+            
+           
+          >    
+            
+             
+            
+              
+            
+           
+          
+              
+            
+           
+          
+                  
+                    
+                    
+                      
+                    
+                    
+                    
+                      ,
+                    
+                   
+                  
+                   
+                      
+                       
+                       
+                         
+                         
+                    
+                  
+             
+            
+                 
+                    
+                  
+                   
+                   
+                  
+                       
+                      
+                       
+                      
+                        
+                      
+                         
+                        
+              
+                 
+                 
+             
+            
+              
+            
+     
+     
+     
+     ,
+   
+     
+     
+     
+     ,
+   
+     
+     
+     
+     ,
+   
+     
+    
+         
+       
+         >
+        
+        
+         
+        
+          
+        
+           
+                  
+                
+                     
+                     
+                   
+                   
+                   
+                  
+                    
+                  
+                   
+                   
+                  
+                   
+                
+              
+     
+    
+         
+       
+         
+        
+          
+        
+       
+      
+       
+           
+               
+           
+                ? ()?(
+):(
+         
+          )
+               
+               
+              
+                 
+                
+                     
+                       
+                       
+                         
+                           
+                   
+                 
+               
+              
+                   
+                  
+                    
+                  
+                   
+                  
+                   
+                  
+                    
+                  
+              
+            
+             
+            
+              
+             
+             
+     
+    
+         
+       
+         
+        
+          
+        
+          
+        
+           
+           
+          
+            
+          
+     
+    
+         
+       
+         
+        
+          
+        
+         
+        
+       
+      
+        
+      
+           
+          
+            
+          
+             
+             
+            
+               
+              
+                 
+                
+                  
+                
+                 
+                
+                  
+                
+         
+        
+           
+          
+            
+          
+              
+                
+                 
+                 
+                
+                  
+                  
+         
+           
+          
+            
+          
+               
+               
+              
+                
+              
+   
+     
+     
+       
+       
+     
+     
+     ,
+   
+     
+     
+     ,
+   (
+          
+        )(
+          
+        )
+         
+        
+               
+              
+                
+              
+                   
+                
+              
+   
+   
+   ,
+ 
+   
+   
+   ,
+ 
+   
+   
+   ,
+ 
+ 
+ ,
+
+ 
+ ;
+
+    
+  
+     
+     
+     
+    
+       
+      
+           
+            
+          
+           
+          
+            
+          
+           
+          
+            
+          
+           
+          
+            
+           
+          
+                
+               
+               
+               
+                 
+                 
+                
+                     
+                   
+                         
+                        
+                         
+                        
+                          
+                         (
+                         >                  
+                          
+                        )
+                       
+                      
+                        
+                      
+                             
+                            
+                           
+                          
+                           
+                          
+                            
+                          
+                           
+                          
+                            
+                          
+                              
+                            
+                 
+                
+                  
+                 
+                
+                 
+                
+   
+   
+     
+     
+       
+       
+   
+   
+     
+     
+ 
+ ,
+
+ 
+ ;
+
+    |
+   
+     
+     
+     
+    
+       
+      
+           
+            
+          
+           
+          
+            
+          
+             
+            
+           
+          
+            
+          
+           
+          
+            
+           
+          
+               
+               
+                 
+                 
+                   
+                   
+                  
+                                       
+                          
+                        
+                         
+                          
+                        
+                         
+                        
+                          
+                        
+                          
+                        
+                         
+                        
+                          
+                        
+                       
+                      
+                        
+                        {" "}
+                       
+                      
+                     
+                    (
+                      
+                       
+                     
+                    )(
+                      
+                       
+                     
+                    )
+                         
+                         
+                        
+                             
+                            
+                             
+                            
+                              
+                            
+                           
+                          
+                            
+                          
+                           
+                          
+                            
+                          
+                               
+                              
+                                
+                              
+                               
+                              
+                                
+                              
+                               
+                              
+                                
+                              
+                                
+                              
+                               
+                              
+                                
+                              
+                                
+                              
+                           
+                          
+                            
+                          
+                             
+                            
+                              
+                            
+                             
+                            
+                              
+                             
+                            >                <button 
+                          
+                 
+                
+                  
+                  
+                
+                 
+                
+  
+ 
+
+   
+   
+   ,
+ 
+   
+   
+     
+     
+ ,
+
+ ;
+
+    ,
+  
+        
+         ,
+      
+     
+     
+     
+    
+       
+      
+               
+              
+            
+             
+            
+              
+            
+             
+              
+            
+             
+            
+              
+            
+               
+                     : 
+                          :  
+            
+              
+            
+           
+          
+            
+          
+             
+            
+              
+            (
+              
+            )(
+              
+            )
+              
+            
+           
+           
+           ,
+         
+              
+            
+             
+            
+              
+            
+               
+               
+                 
+                
+                   
+                   
+           
+          
+            
+          
+             
+                  :
+                      :
+                   
+                  
+                       
+                      
+                        
+                      (
+                        
+                          
+                        
+                      )
+                          
+                        
+                        
+                      
+                     
+                    
+                      
+                    
+                     
+                    
+           
+          
+            
+          
+               
+               
+              
+                 
+                
+                  
+                
+                 
+                
+                  
+                
+ 
+ ,
+
+ 
+ ;
+
+    
+  
+     
+     
+     
+     ,
+   
+     
+     
+     
+     ,
+   
+     
+     
+     
+     ,
+   
+     
+     
+     
+    
+       
+      
+         
+        
+          
+        
+            
+          
+       
+      
+           
+           
+           
+             
+               
+               
+                 
+                 ,
+         
+           
+           
+           
+             
+               
+               
+                 
+                 ,
+         
+           
+           
+           ,
+         
+           
+           
+          
+              
+            
+             
+            
+              
+            
+       
+      
+            
+             
+             
+             ,
+             
+             
+             
+             ,
+             
+             
+             
+             ,
+             
+        
+            
+                 
+               
+                     
+                    
+                      
+                    
+                     
+                    
+                      
+                    
+                     
+                    
+                      
+                    (
+                      
+                       
+                      
+                        
+                      
+                    )
+                      
+                       
+                       
+                      
+               
+             
+                   
+                  
+                    
+                  
+                   
+                  
+                   
+                  
+                    
+                  
+                       
+                  
+                
+                 
+                
+                  
+                
+             
+            
+               
+             
+            
+              
+            
+                 
+               
+                     
+                    
+                      
+                    
+                     
+                    
+                     
+                    
+                      
+                    
+                   
+                  
+                    
+                  (
+                    
+                     
+                    
+                      
+                    
+                  )
+       
+      
+          
+        
+ 
+ ,
+
+ 
+ ;
+
+       
+       
+      
+           
+           
+           
+           
+           
+         
+           
+           
+           
+           
+           
+           
+         
+            
+          
+           
+          
+            
+          
+     
+     
+     
+    
+       
+      
+         >
+        
+        
+         
+        
+          
+        
+       
+      
+           
+          
+             
+             
+            
+              
+           
+           
+          
+             
+            
+              
+            
+             
+            
+              
+            
+             
+            (
+                
+              )(
+                
+              )(
+                
+              )
+             
+            
+              
+            
+ 
+ ,
+
+ 
+ ;
+
+    
+   
+   
+   
+   
+   ,
+  
+     
+     
+     
+     ,
+   
+     
+     
+     
+     ,
+   
+     
+     
+     
+     ,
+   
+     
+     
+     
+    
+       
+      
+         >
+        
+        
+         
+        
+          
+        
+       
+      
+          
+        
+            
+               
+             
+                 
+                
+                  
+                
+                 
+                  {" "}
+                 (){" "}
+                 
+                
+               
+              (
+                
+                 
+               
+              )(
+                
+                 
+               
+              )()
+                           
+                          
+                             
+                            
+                               
+                             
+                               
+                              
+                                
+                              
+                             
+                            
+                              
+                            
+                               
+                              
+                                
+                              >            
+                    
+                   
+                  
+                    
+                  
+                 
+                
+                   
+                  
+                     
+                    
+                      
+                    
+                       
+                      (
+                          
+                            
+                            
+                          
+                        )(
+                          
+                            
+                            
+                          
+                        )
+                       
+                       
+                      
+                        
+                      
+                   
+                  
+ ,
+
+ ;
+
+   
+     
+     
+       
+       
+   
+     
+     
+       
+       
+    ,
+  
+     
+     
+     
+    
+       
+      
+         >
+        
+        
+         
+        
+       
+      
+           
+           
+           ,
+         
+           
+           
+           ,
+         
+           
+           
+           ,
+         
+           
+           
+          
+              
+            
+             
+            
+              
+            
+         
+        
+           
+          
+            
+          
+                       
+                  
+                
+                 
+                
+                 
+                
+                  
+                
+       
+      
+         >
+        
+        
+         
+        
+           
+          
+            
+          
+               
+               
+              {" "}
+               
+           
+           (
+             
+            )(
+              
+            )
+ ,
+
+ ;
+(
+        ,
+      )
+       
+     
+          
+        
+         >
+        
+          
+        (
+          
+            
+          
+        )(
+          
+            
+          
+        )
+     
+   
+     
+   
+   
+   
+   
+   ;
+ 
+     
+     
+     
+     ,
+   
+     
+     
+     
+     ,
+   
+     
+     
+     
+     ,
+   
+     
+     
+     
+     ,
+   
+      
+     
+     ,
+    
+          ,
+        
+     
+     
+     
+    
+       
+      
+         
+       
+         >
+        
+        
+         
+          
+        
+         (
+            
+              
+              
+            
+          )(
+            
+              
+              
+            
+          )
+       
+      
+           
+          
+           
+          
+            
+           (
+           
+              
+            
+          )
+               
+              
+                
+              
+                 
+                 
+                
+                           
+                  (
+                      
+                       
+                     
+                    )>          <p 
+                    
+                     
+                    
+                      
+                    
+         
+           
+             
+      
+         
+       
+             >
+           
+          
+                   
+          
+ 
+ ,
+
+ 
+ ;
+
+   
+   
+   ;
+ 
+           
+       
+           
+           
+           
+           
+           
+           
+         
+        
+          
+        
+           
+           
+          
+               
+              
+                
+              
+               
+              
+                
+              {" "}
+         
+ ,
+
+ ;
+
+     
+    
+         
+       
+         
+        
+          
+        
+          
+        
+          
+        >
+        
+         
+        
+          
+        
+         
+           
+          
+            
+          
+           
+          
+            
+          
+         
+           
+          
+            
+          
+           
+          
+            
+          
+            
+          
+            
+          
+            
+          (
+              
+            )(
+              
+            )
+            
+                 
+                    
+                  
+                       
+                      
+                        
+                      
+                       
+                      
+                        
+                      
+                         
+                        
+                          
+                        
+                          
+                        
+                         
+                        
+                          
+                        
+                          
+                        
+                         
+                        
+                          
+                        
+                         
+                        
+                          
+                        
+ ,
+
+ ;
+
+   
+     
+     
+       
+       
+   
+     
+    
+         
+       
+         
+        
+          
+        
+                 
+        
+           
+           
+           
+           
+          
+             
+             
+             
+             
+             
+             
+           
+             
+             
+             
+             
+             
+             
+             
+           
+              
+            
+             
+            
+              
+            
+           
+          
+            
+          
+                 
+                 
+                
+             
+               
+               
+                 
+                 
+             
+               
+               
+                 
+                 
+               
+               
+              
+                     
+                     
+                     
+                     
+                    
+                       
+                       
+                       
+                       
+                       
+                       
+                     
+                       
+                       
+                       
+                       
+                          
+                           
+                           
+                             
+                             
+                        
+                     
+                        
+                      
+                   
+                  
+                    
+                  
+                   
+                  
+                    
+                  (
+                    
+                     
+                   
+                  )(
+                    
+                     
+                   
+                  )
+                   
+                  
+                       
+                       
+                      
+                         
+                        
+                          
+                        
+     
+    
+         
+       
+         
+        
+          
+        
+         
+        
+          
+        
+           
+         (
+            
+          )(
+            
+          )(
+            
+              
+            
+          )
+                 >
+             
+            
+              
+            
+     
+    
+           
+             ,
+         
+               
+               
+               ,
+             
+             
+             
+             
+             
+            
+               
+               
+               
+               
+               
+             
+               
+               
+               
+               
+               
+               
+                 
+                 ,
+               
+               
+              
+                
+              >  <h2 
+            
+             
+            
+                 
+                 
+                 ,
+               
+                       
+                       
+                       
+                       
+                 
+                
+                   
+                       
+                           
+                         
+                           
+                
+                   
+                   
+                   
+                  
+                     
+                     
+                     ,
+                   
+           
+          
+    
+  
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+
+     
+   
+     
+       
+          
+           
+            
+             
+               
+           
+            
+                
+     
+       
+        
+          
+            
+   ()
+       
+      
+             
+            
+              
+            
+             
+            
+              
+             
+            (
+                
+                  
+                  
+                
+              )(
+                
+              )
+               ${isLight ? "hover:bg-gray-50/50" : "hover:bg-white/[0.02]"} transition-colors`}
         data-testid={`issue-${issue.id}`}
       >
         {rank && (
-          <span className={`w-5 h-5 rounded-full ${isLight ? "bg-gray-100" : "bg-white/[0.06]"} border ${isLight ? "border-gray-200" : "border-white/[0.1]"} flex items-center justify-center text-[10px] font-bold ${isLight ? "text-gray-500" : "text-white/40"} shrink-0">
+          <span className={`w-5 h-5 rounded-full ${isLight ? "bg-gray-100" : "bg-white/[0.06]"} border ${isLight ? "border-gray-200" : "border-white/[0.1]"} flex items-center justify-center text-[10px] font-bold ${isLight ? "text-gray-500" : "text-white/40"} shrink-0`}
+          >
             {rank}
           </span>
         )}
@@ -339,7 +2750,7 @@ function EvidenceCard({ issue, rank, scanId, isCreator }: { issue: ScanIssue; ra
               <button
                 onClick={copy}
                 data-testid={`button-copy-${issue.id}`}
-                className={`flex items-center gap-1 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white transition-colors`
+                className={`flex items-center gap-1 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white transition-colors`}
               >
                 {copied
                   ? <><CheckCheck className="w-3.5 h-3.5 text-green-400" />Copied!</>
@@ -369,7 +2780,7 @@ function EvidenceCard({ issue, rank, scanId, isCreator }: { issue: ScanIssue; ra
                       <span className="text-xs font-semibold text-violet-400 flex items-center gap-1.5">
                         <Sparkles className="w-3 h-3" />AI-Generated Code Fix
                       </span>
-                      <button onClick={copyFix} className={`flex items-center gap-1 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white transition-colors`>
+                      <button onClick={copyFix} className={`flex items-center gap-1 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white transition-colors`}>
                         {fixCopied ? <><CheckCheck className="w-3 h-3 text-green-400" />Copied!</> : <><Copy className="w-3 h-3" />Copy</>}
                       </button>
                     </div>
@@ -378,7 +2789,7 @@ function EvidenceCard({ issue, rank, scanId, isCreator }: { issue: ScanIssue; ra
                     </pre>
                     <button
                       onClick={() => setFixCode("")}
-                      className={`w-full text-center text-[10px] ${isLight ? "text-gray-400" : "text-white/20"} hover:text-gray-500 py-1.5 border-t border-white/[0.05] transition-colors"
+                      className={`w-full text-center text-[10px] ${isLight ? "text-gray-400" : "text-white/20"} hover:text-gray-500 py-1.5 border-t border-white/[0.05] transition-colors`}
                     >
                       Regenerate
                     </button>
@@ -391,7 +2802,7 @@ function EvidenceCard({ issue, rank, scanId, isCreator }: { issue: ScanIssue; ra
                 onClick={() => window.location.href = "/pricing"}
                 className="flex items-center gap-1.5 text-xs text-violet-400/50 border border-violet-500/20 px-3 py-2 rounded-lg w-full justify-center hover:bg-violet-500/5 transition-colors"
               >
-                <Lock className="w-3 h-3" />⚡ Generate Code Fix — Creator Plan
+                <Lock className="w-3 h-3" />⚡ Generate Code Fix - Creator Plan
               </button>
             )
           )}
@@ -402,6 +2813,7 @@ function EvidenceCard({ issue, rank, scanId, isCreator }: { issue: ScanIssue; ra
 }
 
 function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
+  const isLight = useIsLight();
   const cfg = SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
   const fileHint = issue.evidence?.startsWith("Found in:") ? issue.evidence : null;
   const fixPreview = issue.fixPrompt && !issue.fixPrompt.startsWith("🔒")
@@ -418,10 +2830,11 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
 
   return (
     <div className={`border rounded-xl overflow-hidden ${cfg.bg}`}>
-      {/* Visible header — severity + title */}
+      {/* Visible header - severity + title */}
       <div className="flex items-center gap-3 p-4">
         {rank && (
-          <span className={`w-5 h-5 rounded-full ${isLight ? "bg-gray-100" : "bg-white/[0.06]"} border ${isLight ? "border-gray-200" : "border-white/[0.1]"} flex items-center justify-center text-[10px] font-bold ${isLight ? "text-gray-500" : "text-white/40"} shrink-0">
+          <span className={`w-5 h-5 rounded-full ${isLight ? "bg-gray-100" : "bg-white/[0.06]"} border ${isLight ? "border-gray-200" : "border-white/[0.1]"} flex items-center justify-center text-[10px] font-bold ${isLight ? "text-gray-500" : "text-white/40"} shrink-0`}
+          >
             {rank}
           </span>
         )}
@@ -432,7 +2845,7 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
         <Lock className="w-3.5 h-3.5 text-violet-400/60 shrink-0" />
       </div>
 
-      {/* File location hint — partial reveal */}
+      {/* File location hint - partial reveal */}
       {fileHint && (
         <div className="px-4 pb-2">
           <span className="text-[10px] font-mono text-amber-400/70 bg-amber-500/[0.06] border border-amber-500/15 px-2 py-0.5 rounded">
@@ -452,7 +2865,7 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
               <span className={`text-xs font-semibold ${isLight ? "text-gray-500" : "text-white/50"}`}>1-Click Fix Prompt</span>
               <button
                 onClick={copy}
-                className={`flex items-center gap-1 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white transition-colors`
+                className={`flex items-center gap-1 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white transition-colors`}
               >
                 {copied
                   ? <><CheckCheck className="w-3.5 h-3.5 text-green-400" />Copied!</>
@@ -475,12 +2888,13 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
         <div className="px-4 pb-4">
           <div className={`bg-black/30 border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-lg px-3 py-2.5 relative overflow-hidden`}>
             <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} mb-1`}>1-Click Fix Prompt</div>
-            <p className={`text-xs font-mono ${isLight ? "text-gray-500" : "text-white/40" leading-relaxed" style={{ filter: "blur(3.5px)", userSelect: "none" }}>
+            <p className={`text-xs font-mono ${isLight ? "text-gray-500" : "text-white/40"} leading-relaxed`} style={{ filter: "blur(3.5px)", userSelect: "none" }}>
               {fixPreview}…
             </p>
             <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
-              <Link href="/pricing">
-                <button className={`flex items-center gap-1.5 text-xs bg-violet-500/80 hover:bg-violet-500 ${isLight ? "text-gray-900" : "text-white" font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30">
+              <Link href="/pricing"
+          >
+                <button className={`flex items-center gap-1.5 text-xs bg-violet-500/80 hover:bg-violet-500 ${isLight ? "text-gray-900" : "text-white"} font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30`}>
                   <Lock className="w-3 h-3" /> Unlock Fix Prompt <ArrowRight className="w-3 h-3" />
                 </button>
               </Link>
@@ -489,9 +2903,10 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
         </div>
       ) : (
         <div className="px-4 pb-4 flex items-center justify-between">
-          <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30">Upgrade to view full details and fix</span>
-          <Link href="/pricing">
-            <button className={`flex items-center gap-1.5 text-xs bg-violet-500/80 hover:bg-violet-500 ${isLight ? "text-gray-900" : "text-white" font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30">
+          <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>Upgrade to view full details and fix</span>
+          <Link href="/pricing"
+          >
+            <button className={`flex items-center gap-1.5 text-xs bg-violet-500/80 hover:bg-violet-500 ${isLight ? "text-gray-900" : "text-white"} font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30`}>
               Unlock <ArrowRight className="w-3 h-3" />
             </button>
           </Link>
@@ -529,9 +2944,9 @@ function CreatorGate({ plan, feature, preview, children, isLight }: {
         </div>
         <Link href="/pricing">
           <button className={isLight
-            ? "flex items-center gap-2 bg-gray-900 isLight ? "text-gray-900" : "text-white" font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-all shadow-lg"
+            ? "flex items-center gap-2 bg-gray-900 text-white font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-all shadow-lg"
             : "flex items-center gap-2 bg-white text-black font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all shadow-lg"}>
-            Upgrade to Creator — ₹299/mo <ArrowRight className="w-3.5 h-3.5" />
+            Upgrade to Creator - Rs.299/mo <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </Link>
       </div>
@@ -553,18 +2968,18 @@ function UpgradeBanner({ count, isLight }: { count: number; isLight: boolean }) 
         <Lock className="w-5 h-5 text-violet-500" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className={isLight ? "text-sm font-bold text-gray-900" : "text-sm font-bold isLight ? "text-gray-900" : "text-white""}>
+        <div className={isLight ? "text-sm font-bold text-gray-900" : "text-sm font-bold text-white"}>
           {count} more finding{count !== 1 ? "s" : ""} locked
         </div>
-        <p className={isLight ? "text-xs text-gray-500 mt-0.5" : "text-xs isLight ? "text-gray-500" : "text-white/40" mt-0.5"}>
+        <p className={isLight ? "text-xs text-gray-500 mt-0.5" : "text-xs text-white/40 mt-0.5"}>
           Upgrade to Creator to unlock all {count} remaining issues, 1-click fix prompts, and full exploit evidence.
         </p>
       </div>
       <Link href="/pricing" className="shrink-0">
         <button className={isLight
-          ? "flex items-center gap-2 bg-gray-900 isLight ? "text-gray-900" : "text-white" font-bold text-xs px-4 py-2 rounded-xl hover:bg-gray-800 transition-all"
+          ? "flex items-center gap-2 bg-gray-900 text-white font-bold text-xs px-4 py-2 rounded-xl hover:bg-gray-800 transition-all"
           : "flex items-center gap-2 bg-white text-black font-bold text-xs px-4 py-2 rounded-xl hover:bg-white/90 transition-all"}>
-          Upgrade — ₹299/mo <ArrowRight className="w-3.5 h-3.5" />
+          Upgrade - Rs.299/mo <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </Link>
     </motion.div>
@@ -572,6 +2987,7 @@ function UpgradeBanner({ count, isLight }: { count: number; isLight: boolean }) 
 }
 
 function ExploitTerminalCard({ issue }: { issue: ScanIssue }) {
+  const isLight = useIsLight();
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     await navigator.clipboard.writeText(issue.fixPrompt);
@@ -594,11 +3010,13 @@ function ExploitTerminalCard({ issue }: { issue: ScanIssue }) {
       <div className="p-4 space-y-3 font-mono">
         <div className="text-green-400/80 text-xs">$ exploit_scanner --target app --mode {issue.severity}</div>
         <div className="text-red-300/90 text-xs font-semibold">[!] {issue.title}</div>
-        <div className={`${isLight ? "text-gray-500" : "text-white/40" text-xs leading-relaxed whitespace-pre-wrap">{issue.description}</div>
+        <div className={`${isLight ? "text-gray-500" : "text-white/40"} text-xs leading-relaxed whitespace-pre-wrap`}
+          >{issue.description}</div>
         {issue.evidence && (
           <div className={`bg-black/50 border ${isLight ? "border-gray-200" : "border-white/[0.06]"} rounded-lg p-3`}>
             <div className="text-[10px] text-amber-400/60 uppercase tracking-wide mb-1.5">Evidence</div>
-            <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30" font-mono leading-relaxed">{issue.evidence}</p>
+            <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"} font-mono leading-relaxed`}
+          >{issue.evidence}</p>
           </div>
         )}
         <div className={`border-t ${isLight ? "border-gray-200" : "border-white/[0.06]"} pt-3 flex items-start gap-3`}>
@@ -608,7 +3026,7 @@ function ExploitTerminalCard({ issue }: { issue: ScanIssue }) {
           </div>
           <button
             onClick={copy}
-            className={`shrink-0 flex items-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/30" hover:text-white px-2 py-1.5 rounded-lg border ${isLight ? "border-gray-200" : "border-white/[0.07]"} hover:border-white/20 transition-all"
+            className={`shrink-0 flex items-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white px-2 py-1.5 rounded-lg border ${isLight ? "border-gray-200" : "border-white/[0.07]"} hover:border-white/20 transition-all`}
           >
             {copied ? <><CheckCheck className="w-3.5 h-3.5 text-green-400" />Copied</> : <><Copy className="w-3.5 h-3.5" />Copy</>}
           </button>
@@ -619,6 +3037,7 @@ function ExploitTerminalCard({ issue }: { issue: ScanIssue }) {
 }
 
 function RiskForecastSection({ forecast }: { forecast: RiskForecast }) {
+  const isLight = useIsLight();
   const riskColor = (r: string) =>
     r === "critical" ? "text-red-400" : r === "high" ? "text-amber-400" : r === "medium" ? "text-yellow-400" : "text-green-400";
   const riskBg = (r: string) =>
@@ -630,20 +3049,22 @@ function RiskForecastSection({ forecast }: { forecast: RiskForecast }) {
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow`}>
       <div className="flex items-center gap-2">
-        <Target className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Launch Risk Forecast</h2>
+        <Target className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Launch Risk Forecast</h2>
         <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 ml-auto">AI Forecast</span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+          >
         {[
           { label: "Churn Risk", value: forecast.churnRisk, type: "badge" },
           { label: "Checkout Risk", value: forecast.checkoutFailureRisk, type: "badge" },
           { label: "Revenue at Risk", value: forecast.revenueAtRisk, type: "text" },
           { label: "Conversion Loss", value: forecast.conversionLoss, type: "text" },
         ].map(({ label, value, type }) => (
-          <div key={label} className={`${isLight ? "bg-gray-50" : "bg-white/[0.03]" border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl p-3">
-            <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" mb-1.5 uppercase tracking-wide">{label}</div>
+          <div key={label} className={`border rounded-xl p-3 ${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.07]"}`}>
+            <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} mb-1.5 uppercase tracking-wide`}
+          >{label}</div>
             {type === "badge" ? (
               <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border capitalize ${riskBg(value)}`}>
                 {value}
@@ -656,20 +3077,23 @@ function RiskForecastSection({ forecast }: { forecast: RiskForecast }) {
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3">
-        <div className={`${isLight ? "bg-gray-50" : "bg-white/[0.03]" border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl p-4">
-          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" uppercase tracking-wide mb-2">Auth Breakage</div>
+        <div className={`border rounded-xl p-4 ${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.07]"}`}>
+          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} uppercase tracking-wide mb-2`}>Auth Breakage</div>
           <div className={`text-xs ${isLight ? "text-gray-600" : "text-white/60"}`}>{forecast.authBreakageProbability}</div>
         </div>
-        <div className={`${isLight ? "bg-gray-50" : "bg-white/[0.03]" border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl p-4">
-          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" uppercase tracking-wide mb-2">Incident Probability</div>
+        <div className={`${isLight ? "bg-gray-50" : "bg-white/[0.03]"} border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl p-4`}
+          >
+          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} uppercase tracking-wide mb-2`}
+          >Incident Probability</div>
           <div className={`text-xs ${isLight ? "text-gray-600" : "text-white/60"}`}>{forecast.incidentProbability}</div>
         </div>
       </div>
 
       {forecast.topFailureModes && forecast.topFailureModes.length > 0 && (
-        <div className={`${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"} border border-gray-200" : ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl p-4">
-          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" uppercase tracking-wide mb-3">Top Failure Modes</div>
-          <div className="space-y-1.5">
+        <div className={`border rounded-xl p-4 ${isLight ? "bg-gray-50/50 border-gray-200" : "bg-white/[0.02] border-white/[0.07]"}`}>
+          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} uppercase tracking-wide mb-3`}>Top Failure Modes</div>
+          <div className="space-y-1.5"
+          >
             {forecast.topFailureModes.map((mode, i) => (
               <div key={i} className={`flex items-center gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/55"}`}>
                 <span className={`${isLight ? "text-gray-400" : "text-white/20"} font-mono`}>{i + 1}.</span>
@@ -691,13 +3115,14 @@ function RiskForecastSection({ forecast }: { forecast: RiskForecast }) {
 }
 
 function ComplianceSection({ results }: { results: ComplianceResult[] }) {
+  const isLight = useIsLight();
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow`}>
       <div className="flex items-center gap-2">
-        <Scale className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">8-Framework Compliance Audit</h2>
+        <Scale className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>8-Framework Compliance Audit</h2>
         <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} ml-auto`}>{results.filter(r => r.status === "pass").length}/{results.length} passed</span>
       </div>
 
@@ -712,7 +3137,7 @@ function ComplianceSection({ results }: { results: ComplianceResult[] }) {
             <div key={result.framework} className={`border rounded-xl overflow-hidden ${statusBg}`}>
               <button
                 onClick={() => setExpanded(isExpanded ? null : result.framework)}
-                className={`w-full flex items-center gap-3 px-4 py-3 hover:${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"} transition-colors`}
+                className={`w-full flex items-center gap-3 px-4 py-3 ${isLight ? "hover:bg-gray-50/50" : "hover:bg-white/[0.02]"} transition-colors`}
               >
                 <ComplianceRing score={result.score} status={result.status} />
                 <div className="flex-1 text-left">
@@ -720,7 +3145,7 @@ function ComplianceSection({ results }: { results: ComplianceResult[] }) {
                     <span className={`text-sm font-semibold ${fwColor}`}>{result.framework}</span>
                     <span className={`text-[10px] font-bold uppercase ${statusColor}`}>{result.status}</span>
                   </div>
-                  <div className={`text-[11px] ${isLight ? "text-gray-400" : "text-white/30" mt-0.5">
+                  <div className={`text-[11px] ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>
                     {result.findings.length} finding{result.findings.length !== 1 ? "s" : ""}
                     {result.riskLevel && ` · ${result.riskLevel} risk`}
                   </div>
@@ -729,7 +3154,7 @@ function ComplianceSection({ results }: { results: ComplianceResult[] }) {
               </button>
               {isExpanded && result.findings.length > 0 && (
                 <div className={`px-4 pb-3 border-t ${isLight ? "border-gray-200" : "border-white/[0.05]"} pt-3 space-y-1.5`}>
-                  {result.findings.map((finding, i) => (
+                  {result.findings.map((finding: any, i: any) => (
                     <div key={i} className={`flex items-start gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/50"}`}>
                       <span className={`${isLight ? "text-gray-400" : "text-white/20"} font-mono mt-0.5 shrink-0`}>{i + 1}.</span>
                       {finding}
@@ -746,15 +3171,17 @@ function ComplianceSection({ results }: { results: ComplianceResult[] }) {
 }
 
 function RevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligence }) {
+  const isLight = useIsLight();
   const riskColor = revenue.overallRevenueRisk === "critical" ? "text-red-400" : revenue.overallRevenueRisk === "high" ? "text-amber-400" : "text-yellow-400";
   const [expanded, setExpanded] = useState<number | null>(null);
 
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow`}>
       <div className="flex items-center gap-2">
-        <DollarSign className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Revenue Intelligence</h2>
-        <div className="ml-auto flex items-center gap-2">
+        <DollarSign className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Revenue Intelligence</h2>
+        <div className="ml-auto flex items-center gap-2"
+          >
           <span className={`text-xs font-bold capitalize ${riskColor}`}>{revenue.overallRevenueRisk} Risk</span>
         </div>
       </div>
@@ -769,27 +3196,30 @@ function RevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligence 
       {revenue.leaks && revenue.leaks.length > 0 && (
         <div className="space-y-2">
           <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} uppercase tracking-widest font-medium mb-3`}>Revenue Leaks</div>
-          {revenue.leaks.map((leak, i) => {
+          {revenue.leaks.map((leak: any, i: any) => {
             const isExp = expanded === i;
             const sev = SEVERITY_CONFIG[leak.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.medium;
             return (
               <div key={i} className={`border rounded-xl overflow-hidden ${sev.bg}`}>
                 <button
                   onClick={() => setExpanded(isExp ? null : i)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"} transition-colors`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left ${isLight ? "hover:bg-gray-50/50" : "hover:bg-white/[0.02]"} transition-colors`}
                 >
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase shrink-0 ${sev.badge}`}>{leak.severity}</span>
                   <span className={`text-xs font-medium ${isLight ? "text-gray-800" : "text-white/80"} flex-1`}>{leak.description}</span>
-                  <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" shrink-0 hidden sm:block">{leak.category}</span>
-                  <span className="text-[10px] text-amber-400/70 shrink-0 hidden md:block">{leak.impact}</span>
+                  <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} shrink-0 hidden sm:block`}>{leak.category}</span>
+                  <span className="text-[10px] text-amber-400/70 shrink-0 hidden md:block"
+          >{leak.impact}</span>
                   {isExp ? <ChevronUp className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/20"}`} /> : <ChevronDown className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/20"}`} />}
                 </button>
                 {isExp && (
                   <div className={`px-4 pb-3 pt-3 border-t ${isLight ? "border-gray-200" : "border-white/[0.05]"} space-y-2`}>
-                    <div className={`text-xs ${isLight ? "text-gray-500" : "text-white/40" leading-relaxed">{leak.description}</div>
+                    <div className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"} leading-relaxed`}
+          >{leak.description}</div>
                     {leak.fix && (
                       <div className={`bg-black/30 border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-lg p-3`}>
-                        <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" mb-1 font-medium">Fix Prompt</div>
+                        <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} mb-1 font-medium`}
+          >Fix Prompt</div>
                         <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/45"} font-mono leading-relaxed`}>{leak.fix}</p>
                       </div>
                     )}
@@ -805,7 +3235,7 @@ function RevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligence 
         <div className="bg-green-500/[0.04] border border-green-500/15 rounded-xl p-4">
           <div className="text-[10px] text-green-400/70 uppercase tracking-wide mb-3 font-medium">Quick Wins ({"<"}1 day)</div>
           <div className="space-y-1.5">
-            {revenue.quickWins.map((win, i) => (
+            {revenue.quickWins.map((win: any, i: any) => (
               <div key={i} className={`flex items-start gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/55"}`}>
                 <CheckCircle2 className="w-3.5 h-3.5 text-green-400/60 shrink-0 mt-0.5" />
                 {win}
@@ -832,6 +3262,7 @@ const PROOF_TYPE_CONFIG = {
 };
 
 function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
+  const isLight = useIsLight();
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const [copied, setCopied] = useState<number | null>(null);
 
@@ -844,15 +3275,16 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 space-y-5 aurora-card`}>
       <div className="flex items-center gap-2">
-        <Camera className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Visual Evidence Gallery</h2>
-        <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 font-medium">
+        <Camera className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Visual Evidence Gallery</h2>
+        <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 font-medium"
+          >
           {evidence.length} Runtime Proof{evidence.length !== 1 ? "s" : ""}
         </span>
       </div>
 
       <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/35"} leading-relaxed`}>
-        These findings were actively probed at runtime — not AI guesses. Each has been verified with real HTTP requests and step-by-step reproduction instructions.
+        These findings were actively probed at runtime - not AI guesses. Each has been verified with real HTTP requests and step-by-step reproduction instructions.
       </p>
 
       <div className="space-y-3">
@@ -866,7 +3298,7 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
             <div key={i} className={`border rounded-xl overflow-hidden ${sev.bg}`}>
               <button
                 onClick={() => setOpenIdx(isOpen ? null : i)}
-                className={`w-full flex items-center gap-3 p-4 text-left hover:${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"} transition-colors`}
+                className={`w-full flex items-center gap-3 p-4 text-left ${isLight ? "hover:bg-gray-50/50" : "hover:bg-white/[0.02]"} transition-colors`}
               >
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${pcfg.bg} ${pcfg.color}`}>
                   {pcfg.label}
@@ -882,7 +3314,7 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
                 <div className={`px-4 pb-4 space-y-4 border-t ${isLight ? "border-gray-200" : "border-white/[0.05]"} pt-3`}>
                   {e.url && (
                     <div className="flex items-center gap-2 text-xs">
-                      <Globe className={`w-3 h-3 ${isLight ? "text-gray-400" : "text-white/25"}} shrink-0`} />
+                      <Globe className={`w-3 h-3 ${isLight ? "text-gray-400" : "text-white/25"} shrink-0`} />
                       <code className="text-violet-400 font-mono break-all">{e.url}</code>
                     </div>
                   )}
@@ -912,13 +3344,13 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
                       </div>
                       <button
                         onClick={() => copySteps(i, e.steps)}
-                        className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors`
+                        className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors`}
                       >
                         {copied === i ? "✓ Copied" : "Copy"}
                       </button>
                     </div>
                     <ol className="space-y-2">
-                      {e.steps.map((step, si) => (
+                      {e.steps.map((step: any, si: any) => (
                         <li key={si} className={`flex items-start gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/55"}`}>
                           <span className={`${isLight ? "text-gray-400" : "text-white/20"} font-mono shrink-0 mt-0.5`}>{si + 1}.</span>
                           {step}
@@ -929,7 +3361,7 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
 
                   <div className="space-y-2">
                     <div className={`bg-black/20 border ${isLight ? "border-gray-200" : "border-white/[0.06]"} rounded-xl p-3`}>
-                      <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" uppercase tracking-wide mb-1.5">What Was Observed</div>
+                      <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} uppercase tracking-wide mb-1.5`}>What Was Observed</div>
                       <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/55"} leading-relaxed whitespace-pre-line`}>{e.observed}</p>
                     </div>
                     <div className="bg-red-500/[0.05] border border-red-500/15 rounded-xl p-3">
@@ -938,7 +3370,7 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
                     </div>
                     {e.codeRef && (
                       <div className={`bg-black/30 border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl p-3`}>
-                        <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" uppercase tracking-wide mb-1.5">How to Fix</div>
+                        <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} uppercase tracking-wide mb-1.5`}>How to Fix</div>
                         <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/50"} font-mono leading-relaxed`}>{e.codeRef}</p>
                       </div>
                     )}
@@ -954,6 +3386,7 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
 }
 
 function ConfidenceBadges({ evidence }: { evidence: ProofEvidence[] }) {
+  const isLight = useIsLight();
   const browserCount = evidence.filter((e) => e.confidence >= 99).length;
   const httpCount = evidence.filter((e) => e.confidence >= 90 && e.confidence < 99).length;
   const staticCount = evidence.filter((e) => e.confidence >= 75 && e.confidence < 90).length;
@@ -974,7 +3407,7 @@ function ConfidenceBadges({ evidence }: { evidence: ProofEvidence[] }) {
         <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-semibold">
           🟡 60% Pattern Match
         </span>
-        <span className={`flex items-center gap-1.5 px-2 py-1 rounded-full ${isLight ? "bg-gray-100" : "bg-white/[0.05]"} border border-gray-200" : ${isLight ? "border-gray-200" : "border-white/[0.08]"} text-white/35 text-[10px] font-semibold">
+        <span className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-white/35 text-[10px] font-semibold ${isLight ? "bg-gray-100 border-gray-200" : "bg-white/[0.05] border-white/[0.08]"}`}>
           ⚪ &lt;60% AI Reasoning
         </span>
       </div>
@@ -983,14 +3416,15 @@ function ConfidenceBadges({ evidence }: { evidence: ProofEvidence[] }) {
 }
 
 function RegressionPanel({ diff }: { diff: RegressionDiff }) {
+  const isLight = useIsLight();
   const hasRegressions = diff.newRegressions.length > 0;
   const hasFixed = diff.fixedIssues.length > 0;
 
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 space-y-4 aurora-card aurora-card-slow`}>
       <div className="flex items-center gap-2">
-        <GitBranch className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Regression Memory</h2>
+        <GitBranch className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Regression Memory</h2>
         {diff.previousScanId && (
           <Link href={`/scans/${diff.previousScanId}`}>
             <span className={`ml-auto text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} hover:text-white/50 transition-colors cursor-pointer`}>
@@ -1006,7 +3440,7 @@ function RegressionPanel({ diff }: { diff: RegressionDiff }) {
 
       {diff.scoreDelta != null && (
         <div className="flex items-center gap-2">
-          <div className={`flex items-center gap-1 text-sm font-bold ${diff.scoreDelta > 0 ? "text-green-400" : diff.scoreDelta < 0 ? "text-red-400" : "${isLight ? "}text-gray-400" : "text-white/30"}`}>
+          <div className={`flex items-center gap-1 text-sm font-bold ${diff.scoreDelta > 0 ? "text-green-400" : diff.scoreDelta < 0 ? "text-red-400" : isLight ? "text-gray-400" : "text-white/30"}`}>
             {diff.scoreDelta > 0 ? <TrendingUp className="w-4 h-4" /> : diff.scoreDelta < 0 ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
             {diff.scoreDelta > 0 ? "+" : ""}{diff.scoreDelta} points
           </div>
@@ -1017,27 +3451,29 @@ function RegressionPanel({ diff }: { diff: RegressionDiff }) {
       )}
 
       <div className="grid sm:grid-cols-3 gap-3">
-        <div className={`rounded-xl p-3 border text-center ${hasRegressions ? "bg-red-500/[0.07] border-red-500/20" : "${isLight ? "bg-gray-50" : ${isLight ? "}bg-gray-50" : "bg-white/[0.03]"} ${isLight ? "}border-gray-200" : "border-white/[0.07]"}`}>
-          <div className={`text-xl font-bold font-['Syne'] ${hasRegressions ? "text-red-400" : "${isLight ? "}text-gray-400" : "text-white/30"}`}>{diff.newRegressions.length}</div>
-          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" mt-0.5">New Regressions</div>
+        <div className={`rounded-xl p-3 border text-center ${hasRegressions ? "bg-red-500/[0.07] border-red-500/20" : isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.07]"}`}>
+          <div className={`text-xl font-bold font-['Syne'] ${hasRegressions ? "text-red-400" : isLight ? "text-gray-400" : "text-white/30"}`}>{diff.newRegressions.length}</div>
+          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>New Regressions</div>
         </div>
-        <div className={`rounded-xl p-3 border text-center ${hasFixed ? "bg-green-500/[0.07] border-green-500/20" : "${isLight ? "bg-gray-50" : ${isLight ? "}bg-gray-50" : "bg-white/[0.03]"} ${isLight ? "}border-gray-200" : "border-white/[0.07]"}`}>
-          <div className={`text-xl font-bold font-['Syne'] ${hasFixed ? "text-green-400" : "${isLight ? "}text-gray-400" : "text-white/30"}`}>{diff.fixedIssues.length}</div>
-          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" mt-0.5">Issues Fixed</div>
+        <div className={`rounded-xl p-3 border text-center ${hasFixed ? "bg-green-500/[0.07] border-green-500/20" : isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.07]"}`}>
+          <div className={`text-xl font-bold font-['Syne'] ${hasFixed ? "text-green-400" : isLight ? "text-gray-400" : "text-white/30"}`}>{diff.fixedIssues.length}</div>
+          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>Issues Fixed</div>
         </div>
-        <div className={`rounded-xl p-3 border ${isLight ? "bg-gray-50" : "bg-white/[0.03]" isLight ? "border-gray-200" : "border-white/[0.07]" text-center">
-          <div className={`text-xl font-bold font-['Syne'] ${isLight ? "text-gray-400" : "text-white/30">{diff.unchanged}</div>
-          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" mt-0.5">Unchanged</div>
+        <div className={`rounded-xl p-3 border text-center ${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.07]"}`}>
+          <div className={`text-xl font-bold font-['Syne'] ${isLight ? "text-gray-400" : "text-white/30"}`}
+          >{diff.unchanged}</div>
+          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>Unchanged</div>
         </div>
       </div>
 
       {hasRegressions && (
         <div className="space-y-1.5">
           <div className="text-[10px] text-red-400/70 uppercase tracking-wide font-medium">New Regressions Since Last Scan</div>
-          {diff.newRegressions.slice(0, 5).map((r, i) => {
+          {diff.newRegressions.slice(0, 5).map((r: any, i: any) => {
             const sev = SEVERITY_CONFIG[r.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
             return (
-              <div key={i} className="flex items-center gap-2 text-xs">
+              <div key={i} className="flex items-center gap-2 text-xs"
+          >
                 <span className={`px-1.5 py-0.5 rounded font-bold text-[9px] uppercase ${sev.badge}`}>{r.severity}</span>
                 <span className={`${isLight ? "text-gray-500" : "text-white/55"}`}>{r.title}</span>
               </div>
@@ -1049,8 +3485,9 @@ function RegressionPanel({ diff }: { diff: RegressionDiff }) {
       {hasFixed && (
         <div className="space-y-1.5">
           <div className="text-[10px] text-green-400/70 uppercase tracking-wide font-medium">Fixed Since Last Scan</div>
-          {diff.fixedIssues.slice(0, 4).map((r, i) => (
-            <div key={i} className={`flex items-center gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/40">
+          {diff.fixedIssues.slice(0, 4).map((r: any, i: any) => (
+            <div key={i} className={`flex items-center gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>
+              <CheckCircle2 className="w-3.5 h-3.5 text-green-400/60 shrink-0" />
               <CheckCircle2 className="w-3 h-3 text-green-400/60 shrink-0" />
               {r.title}
             </div>
@@ -1062,6 +3499,7 @@ function RegressionPanel({ diff }: { diff: RegressionDiff }) {
 }
 
 function BenchmarkPanel({ data }: { data: BenchmarkData }) {
+  const isLight = useIsLight();
   const dims = [
     { label: "Overall", value: data.overall },
     { label: "Security", value: data.security },
@@ -1073,8 +3511,8 @@ function BenchmarkPanel({ data }: { data: BenchmarkData }) {
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 space-y-5 aurora-card`}>
       <div className="flex items-center gap-2">
-        <Award className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Benchmark Percentile</h2>
+        <Award className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Benchmark Percentile</h2>
         <span className={`ml-auto text-[10px] ${isLight ? "text-gray-400" : "text-white/25"}`}>vs {data.totalScansCompared} apps</span>
       </div>
 
@@ -1132,7 +3570,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
     border: "border-orange-500/20",
     riskPhrase: "Common Replit pattern",
     patterns: [
-      "Monolithic App.tsx / index.ts (900+ lines) — should be split across modules",
+      "Monolithic App.tsx / index.ts (900+ lines) - should be split across modules",
       "PORT hardcoded in source instead of environment variable",
       "Express server missing helmet + rate-limiting middleware",
       "Secrets referenced directly from process.env without validation",
@@ -1149,7 +3587,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
     patterns: [
       "Multiple conflicting implementations of the same function from different AI sessions",
       '"TODO: implement this" placeholders left in production code paths',
-      "Inconsistent TypeScript strictness — some files strict, others permissive",
+      "Inconsistent TypeScript strictness - some files strict, others permissive",
       "Over-use of 'as' type casts to silence TS errors instead of fixing types",
       "Dead branches from earlier AI sessions never cleaned up",
     ],
@@ -1162,11 +3600,11 @@ const VIBE_TOOL_PATTERNS: Record<string, {
     border: "border-pink-500/20",
     riskPhrase: "Common Lovable pattern",
     patterns: [
-      "Supabase / Firebase RLS not enabled — all rows publicly readable",
+      "Supabase / Firebase RLS not enabled - all rows publicly readable",
       "API keys or service credentials exposed in client-side code",
-      "Auth checked only on frontend — no server-side guard on protected endpoints",
+      "Auth checked only on frontend - no server-side guard on protected endpoints",
       "Single-file components exceeding 2,000 lines",
-      "No environment separation — same keys used in dev and prod",
+      "No environment separation - same keys used in dev and prod",
     ],
   },
   "bolt": {
@@ -1177,11 +3615,11 @@ const VIBE_TOOL_PATTERNS: Record<string, {
     border: "border-yellow-500/20",
     riskPhrase: "Common Bolt pattern",
     patterns: [
-      "Supabase / Firebase RLS not enabled — all rows publicly readable",
+      "Supabase / Firebase RLS not enabled - all rows publicly readable",
       "API keys or service credentials exposed in client-side code",
-      "Auth checked only on frontend — no server-side guard on protected endpoints",
+      "Auth checked only on frontend - no server-side guard on protected endpoints",
       "Single-file components exceeding 2,000 lines",
-      "No environment separation — same keys used in dev and prod",
+      "No environment separation - same keys used in dev and prod",
     ],
   },
   "windsurf": {
@@ -1193,9 +3631,9 @@ const VIBE_TOOL_PATTERNS: Record<string, {
     riskPhrase: "Common Windsurf pattern",
     patterns: [
       "Duplicate utility functions with slight variations across files",
-      "useEffect hooks missing cleanup functions — causes memory leaks",
+      "useEffect hooks missing cleanup functions - causes memory leaks",
       "Async functions without try-catch in 60%+ of cases",
-      "State mutations inside render — causes unexpected re-renders",
+      "State mutations inside render - causes unexpected re-renders",
       "Missing dependency arrays or stale closures in hooks",
     ],
   },
@@ -1207,8 +3645,8 @@ const VIBE_TOOL_PATTERNS: Record<string, {
     border: "border-violet-500/20",
     riskPhrase: "Common Copilot pattern",
     patterns: [
-      'Auth check commented out: // TODO: validate user — left in production',
-      "SQL queries with string interpolation — SQL injection risk",
+      'Auth check commented out: // TODO: validate user - left in production',
+      "SQL queries with string interpolation - SQL injection risk",
       "Error swallowing: catch(e) {} with no logging or retry",
       "Debug console.log() statements left in production paths",
       "Boilerplate security stubs never implemented",
@@ -1221,6 +3659,7 @@ function VibeCodeIntelPanel({ vibeTool, issues, vibeToolRank }: {
   issues: ScanIssue[];
   vibeToolRank?: string | null;
 }) {
+  const isLight = useIsLight();
   const normalised = vibeTool.toLowerCase().replace(/[^a-z]/g, "");
   const cfg = VIBE_TOOL_PATTERNS[normalised] ?? VIBE_TOOL_PATTERNS["copilot"];
   const aiIssues = issues.filter((i) => i.agentName === "AI Code Quality");
@@ -1236,18 +3675,19 @@ function VibeCodeIntelPanel({ vibeTool, issues, vibeToolRank }: {
         <span className="text-xl">{cfg.emoji}</span>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">VibeCode Intelligence</h2>
+            <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>VibeCode Intelligence</h2>
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${cfg.bg} ${cfg.color} ${cfg.border}`}>
               {cfg.label}
             </span>
           </div>
-          <p className={`text-[11px] ${isLight ? "text-gray-400" : "text-white/30" mt-0.5">
+          <p className={`text-[11px] ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>
             Pattern-matched against known {cfg.label} failure signatures
           </p>
         </div>
         {criticalOrHigh.length > 0 && (
           <div className="shrink-0 text-right">
-            <div className="text-lg font-bold font-['Syne'] text-red-400">{criticalOrHigh.length}</div>
+            <div className="text-lg font-bold font-['Syne'] text-red-400"
+          >{criticalOrHigh.length}</div>
             <div className={`text-[9px] ${isLight ? "text-gray-400" : "text-white/25"}`}>High-risk patterns</div>
           </div>
         )}
@@ -1264,13 +3704,13 @@ function VibeCodeIntelPanel({ vibeTool, issues, vibeToolRank }: {
         {/* Known failure patterns for this tool */}
         <div>
           <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} uppercase tracking-widest font-medium mb-2.5`}>
-            Known {cfg.label} failure patterns — checked in your code
+            Known {cfg.label} failure patterns - checked in your code
           </div>
           <div className="space-y-1.5">
             {cfg.patterns.map((p, i) => {
               const matched = aiIssues.some((issue) =>
-                issue.title?.toLowerCase().split(" ").some((w) => p.toLowerCase().includes(w)) ||
-                issue.description?.toLowerCase().split(" ").some((w) => w.length > 5 && p.toLowerCase().includes(w)),
+                issue.title?.toLowerCase().split(" ").some((w: any) => p.toLowerCase().includes(w)) ||
+                issue.description?.toLowerCase().split(" ").some((w: any) => w.length > 5 && p.toLowerCase().includes(w)),
               );
               return (
                 <div key={i} className="flex items-start gap-2.5 text-xs">
@@ -1320,8 +3760,7 @@ function VibeCodeIntelPanel({ vibeTool, issues, vibeToolRank }: {
             {aiIssues.length > 3 && (
               <button
                 onClick={() => setExpanded(!expanded)}
-                className={`mt-2 text-[11px] ${isLight ? "text-gray-400" : "text-white/25"} hover:text-white/50 transition-colors w-full text-center`}
-              >
+                className={`mt-2 text-[11px] ${isLight ? "text-gray-400" : "text-white/25"} hover:text-white/50 transition-colors w-full text-center`}>
                 {expanded ? "Show less" : `Show ${aiIssues.length - 3} more findings`}
               </button>
             )}
@@ -1339,6 +3778,7 @@ function VibeCodeIntelPanel({ vibeTool, issues, vibeToolRank }: {
 }
 
 function LaunchDNAPanel({ dna }: { dna: LaunchDNA }) {
+  const isLight = useIsLight();
   const profiles = [
     { key: "risk", data: dna.riskProfile, accent: "text-red-400", bg: "bg-red-500/[0.05] border-red-500/15" },
     { key: "growth", data: dna.growthProfile, accent: "text-green-400", bg: "bg-green-500/[0.05] border-green-500/15" },
@@ -1348,12 +3788,14 @@ function LaunchDNAPanel({ dna }: { dna: LaunchDNA }) {
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow`}>
       <div className="flex items-center gap-2">
-        <Dna className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Launch DNA</h2>
-        <span className={`ml-auto text-[10px] ${isLight ? "text-gray-400" : "text-white/30" font-mono">{dna.overallDNA}</span>
+        <Dna className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}
+          >Launch DNA</h2>
+        <span className={`ml-auto text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} font-mono`}>{dna.overallDNA}</span>
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-3 gap-4"
+          >
         {profiles.map(({ key, data, accent, bg }) => {
           const pct = data.score;
           const color = pct >= 70 ? "#4ade80" : pct >= 45 ? "#f59e0b" : "#f87171";
@@ -1369,13 +3811,14 @@ function LaunchDNAPanel({ dna }: { dna: LaunchDNA }) {
                 </div>
               </div>
               <div className="flex flex-wrap gap-1">
-                {data.tags.map((tag) => (
-                  <span key={tag} className={`text-[9px] px-1.5 py-0.5 rounded-full ${isLight ? "bg-gray-100" : "bg-white/[0.06]"} border border-gray-200" : ${isLight ? "border-gray-200" : "border-white/[0.08]"} isLight ? "text-gray-500" : "text-white/40">
+                {data.tags.map((tag: any) => (
+                  <span key={tag} className={`text-[9px] px-1.5 py-0.5 rounded-full border ${isLight ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white/[0.06] border-white/[0.08] text-white/40"}`}>
                     {tag}
                   </span>
                 ))}
               </div>
-              <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40" leading-relaxed">{data.insight}</p>
+              <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"} leading-relaxed`}
+          >{data.insight}</p>
             </div>
           );
         })}
@@ -1385,6 +3828,7 @@ function LaunchDNAPanel({ dna }: { dna: LaunchDNA }) {
 }
 
 function LaunchReplaySection({ steps }: { steps: LaunchReplayStep[] }) {
+  const isLight = useIsLight();
   const failCount = steps.filter((s) => s.status === "fail").length;
   const warnCount = steps.filter((s) => s.status === "warning").length;
   const hasCritical = failCount > 0;
@@ -1392,8 +3836,8 @@ function LaunchReplaySection({ steps }: { steps: LaunchReplayStep[] }) {
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow`}>
       <div className="flex items-center gap-2">
-        <Play className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Launch Replay</h2>
+        <Play className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Launch Replay</h2>
         <div className="ml-auto flex items-center gap-2">
           {failCount > 0 && (
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/25">
@@ -1401,7 +3845,8 @@ function LaunchReplaySection({ steps }: { steps: LaunchReplayStep[] }) {
             </span>
           )}
           {warnCount > 0 && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25"
+          >
               {warnCount} warning{warnCount !== 1 ? "s" : ""}
             </span>
           )}
@@ -1409,7 +3854,7 @@ function LaunchReplaySection({ steps }: { steps: LaunchReplayStep[] }) {
       </div>
 
       <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/35"} leading-relaxed`}>
-        Visual replay of a typical user's first session — showing exactly where real users hit walls, get confused, or lose trust.
+        Visual replay of a typical user's first session - showing exactly where real users hit walls, get confused, or lose trust.
       </p>
 
       <div className="space-y-0">
@@ -1478,7 +3923,7 @@ function LaunchReplaySection({ steps }: { steps: LaunchReplayStep[] }) {
             <div className="text-xs font-bold text-red-400 mb-0.5">🔴 DO NOT LAUNCH</div>
             <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/50"} leading-relaxed`}>
               {failCount} critical user journey failure{failCount !== 1 ? "s" : ""} detected. Real users will experience these in their first session.
-              Fix these before going live — first impressions are permanent.
+              Fix these before going live - first impressions are permanent.
             </p>
           </div>
         </div>
@@ -1488,16 +3933,18 @@ function LaunchReplaySection({ steps }: { steps: LaunchReplayStep[] }) {
 }
 
 function CofounderNarrativePanel({ narrative }: { narrative: string }) {
+  const isLight = useIsLight();
   const paragraphs = narrative.split("\n").filter((p) => p.trim().length > 0);
 
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 space-y-5 aurora-card`}>
       <div className="flex items-center gap-2">
-        <Users className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Technical Co-Founder Mode</h2>
+        <Users className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Technical Co-Founder Mode</h2>
         <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400">AI CTO</span>
       </div>
-      <div className="border border-violet-500/10 bg-violet-500/[0.03] rounded-2xl p-5 space-y-4">
+      <div className="border border-violet-500/10 bg-violet-500/[0.03] rounded-2xl p-5 space-y-4"
+          >
         {paragraphs.map((p, i) => (
           <p key={i} className={`text-sm ${isLight ? "text-gray-600" : "text-white/60"} leading-relaxed`}>{p}</p>
         ))}
@@ -1507,50 +3954,54 @@ function CofounderNarrativePanel({ narrative }: { narrative: string }) {
 }
 
 function ShadowApiPanel({ findings }: { findings: ShadowApiFindings }) {
+  const isLight = useIsLight();
   const hasOrphaned = findings.orphanedRoutes.length > 0;
 
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow`}>
       <div className="flex items-center gap-2">
-        <Globe className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Shadow API Radar</h2>
+        <Globe className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Shadow API Radar</h2>
         <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${hasOrphaned ? "bg-amber-500/15 text-amber-400" : "bg-green-500/15 text-green-400"}`}>
           {hasOrphaned ? `${findings.orphanedRoutes.length} orphaned` : "Clean"}
         </span>
       </div>
 
-      <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40" leading-relaxed">{findings.summary}</p>
+      <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"} leading-relaxed`}>{findings.summary}</p>
 
       {hasOrphaned && (
-        <div className="space-y-2">
+        <div className="space-y-2"
+          >
           <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} uppercase tracking-widest font-medium`}>Orphaned Routes (live but unused)</div>
-          {findings.orphanedRoutes.map((route, i) => (
+          {findings.orphanedRoutes.map((route: any, i: any) => (
             <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${route.risk.startsWith("HIGH") ? "bg-red-500/[0.06] border-red-500/15" : "bg-amber-500/[0.05] border-amber-500/12"}`}>
               <span className={`text-[9px] font-bold font-mono px-1.5 py-0.5 rounded shrink-0 mt-0.5 ${route.risk.startsWith("HIGH") ? "bg-red-500/20 text-red-400" : "bg-amber-500/15 text-amber-400"}`}>
                 {route.method}
               </span>
               <div>
                 <code className={`text-xs ${isLight ? "text-gray-600" : "text-white/60"} font-mono`}>{route.route}</code>
-                <p className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" mt-0.5">{route.risk}</p>
+                <p className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>{route.risk}</p>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      <div className="grid sm:grid-cols-2 gap-3 text-xs">
-        <div className={`${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"} border border-gray-200" : ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl p-3">
+      <div className="grid sm:grid-cols-2 gap-3 text-xs"
+          >
+        <div className={`border rounded-xl p-3 ${isLight ? "bg-gray-50/50 border-gray-200" : "bg-white/[0.02] border-white/[0.07]"}`}>
           <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} uppercase tracking-wide mb-2`}>Backend Routes Registered</div>
           <div className="space-y-1 max-h-28 overflow-y-auto">
-            {findings.backendRegisteredRoutes.slice(0, 8).map((r, i) => (
+            {findings.backendRegisteredRoutes.slice(0, 8).map((r: any, i: any) => (
               <code key={i} className={`block ${isLight ? "text-gray-400" : "text-white/35"} font-mono text-[10px]`}>{r}</code>
             ))}
           </div>
         </div>
-        <div className={`${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"} border border-gray-200" : ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl p-3">
+        <div className={`border rounded-xl p-3 ${isLight ? "bg-gray-50/50 border-gray-200" : "bg-white/[0.02] border-white/[0.07]"}`}
+          >
           <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} uppercase tracking-wide mb-2`}>Frontend Fetch Calls</div>
           <div className="space-y-1 max-h-28 overflow-y-auto">
-            {findings.frontendFetchRoutes.slice(0, 8).map((r, i) => (
+            {findings.frontendFetchRoutes.slice(0, 8).map((r: any, i: any) => (
               <code key={i} className={`block ${isLight ? "text-gray-400" : "text-white/35"} font-mono text-[10px]`}>{r}</code>
             ))}
           </div>
@@ -1561,6 +4012,7 @@ function ShadowApiPanel({ findings }: { findings: ShadowApiFindings }) {
 }
 
 function ShareBadgeButton({ scan }: { scan: ScanDetail }) {
+  const isLight = useIsLight();
   const [copied, setCopied] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
@@ -1575,7 +4027,7 @@ function ShareBadgeButton({ scan }: { scan: ScanDetail }) {
   const options = [
     { label: "Markdown badge", value: markdownBadge, hint: "For GitHub README" },
     { label: "HTML badge", value: htmlBadge, hint: "For websites" },
-    { label: "Score only", value: `Agenario score: ${score}/100 (${label}) — ${scan.sourceInput}`, hint: "Plain text" },
+    { label: "Score only", value: `Agenario score: ${score}/100 (${label}) - ${scan.sourceInput}`, hint: "Plain text" },
   ];
 
   const handleCopy = (value: string) => {
@@ -1589,7 +4041,7 @@ function ShareBadgeButton({ scan }: { scan: ScanDetail }) {
     <div className="relative">
       <button
         onClick={() => setShowMenu((v) => !v)}
-        className={`flex items-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/30" hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border ${isLight ? "border-gray-200" : "border-white/[0.07]"} hover:border-white/15"
+        className={`flex items-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border ${isLight ? "border-gray-200" : "border-white/[0.07]"} hover:border-white/15`}
       >
         {copied ? <CheckCheck className="w-3 h-3 text-green-400" /> : <Share2 className="w-3 h-3" />}
         {copied ? "Copied!" : "Share"}
@@ -1600,10 +4052,11 @@ function ShareBadgeButton({ scan }: { scan: ScanDetail }) {
             <button
               key={opt.label}
               onClick={() => handleCopy(opt.value)}
-              className={`w-full text-left px-4 py-2.5 hover:${isLight ? "bg-gray-100" : "bg-white/[0.05]"} transition-colors`}
+              className={`w-full text-left px-4 py-2.5 ${isLight ? "hover:bg-gray-100" : "hover:bg-white/[0.05]"} transition-colors`}
             >
               <div className={`text-xs font-medium ${isLight ? "text-gray-800" : "text-white/80"}`}>{opt.label}</div>
-              <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" mt-0.5">{opt.hint}</div>
+              <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}
+          >{opt.hint}</div>
             </button>
           ))}
         </div>
@@ -1634,6 +4087,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 };
 
 function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["secretScanResults"]>; isCreator: boolean }) {
+  const isLight = useIsLight();
   const lockedCount = (data as Record<string, unknown>)["_lockedFindingCount"] as number | undefined;
 
   return (
@@ -1644,8 +4098,9 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
           <span className="text-sm">🔍</span>
         </div>
         <div className="flex-1">
-          <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Secret & API Key Scanner</h2>
-          <p className={`${isLight ? "text-gray-400" : "text-white/30" text-xs mt-0.5">Deterministic regex scan — 60+ credential patterns</p>
+          <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}
+          >Secret & API Key Scanner</h2>
+          <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-xs mt-0.5`}>Deterministic regex scan - 60+ credential patterns</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {data.criticalCount > 0 && (
@@ -1667,9 +4122,10 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
       </div>
 
       {data.totalFound === 0 ? (
-        <div className="px-6 py-8 text-center">
+        <div className="px-6 py-8 text-center"
+          >
           <CheckCircle2 className="w-8 h-8 text-green-400 mx-auto mb-3" />
-          <p className={`${isLight ? "text-gray-600" : "text-white/60"} font-medium text-sm`}>Clean — no hardcoded secrets detected</p>
+          <p className={`${isLight ? "text-gray-600" : "text-white/60"} font-medium text-sm`}>Clean - no hardcoded secrets detected</p>
           <p className={`${isLight ? "text-gray-400" : "text-white/25"} text-xs mt-1`}>Scanned {(data.scannedChars / 1000).toFixed(0)}KB of source code across 60+ credential patterns</p>
         </div>
       ) : (
@@ -1678,12 +4134,12 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
             <div className="px-6 py-3 bg-red-500/[0.06] border-b border-red-500/15 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
               <p className="text-red-400 text-xs font-semibold">
-                {data.criticalCount} critical secret{data.criticalCount !== 1 ? "s" : ""} found — rotate these credentials immediately before deployment
+                {data.criticalCount} critical secret{data.criticalCount !== 1 ? "s" : ""} found - rotate these credentials immediately before deployment
               </p>
             </div>
           )}
           <div className="divide-y divide-white/[0.04]">
-            {data.findings.map((finding) => {
+            {data.findings.map((finding: any) => {
               const rc = RISK_CONFIG[finding.risk as keyof typeof RISK_CONFIG] ?? RISK_CONFIG.medium;
               return (
                 <div key={finding.id} className={`px-6 py-4 ${rc.bg} border-l-0`}>
@@ -1694,8 +4150,9 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
                         <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${rc.badge}`}>
                           {finding.risk}
                         </span>
-                        <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30">{CATEGORY_LABEL[finding.category] ?? finding.category}</span>
-                        {finding.lineHint && <span className="text-[10px] font-mono text-amber-400/50 bg-amber-400/[0.06] px-1.5 py-0.5 rounded border border-amber-400/10">{finding.lineHint}</span>}
+                        <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>{CATEGORY_LABEL[finding.category] ?? finding.category}</span>
+                        {finding.lineHint && <span className="text-[10px] font-mono text-amber-400/50 bg-amber-400/[0.06] px-1.5 py-0.5 rounded border border-amber-400/10"
+          >{finding.lineHint}</span>}
                       </div>
                       <p className={`text-sm font-semibold ${isLight ? "text-gray-800" : "text-white/85"} mb-1`}>{finding.name}</p>
                       {isCreator ? (
@@ -1708,10 +4165,11 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
                           <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/35"} font-mono bg-black/20 rounded px-2 py-1.5 leading-relaxed border border-white/[0.04] truncate`}>
                             {finding.context}
                           </p>
-                          <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40" mt-2 leading-relaxed">{finding.recommendation}</p>
+                          <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"} mt-2 leading-relaxed`}>{finding.recommendation}</p>
                         </>
                       ) : (
-                        <div className="flex items-center gap-2 mt-1.5">
+                        <div className="flex items-center gap-2 mt-1.5"
+          >
                           <Lock className="w-3 h-3 text-violet-400 shrink-0" />
                           <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/35"}`}>{finding.context}</span>
                           <Link href="/pricing">
@@ -1729,10 +4187,10 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
             <div className="px-6 py-3 bg-violet-500/[0.05] border-t border-violet-500/15 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Lock className="w-3.5 h-3.5 text-violet-400" />
-                <span className={`text-xs ${isLight ? "text-gray-500" : "text-white/40">{lockedCount} more secret{lockedCount !== 1 ? "s" : ""} found — upgrade to see all</span>
+                <span className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>{lockedCount} more secret{lockedCount !== 1 ? "s" : ""} found - upgrade to see all</span>
               </div>
               <Link href="/pricing">
-                <button className={`text-xs bg-violet-500/80 hover:bg-violet-500 ${isLight ? "text-gray-900" : "text-white" font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30 flex items-center gap-1">
+                <button className={`text-xs bg-violet-500/80 hover:bg-violet-500 ${isLight ? "text-gray-900" : "text-white"} font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30 flex items-center gap-1`}>
                   Unlock All <ArrowRight className="w-3 h-3" />
                 </button>
               </Link>
@@ -1746,12 +4204,13 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
 
 // ── Package CVE Vulnerability Panel ─────────────────────────────────────────
 const CVSS_COLOR = (score: number) =>
-  score >= 9 ? "text-red-400" : score >= 7 ? "text-amber-400" : score >= 4 ? "text-yellow-400" : "text-white/40;
+  score >= 9 ? "text-red-400" : score >= 7 ? "text-amber-400" : score >= 4 ? "text-yellow-400" : "text-white/40";
 
 const CVSS_BG = (score: number) =>
   score >= 9 ? "bg-red-500/15 border-red-500/25" : score >= 7 ? "bg-amber-500/15 border-amber-500/25" : "bg-yellow-500/10 border-yellow-500/20";
 
 function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["packageVulns"]>; isCreator: boolean }) {
+  const isLight = useIsLight();
   const [expanded, setExpanded] = useState<string | null>(null);
   const lockedCount = (data as Record<string, unknown>)["_lockedCount"] as number | undefined;
 
@@ -1763,8 +4222,9 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
           <span className="text-sm">📦</span>
         </div>
         <div className="flex-1">
-          <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Dependency CVE Tracker</h2>
-          <p className={`${isLight ? "text-gray-400" : "text-white/30" text-xs mt-0.5">{data.totalPackages} packages scanned · NVD + GitHub Advisory DB</p>
+          <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}
+          >Dependency CVE Tracker</h2>
+          <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-xs mt-0.5`}>{data.totalPackages} packages scanned · NVD + GitHub Advisory DB</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {data.hasCritical && (
@@ -1802,12 +4262,12 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
             <div className="px-6 py-3 bg-amber-500/[0.05] border-b border-amber-500/15 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
               <p className="text-amber-400 text-xs font-semibold">
-                Highest: {data.topCveId} (CVSS {data.topCvssScore?.toFixed(1)}) — update affected packages before launch
+                Highest: {data.topCveId} (CVSS {data.topCvssScore?.toFixed(1)}) - update affected packages before launch
               </p>
             </div>
           )}
           <div className="divide-y divide-white/[0.04]">
-            {data.findings.map((pkg) => {
+            {data.findings.map((pkg: any) => {
               const isExpanded = expanded === pkg.name;
               const sev = pkg.highestSeverity;
               const sevCfg = sev === "critical" ? RISK_CONFIG.critical : sev === "high" ? RISK_CONFIG.high : RISK_CONFIG.medium;
@@ -1815,17 +4275,18 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
                 <div key={pkg.name}>
                   <button
                     onClick={() => setExpanded(isExpanded ? null : pkg.name)}
-                    className={`w-full px-6 py-4 flex items-center gap-4 hover:${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"} transition-colors text-left`}
-                  >
+                    className={`w-full px-6 py-4 flex items-center gap-4 ${isLight ? "hover:bg-gray-50/50" : "hover:bg-white/[0.02]"} transition-colors text-left`}>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white" font-mono">{pkg.name}</span>
-                        <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30">v{pkg.installedVersion}</span>
+                        <span className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white"} font-mono`}
+          >{pkg.name}</span>
+                        <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>
+                        v{pkg.installedVersion}</span>
                         <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>→</span>
                         <span className="text-xs text-green-400/70 font-mono">v{pkg.fixVersion}</span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${sevCfg.badge}`}>{sev}</span>
                       </div>
-                      <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30" mt-0.5">{pkg.vulns.length} CVE{pkg.vulns.length !== 1 ? "s" : ""} · CVSS {pkg.highestCvss.toFixed(1)}</p>
+                      <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>{pkg.vulns.length} CVE{pkg.vulns.length !== 1 ? "s" : ""} · CVSS {pkg.highestCvss.toFixed(1)}</p>
                     </div>
                     <div className={`text-xl font-bold font-['Syne'] shrink-0 ${CVSS_COLOR(pkg.highestCvss)}`}>
                       {pkg.highestCvss.toFixed(1)}
@@ -1834,7 +4295,7 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
                   </button>
                   {isExpanded && isCreator && (
                     <div className="px-6 pb-4 space-y-3">
-                      {pkg.vulns.map((vuln) => (
+                      {pkg.vulns.map((vuln: any) => (
                         <div key={vuln.cveId} className={`bg-black/30 border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl p-4`}>
                           <div className="flex items-start gap-3 mb-2">
                             <span className={`text-xs font-bold px-2 py-0.5 rounded-full border shrink-0 ${CVSS_BG(vuln.cvssScore)}`}>
@@ -1875,11 +4336,12 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
                           <Lock className="w-4 h-4 text-violet-400" />
                           <div>
                             <p className={`text-xs font-semibold ${isLight ? "text-gray-600" : "text-white/60"}`}>Full CVE details locked</p>
-                            <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30">Upgrade to see CVE IDs, CVSS vectors, exploit status, and exact fix versions</p>
+                            <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>Upgrade to see CVE IDs, CVSS vectors, exploit status, and exact fix versions</p>
                           </div>
                         </div>
-                        <Link href="/pricing">
-                          <button className={`text-xs bg-violet-500/80 hover:bg-violet-500 ${isLight ? "text-gray-900" : "text-white" font-semibold px-3 py-2 rounded-lg transition-all border border-violet-400/30 shrink-0 flex items-center gap-1">
+                        <Link href="/pricing"
+          >
+                          <button className={`text-xs bg-violet-500/80 hover:bg-violet-500 ${isLight ? "text-gray-900" : "text-white"} font-semibold px-3 py-2 rounded-lg transition-all border border-violet-400/30 shrink-0 flex items-center gap-1`}>
                             Unlock <ArrowRight className="w-3 h-3" />
                           </button>
                         </Link>
@@ -1892,12 +4354,13 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
           </div>
           {lockedCount && lockedCount > 0 && !isCreator && (
             <div className="px-6 py-3 bg-violet-500/[0.05] border-t border-violet-500/15 flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2"
+          >
                 <Lock className="w-3.5 h-3.5 text-violet-400" />
-                <span className={`text-xs ${isLight ? "text-gray-500" : "text-white/40">{lockedCount} more vulnerable package{lockedCount !== 1 ? "s" : ""} — upgrade to see all</span>
+                <span className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>{lockedCount} more vulnerable package{lockedCount !== 1 ? "s" : ""} - upgrade to see all</span>
               </div>
               <Link href="/pricing">
-                <button className={`text-xs bg-violet-500/80 hover:bg-violet-500 ${isLight ? "text-gray-900" : "text-white" font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30 flex items-center gap-1">
+                <button className={`text-xs bg-violet-500/80 hover:bg-violet-500 ${isLight ? "text-gray-900" : "text-white"} font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30 flex items-center gap-1`}>
                   Unlock All <ArrowRight className="w-3 h-3" />
                 </button>
               </Link>
@@ -1916,7 +4379,7 @@ const CLEANUP_CAT_LABEL: Record<string, { label: string; icon: string; color: st
   "dead-code":      { label: "Dead Code",      icon: "💀", color: "text-red-400" },
   "type-safety":    { label: "Type Safety",    icon: "🔷", color: "text-blue-400" },
   "env-hygiene":    { label: "Env Hygiene",    icon: "🌿", color: "text-green-400" },
-  "doc-clutter":    { label: "Doc Clutter",    icon: "📄", color: "text-white/40 },
+  "doc-clutter":    { label: "Doc Clutter",    icon: "📄", color: "text-white/40" },
   "security-smell": { label: "Security Smell", icon: "🔥", color: "text-red-500" },
   "file-hygiene":   { label: "File Hygiene",   icon: "🗑️", color: "text-white/35" },
 };
@@ -1927,6 +4390,7 @@ const DEBT_LABEL = (score: number) =>
   score >= 85 ? "Clean" : score >= 60 ? "Moderate Debt" : "High Debt";
 
 function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupReport"]> }) {
+  const isLight = useIsLight();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -1934,16 +4398,16 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
   const categoryKeys = Object.keys(categoryCounts).filter((k) => categoryCounts[k] > 0);
 
   const visibleFindings = activeCategory
-    ? data.findings.filter((f) => f.category === activeCategory)
+    ? data.findings.filter((f: any) => f.category === activeCategory)
     : data.findings;
 
   const copyAsTodo = () => {
     const lines = [
-      `# Code Cleanup Report — Tech Debt Score: ${data.debtScore}/100`,
+      `# Code Cleanup Report - Tech Debt Score: ${data.debtScore}/100`,
       `# ${data.summary}`,
       `# Estimated cleanup: ~${data.estimatedCleanupMinutes} minutes`,
       "",
-      ...data.findings.map((f) => `- [ ] [${f.severity.toUpperCase()}] ${f.title}${f.file ? ` (${f.file})` : ""}${f.lineHint ? ` — ${f.lineHint}` : ""}\n  Fix: ${f.fixSuggestion}`),
+      ...data.findings.map((f: any) => `- [ ] [${f.severity.toUpperCase()}] ${f.title}${f.file ? ` (${f.file})` : ""}${f.lineHint ? ` - ${f.lineHint}` : ""}\n  Fix: ${f.fixSuggestion}`),
     ];
     navigator.clipboard.writeText(lines.join("\n"));
     setCopied(true);
@@ -1959,9 +4423,11 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Cleanup Agent</h2>
+            <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}
+          >Cleanup Agent</h2>
             <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>·</span>
-            <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30">Tech Debt Score</span>
+            <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>
+            Tech Debt Score</span>
             <span className={`text-sm font-bold font-['Syne'] ${DEBT_COLOR(data.debtScore)}`}>{data.debtScore}/100</span>
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
               data.debtScore >= 85 ? "bg-green-500/10 text-green-400 border-green-500/20" :
@@ -1969,15 +4435,16 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
               "bg-red-500/10 text-red-400 border-red-500/20"
             }`}>{DEBT_LABEL(data.debtScore)}</span>
           </div>
-          <p className={`${isLight ? "text-gray-400" : "text-white/30" text-xs mt-0.5">{data.summary}</p>
+          <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-xs mt-0.5`}>{data.summary}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0"
+          >
           {data.estimatedCleanupMinutes > 0 && (
             <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} hidden sm:block`}>~{data.estimatedCleanupMinutes} min to fix</span>
           )}
           <button
             onClick={copyAsTodo}
-            className={`flex items-center gap-1.5 text-xs ${isLight ? "text-gray-500" : "text-white/40" hover:text-white/70 bg-white/[0.05] border isLight ? "border-gray-200" : "border-white/[0.08]" rounded-lg px-2.5 py-1.5 transition-colors"
+            className={`flex items-center gap-1.5 text-xs ${isLight ? "text-gray-500" : "text-white/40"} hover:text-white/70 bg-white/[0.05] border ${isLight ? "border-gray-200" : "border-white/[0.08]"} rounded-lg px-2.5 py-1.5 transition-colors`}
           >
             {copied ? <CheckCheck className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
             <span className="hidden sm:inline">{copied ? "Copied!" : "Export TODO"}</span>
@@ -1990,7 +4457,7 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
         {[
           { label: "Errors", value: data.errorCount, color: "text-red-400" },
           { label: "Warnings", value: data.warnCount, color: "text-amber-400" },
-          { label: "Info", value: data.infoCount, color: "text-white/40 },
+          { label: "Info", value: data.infoCount, color: "text-white/40" },
           { label: "Auto-fixable", value: data.autoFixableCount, color: "text-green-400" },
         ].map((s) => (
           <div key={s.label} className="px-4 py-3 text-center">
@@ -2006,7 +4473,7 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
           <button
             onClick={() => setActiveCategory(null)}
             className={`text-[10px] font-bold px-2.5 py-1 rounded-full border whitespace-nowrap transition-colors ${
-              activeCategory === null ? "bg-white/10 border-white/20 text-white" : "bg-white/[0.03] isLight ? "border-gray-200" : "border-white/[0.08]" text-white/35 hover:text-white/60"
+              activeCategory === null ? "bg-white/10 border-white/20 text-white" : `${isLight ? "bg-white border-gray-200" : "bg-white/[0.03] border-white/[0.08]"} text-white/35 hover:text-white/60`
             }`}
           >
             All ({data.totalFindings})
@@ -2018,7 +4485,7 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
                 key={cat}
                 onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
                 className={`text-[10px] font-bold px-2.5 py-1 rounded-full border whitespace-nowrap transition-colors ${
-                  activeCategory === cat ? "bg-white/10 border-white/20 text-white" : "bg-white/[0.03] isLight ? "border-gray-200" : "border-white/[0.08]" text-white/35 hover:text-white/60"
+                  activeCategory === cat ? "bg-white/10 border-white/20 text-white" : `bg-white/[0.03] ${isLight ? "border-gray-200" : "border-white/[0.08]"} text-white/35 hover:text-white/60`
                 }`}
               >
                 {meta?.icon ?? "•"} {meta?.label ?? cat} ({categoryCounts[cat]})
@@ -2036,11 +4503,11 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
         </div>
       ) : (
         <div className="divide-y divide-white/[0.03] max-h-96 overflow-y-auto">
-          {visibleFindings.map((finding) => {
+          {visibleFindings.map((finding: any) => {
             const meta = CLEANUP_CAT_LABEL[finding.category];
             const sevColor = finding.severity === "error" ? "text-red-400 border-red-500/20 bg-red-500/[0.06]" :
               finding.severity === "warn" ? "text-amber-400 border-amber-500/20 bg-amber-500/[0.06]" :
-              "text-white/35 isLight ? "border-gray-200" : "border-white/[0.08]" isLight ? "bg-gray-50" : "bg-white/[0.03]"";
+              `text-white/35 ${isLight ? "border-gray-200 bg-gray-50" : "border-white/[0.08] bg-white/[0.03]"}`;
             return (
               <div key={finding.id} className="px-6 py-3.5">
                 <div className="flex items-start gap-3">
@@ -2059,7 +4526,7 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
                       <p className="text-[10px] font-mono text-amber-400/50 bg-amber-400/[0.06] px-1.5 py-0.5 rounded border border-amber-400/10 mb-1 inline-block">{finding.lineHint}</p>
                     )}
                     <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/35"} leading-relaxed mb-1.5`}>{finding.detail}</p>
-                    <div className={`bg-black/30 border ${isLight ? "border-gray-200" : "border-white/[0.06]"} rounded-lg px-3 py-2 text-[10px] font-mono text-gray-400" : ${isLight ? "text-gray-400" : "text-white/30"} leading-relaxed">
+                    <div className={`bg-black/30 border rounded-lg px-3 py-2 text-[10px] font-mono leading-relaxed ${isLight ? "border-gray-200 text-gray-400" : "border-white/[0.06] text-white/30"}`}>
                       💡 {finding.fixSuggestion}
                     </div>
                   </div>
@@ -2072,13 +4539,14 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
 
       {/* Top offending files */}
       {data.topFiles.length > 0 && (
-        <div className="px-6 py-4 border-t border-white/[0.04]">
+        <div className="px-6 py-4 border-t border-white/[0.04]"
+          >
           <p className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} uppercase tracking-wider font-bold mb-2`}>Most issues</p>
           <div className="flex flex-wrap gap-2">
-            {data.topFiles.map((f) => (
-              <div key={f.path} className={`flex items-center gap-1.5 text-[10px] ${isLight ? "bg-gray-50" : "bg-white/[0.03]" border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-lg px-2 py-1">
+            {data.topFiles.map((f: any) => (
+              <div key={f.path} className={`flex items-center gap-1.5 text-[10px] border rounded-lg px-2 py-1 ${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.07]"}`}>
                 <span className={`${isLight ? "text-gray-400" : "text-white/25"} font-mono truncate max-w-[180px]`}>{f.path.split("/").slice(-2).join("/")}</span>
-                <span className={`${isLight ? "text-gray-500" : "text-white/40" font-bold">{f.issueCount}</span>
+                <span className={`${isLight ? "text-gray-500" : "text-white/40"} font-bold`}>{f.issueCount}</span>
               </div>
             ))}
           </div>
@@ -2090,6 +4558,7 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
 
 // ── Digital Twin Panel ───────────────────────────────────────────────────────
 function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCreator: boolean }) {
+  const isLight = useIsLight();
   const [openSection, setOpenSection] = useState<"journeys" | "chaos" | "attacks">("journeys");
 
   const statusConfig = {
@@ -2103,8 +4572,9 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
       className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
       <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} flex items-center gap-3`}>
         <Network className="w-4 h-4 text-violet-400" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm flex-1">Digital Twin Simulation</h2>
-        <div className="flex items-center gap-3 text-xs">
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm flex-1`}>Digital Twin Simulation</h2>
+        <div className="flex items-center gap-3 text-xs"
+          >
           <span className={`${isLight ? "text-gray-400" : "text-white/25"}`}>{data.simulatedUserCount?.toLocaleString() ?? "1,000"} virtual users</span>
           <span className="px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 font-semibold">
             {data.twinConfidenceScore}/100 confidence
@@ -2138,8 +4608,8 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
             onClick={() => setOpenSection(key)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-xs border-b-2 transition-colors ${
               openSection === key
-                ? "border-violet-500 isLight ? "text-gray-900" : "text-white""
-                : "border-transparent isLight ? "text-gray-400" : "text-white/30" hover:text-white/60"
+                ? `border-violet-500 ${isLight ? "text-gray-900" : "text-white"}`
+                : `border-transparent ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60`
             }`}
           >
             <Icon className="w-3 h-3" />{label}
@@ -2150,7 +4620,7 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
       {/* Journeys */}
       {openSection === "journeys" && (
         <div className="divide-y divide-white/[0.04]">
-          {data.journeys.map((j, i) => {
+          {data.journeys.map((j: any, i: any) => {
             const sc = statusConfig[j.status];
             return (
               <div key={i} className="px-6 py-3 flex items-start gap-4">
@@ -2168,8 +4638,8 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
                     </p>
                   )}
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    {j.steps.slice(0, 4).map((s, si) => (
-                      <span key={si} className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" isLight ? "bg-gray-50" : "bg-white/[0.03]" border border-white/[0.06] px-1.5 py-0.5 rounded">
+                    {j.steps.slice(0, 4).map((s: any, si: any) => (
+                      <span key={si} className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} ${isLight ? "bg-gray-50" : "bg-white/[0.03]"} border border-white/[0.06] px-1.5 py-0.5 rounded`}>
                         {si + 1}. {s}
                       </span>
                     ))}
@@ -2184,8 +4654,9 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
       {/* Chaos */}
       {openSection === "chaos" && (
         <div className="divide-y divide-white/[0.04]">
-          {data.chaosResults.map((c, i) => (
-            <div key={i} className="px-6 py-3 flex items-start gap-4">
+          {data.chaosResults.map((c: any, i: any) => (
+            <div key={i} className="px-6 py-3 flex items-start gap-4"
+          >
               <span className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${c.graceful ? "bg-green-400" : "bg-red-400"}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
@@ -2193,9 +4664,10 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
                   <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${c.graceful ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
                     {c.graceful ? "Graceful" : "Crashes"}
                   </span>
-                  <span className={`text-[10px] ml-auto ${SEVERITY_CONFIG[c.severity as keyof typeof SEVERITY_CONFIG]?.color ?? "${isLight ? "}text-gray-500" : "text-white/40"}`}>{c.severity}</span>
+                  <span className={`text-[10px] ml-auto ${SEVERITY_CONFIG[c.severity as keyof typeof SEVERITY_CONFIG]?.color ?? (isLight ? "text-gray-500" : "text-white/40")}`}>{c.severity}</span>
                 </div>
-                <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40">{c.scenario}</p>
+                <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}
+          >{c.scenario}</p>
                 <p className={`text-xs ${isLight ? "text-gray-600" : "text-white/60"} mt-0.5`}>{c.impact}</p>
               </div>
             </div>
@@ -2210,7 +4682,7 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
             <div className={`px-6 py-3 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} bg-amber-500/[0.03]`}>
               <p className="text-xs text-amber-400/70 flex items-center gap-1.5">
                 <Lock className="w-3 h-3" />
-                {data._lockedAttackCount} attack vectors hidden — upgrade to Creator to see full exploit map
+                {data._lockedAttackCount} attack vectors hidden - upgrade to Creator to see full exploit map
               </p>
             </div>
           )}
@@ -2218,7 +4690,7 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
             <div className={`px-6 py-6 text-center ${isLight ? "text-gray-400" : "text-white/25"} text-sm`}>No attack simulations available</div>
           )}
           <div className="divide-y divide-white/[0.04]">
-            {data.attackSimulations.map((a, i) => (
+            {data.attackSimulations.map((a: any, i: any) => (
               <div key={i} className="px-6 py-3 flex items-start gap-4">
                 <span className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${a.blocked ? "bg-green-400" : "bg-red-400"}`} />
                 <div className="flex-1 min-w-0">
@@ -2227,7 +4699,7 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${a.blocked ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
                       {a.blocked ? "Blocked" : "Unblocked"}
                     </span>
-                    <span className={`text-[10px] ml-auto ${SEVERITY_CONFIG[a.severity as keyof typeof SEVERITY_CONFIG]?.color ?? "${isLight ? "}text-gray-500" : "text-white/40"}`}>{a.severity}</span>
+                    <span className={`text-[10px] ml-auto ${SEVERITY_CONFIG[a.severity as keyof typeof SEVERITY_CONFIG]?.color ?? (isLight ? "text-gray-500" : "text-white/40")}`}>{a.severity}</span>
                   </div>
                   <p className={`text-xs ${isLight ? "text-gray-600" : "text-white/60"}`}>{a.detail}</p>
                   {a.vector && <p className={`text-[10px] font-mono ${isLight ? "text-gray-400" : "text-white/25"} mt-1 truncate`}>{a.vector}</p>}
@@ -2247,6 +4719,7 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
 
 // ── Predictive Intelligence Panel ────────────────────────────────────────────
 function PredictiveIntelPanel({ data, isCreator }: { data: PredictiveIntelResult; isCreator: boolean }) {
+  const isLight = useIsLight();
   const colorMap: Record<string, string> = {
     red: "text-red-400",
     amber: "text-amber-400",
@@ -2285,7 +4758,8 @@ function PredictiveIntelPanel({ data, isCreator }: { data: PredictiveIntelResult
       className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
       <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} flex items-center gap-3`}>
         <Brain className="w-4 h-4 text-sky-400" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm flex-1">Predictive Intelligence</h2>
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm flex-1`}
+          >Predictive Intelligence</h2>
         <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>{data.confidenceLabel}</span>
       </div>
 
@@ -2306,11 +4780,11 @@ function PredictiveIntelPanel({ data, isCreator }: { data: PredictiveIntelResult
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-5">
-        {(data.forecasts ?? []).map((f, i) => (
+        {(data.forecasts ?? []).map((f: any, i: any) => (
           <div key={i} className={`rounded-xl border p-3 ${bgMap[f.color] ?? bgMap.amber}`}>
             <div className={`text-lg font-bold font-['Syne'] ${colorMap[f.color] ?? "text-white/60"}`}>{f.value}</div>
             <div className={`text-[11px] ${isLight ? "text-gray-500" : "text-white/50"} font-medium mt-0.5`}>{f.metric}</div>
-            <div className={`flex items-center gap-0.5 mt-1 text-[10px] ${colorMap[f.color] ?? "${isLight ? "}text-gray-500" : "text-white/40"}`}>
+            <div className={`flex items-center gap-0.5 mt-1 text-[10px] ${colorMap[f.color] ?? (isLight ? "text-gray-500" : "text-white/40")}`}>
               {f.trend === "up" ? <ArrowUpRight className="w-2.5 h-2.5" /> : f.trend === "down" ? <ArrowDownRight className="w-2.5 h-2.5" /> : <Minus className="w-2.5 h-2.5" />}
               {f.trendLabel}
             </div>
@@ -2324,6 +4798,7 @@ function PredictiveIntelPanel({ data, isCreator }: { data: PredictiveIntelResult
 
 // ── Root Cause Panel ──────────────────────────────────────────────────────────
 function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator: boolean }) {
+  const isLight = useIsLight();
   const [expandedChain, setExpandedChain] = useState<number | null>(0);
   const [copiedPR, setCopiedPR] = useState<number | null>(null);
 
@@ -2331,7 +4806,7 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
   const hopConfig = {
     clean: { color: "text-green-400", bg: "bg-green-500/10 border-green-500/25", dot: "bg-green-400", label: "Clean" },
     implicated: { color: "text-red-400", bg: "bg-red-500/10 border-red-500/25", dot: "bg-red-400", label: "Implicated" },
-    unknown: { color: "text-white/30", bg: "bg-white/[0.03] isLight ? "border-gray-200" : "border-white/[0.08]"", dot: "bg-white/20", label: "Unknown" },
+    unknown: { color: "text-white/30", bg: `bg-white/[0.03] ${isLight ? "border-gray-200" : "border-white/[0.08]"}`, dot: "bg-white/20", label: "Unknown" },
   };
 
   const copyPR = async (pr: string, i: number) => {
@@ -2347,30 +4822,32 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
       className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
       <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} flex items-center gap-3`}>
         <GitMerge className="w-4 h-4 text-red-400" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm flex-1">Root Cause Engine</h2>
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm flex-1`}
+          >Root Cause Engine</h2>
         <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>{data.chains.length} issue{data.chains.length !== 1 ? "s" : ""} traced</span>
       </div>
 
       <div className={`px-6 py-3 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"}`}>
-        <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40">{data.summary}</p>
+        <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>{data.summary}</p>
       </div>
 
-      <div className="divide-y divide-white/[0.04]">
-        {data.chains.map((chain, ci) => (
+      <div className="divide-y divide-white/[0.04]"
+          >
+        {data.chains.map((chain: any, ci: any) => (
           <div key={ci}>
             <button
               onClick={() => setExpandedChain(expandedChain === ci ? null : ci)}
-              className={`w-full px-6 py-4 flex items-center gap-3 hover:${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"} transition-colors text-left`}
-            >
+              className={`w-full px-6 py-4 flex items-center gap-3 ${isLight ? "hover:bg-gray-50/50" : "hover:bg-white/[0.02]"} transition-colors text-left`}>
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${chain.issueSeverity === "critical" ? "bg-red-400" : "bg-amber-400"}`} />
               <div className="flex-1 min-w-0">
                 <span className={`text-sm font-medium ${isLight ? "text-gray-800" : "text-white/80"} truncate block`}>{chain.issueTitle}</span>
-                <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30">Origin: {chain.originLayer} · {chain.hops.filter(h => h.status === "implicated").length} layers implicated</span>
+                <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"}`}>
+                Origin: {chain.originLayer} · {chain.hops.filter(h => h.status === "implicated").length} layers implicated</span>
               </div>
               <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${chain.issueSeverity === "critical" ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400"}`}>
                 {chain.issueSeverity}
               </span>
-              {expandedChain === ci ? <ChevronUp className={`w-3.5 h-3.5 ${isLight ? "text-gray-400" : "text-white/30" shrink-0" /> : <ChevronDown className={`w-3.5 h-3.5 ${isLight ? "text-gray-400" : "text-white/30" shrink-0" />}
+              {expandedChain === ci ? <ChevronUp className={`w-3.5 h-3.5 ${isLight ? "text-gray-400" : "text-white/30"} shrink-0`} /> : <ChevronDown className={`w-3.5 h-3.5 ${isLight ? "text-gray-400" : "text-white/30"} shrink-0`} />}
             </button>
 
             {expandedChain === ci && (
@@ -2391,7 +4868,7 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
                             </div>
                             <div className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/50"} font-medium leading-tight`}>{layer}</div>
                             {hop?.evidence && (
-                              <div className={`text-[9px] ${isLight ? "text-gray-400" : "text-white/30" mt-1 leading-tight line-clamp-2">{hop.evidence}</div>
+                              <div className={`text-[9px] ${isLight ? "text-gray-400" : "text-white/30"} mt-1 leading-tight line-clamp-2`}>{hop.evidence}</div>
                             )}
                           </div>
                           {li < LAYERS.length - 1 && (
@@ -2407,7 +4884,8 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
                 <div className="bg-red-500/[0.04] border border-red-500/15 rounded-xl px-4 py-3">
                   <div className="flex items-center gap-2 mb-1">
                     <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                    <span className="text-xs font-bold text-red-400">Blast Radius</span>
+                    <span className="text-xs font-bold text-red-400"
+          >Blast Radius</span>
                   </div>
                   <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/50"} leading-relaxed`}>{chain.blastRadius}</p>
                 </div>
@@ -2419,14 +4897,14 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
                     <span className={`text-[11px] font-bold ${isLight ? "text-gray-500" : "text-white/50"} flex-1`}>Auto-Generated Fix PR</span>
                     {!chain.fixPR.startsWith("🔒") ? (
                       <button onClick={() => copyPR(chain.fixPR, ci)}
-                        className={`flex items-center gap-1 text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors`>
+                        className={`flex items-center gap-1 text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors`}>
                         {copiedPR === ci ? <><CheckCheck className="w-2.5 h-2.5 text-green-400" />Copied!</> : <><Copy className="w-2.5 h-2.5" />Copy</>}
                       </button>
                     ) : (
                       <Link href="/pricing" className="text-[10px] text-violet-400 hover:underline">Upgrade</Link>
                     )}
                   </div>
-                  <pre className={`px-4 py-3 text-[10px] ${isLight ? "text-gray-500" : "text-white/40" leading-relaxed overflow-x-auto whitespace-pre-wrap font-mono max-h-40 overflow-y-auto">
+                  <pre className={`px-4 py-3 text-[10px] ${isLight ? "text-gray-500" : "text-white/40"} leading-relaxed overflow-x-auto whitespace-pre-wrap font-mono max-h-40 overflow-y-auto`}>
                     {chain.fixPR}
                   </pre>
                 </div>
@@ -2441,6 +4919,7 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
 
 // ── Cleanup Radar Panel ───────────────────────────────────────────────────────
 function CleanupRadarPanel({ data }: { data: NonNullable<ScanDetail["cleanupReport"]> }) {
+  const isLight = useIsLight();
   const [expanded, setExpanded] = useState(false);
 
   const debtColor = data.debtScore >= 70 ? "text-red-400" : data.debtScore >= 40 ? "text-amber-400" : "text-green-400";
@@ -2467,7 +4946,8 @@ function CleanupRadarPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
       className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
       <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} flex items-center gap-3`}>
         <Layers className="w-4 h-4 text-amber-400" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm flex-1">Cleanup Radar</h2>
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm flex-1`}
+          >Cleanup Radar</h2>
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${debtBg} ${debtColor}`}>
           Tech Debt {data.debtScore}/100
         </span>
@@ -2494,14 +4974,15 @@ function CleanupRadarPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
           <div className="space-y-2">
             {cats.slice(0, 6).map(([cat, count]) => (
               <div key={cat} className="flex items-center gap-3">
-                <span className={`text-[11px] ${isLight ? "text-gray-500" : "text-white/40" w-28 capitalize shrink-0">{cat}</span>
+                <span className={`text-[11px] ${isLight ? "text-gray-500" : "text-white/40"} w-28 capitalize shrink-0`}
+          >{cat}</span>
                 <div className={`flex-1 h-1.5 ${isLight ? "bg-gray-100" : "bg-white/[0.05]"} rounded-full overflow-hidden`}>
                   <div
                     className={`h-full rounded-full transition-all duration-700 ${categoryColors[cat] ?? "bg-white/30"}`}
                     style={{ width: `${(count / total) * 100}%` }}
                   />
                 </div>
-                <span className={`text-[11px] ${isLight ? "text-gray-400" : "text-white/30" w-6 text-right">{count}</span>
+                <span className={`text-[11px] ${isLight ? "text-gray-400" : "text-white/30"} w-6 text-right`}>{count}</span>
               </div>
             ))}
           </div>
@@ -2510,7 +4991,8 @@ function CleanupRadarPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
 
       {/* Summary */}
       <div className={`px-6 py-3 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"}`}>
-        <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40" leading-relaxed">{data.summary}</p>
+        <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"} leading-relaxed`}
+          >{data.summary}</p>
       </div>
 
       {/* Top files */}
@@ -2518,9 +5000,10 @@ function CleanupRadarPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
         <div className={`px-6 py-3 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"}`}>
           <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} uppercase tracking-widest mb-2`}>Hotspot Files</div>
           <div className="flex flex-wrap gap-1.5">
-            {data.topFiles.slice(0, 6).map((f) => (
-              <span key={f.path} className={`text-[10px] font-mono ${isLight ? "text-gray-500" : "text-white/40" isLight ? "bg-gray-50" : "bg-white/[0.03]" border ${isLight ? "border-gray-200" : "border-white/[0.07]"} px-2 py-0.5 rounded">
-                {f.path.split("/").pop()} <span className="text-red-400">{f.issueCount}</span>
+            {data.topFiles.slice(0, 6).map((f: any) => (
+              <span key={f.path} className={`text-[10px] font-mono border px-2 py-0.5 rounded ${isLight ? "bg-gray-50 border-gray-200 text-gray-500" : "bg-white/[0.03] border-white/[0.07] text-white/40"}`}>
+                {f.path.split("/").pop()} <span className="text-red-400"
+          >{f.issueCount}</span>
               </span>
             ))}
           </div>
@@ -2531,13 +5014,13 @@ function CleanupRadarPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
       {data.findings && data.findings.length > 0 && (
         <div>
           <button onClick={() => setExpanded(!expanded)}
-            className={`w-full px-6 py-3 flex items-center gap-2 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors`>
+            className={`w-full px-6 py-3 flex items-center gap-2 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors`}>
             {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             {expanded ? "Hide" : "Show"} {data.findings.length} findings
           </button>
           {expanded && (
             <div className="divide-y divide-white/[0.04] max-h-80 overflow-y-auto">
-              {data.findings.slice(0, 20).map((f) => (
+              {data.findings.slice(0, 20).map((f: any) => (
                 <CleanupFindingRow key={f.id} finding={f} />
               ))}
             </div>
@@ -2549,6 +5032,7 @@ function CleanupRadarPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
 }
 
 function CleanupFindingRow({ finding: f }: { finding: NonNullable<ScanDetail["cleanupReport"]>["findings"][0] }) {
+  const isLight = useIsLight();
   const [rmCopied, setRmCopied] = useState(false);
 
   // Extract a git rm / npm uninstall command from fixSuggestion if auto-fixable
@@ -2568,7 +5052,8 @@ function CleanupFindingRow({ finding: f }: { finding: NonNullable<ScanDetail["cl
       <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${f.severity === "error" ? "bg-red-400" : f.severity === "warn" ? "bg-amber-400" : "bg-white/20"}`} />
       <div className="flex-1 min-w-0">
         <p className={`text-xs ${isLight ? "text-gray-700" : "text-white/70"}`}>{f.title}</p>
-        <p className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30" mt-0.5">{f.file}{f.lineHint ? `:${f.lineHint}` : ""}</p>
+        <p className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}
+          >{f.file}{f.lineHint ? `:${f.lineHint}` : ""}</p>
         {f.fixSuggestion && <p className="text-[10px] text-green-400/60 mt-0.5 truncate">{f.fixSuggestion}</p>}
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
@@ -2589,20 +5074,21 @@ function CleanupFindingRow({ finding: f }: { finding: NonNullable<ScanDetail["cl
 
 // ── Pre-Launch Checklist ─────────────────────────────────────────────────────
 function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
+  const isLight = useIsLight();
   const storageKey = `checklist-${scan.id}`;
   const [checked, setChecked] = useState<Record<number, boolean>>(() => {
     try { return JSON.parse(localStorage.getItem(storageKey) ?? "{}"); } catch { return {}; }
   });
   const [copied, setCopied] = useState(false);
 
-  const unlockedIssues = scan.issues.filter((i) => !i.locked);
+  const unlockedIssues = scan.issues.filter((i: any) => !i.locked);
   if (unlockedIssues.length === 0) return null;
 
   const groups: Array<{ label: string; color: string; dot: string; items: typeof unlockedIssues }> = [
-    { label: "Critical — Fix before launch", color: "text-red-400", dot: "bg-red-500", items: unlockedIssues.filter((i) => i.severity === "critical") },
-    { label: "High — Fix this week", color: "text-amber-400", dot: "bg-amber-500", items: unlockedIssues.filter((i) => i.severity === "high") },
-    { label: "Medium — Fix this month", color: "text-yellow-400", dot: "bg-yellow-500", items: unlockedIssues.filter((i) => i.severity === "medium") },
-    { label: "Low — When time allows", color: "text-white/35", dot: "bg-white/20", items: unlockedIssues.filter((i) => i.severity === "low") },
+    { label: "Critical - Fix before launch", color: "text-red-400", dot: "bg-red-500", items: unlockedIssues.filter((i) => i.severity === "critical") },
+    { label: "High - Fix this week", color: "text-amber-400", dot: "bg-amber-500", items: unlockedIssues.filter((i) => i.severity === "high") },
+    { label: "Medium - Fix this month", color: "text-yellow-400", dot: "bg-yellow-500", items: unlockedIssues.filter((i) => i.severity === "medium") },
+    { label: "Low - When time allows", color: "text-white/35", dot: "bg-white/20", items: unlockedIssues.filter((i) => i.severity === "low") },
   ].filter((g) => g.items.length > 0);
 
   const total = unlockedIssues.length;
@@ -2616,11 +5102,11 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
   };
 
   const copyMarkdown = async () => {
-    const lines = [`# Pre-Launch Checklist — ${scan.sourceInput}`, `Score: ${scan.score ?? "??"}/100`, ""];
+    const lines = [`# Pre-Launch Checklist - ${scan.sourceInput}`, `Score: ${scan.score ?? "??"}/100`, ""];
     for (const g of groups) {
       lines.push(`## ${g.label}`);
       for (const item of g.items) {
-        lines.push(`- [${checked[item.id] ? "x" : " "}] **${item.title}** — ${item.description.slice(0, 120)}…`);
+        lines.push(`- [${checked[item.id] ? "x" : " "}] **${item.title}** - ${item.description.slice(0, 120)}…`);
       }
       lines.push("");
     }
@@ -2633,11 +5119,14 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
       className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
       <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} flex items-center gap-3`}>
-        <ListChecks className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm flex-1">Pre-Launch Checklist</h2>
-        <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30">{done}/{total} resolved</span>
+        <ListChecks className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm flex-1`}
+          >Pre-Launch Checklist</h2>
+        <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>
+        {done}/{total} resolved</span>
         <button onClick={copyMarkdown}
-          className={`flex items-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/25"} hover:text-white/60 border ${border-gray-200" : "border-white/[0.07]"} hover:border-white/15 px-3 py-1.5 rounded-lg transition-all">
+          className={`flex items-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/25"} hover:text-white/60 border ${isLight ? "border-gray-200" : "border-white/[0.07]"} hover:border-white/15 px-3 py-1.5 rounded-lg transition-all`}
+          >
           {copied ? <><CheckCheck className="w-3 h-3 text-green-400" />Copied!</> : <><Copy className="w-3 h-3" />Copy MD</>}
         </button>
       </div>
@@ -2651,7 +5140,7 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
               style={{ width: `${pct}%` }}
             />
           </div>
-          <span className={`text-xs font-bold ${pct === 100 ? "text-green-400" : "${isLight ? "}text-gray-500" : "text-white/40"}`}>{pct}%</span>
+          <span className={`text-xs font-bold ${pct === 100 ? "text-green-400" : isLight ? "text-gray-500" : "text-white/40"}`}>{pct}%</span>
           {pct === 100 && <span className="text-xs text-green-400 font-semibold">Launch ready! 🚀</span>}
         </div>
       </div>
@@ -2664,7 +5153,7 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
               <span className={`text-[11px] font-bold uppercase tracking-wide ${g.color}`}>{g.label}</span>
             </div>
             <div className="space-y-2">
-              {g.items.map((item) => (
+              {g.items.map((item: any) => (
                 <label key={item.id} className="flex items-start gap-3 cursor-pointer group">
                   <div className={`w-4 h-4 mt-0.5 rounded shrink-0 border flex items-center justify-center transition-all ${
                     checked[item.id]
@@ -2672,13 +5161,14 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
                       : "bg-white/[0.04] border-white/[0.12] group-hover:border-white/25"
                   }`}
                     onClick={() => toggle(item.id)}>
-                    {checked[item.id] && <CheckCheck className={`w-2.5 h-2.5 ${isLight ? "text-gray-900" : "text-white" />}
+                    {checked[item.id] && <CheckCheck className={`w-2.5 h-2.5 ${isLight ? "text-gray-900" : "text-white"}`} />}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium transition-colors ${checked[item.id] ? "${isLight ? "text-gray-400" : "text-white/25"} line-through" : "text-white/75"}`}>
+                  <div className="flex-1 min-w-0"
+          >
+                    <p className={`text-sm font-medium transition-colors ${checked[item.id] ? (isLight ? "text-gray-400 line-through" : "text-white/25 line-through") : (isLight ? "text-gray-700" : "text-white/75")}`}>
                       {item.title}
                     </p>
-                    <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30" mt-0.5 leading-relaxed line-clamp-2">{item.description}</p>
+                    <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5 leading-relaxed line-clamp-2`}>{item.description}</p>
                   </div>
                 </label>
               ))}
@@ -2691,6 +5181,7 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
 }
 
 function StickyLaunchAlertBanner({ scan }: { scan: ScanDetail }) {
+  const isLight = useIsLight();
   const [dismissed, setDismissed] = useState(false);
   const critCount = scan.issueCounts?.critical ?? 0;
   const hasRevenueLeak =
@@ -2706,33 +5197,34 @@ function StickyLaunchAlertBanner({ scan }: { scan: ScanDetail }) {
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 1.5, duration: 0.4 }}
       className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-4"
-    >
+          >
       <div className={`rounded-2xl px-5 py-3.5 backdrop-blur-xl flex items-center gap-4 shadow-2xl border ${
         isRevAlert ? "bg-amber-950/90 border-amber-500/30" : "bg-red-950/90 border-red-500/30"
       }`}>
         <AlertTriangle className={`w-5 h-5 shrink-0 ${isRevAlert ? "text-amber-400" : "text-red-400"}`} />
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white">
+          <p className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
+        
             {isRevAlert ? "⚠️ Revenue Alert" : "⚠️ Launch Security Alert"}
           </p>
           <p className={`text-xs mt-0.5 truncate ${isRevAlert ? "text-amber-300/70" : "text-red-300/70"}`}>
             {isRevAlert
               ? `${scan.revenueIntelligence?.estimatedMonthlyImpact ?? "Potential revenue loss"} at risk`
-              : `${critCount} critical blocker${critCount !== 1 ? "s" : ""} — fix before going live`}
+              : `${critCount} critical blocker${critCount !== 1 ? "s" : ""} - fix before going live`}
           </p>
         </div>
         <Link href="/pricing" className="shrink-0">
           <button className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-all ${
             isRevAlert
-              ? "bg-amber-500/80 hover:bg-amber-500 isLight ? "text-gray-900" : "text-white" border border-amber-400/30"
-              : "bg-red-500/80 hover:bg-red-500 isLight ? "text-gray-900" : "text-white" border border-red-400/30"
+              ? `bg-amber-500/80 hover:bg-amber-500 ${isLight ? "text-gray-900" : "text-white"} border border-amber-400/30`
+              : `bg-red-500/80 hover:bg-red-500 ${isLight ? "text-gray-900" : "text-white"} border border-red-400/30`
           }`}>
             Fix Before Launch
           </button>
         </Link>
         <button
           onClick={() => setDismissed(true)}
-          className={`shrink-0 w-7 h-7 rounded-lg ${isLight ? "bg-gray-100" : "bg-white/[0.07]"} hover:bg-white/[0.12] flex items-center justify-center transition-colors text-gray-500" : ${isLight ? "text-gray-500" : "text-white/40"} hover:text-white"
+          className={`shrink-0 w-7 h-7 rounded-lg ${isLight ? "bg-gray-100" : "bg-white/[0.07]"} hover:bg-white/[0.12] flex items-center justify-center transition-colors ${isLight ? "text-gray-500" : "text-white/40"} hover:text-white`}
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -2742,6 +5234,7 @@ function StickyLaunchAlertBanner({ scan }: { scan: ScanDetail }) {
 }
 
 function LockedInsightsPanel({ scan, plan }: { scan: ScanDetail; plan: string }) {
+  const isLight = useIsLight();
   const isCreator = plan === "creator" || plan === "enterprise";
   if (isCreator) return null;
 
@@ -2792,12 +5285,13 @@ function LockedInsightsPanel({ scan, plan }: { scan: ScanDetail; plan: string })
     >
       <div className="flex items-center gap-2">
         <Lock className="w-4 h-4 text-violet-400" />
-        <h3 className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white" font-['Syne']">Locked Premium Insights</h3>
+        <h3 className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white"} font-['Syne']`}>Locked Premium Insights</h3>
         <span className="ml-auto text-[11px] text-violet-400/70 border border-violet-500/20 px-2 py-0.5 rounded-full">
           {items.length} report{items.length !== 1 ? "s" : ""} detected
         </span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+          >
         {items.map((item, i) => (
           <div key={i} className={`flex items-start gap-2.5 p-3 ${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"} border ${isLight ? "border-gray-200" : "border-white/[0.06]"} rounded-xl`}>
             <item.IconCmp className="w-3.5 h-3.5 text-violet-400/50 shrink-0 mt-0.5" />
@@ -2810,7 +5304,7 @@ function LockedInsightsPanel({ scan, plan }: { scan: ScanDetail; plan: string })
       </div>
       <Link href="/pricing">
         <button className="w-full flex items-center justify-center gap-2 bg-white text-black font-bold text-xs py-3 rounded-xl hover:bg-white/90 transition-all">
-          Unlock All Reports — Creator ₹299/mo <ArrowRight className="w-3.5 h-3.5" />
+          Unlock All Reports - Creator Rs.299/mo <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </Link>
     </motion.div>
@@ -2818,25 +5312,29 @@ function LockedInsightsPanel({ scan, plan }: { scan: ScanDetail; plan: string })
 }
 
 function LaunchImpactPanel({ data }: { data: NonNullable<ScanDetail["launchImpact"]> }) {
+  const isLight = useIsLight();
   const [expanded, setExpanded] = useState(false);
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 space-y-5 aurora-card aurora-card-slow`}>
       <div className="flex items-center gap-2">
-        <DollarSign className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Launch Impact Calculator</h2>
+        <DollarSign className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Launch Impact Calculator</h2>
         <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">Real Cost</span>
       </div>
       <div className="bg-red-500/[0.06] border border-red-500/15 rounded-xl px-4 py-3.5">
         <div className="text-[10px] text-red-400/70 uppercase tracking-wide mb-1 font-medium">Total Revenue at Risk</div>
-        <div className="text-lg font-bold text-red-400">{data.totalRevenueAtRisk}</div>
+        <div className="text-lg font-bold text-red-400"
+          >{data.totalRevenueAtRisk}</div>
         <div className={`text-xs ${isLight ? "text-gray-400" : "text-white/35"} mt-0.5`}>{data.supportCostPerMonth}</div>
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
-        <div className={`${isLight ? "bg-gray-50" : "bg-white/[0.03]" border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl p-3">
+        <div className={`${isLight ? "bg-gray-50" : "bg-white/[0.03]"} border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl p-3`}
+          >
           <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} uppercase tracking-wide mb-1.5`}>Trust Impact</div>
           <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/55"}`}>{data.trustImpact}</p>
         </div>
-        <div className={`${isLight ? "bg-gray-50" : "bg-white/[0.03]" border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl p-3">
+        <div className={`${isLight ? "bg-gray-50" : "bg-white/[0.03]"} border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl p-3`}
+          >
           <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} uppercase tracking-wide mb-1.5`}>User Impact</div>
           <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/55"}`}>{data.userImpact}</p>
         </div>
@@ -2857,14 +5355,14 @@ function LaunchImpactPanel({ data }: { data: NonNullable<ScanDetail["launchImpac
         <div>
           <button
             onClick={() => setExpanded((v) => !v)}
-            className={`flex items-center gap-2 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors`
+            className={`flex items-center gap-2 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors`}
           >
             {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             {expanded ? "Hide" : "Show"} per-issue breakdown ({data.breakdown.length} issues)
           </button>
           {expanded && (
             <div className="mt-3 space-y-2">
-              {data.breakdown.map((item, i) => {
+              {data.breakdown.map((item: any, i: any) => {
                 const sev = SEVERITY_CONFIG[item.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
                 return (
                   <div key={i} className={`border rounded-xl p-3 ${sev.bg}`}>
@@ -2883,7 +5381,7 @@ function LaunchImpactPanel({ data }: { data: NonNullable<ScanDetail["launchImpac
                       </div>
                       <div>
                         <div className={`text-[9px] ${isLight ? "text-gray-400" : "text-white/20"} mb-0.5`}>Support</div>
-                        <div className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/40" line-clamp-1">{item.supportHours}</div>
+                        <div className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/40"} line-clamp-1`}>{item.supportHours}</div>
                       </div>
                     </div>
                   </div>
@@ -2898,6 +5396,7 @@ function LaunchImpactPanel({ data }: { data: NonNullable<ScanDetail["launchImpac
 }
 
 function ProductHuntPanel({ data }: { data: NonNullable<ScanDetail["productHuntScore"]> }) {
+  const isLight = useIsLight();
   const [expanded, setExpanded] = useState<string | null>(null);
   const scoreColor = data.score >= 70 ? "text-green-400" : data.score >= 50 ? "text-amber-400" : "text-red-400";
   const r = 32;
@@ -2908,8 +5407,8 @@ function ProductHuntPanel({ data }: { data: NonNullable<ScanDetail["productHuntS
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 space-y-5 aurora-card`}>
       <div className="flex items-center gap-2">
-        <Award className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Product Hunt Readiness</h2>
+        <Award className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Product Hunt Readiness</h2>
         <span className={`ml-auto text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
           data.readyToHunt
             ? "bg-green-500/15 text-green-400 border-green-500/25"
@@ -2931,10 +5430,10 @@ function ProductHuntPanel({ data }: { data: NonNullable<ScanDetail["productHuntS
           </div>
         </div>
         <div className="flex-1">
-          <p className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white">{data.verdict}</p>
+          <p className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white"}`}>{data.verdict}</p>
           {data.topBlockers && data.topBlockers.length > 0 && (
             <div className="mt-2 space-y-1.5">
-              {data.topBlockers.slice(0, 2).map((b, i) => (
+              {data.topBlockers.slice(0, 2).map((b: any, i: any) => (
                 <div key={i} className="flex items-start gap-1.5 text-[11px] text-red-400/80">
                   <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
                   <span>{b}</span>
@@ -2945,8 +5444,9 @@ function ProductHuntPanel({ data }: { data: NonNullable<ScanDetail["productHuntS
         </div>
       </div>
       {data.categories && data.categories.length > 0 && (
-        <div className="space-y-2">
-          {data.categories.map((cat) => {
+        <div className="space-y-2"
+          >
+          {data.categories.map((cat: any) => {
             const isExp = expanded === cat.name;
             const statusColor = cat.status === "pass" ? "text-green-400" : cat.status === "warning" ? "text-amber-400" : "text-red-400";
             const statusBg = cat.status === "pass" ? "bg-green-500/[0.07] border-green-500/15" : cat.status === "warning" ? "bg-amber-500/[0.06] border-amber-500/15" : "bg-red-500/[0.06] border-red-500/15";
@@ -2957,7 +5457,7 @@ function ProductHuntPanel({ data }: { data: NonNullable<ScanDetail["productHuntS
               <div key={cat.name} className={`border rounded-xl overflow-hidden ${statusBg}`}>
                 <button
                   onClick={() => setExpanded(isExp ? null : cat.name)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 hover:${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"} transition-colors`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 ${isLight ? "hover:bg-gray-50/50" : "hover:bg-white/[0.02]"} transition-colors`}
                 >
                   <div className="w-8 h-8 shrink-0 relative">
                     <svg width="32" height="32" viewBox="0 0 32 32" className="-rotate-90">
@@ -2978,7 +5478,7 @@ function ProductHuntPanel({ data }: { data: NonNullable<ScanDetail["productHuntS
                 </button>
                 {isExp && cat.findings.length > 0 && (
                   <div className={`px-4 pb-3 pt-2 border-t ${isLight ? "border-gray-200" : "border-white/[0.05]"} space-y-1`}>
-                    {cat.findings.map((f, i) => (
+                    {cat.findings.map((f: any, i: any) => (
                       <div key={i} className={`flex items-start gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/45"}`}>
                         <span className={`${isLight ? "text-gray-400" : "text-white/20"} mt-0.5 shrink-0`}>·</span>
                         {f}
@@ -2996,6 +5496,7 @@ function ProductHuntPanel({ data }: { data: NonNullable<ScanDetail["productHuntS
 }
 
 function CofounderQAPanel({ scanId }: { scanId: number }) {
+  const isLight = useIsLight();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
@@ -3026,8 +5527,8 @@ function CofounderQAPanel({ scanId }: { scanId: number }) {
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 space-y-5`}>
       <div className="flex items-center gap-2">
-        <Brain className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white" font-bold font-['Syne'] text-sm">Ask Your Technical Co-Founder</h2>
+        <Brain className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Ask Your Technical Co-Founder</h2>
         <span className={`ml-auto text-[10px] ${isLight ? "text-gray-400" : "text-white/25"}`}>Powered by your scan data</span>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -3036,7 +5537,7 @@ function CofounderQAPanel({ scanId }: { scanId: number }) {
             key={q}
             onClick={() => ask(q)}
             disabled={loading}
-            className={`text-xs px-3 py-1.5 rounded-full border ${isLight ? "border-gray-200" : "border-white/[0.1]"} bg-gray-50" : ${isLight ? "bg-gray-50" : "bg-white/[0.04]"} text-white/50 hover:text-white hover:bg-white/[0.08] hover:border-white/20 transition-all disabled:opacity-40"
+            className={`text-xs px-3 py-1.5 rounded-full border ${isLight ? "border-gray-200" : "border-white/[0.1]"} ${isLight ? "bg-gray-50" : "bg-white/[0.04]"} text-white/50 hover:text-white hover:bg-white/[0.08] hover:border-white/20 transition-all disabled:opacity-40`}
           >
             {q}
           </button>
@@ -3049,7 +5550,7 @@ function CofounderQAPanel({ scanId }: { scanId: number }) {
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && question.trim()) ask(question.trim()); }}
           placeholder="Ask anything about your scan…"
-          className={`flex-1 ${isLight ? "bg-gray-50" : "bg-white/[0.04]" border border-white/[0.10] rounded-xl px-4 py-2.5 text-sm isLight ? "text-gray-900" : "text-white" placeholder-white/25 focus:outline-none focus:border-violet-500/50 transition-all"
+          className={`flex-1 ${isLight ? "bg-gray-50" : "bg-white/[0.04]"} border border-white/[0.10] rounded-xl px-4 py-2.5 text-sm ${isLight ? "text-gray-900" : "text-white"} placeholder-white/25 focus:outline-none focus:border-violet-500/50 transition-all`}
         />
         <button
           onClick={() => question.trim() && ask(question.trim())}
@@ -3067,7 +5568,8 @@ function CofounderQAPanel({ scanId }: { scanId: number }) {
         >
           {askedQ && <p className="text-[10px] text-violet-400/60 font-medium">Q: {askedQ}</p>}
           {loading ? (
-            <div className={`flex items-center gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/40">
+            <div className={`flex items-center gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>
+        
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
               Thinking…
             </div>
@@ -3161,15 +5663,16 @@ function ScanRunningScreen({
                 key={Math.round(progress)}
                 initial={{ scale: 1.15, opacity: 0.6 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className={`text-3xl font-extrabold font-['Syne'] ${isLight ? "text-gray-900" : "text-white"
+                className={`text-3xl font-extrabold font-['Syne'] ${isLight ? "text-gray-900" : "text-white"}`}
               >
                 {Math.round(progress)}
               </motion.span>
-              <span className={`text-[10px] font-medium ${isLight ? "text-gray-400" : "text-white/30">%</span>
+              <span className={`text-[10px] font-medium ${isLight ? "text-gray-400" : "text-white/30"}`}>%</span>
             </div>
           </div>
 
-          <div className="text-center space-y-1.5">
+          <div className="text-center space-y-1.5"
+          >
             <h2 className={`text-lg font-bold font-['Syne'] ${isLight ? "text-gray-900" : "text-white/90"}`}>
               Reviewing your app
             </h2>
@@ -3249,17 +5752,17 @@ export default function ScanResultsPage() {
   const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("all");
   const [rescanning, setRescanning] = useState(false);
   const t = {
-    page: isLight ? "bg-white" : "bg-[#050505]"bg-white" : ${isLight ? "bg-white" : "bg-[#050505]"}",
-    nav: isLight ? "bg-white/90 border-gray-200 backdrop-blur-2xl" : "bg-[#050505]/80 border-white/[0.07] backdrop-blur-2xl"border-gray-200" : ${isLight ? "border-gray-200" : "border-white/[0.07]"} isLight ? "bg-white" : "bg-[#050505]"/90 backdrop-blur-2xl",
-    navText: isLight ? "text-gray-500 hover:text-gray-900 transition-colors" : "text-white/30 hover:text-white transition-colors"
-    navBrand: isLight ? "text-gray-900 font-bold font-['Syne'] text-sm" : "text-white font-bold font-['Syne'] text-sm"text-gray-900" : ${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm",
-    navMeta: isLight ? "text-gray-400 text-xs ml-2 truncate hidden sm:block max-w-xs" : "text-white/20 text-xs ml-2 truncate hidden sm:block max-w-xs"text-gray-400" : "text-white/20" text-xs ml-2 truncate hidden sm:block max-w-xs",
-    tabBar: isLight ? "bg-white/95 backdrop-blur-2xl border-b border-gray-200" : "bg-[#050505]/95 backdrop-blur-2xl border-b border-white/[0.06]"bg-white" : ${isLight ? "bg-white" : "bg-[#050505]"}/95 backdrop-blur-2xl border-b border-white/[0.06]",
-    tabActive: isLight ? "bg-gray-900 text-white shadow-sm" : "bg-white/[0.1] border border-white/20 text-white"text-gray-900" : ${isLight ? "text-gray-900" : "text-white"}",
-    tabInactive: isLight ? "text-gray-500 hover:text-gray-900 hover:bg-gray-100" : "text-white/35 hover:text-white/60 hover:bg-white/[0.04]"bg-gray-50" : ${isLight ? "bg-gray-50" : "bg-white/[0.04]"}",
+    page: isLight ? "bg-white" : "bg-[#050505]",
+    nav: isLight ? "bg-white/90 border-gray-200 backdrop-blur-2xl" : "bg-[#050505]/80 border-white/[0.07] backdrop-blur-2xl",
+    navText: isLight ? "text-gray-500 hover:text-gray-900 transition-colors" : "text-white/30 hover:text-white transition-colors",
+    navBrand: isLight ? "text-gray-900 font-bold font-['Syne'] text-sm" : "text-white font-bold font-['Syne'] text-sm",
+    navMeta: isLight ? "text-gray-400 text-xs ml-2 truncate hidden sm:block max-w-xs" : "text-white/20 text-xs ml-2 truncate hidden sm:block max-w-xs",
+    tabBar: isLight ? "bg-white/95 backdrop-blur-2xl border-b border-gray-200" : "bg-[#050505]/95 backdrop-blur-2xl border-b border-white/[0.06]",
+    tabActive: isLight ? "bg-gray-900 text-white shadow-sm" : "bg-white/[0.1] border border-white/20 text-white",
+    tabInactive: isLight ? "text-gray-500 hover:text-gray-900 hover:bg-gray-100" : "text-white/35 hover:text-white/60 hover:bg-white/[0.04]",
     tabCountActive:   "bg-white/15 text-white/80",
-    tabCountInactive: "bg-white/[0.07] isLight ? "text-gray-400" : "text-white/30"",
-    navBtn:           "flex items-center gap-1.5 text-xs isLight ? "text-gray-400" : "text-white/30" hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border ${isLight ? "border-gray-200" : "border-white/[0.07]"} hover:border-white/15",
+    tabCountInactive: `bg-white/[0.07] \${isLight ? "text-gray-400" : "text-white/30"}`,
+    navBtn:           `flex items-center gap-1.5 text-xs \${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border \${isLight ? "border-gray-200" : "border-white/[0.07]"} hover:border-white/15`,
     ambient:          "absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.04)_0%,_transparent_60%)] pointer-events-none",
   };
 
@@ -3298,7 +5801,8 @@ export default function ScanResultsPage() {
         <div className={`w-12 h-12 rounded-2xl ${isLight ? "bg-white border border-gray-200" : "glass"} flex items-center justify-center mx-auto`}>
           <Loader2 className={`w-5 h-5 ${isLight ? "text-gray-600" : "text-white/60"} animate-spin`} />
         </div>
-        <p className={`${isLight ? "text-gray-400" : "text-white/30" text-sm">Loading report…</p>
+        <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-sm`}
+          >Loading report…</p>
       </div>
     </div>
   );
@@ -3319,7 +5823,7 @@ export default function ScanResultsPage() {
       setRescanning(true);
       try {
         await api.scans.rescan(Number(params.id));
-        setScan((prev) => prev ? { ...prev, status: "running" } : prev);
+        setScan((prev: any) => prev ? { ...prev, status: "running" } : prev);
       } catch {
         setRescanning(false);
       }
@@ -3332,7 +5836,7 @@ export default function ScanResultsPage() {
           </div>
           <div className="space-y-2">
             <h2 className={`${isLight ? "text-gray-800" : "text-white/80"} text-base font-semibold`}>Analysis failed</h2>
-            <p className={`${isLight ? "text-gray-400" : "text-white/35"} text-sm`}>Something went wrong during the review. You can retry — failed scans don't count against your quota.</p>
+            <p className={`${isLight ? "text-gray-400" : "text-white/35"} text-sm`}>Something went wrong during the review. You can retry - failed scans don't count against your quota.</p>
           </div>
           <div className="flex flex-col gap-2.5">
             <button
@@ -3343,7 +5847,8 @@ export default function ScanResultsPage() {
               {rescanning ? <><Loader2 className="w-4 h-4 animate-spin" />Retrying…</> : <>Retry Analysis</>}
             </button>
             <Link href="/new-scan">
-              <button className={`text-sm ${isLight ? "text-gray-400" : "text-white/35"} hover:${isLight ? "text-gray-500" : "text-white/55"} transition-colors`}>
+              <button className={`text-sm ${isLight ? "text-gray-400" : "text-white/35"} ${isLight ? "hover:text-gray-500" : "hover:text-white/55"} transition-colors`}
+              >
                 Start a new scan instead
               </button>
             </Link>
@@ -3353,30 +5858,47 @@ export default function ScanResultsPage() {
     );
   }
 
-  const rawVerdict = scan.launchVerdict ?? (
-    scan.score != null
-      ? scan.score >= 80 ? "ready" : scan.score >= 55 ? "caution" : "do-not-launch"
-      : null
-  );
-  const verdictKey = (rawVerdict as keyof typeof VERDICT_CONFIG | null);
+  const rawVerdict =
+    scan.launchVerdict ??
+    (scan.score != null
+      ? scan.score >= 80
+        ? "ready"
+        : scan.score >= 55
+          ? "caution"
+          : "do-not-launch"
+      : null);
+  const verdictKey = rawVerdict as keyof typeof VERDICT_CONFIG | null;
   const verdict = verdictKey ? VERDICT_CONFIG[verdictKey] : null;
 
-  const agents = Array.from(new Set(scan.issues.map((i) => i.agentName)));
-  const agentFiltered = activeAgent ? scan.issues.filter((i) => i.agentName === activeAgent) : scan.issues;
-  const filteredIssues = evidenceFilter === "all"
-    ? agentFiltered
-    : agentFiltered.filter((i) => (i.sourceEvidence ?? "ai_reasoning") === evidenceFilter);
+  const agents = Array.from(new Set(scan.issues.map((i: any) => i.agentName)));
+  const agentFiltered = activeAgent
+    ? scan.issues.filter((i: any) => i.agentName === activeAgent)
+    : scan.issues;
+  const filteredIssues =
+    evidenceFilter === "all"
+      ? agentFiltered
+      : agentFiltered.filter(
+          (i: any) => (i.sourceEvidence ?? "ai_reasoning") === evidenceFilter,
+        );
   const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
   const sortedIssues = [...filteredIssues].sort(
-    (a, b) => (severityOrder[a.severity as keyof typeof severityOrder] ?? 4) - (severityOrder[b.severity as keyof typeof severityOrder] ?? 4),
+    (a, b) =>
+      (severityOrder[a.severity as keyof typeof severityOrder] ?? 4) -
+      (severityOrder[b.severity as keyof typeof severityOrder] ?? 4),
   );
 
   const topThree = sortedIssues.slice(0, 3);
   const remaining = sortedIssues.slice(3);
 
-  const runtimeCount = agentFiltered.filter((i) => i.sourceEvidence === "runtime").length;
-  const staticCount = agentFiltered.filter((i) => i.sourceEvidence === "static").length;
-  const aiCount = agentFiltered.filter((i) => !i.sourceEvidence || i.sourceEvidence === "ai_reasoning").length;
+  const runtimeCount = agentFiltered.filter(
+    (i: any) => i.sourceEvidence === "runtime",
+  ).length;
+  const staticCount = agentFiltered.filter(
+    (i: any) => i.sourceEvidence === "static",
+  ).length;
+  const aiCount = agentFiltered.filter(
+    (i: any) => !i.sourceEvidence || i.sourceEvidence === "ai_reasoning",
+  ).length;
 
   return (
     <div className={`min-h-screen ${t.page}`}>
@@ -3388,25 +5910,28 @@ export default function ScanResultsPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover" />
+            <img
+              src="/logo.png"
+              alt="Agenario"
+              className="w-7 h-7 rounded-xl object-cover"
+            />
             <span className={t.navBrand}>Launch Report</span>
           </div>
           <span className={t.navMeta}>{scan.sourceInput}</span>
           <div className="ml-auto flex items-center gap-2">
-            {scan.score != null && (
-              <ShareBadgeButton scan={scan} />
-            )}
+            {scan.score != null && <ShareBadgeButton scan={scan} />}
             <Link href="/portfolio">
               <button className={t.navBtn}>
-                <BarChart3 className="w-3 h-3" />Portfolio
+                <BarChart3 className="w-3 h-3" />
+                Portfolio
               </button>
             </Link>
+            <ThemeToggle />
           </div>
         </div>
       </nav>
 
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-5">
-
         {/* ── Sticky Launch Alert Banner ───────────────────── */}
         <StickyLaunchAlertBanner scan={scan} />
 
@@ -3419,21 +5944,40 @@ export default function ScanResultsPage() {
           >
             <verdict.icon className={`w-7 h-7 ${verdict.color} shrink-0`} />
             <div className="flex-1">
-              <div className={`text-lg font-bold font-['Syne'] ${verdict.color}`}>{verdict.label}</div>
-              <p className={`text-sm ${isLight ? "text-gray-500" : "text-white/40" mt-0.5">{verdict.sublabel}</p>
+              <div
+                className={`text-lg font-bold font-['Syne'] ${verdict.color}`}
+              >
+                {verdict.label}
+              </div>
+              <p
+                className={`text-sm ${isLight ? "text-gray-500" : "text-white/40"} mt-0.5`}
+              >
+                {verdict.sublabel}
+              </p>
             </div>
             {scan.score != null && (
               <div className="shrink-0 flex flex-col items-end gap-2">
                 <div className="text-right">
-                  <div className={`text-3xl font-bold font-['Syne'] ${verdict.scoreColor}`}>{scan.score}</div>
-                  <div className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>Launch Score</div>
+                  <div
+                    className={`text-3xl font-bold font-['Syne'] ${verdict.scoreColor}`}
+                  >
+                    {scan.score}
+                  </div>
+                  <div
+                    className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}
+                  >
+                    Launch Score
+                  </div>
                 </div>
                 <button
                   onClick={() => {
-                    const text = `My app scored ${scan.score}/100 on Agenario 🔐 — ${verdict?.label}. Free AI security & launch audit:`;
-                    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent("https://agenario.tech")}`, "_blank");
+                    const text = `My app scored ${scan.score}/100 on Agenario 🔐 - ${verdict?.label}. Free AI security & launch audit:`;
+                    window.open(
+                      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent("https://agenario.tech")}`,
+                      "_blank",
+                    );
                   }}
-                  className={`flex items-center gap-1 text-[11px] ${isLight ? "text-gray-400" : "text-white/30" hover:text-white/60 border isLight ? "border-gray-200" : "border-white/[0.08]" hover:border-white/20 px-2.5 py-1 rounded-lg transition-all"
+                  className={`flex items-center gap-1 text-[11px] ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 border ${isLight ? "border-gray-200" : "border-white/[0.08]"} hover:border-white/20 px-2.5 py-1 rounded-lg transition-all`}
                 >
                   𝕏 Share
                 </button>
@@ -3446,15 +5990,28 @@ export default function ScanResultsPage() {
         <LockedInsightsPanel scan={scan} plan={user.plan} />
 
         {/* ── Section Tab Navigation ───────────────────────── */}
-        <div className={`sticky top-[57px] z-[9] -mx-6 px-6 py-2.5 ${t.tabBar}`}>
+        <div
+          className={`sticky top-[57px] z-[9] -mx-6 px-6 py-2.5 ${t.tabBar}`}
+        >
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-4xl">
             {[
               { id: "overview", label: "Overview" },
-              { id: "issues", label: "Issues", count: scan.issues.filter(i => !i.locked).length || undefined },
+              {
+                id: "issues",
+                label: "Issues",
+                count: scan.issues.filter((i) => !i.locked).length || undefined,
+              },
               { id: "intelligence", label: "Intelligence" },
               { id: "compliance", label: "Compliance" },
-              { id: "advanced", label: "Advanced", badge: user.plan === "creator" || user.plan === "enterprise" ? undefined : "🔒" },
-            ].map(tab => (
+              {
+                id: "advanced",
+                label: "Advanced",
+                badge:
+                  user.plan === "creator" || user.plan === "enterprise"
+                    ? undefined
+                    : "🔒",
+              },
+            ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -3464,486 +6021,815 @@ export default function ScanResultsPage() {
               >
                 {tab.label}
                 {tab.count !== undefined && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === tab.id ? t.tabCountActive : t.tabCountInactive}`}>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === tab.id ? t.tabCountActive : t.tabCountInactive}`}
+                  >
                     {tab.count}
                   </span>
                 )}
-                {tab.badge && <span className="text-[10px] opacity-50">{tab.badge}</span>}
+                {tab.badge && (
+                  <span className="text-[10px] opacity-50">{tab.badge}</span>
+                )}
               </button>
             ))}
           </div>
         </div>
 
         {/* ── Overview Tab ─────────────────────────────────── */}
-        {activeTab === "overview" && <>
-
-        {/* ── Executive summary row ────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-5 flex flex-col items-center justify-center gap-4`}>
-            {scan.score != null
-              ? <ScoreRing score={scan.score} />
-              : <Loader2 className={`w-8 h-8 ${isLight ? "text-gray-400" : "text-white/30" animate-spin" />}
-            <div className="flex flex-wrap gap-1.5 justify-center">
-              {scan.framework && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-lg ${isLight ? "bg-gray-100" : "bg-white/[0.05]"} border border-gray-200" : ${isLight ? "border-gray-200" : "border-white/[0.08]"} isLight ? "text-gray-500" : "text-white/40" capitalize">
-                  {scan.framework}
-                </span>
-              )}
-              {scan.vibeTool && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-lg ${isLight ? "bg-gray-100" : "bg-white/[0.05]"} border border-gray-200" : ${isLight ? "border-gray-200" : "border-white/[0.08]"} isLight ? "text-gray-500" : "text-white/40" capitalize">
-                  {scan.vibeTool.replace("-", " ")}
-                </span>
-              )}
-              {scan.businessType && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-lg ${isLight ? "bg-gray-100" : "bg-white/[0.05]"} border border-gray-200" : ${isLight ? "border-gray-200" : "border-white/[0.08]"} isLight ? "text-gray-500" : "text-white/40" capitalize">
-                  {scan.businessType.replace("-", " ")}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className={`lg:col-span-2 ${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6`}>
-            <div className="flex items-center gap-2 mb-3">
-              <FileText className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
-              <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Executive Summary</h2>
-            </div>
-            <p className={`${isLight ? "text-gray-500" : "text-white/55"} text-sm leading-relaxed`}>{scan.summary ?? "Analysis in progress…"}</p>
-
-            {scan.issueCounts && (
-              <div className="grid grid-cols-4 gap-2 mt-5">
-                {[
-                  { label: "Critical", count: scan.issueCounts.critical, color: "text-red-400" },
-                  { label: "High", count: scan.issueCounts.high, color: "text-amber-400" },
-                  { label: "Medium", count: scan.issueCounts.medium, color: "text-yellow-400" },
-                  { label: "Low", count: scan.issueCounts.low, color: "text-gray-400" },
-                ].map((s) => (
-                  <div key={s.label} className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.07]"} border rounded-xl p-3 text-center`}>
-                    <div className={`text-xl font-bold font-['Syne'] ${s.color}`}>{s.count}</div>
-                    <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} mt-0.5`}>{s.label}</div>
-                  </div>
-                ))}
+        {activeTab === "overview" && (
+          <>
+            {/* ── Executive summary row ────────────────────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div
+                className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-5 flex flex-col items-center justify-center gap-4`}
+              >
+                {scan.score != null ? (
+                  <ScoreRing score={scan.score} />
+                ) : (
+                  <Loader2
+                    className={`w-8 h-8 ${isLight ? "text-gray-400" : "text-white/30"} animate-spin`}
+                  />
+                )}
+                <div className="flex flex-wrap gap-1.5 justify-center">
+                  {scan.framework && (
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-lg border capitalize ${isLight ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white/[0.05] border-white/[0.08] text-white/40"}`}
+                    >
+                      {scan.framework}
+                    </span>
+                  )}
+                  {scan.vibeTool && (
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-lg border capitalize ${isLight ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white/[0.05] border-white/[0.08] text-white/40"}`}
+                    >
+                      {scan.vibeTool.replace("-", " ")}
+                    </span>
+                  )}
+                  {scan.businessType && (
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-lg border capitalize ${isLight ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white/[0.05] border-white/[0.08] text-white/40"}`}
+                    >
+                      {scan.businessType.replace("-", " ")}
+                    </span>
+                  )}
+                </div>
               </div>
+
+              <div
+                className={`lg:col-span-2 ${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6`}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <FileText
+                    className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`}
+                  />
+                  <h2
+                    className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}
+                  >
+                    Executive Summary
+                  </h2>
+                </div>
+                <p
+                  className={`${isLight ? "text-gray-500" : "text-white/55"} text-sm leading-relaxed`}
+                >
+                  {scan.summary ?? "Analysis in progress…"}
+                </p>
+
+                {scan.issueCounts && (
+                  <div className="grid grid-cols-4 gap-2 mt-5">
+                    {[
+                      {
+                        label: "Critical",
+                        count: scan.issueCounts.critical,
+                        color: "text-red-400",
+                      },
+                      {
+                        label: "High",
+                        count: scan.issueCounts.high,
+                        color: "text-amber-400",
+                      },
+                      {
+                        label: "Medium",
+                        count: scan.issueCounts.medium,
+                        color: "text-yellow-400",
+                      },
+                      {
+                        label: "Low",
+                        count: scan.issueCounts.low,
+                        color: "text-gray-400",
+                      },
+                    ].map((s) => (
+                      <div
+                        key={s.label}
+                        className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.07]"} border rounded-xl p-3 text-center`}
+                      >
+                        <div
+                          className={`text-xl font-bold font-['Syne'] ${s.color}`}
+                        >
+                          {s.count}
+                        </div>
+                        <div
+                          className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} mt-0.5`}
+                        >
+                          {s.label}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ── VibeCode Intelligence Network ─────────────────── */}
+            {scan.vibeTool && scan.vibeTool !== "unknown" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08 }}
+              >
+                <VibeCodeIntelPanel
+                  vibeTool={scan.vibeTool}
+                  issues={scan.issues}
+                  vibeToolRank={scan.benchmarkPercentile?.vibeToolRank}
+                />
+              </motion.div>
             )}
-          </div>
-        </div>
-
-        {/* ── VibeCode Intelligence Network ─────────────────── */}
-        {scan.vibeTool && scan.vibeTool !== "unknown" && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-            <VibeCodeIntelPanel
-              vibeTool={scan.vibeTool}
-              issues={scan.issues}
-              vibeToolRank={scan.benchmarkPercentile?.vibeToolRank}
-            />
-          </motion.div>
+          </>
         )}
-
-        </>}
 
         {/* ── Intelligence Tab ─────────────────────────────── */}
-        {activeTab === "intelligence" && <>
+        {activeTab === "intelligence" && (
+          <>
+            {/* ── Launch Impact Calculator - Creator only ──────── */}
+            {scan.launchImpact && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.06 }}
+              >
+                <CreatorGate
+                  isLight={isLight}
+                  plan={user.plan}
+                  feature="Launch Impact Calculator"
+                  preview="Per-issue revenue risk in Rs., trust impact, support burden, and a direct founder warning"
+                >
+                  <LaunchImpactPanel data={scan.launchImpact} />
+                </CreatorGate>
+              </motion.div>
+            )}
 
-        {/* ── Launch Impact Calculator — Creator only ──────── */}
-        {scan.launchImpact && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
-            <CreatorGate isLight={isLight}
-              plan={user.plan}
-              feature="Launch Impact Calculator"
-              preview="Per-issue revenue risk in ₹, trust impact, support burden, and a direct founder warning"
-            >
-              <LaunchImpactPanel data={scan.launchImpact} />
-            </CreatorGate>
-          </motion.div>
+            {/* ── Visual Evidence Gallery (Runtime Proofs) ─────── */}
+            {scan.proofEvidence && scan.proofEvidence.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+              >
+                <ProofEvidencePanel evidence={scan.proofEvidence} />
+              </motion.div>
+            )}
+
+            {/* ── Confidence Badges ─────────────────────────────── */}
+            {scan.proofEvidence && scan.proofEvidence.length > 0 && (
+              <ConfidenceBadges evidence={scan.proofEvidence} />
+            )}
+
+            {/* ── Launch DNA ────────────────────────────────────── */}
+            {scan.launchDNA && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08 }}
+              >
+                <LaunchDNAPanel dna={scan.launchDNA} />
+              </motion.div>
+            )}
+
+            {/* ── Product Hunt Readiness - Creator only ─────────── */}
+            {scan.productHuntScore && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.085 }}
+              >
+                <CreatorGate
+                  isLight={isLight}
+                  plan={user.plan}
+                  feature="Product Hunt Readiness"
+                  preview="6-category Product Hunt score covering mobile UX, onboarding, analytics, social features, error resilience, and traffic readiness"
+                >
+                  <ProductHuntPanel data={scan.productHuntScore} />
+                </CreatorGate>
+              </motion.div>
+            )}
+
+            {/* ── Technical Co-Founder Narrative ───────────────── */}
+            {scan.cofounderNarrative && scan.cofounderNarrative.length > 20 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.09 }}
+              >
+                <CofounderNarrativePanel narrative={scan.cofounderNarrative} />
+              </motion.div>
+            )}
+
+            {/* ── Launch Replay ─────────────────────────────────── */}
+            {scan.launchReplaySteps && scan.launchReplaySteps.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.09 }}
+              >
+                <LaunchReplaySection steps={scan.launchReplaySteps} />
+              </motion.div>
+            )}
+
+            {/* ── Regression Memory ────────────────────────────── */}
+            {scan.regressionDiff && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.09 }}
+              >
+                <RegressionPanel diff={scan.regressionDiff} />
+              </motion.div>
+            )}
+
+            {/* ── Benchmark Percentile ─────────────────────────── */}
+            {scan.benchmarkPercentile && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <BenchmarkPanel data={scan.benchmarkPercentile} />
+              </motion.div>
+            )}
+
+            {/* ── Launch Risk Forecast - Creator only ──────────── */}
+            {scan.riskForecast && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <CreatorGate
+                  isLight={isLight}
+                  plan={user.plan}
+                  feature="Launch Risk Forecast"
+                  preview="AI-powered churn risk, checkout failure probability, and revenue-at-risk estimates"
+                >
+                  <RiskForecastSection forecast={scan.riskForecast} />
+                </CreatorGate>
+              </motion.div>
+            )}
+          </>
         )}
-
-        {/* ── Visual Evidence Gallery (Runtime Proofs) ─────── */}
-        {scan.proofEvidence && scan.proofEvidence.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-            <ProofEvidencePanel evidence={scan.proofEvidence} />
-          </motion.div>
-        )}
-
-        {/* ── Confidence Badges ─────────────────────────────── */}
-        {scan.proofEvidence && scan.proofEvidence.length > 0 && (
-          <ConfidenceBadges evidence={scan.proofEvidence} />
-        )}
-
-        {/* ── Launch DNA ────────────────────────────────────── */}
-        {scan.launchDNA && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-            <LaunchDNAPanel dna={scan.launchDNA} />
-          </motion.div>
-        )}
-
-        {/* ── Product Hunt Readiness — Creator only ─────────── */}
-        {scan.productHuntScore && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.085 }}>
-            <CreatorGate isLight={isLight}
-              plan={user.plan}
-              feature="Product Hunt Readiness"
-              preview="6-category Product Hunt score covering mobile UX, onboarding, analytics, social features, error resilience, and traffic readiness"
-            >
-              <ProductHuntPanel data={scan.productHuntScore} />
-            </CreatorGate>
-          </motion.div>
-        )}
-
-        {/* ── Technical Co-Founder Narrative ───────────────── */}
-        {scan.cofounderNarrative && scan.cofounderNarrative.length > 20 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
-            <CofounderNarrativePanel narrative={scan.cofounderNarrative} />
-          </motion.div>
-        )}
-
-        {/* ── Launch Replay ─────────────────────────────────── */}
-        {scan.launchReplaySteps && scan.launchReplaySteps.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
-            <LaunchReplaySection steps={scan.launchReplaySteps} />
-          </motion.div>
-        )}
-
-        {/* ── Regression Memory ────────────────────────────── */}
-        {scan.regressionDiff && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
-            <RegressionPanel diff={scan.regressionDiff} />
-          </motion.div>
-        )}
-
-        {/* ── Benchmark Percentile ─────────────────────────── */}
-        {scan.benchmarkPercentile && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <BenchmarkPanel data={scan.benchmarkPercentile} />
-          </motion.div>
-        )}
-
-        {/* ── Launch Risk Forecast — Creator only ──────────── */}
-        {scan.riskForecast && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <CreatorGate isLight={isLight}
-              plan={user.plan}
-              feature="Launch Risk Forecast"
-              preview="AI-powered churn risk, checkout failure probability, and revenue-at-risk estimates"
-            >
-              <RiskForecastSection forecast={scan.riskForecast} />
-            </CreatorGate>
-          </motion.div>
-        )}
-
-        </>}
 
         {/* ── Compliance Tab ───────────────────────────────── */}
-        {activeTab === "compliance" && <>
+        {activeTab === "compliance" && (
+          <>
+            {/* ── Compliance Audit - Creator only ──────────────── */}
+            {scan.complianceResults && scan.complianceResults.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+              >
+                <CreatorGate
+                  isLight={isLight}
+                  plan={user.plan}
+                  feature="8-Framework Compliance Audit"
+                  preview="Full scoring across GDPR, OWASP, PCI-DSS, HIPAA, SOC2, ISO 27001, CCPA & WCAG 2.1"
+                >
+                  <ComplianceSection results={scan.complianceResults} />
+                </CreatorGate>
+              </motion.div>
+            )}
 
-        {/* ── Compliance Audit — Creator only ──────────────── */}
-        {scan.complianceResults && scan.complianceResults.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <CreatorGate isLight={isLight}
-              plan={user.plan}
-              feature="8-Framework Compliance Audit"
-              preview="Full scoring across GDPR, OWASP, PCI-DSS, HIPAA, SOC2, ISO 27001, CCPA & WCAG 2.1"
-            >
-              <ComplianceSection results={scan.complianceResults} />
-            </CreatorGate>
-          </motion.div>
+            {/* ── Revenue Intelligence - Creator only ──────────── */}
+            {scan.revenueIntelligence && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <CreatorGate
+                  isLight={isLight}
+                  plan={user.plan}
+                  feature="Revenue Intelligence"
+                  preview="Payment flow leaks, billing edge cases, churn risk factors, and monthly revenue impact estimates"
+                >
+                  <RevenueIntelligenceSection
+                    revenue={scan.revenueIntelligence}
+                  />
+                </CreatorGate>
+              </motion.div>
+            )}
+
+            {/* ── Shadow API Radar - Creator only ──────────────── */}
+            {scan.shadowApiFindings && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.22 }}
+              >
+                <CreatorGate
+                  isLight={isLight}
+                  plan={user.plan}
+                  feature="Shadow API Radar"
+                  preview="Orphaned endpoints, undocumented routes, and API surface attack vector analysis"
+                >
+                  <ShadowApiPanel findings={scan.shadowApiFindings} />
+                </CreatorGate>
+              </motion.div>
+            )}
+
+            {/* ── Secret & API Key Scanner ──────────────────────── */}
+            {scan.secretScanResults && (
+              <SecretScanPanel
+                data={scan.secretScanResults}
+                isCreator={
+                  user.plan === "creator" || user.plan === "enterprise"
+                }
+              />
+            )}
+
+            {/* ── Dependency CVE Tracker ───────────────────────── */}
+            {scan.packageVulns && (
+              <PackageVulnsPanel
+                data={scan.packageVulns}
+                isCreator={
+                  user.plan === "creator" || user.plan === "enterprise"
+                }
+              />
+            )}
+          </>
         )}
-
-        {/* ── Revenue Intelligence — Creator only ──────────── */}
-        {scan.revenueIntelligence && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <CreatorGate isLight={isLight}
-              plan={user.plan}
-              feature="Revenue Intelligence"
-              preview="Payment flow leaks, billing edge cases, churn risk factors, and monthly revenue impact estimates"
-            >
-              <RevenueIntelligenceSection revenue={scan.revenueIntelligence} />
-            </CreatorGate>
-          </motion.div>
-        )}
-
-        {/* ── Shadow API Radar — Creator only ──────────────── */}
-        {scan.shadowApiFindings && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
-            <CreatorGate isLight={isLight}
-              plan={user.plan}
-              feature="Shadow API Radar"
-              preview="Orphaned endpoints, undocumented routes, and API surface attack vector analysis"
-            >
-              <ShadowApiPanel findings={scan.shadowApiFindings} />
-            </CreatorGate>
-          </motion.div>
-        )}
-
-        {/* ── Secret & API Key Scanner ──────────────────────── */}
-        {scan.secretScanResults && (
-          <SecretScanPanel data={scan.secretScanResults} isCreator={user.plan === "creator" || user.plan === "enterprise"} />
-        )}
-
-        {/* ── Dependency CVE Tracker ───────────────────────── */}
-        {scan.packageVulns && (
-          <PackageVulnsPanel data={scan.packageVulns} isCreator={user.plan === "creator" || user.plan === "enterprise"} />
-        )}
-
-        </>}
 
         {/* ── Advanced Tab ─────────────────────────────────── */}
-        {activeTab === "advanced" && <>
+        {activeTab === "advanced" && (
+          <>
+            {/* ── Digital Twin Simulation - Creator only ────────── */}
+            {scan.digitalTwin && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.23 }}
+              >
+                <CreatorGate
+                  isLight={isLight}
+                  plan={user.plan}
+                  feature="Digital Twin Simulation"
+                  preview="Virtual user journeys, chaos engineering probes, and attack vector simulations across your app"
+                >
+                  <DigitalTwinPanel
+                    data={scan.digitalTwin}
+                    isCreator={
+                      user.plan === "creator" || user.plan === "enterprise"
+                    }
+                  />
+                </CreatorGate>
+              </motion.div>
+            )}
 
-        {/* ── Digital Twin Simulation — Creator only ────────── */}
-        {scan.digitalTwin && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.23 }}>
-            <CreatorGate isLight={isLight}
-              plan={user.plan}
-              feature="Digital Twin Simulation"
-              preview="Virtual user journeys, chaos engineering probes, and attack vector simulations across your app"
-            >
-              <DigitalTwinPanel data={scan.digitalTwin} isCreator={user.plan === "creator" || user.plan === "enterprise"} />
-            </CreatorGate>
-          </motion.div>
+            {/* ── Predictive Intelligence - Creator only ────────── */}
+            {scan.predictiveIntel && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+              >
+                <CreatorGate
+                  isLight={isLight}
+                  plan={user.plan}
+                  feature="Predictive Intelligence"
+                  preview="Release confidence score, outage probability, churn risk, and revenue-at-risk forecasts"
+                >
+                  <PredictiveIntelPanel
+                    data={scan.predictiveIntel}
+                    isCreator={
+                      user.plan === "creator" || user.plan === "enterprise"
+                    }
+                  />
+                </CreatorGate>
+              </motion.div>
+            )}
+
+            {/* ── Root Cause Engine - Creator only ──────────────── */}
+            {scan.rootCause && scan.rootCause.chains.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.27 }}
+              >
+                <CreatorGate
+                  isLight={isLight}
+                  plan={user.plan}
+                  feature="Root Cause Engine"
+                  preview="6-layer architectural blast radius tracing with auto-generated fix PR descriptions"
+                >
+                  <RootCausePanel
+                    data={scan.rootCause}
+                    isCreator={
+                      user.plan === "creator" || user.plan === "enterprise"
+                    }
+                  />
+                </CreatorGate>
+              </motion.div>
+            )}
+
+            {/* ── Cleanup Radar - Creator only ──────────────────── */}
+            {scan.cleanupReport && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.28 }}
+              >
+                <CreatorGate
+                  isLight={isLight}
+                  plan={user.plan}
+                  feature="Cleanup Radar"
+                  preview="Tech debt score, category breakdown, hotspot files, and auto-fixable findings list"
+                >
+                  <CleanupRadarPanel data={scan.cleanupReport} />
+                </CreatorGate>
+              </motion.div>
+            )}
+          </>
         )}
-
-        {/* ── Predictive Intelligence — Creator only ────────── */}
-        {scan.predictiveIntel && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-            <CreatorGate isLight={isLight}
-              plan={user.plan}
-              feature="Predictive Intelligence"
-              preview="Release confidence score, outage probability, churn risk, and revenue-at-risk forecasts"
-            >
-              <PredictiveIntelPanel data={scan.predictiveIntel} isCreator={user.plan === "creator" || user.plan === "enterprise"} />
-            </CreatorGate>
-          </motion.div>
-        )}
-
-        {/* ── Root Cause Engine — Creator only ──────────────── */}
-        {scan.rootCause && scan.rootCause.chains.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.27 }}>
-            <CreatorGate isLight={isLight}
-              plan={user.plan}
-              feature="Root Cause Engine"
-              preview="6-layer architectural blast radius tracing with auto-generated fix PR descriptions"
-            >
-              <RootCausePanel data={scan.rootCause} isCreator={user.plan === "creator" || user.plan === "enterprise"} />
-            </CreatorGate>
-          </motion.div>
-        )}
-
-        {/* ── Cleanup Radar — Creator only ──────────────────── */}
-        {scan.cleanupReport && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
-            <CreatorGate isLight={isLight}
-              plan={user.plan}
-              feature="Cleanup Radar"
-              preview="Tech debt score, category breakdown, hotspot files, and auto-fixable findings list"
-            >
-              <CleanupRadarPanel data={scan.cleanupReport} />
-            </CreatorGate>
-          </motion.div>
-        )}
-
-        </>}
 
         {/* ── Issues Tab ───────────────────────────────────── */}
-        {activeTab === "issues" && <>
+        {activeTab === "issues" && (
+          <>
+            {/* ── Top 3 Action Plan ────────────────────────────── */}
+            {topThree.length > 0 && (
+              <div
+                className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6`}
+              >
+                <div className="flex items-center gap-2 mb-5">
+                  <TrendingUp
+                    className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`}
+                  />
+                  <h2
+                    className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}
+                  >
+                    Top 3 Priority Actions
+                  </h2>
+                  <span
+                    className={`ml-auto text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}
+                  >
+                    Address these first
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {topThree.map((issue, i) => (
+                    <EvidenceCard
+                      key={issue.id}
+                      issue={issue}
+                      rank={i + 1}
+                      scanId={scan.id}
+                      isCreator={user.plan === "creator"}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* ── Top 3 Action Plan ────────────────────────────── */}
-        {topThree.length > 0 && (
-          <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6`}>
-            <div className="flex items-center gap-2 mb-5">
-              <TrendingUp className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
-              <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Top 3 Priority Actions</h2>
-              <span className={`ml-auto text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>Address these first</span>
-            </div>
-            <div className="space-y-3">
-              {topThree.map((issue, i) => (
-                <EvidenceCard key={issue.id} issue={issue} rank={i + 1} scanId={scan.id} isCreator={user.plan === "creator"} />
-              ))}
-            </div>
-          </div>
-        )}
+            {/* ── Pre-Launch Checklist ─────────────────────────── */}
+            {!activeAgent && scan.issues.length > 0 && (
+              <PreLaunchChecklist scan={scan} />
+            )}
 
-        {/* ── Pre-Launch Checklist ─────────────────────────── */}
-        {!activeAgent && scan.issues.length > 0 && (
-          <PreLaunchChecklist scan={scan} />
-        )}
-
-        {/* ── Confidence legend ────────────────────────────── */}
-        <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-xl px-5 py-3`}>
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className={`${isLight ? "text-gray-400" : "text-white/20"} uppercase tracking-widest font-medium text-[10px] mr-1`}>Confidence</span>
-            {[
-              { badge: "bg-green-500/15 text-green-400 border-green-500/25", label: "🟢 99% Browser Runtime Proof" },
-              { badge: "bg-green-500/10 text-green-400 border-green-500/20", label: "🔵 90% HTTP Runtime Proof" },
-              { badge: "bg-sky-500/10 text-sky-400 border-sky-500/20", label: "🔵 75% Static Code Evidence" },
-              { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20", label: "🟡 60% Pattern Match" },
-              { badge: `bg-white/[0.05] text-white/35 ${isLight ? "border-gray-200" : "border-white/[0.08]"}`, label: "⚪ <60% AI Reasoning" },
-            ].map((item) => (
-              <span key={item.label} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${item.badge}`}>
-                {item.label}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Agent filter ─────────────────────────────────── */}
-        {agents.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setActiveAgent(null)}
-              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-                !activeAgent
-                  ? (isLight ? "bg-gray-100 border-gray-300 text-gray-900" : "bg-white/[0.1] border-white/20 text-white")
-                  : (isLight ? "bg-white border-gray-200 text-gray-400 hover:text-gray-700" : "glass text-white/35 hover:text-white/60")
-              }`}
+            {/* ── Confidence legend ────────────────────────────── */}
+            <div
+              className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-xl px-5 py-3`}
             >
-              All Dimensions
-            </button>
-            {agents.map((agent) => {
-              const Icon = AGENT_ICONS[agent] ?? Bot;
-              const count = scan.issues.filter((i) => i.agentName === agent).length;
-              return (
+              <div className="flex flex-wrap gap-2 items-center">
+                <span
+                  className={`${isLight ? "text-gray-400" : "text-white/20"} uppercase tracking-widest font-medium text-[10px] mr-1`}
+                >
+                  Confidence
+                </span>
+                {[
+                  {
+                    badge: "bg-green-500/15 text-green-400 border-green-500/25",
+                    label: "🟢 99% Browser Runtime Proof",
+                  },
+                  {
+                    badge: "bg-green-500/10 text-green-400 border-green-500/20",
+                    label: "🔵 90% HTTP Runtime Proof",
+                  },
+                  {
+                    badge: "bg-sky-500/10 text-sky-400 border-sky-500/20",
+                    label: "🔵 75% Static Code Evidence",
+                  },
+                  {
+                    badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+                    label: "🟡 60% Pattern Match",
+                  },
+                  {
+                    badge: `bg-white/[0.05] text-white/35 ${isLight ? "border-gray-200" : "border-white/[0.08]"}`,
+                    label: "⚪ <60% AI Reasoning",
+                  },
+                ].map((item) => (
+                  <span
+                    key={item.label}
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${item.badge}`}
+                  >
+                    {item.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Agent filter ─────────────────────────────────── */}
+            {agents.length > 0 && (
+              <div className="flex flex-wrap gap-2">
                 <button
-                  key={agent}
-                  onClick={() => setActiveAgent(agent === activeAgent ? null : agent)}
-                  data-testid={`filter-${agent}`}
-                  className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-                    activeAgent === agent
-                      ? (isLight ? "bg-gray-100 border-gray-300 text-gray-900" : "bg-white/[0.1] border-white/20 text-white")
-                      : (isLight ? "bg-white border-gray-200 text-gray-400 hover:text-gray-700" : "glass text-white/35 hover:text-white/60")
+                  onClick={() => setActiveAgent(null)}
+                  className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+                    !activeAgent
+                      ? isLight
+                        ? "bg-gray-100 border-gray-300 text-gray-900"
+                        : "bg-white/[0.1] border-white/20 text-white"
+                      : isLight
+                        ? "bg-white border-gray-200 text-gray-400 hover:text-gray-700"
+                        : "glass text-white/35 hover:text-white/60"
                   }`}
                 >
-                  <Icon className="w-3 h-3" />
-                  {agent.replace(" Agent", "")}
-                  <span className="opacity-50">({count})</span>
+                  All Dimensions
                 </button>
-              );
-            })}
-          </div>
-        )}
+                {agents.map((agent) => {
+                  const Icon = AGENT_ICONS[agent] ?? Bot;
+                  const count = scan.issues.filter(
+                    (i: any) => i.agentName === agent,
+                  ).length;
+                  return (
+                    <button
+                      key={agent}
+                      onClick={() =>
+                        setActiveAgent(agent === activeAgent ? null : agent)
+                      }
+                      data-testid={`filter-${agent}`}
+                      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+                        activeAgent === agent
+                          ? isLight
+                            ? "bg-gray-100 border-gray-300 text-gray-900"
+                            : "bg-white/[0.1] border-white/20 text-white"
+                          : isLight
+                            ? "bg-white border-gray-200 text-gray-400 hover:text-gray-700"
+                            : "glass text-white/35 hover:text-white/60"
+                      }`}
+                    >
+                      <Icon className="w-3 h-3" />
+                      {agent.replace(" Agent", "")}
+                      <span className="opacity-50">({count})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
-        {/* ── Runtime Evidence Gallery ─────────────────────── */}
-        {!activeAgent && (runtimeCount > 0 || staticCount > 0 || aiCount > 0) && (
-          <div className={`${isLight ? "bg-white border border-gray-200" : "glass border border-white/[0.07]"} rounded-xl p-4`}>
-            <div className="flex items-center gap-2 mb-3">
-              <ShieldCheck className={`w-3.5 h-3.5 ${isLight ? "text-gray-400" : "text-white/30"}`} />
-              <span className={`text-xs font-semibold uppercase tracking-widest ${isLight ? "text-gray-500" : "text-white/40"}`}>Evidence Classification</span>
-              {evidenceFilter !== "all" && (
-                <button
-                  onClick={() => setEvidenceFilter("all")}
-                  className={`ml-auto text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} hover:text-white/50 transition-colors flex items-center gap-1`}
+            {/* ── Runtime Evidence Gallery ─────────────────────── */}
+            {!activeAgent &&
+              (runtimeCount > 0 || staticCount > 0 || aiCount > 0) && (
+                <div
+                  className={`${isLight ? "bg-white border border-gray-200" : "glass border border-white/[0.07]"} rounded-xl p-4`}
                 >
-                  <X className="w-3 h-3" />Clear filter
-                </button>
+                  <div className="flex items-center gap-2 mb-3">
+                    <ShieldCheck
+                      className={`w-3.5 h-3.5 ${isLight ? "text-gray-400" : "text-white/30"}`}
+                    />
+                    <span
+                      className={`text-xs font-semibold uppercase tracking-widest ${isLight ? "text-gray-500" : "text-white/40"}`}
+                    >
+                      Evidence Classification
+                    </span>
+                    {evidenceFilter !== "all" && (
+                      <button
+                        onClick={() => setEvidenceFilter("all")}
+                        className={`ml-auto text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} hover:text-white/50 transition-colors flex items-center gap-1`}
+                      >
+                        <X className="w-3 h-3" />
+                        Clear filter
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() =>
+                        setEvidenceFilter(
+                          evidenceFilter === "runtime" ? "all" : "runtime",
+                        )
+                      }
+                      className={`flex flex-col items-center gap-1.5 rounded-lg p-3 border transition-all ${
+                        evidenceFilter === "runtime"
+                          ? "bg-green-500/15 border-green-500/30"
+                          : "bg-green-500/[0.04] border-green-500/10 hover:bg-green-500/[0.08]"
+                      }`}
+                    >
+                      <span className="text-lg font-bold font-['Syne'] text-green-400">
+                        {runtimeCount}
+                      </span>
+                      <span className="text-[10px] font-semibold text-green-400/70">
+                        🟢 Runtime Verified
+                      </span>
+                      <span
+                        className={`text-[9px] ${isLight ? "text-gray-400" : "text-white/20"} text-center leading-tight`}
+                      >
+                        HTTP/browser proof
+                      </span>
+                    </button>
+                    <button
+                      onClick={() =>
+                        setEvidenceFilter(
+                          evidenceFilter === "static" ? "all" : "static",
+                        )
+                      }
+                      className={`flex flex-col items-center gap-1.5 rounded-lg p-3 border transition-all ${
+                        evidenceFilter === "static"
+                          ? "bg-sky-500/15 border-sky-500/30"
+                          : "bg-sky-500/[0.04] border-sky-500/10 hover:bg-sky-500/[0.08]"
+                      }`}
+                    >
+                      <span className="text-lg font-bold font-['Syne'] text-sky-400">
+                        {staticCount}
+                      </span>
+                      <span className="text-[10px] font-semibold text-sky-400/70">
+                        🔵 Static Code
+                      </span>
+                      <span
+                        className={`text-[9px] ${isLight ? "text-gray-400" : "text-white/20"} text-center leading-tight`}
+                      >
+                        Direct code evidence
+                      </span>
+                    </button>
+                    <button
+                      onClick={() =>
+                        setEvidenceFilter(
+                          evidenceFilter === "ai_reasoning"
+                            ? "all"
+                            : "ai_reasoning",
+                        )
+                      }
+                      className={`flex flex-col items-center gap-1.5 rounded-lg p-3 border transition-all ${
+                        evidenceFilter === "ai_reasoning"
+                          ? "bg-white/[0.08] border-white/15"
+                          : "bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.05]"
+                      }`}
+                    >
+                      <span
+                        className={`text-lg font-bold font-['Syne'] ${isLight ? "text-gray-500" : "text-white/40"}`}
+                      >
+                        {aiCount}
+                      </span>
+                      <span
+                        className={`text-[10px] font-semibold ${isLight ? "text-gray-400" : "text-white/30"}`}
+                      >
+                        ⚪ AI Observation
+                      </span>
+                      <span
+                        className={`text-[9px] ${isLight ? "text-gray-400" : "text-white/20"} text-center leading-tight`}
+                      >
+                        Pattern inference
+                      </span>
+                    </button>
+                  </div>
+                  {evidenceFilter !== "all" && (
+                    <p
+                      className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/20"} mt-2 text-center`}
+                    >
+                      Showing {filteredIssues.length}{" "}
+                      {evidenceFilter === "runtime"
+                        ? "🟢 runtime verified"
+                        : evidenceFilter === "static"
+                          ? "🔵 static code"
+                          : "⚪ AI observation"}{" "}
+                      findings
+                    </p>
+                  )}
+                </div>
               )}
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => setEvidenceFilter(evidenceFilter === "runtime" ? "all" : "runtime")}
-                className={`flex flex-col items-center gap-1.5 rounded-lg p-3 border transition-all ${
-                  evidenceFilter === "runtime"
-                    ? "bg-green-500/15 border-green-500/30"
-                    : "bg-green-500/[0.04] border-green-500/10 hover:bg-green-500/[0.08]"
-                }`}
-              >
-                <span className="text-lg font-bold font-['Syne'] text-green-400">{runtimeCount}</span>
-                <span className="text-[10px] font-semibold text-green-400/70">🟢 Runtime Verified</span>
-                <span className={`text-[9px] ${isLight ? "text-gray-400" : "text-white/20"} text-center leading-tight`}>HTTP/browser proof</span>
-              </button>
-              <button
-                onClick={() => setEvidenceFilter(evidenceFilter === "static" ? "all" : "static")}
-                className={`flex flex-col items-center gap-1.5 rounded-lg p-3 border transition-all ${
-                  evidenceFilter === "static"
-                    ? "bg-sky-500/15 border-sky-500/30"
-                    : "bg-sky-500/[0.04] border-sky-500/10 hover:bg-sky-500/[0.08]"
-                }`}
-              >
-                <span className="text-lg font-bold font-['Syne'] text-sky-400">{staticCount}</span>
-                <span className="text-[10px] font-semibold text-sky-400/70">🔵 Static Code</span>
-                <span className={`text-[9px] ${isLight ? "text-gray-400" : "text-white/20"} text-center leading-tight`}>Direct code evidence</span>
-              </button>
-              <button
-                onClick={() => setEvidenceFilter(evidenceFilter === "ai_reasoning" ? "all" : "ai_reasoning")}
-                className={`flex flex-col items-center gap-1.5 rounded-lg p-3 border transition-all ${
-                  evidenceFilter === "ai_reasoning"
-                    ? "bg-white/[0.08] border-white/15"
-                    : "bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.05]"
-                }`}
-              >
-                <span className={`text-lg font-bold font-['Syne'] ${isLight ? "text-gray-500" : "text-white/40"}`}>{aiCount}</span>
-                <span className={`text-[10px] font-semibold ${isLight ? "text-gray-400" : "text-white/30"}`}>⚪ AI Observation</span>
-                <span className={`text-[9px] ${isLight ? "text-gray-400" : "text-white/20"} text-center leading-tight`}>Pattern inference</span>
-              </button>
-            </div>
-            {evidenceFilter !== "all" && (
-              <p className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/20"} mt-2 text-center`}>
-                Showing {filteredIssues.length} {evidenceFilter === "runtime" ? "🟢 runtime verified" : evidenceFilter === "static" ? "🔵 static code" : "⚪ AI observation"} findings
-              </p>
+
+            {/* ── All remaining findings ───────────────────────── */}
+            {remaining.length > 0 && (
+              <div className="space-y-2.5">
+                <p
+                  className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"} uppercase tracking-widest font-medium`}
+                >
+                  {activeAgent
+                    ? "All findings"
+                    : `All findings (${sortedIssues.length} total)`}
+                </p>
+                {(activeAgent ? sortedIssues : remaining).map((issue) =>
+                  issue.locked ? (
+                    <LockedIssueCard
+                      key={issue.id ?? issue.title}
+                      issue={issue}
+                    />
+                  ) : (
+                    <EvidenceCard
+                      key={issue.id}
+                      issue={issue}
+                      scanId={scan.id}
+                      isCreator={user.plan === "creator"}
+                    />
+                  ),
+                )}
+              </div>
             )}
-          </div>
-        )}
 
-        {/* ── All remaining findings ───────────────────────── */}
-        {remaining.length > 0 && (
-          <div className="space-y-2.5">
-            <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"} uppercase tracking-widest font-medium`}>
-              {activeAgent ? "All findings" : `All findings (${sortedIssues.length} total)`}
-            </p>
-            {(activeAgent ? sortedIssues : remaining).map((issue) =>
-              issue.locked
-                ? <LockedIssueCard key={issue.id ?? issue.title} issue={issue} />
-                : <EvidenceCard key={issue.id} issue={issue} scanId={scan.id} isCreator={user.plan === "creator"} />,
+            {/* ── Upgrade banner for locked issues ─────────────── */}
+            {!activeAgent && (scan as any)._lockedIssueCount > 0 && (
+              <UpgradeBanner
+                count={(scan as any)._lockedIssueCount as number}
+                isLight={isLight}
+              />
             )}
-          </div>
-        )}
 
-        {/* ── Upgrade banner for locked issues ─────────────── */}
-        {!activeAgent && (scan as any)._lockedIssueCount > 0 && (
-          <UpgradeBanner count={(scan as any)._lockedIssueCount as number} isLight={isLight} />
-        )}
+            {/* ── Exploit Terminal for critical IDOR/auth issues ─ */}
+            {!activeAgent &&
+              sortedIssues.some(
+                (i) =>
+                  !i.locked &&
+                  i.severity === "critical" &&
+                  (i.agentName.includes("Security") ||
+                    i.agentName.includes("IDOR") ||
+                    i.agentName.includes("Access")),
+              ) && (
+                <div className="space-y-3">
+                  <p
+                    className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"} uppercase tracking-widest font-medium flex items-center gap-2`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                    Exploit Terminal - Critical Vectors
+                  </p>
+                  {sortedIssues
+                    .filter(
+                      (i) =>
+                        !i.locked &&
+                        i.severity === "critical" &&
+                        (i.agentName.includes("Security") ||
+                          i.agentName.includes("IDOR") ||
+                          i.agentName.includes("Access")),
+                    )
+                    .slice(0, 2)
+                    .map((issue) => (
+                      <ExploitTerminalCard key={issue.id} issue={issue} />
+                    ))}
+                </div>
+              )}
 
-        {/* ── Exploit Terminal for critical IDOR/auth issues ─ */}
-        {!activeAgent && sortedIssues.some((i) =>
-          !i.locked && i.severity === "critical" &&
-          (i.agentName.includes("Security") || i.agentName.includes("IDOR") || i.agentName.includes("Access")),
-        ) && (
-          <div className="space-y-3">
-            <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"} uppercase tracking-widest font-medium flex items-center gap-2`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              Exploit Terminal — Critical Vectors
-            </p>
-            {sortedIssues.filter((i) =>
-              !i.locked && i.severity === "critical" &&
-              (i.agentName.includes("Security") || i.agentName.includes("IDOR") || i.agentName.includes("Access")),
-            ).slice(0, 2).map((issue) => (
-              <ExploitTerminalCard key={issue.id} issue={issue} />
-            ))}
-          </div>
-        )}
+            {!activeAgent &&
+              topThree.length === 0 &&
+              sortedIssues.length === 0 && (
+                <div
+                  className={`text-center py-16 ${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl`}
+                >
+                  <CheckCircle2 className="w-10 h-10 text-green-400 mx-auto mb-3" />
+                  <p
+                    className={`font-bold font-['Syne'] mb-1 ${isLight ? "text-gray-900" : "text-white"}`}
+                  >
+                    No issues found
+                  </p>
+                  <p
+                    className={`text-sm ${isLight ? "text-gray-400" : "text-white/30"}`}
+                  >
+                    Your app passed all checks in this dimension.
+                  </p>
+                </div>
+              )}
 
-        {!activeAgent && topThree.length === 0 && sortedIssues.length === 0 && (
-          <div className={`text-center py-16 ${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl`}>
-            <CheckCircle2 className="w-10 h-10 text-green-400 mx-auto mb-3" />
-            <p className={`font-bold font-['Syne'] mb-1 ${isLight ? "text-gray-900" : "text-white"}`}>No issues found</p>
-            <p className={`text-sm ${isLight ? "text-gray-400" : "text-white/30"}`}>Your app passed all checks in this dimension.</p>
-          </div>
-        )}
+            {activeAgent && filteredIssues.length === 0 && (
+              <div
+                className={`text-center py-12 ${isLight ? "text-gray-400" : "text-white/25"} text-sm`}
+              >
+                No issues in this dimension.
+              </div>
+            )}
 
-        {activeAgent && filteredIssues.length === 0 && (
-          <div className={`text-center py-12 ${isLight ? "text-gray-400" : "text-white/25"} text-sm`}>No issues in this dimension.</div>
+            {/* ── Technical Co-Founder Q&A ─────────────────────── */}
+            {!activeAgent && scan.status === "completed" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <CofounderQAPanel scanId={scan.id} />
+              </motion.div>
+            )}
+          </>
         )}
-
-        {/* ── Technical Co-Founder Q&A ─────────────────────── */}
-        {!activeAgent && scan.status === "completed" && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <CofounderQAPanel scanId={scan.id} />
-          </motion.div>
-        )}
-
-        </>}
 
         {/* ── Privacy footer ───────────────────────────────── */}
         <div className="flex items-center gap-2 justify-center py-4">
           <ShieldCheck className="w-3.5 h-3.5 text-green-400/60" />
-          <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>Your code was not stored. Analyzed in-session only.</p>
+          <p
+            className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}
+          >
+            Your code was not stored. Analyzed in-session only.
+          </p>
         </div>
       </main>
     </div>

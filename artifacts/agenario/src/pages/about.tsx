@@ -5,6 +5,7 @@ import {
   Shield, Zap, Target, Code2, Star, ArrowRight,
 } from "lucide-react";
 import { useIsLight } from "@/hooks/use-is-light";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const FADE_UP = {
   hidden: { opacity: 0, y: 20 },
@@ -61,6 +62,7 @@ export default function AboutPage() {
             <span className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Agenario</span>
           </Link>
           <div className="ml-auto flex items-center gap-3">
+            <ThemeToggle />
             <Link href="/login" className={`text-sm transition-colors hidden sm:block ${isLight ? "text-gray-400 hover:text-gray-900" : "text-white/40 hover:text-white"}`}>
               Sign In
             </Link>

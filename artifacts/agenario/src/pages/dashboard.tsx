@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { useScans } from "@/hooks/use-scans";
 import { ChevronRight, Plus, LogOut, Zap, Brain, Activity, BarChart3, BookOpen, Loader2 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 function ScoreRing({ score, isLight }: { score: number; isLight: boolean }) {
   const r = 22;
@@ -124,6 +125,7 @@ export default function DashboardPage() {
                 <Zap className="w-3 h-3" /> Upgrade
               </Link>
             )}
+            <ThemeToggle />
             <button
               onClick={handleLogout}
               data-testid="button-logout"

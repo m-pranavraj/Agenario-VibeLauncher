@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { ArrowLeft, Mail, Zap, Heart, Globe, Code2 } from "lucide-react";
 import { useIsLight } from "@/hooks/use-is-light";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const FADE_UP = {
   hidden: { opacity: 0, y: 20 },
@@ -67,6 +68,7 @@ export default function CareersPage() {
             <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover object-left" />
             <span className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Careers</span>
           </div>
+          <ThemeToggle className="ml-auto" />
         </div>
       </nav>
 

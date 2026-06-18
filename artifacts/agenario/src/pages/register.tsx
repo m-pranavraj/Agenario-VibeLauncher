@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -66,6 +67,9 @@ export default function RegisterPage() {
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className={`absolute top-[-15%] right-[-5%] w-[50%] h-[50%] blur-[160px] rounded-full ${isLight ? "bg-violet-300/[0.20]" : "bg-violet-600/[0.06]"}`} />
         <div className={`absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] blur-[140px] rounded-full ${isLight ? "bg-blue-300/[0.15]" : "bg-blue-500/[0.04]"}`} />
+      </div>
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
       </div>
 
       <motion.div

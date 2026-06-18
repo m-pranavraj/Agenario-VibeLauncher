@@ -4,6 +4,7 @@ import {
   Github, Globe, FileText, ArrowLeft, CheckCircle,
   ChevronDown, FileArchive, Upload,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { api } from "@/lib/api";
@@ -309,6 +310,7 @@ export default function NewScanPage() {
             <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover" />
             <span className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>New Analysis</span>
           </div>
+          <ThemeToggle className="ml-auto" />
         </div>
       </nav>
 

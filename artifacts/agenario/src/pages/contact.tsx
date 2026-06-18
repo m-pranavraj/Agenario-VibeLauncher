@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ArrowLeft, Building2, Mail, User, MessageSquare, Send } from "lucide-react";
 import { useState } from "react";
 import { useIsLight } from "@/hooks/use-is-light";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function ContactPage() {
   const [submitting, setSubmitting] = useState(false);
@@ -27,6 +28,7 @@ export default function ContactPage() {
             <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-lg object-cover" />
             <span className={`font-heading font-bold text-base tracking-tight ${isLight ? "text-gray-900" : "text-white"}`}>Agenario</span>
           </div>
+          <ThemeToggle className="ml-auto" />
         </div>
       </nav>
 

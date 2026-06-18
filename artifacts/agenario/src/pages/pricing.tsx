@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Check, Zap, ArrowLeft, Loader2, ShieldCheck, Building2, Mail, Tag, X, CheckCircle2 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { api } from "@/lib/api";
@@ -218,13 +219,14 @@ export default function PricingPage() {
 
       <nav className={`border-b ${isLight ? "bg-white/90 border-gray-200" : "bg-[#050505]/90 border-white/[0.07]"} backdrop-blur-2xl sticky top-0 z-10`}>
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-3">
-          <Link href={user ? "/dashboard" : "/"} className={`${isLight ? "text-gray-400" : "text-white/30"} hover:${isLight ? "text-gray-900" : "text-white"} transition-colors`}>
+          <Link href={user ? "/dashboard" : "/"} className={`${isLight ? "text-gray-400" : "text-white/30"} ${isLight ? "hover:text-gray-900" : "hover:text-white"} transition-colors`}>
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover" />
             <span className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Pricing</span>
           </div>
+          <ThemeToggle className="ml-auto" />
         </div>
       </nav>
 

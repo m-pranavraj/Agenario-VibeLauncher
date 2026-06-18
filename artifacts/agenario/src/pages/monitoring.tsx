@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface AppOverview {
   source: string;
@@ -99,7 +100,7 @@ export default function MonitoringPage() {
       <nav className={`border-b ${isLight ? "bg-white/90 border-gray-200" : "bg-[#050505]/90 border-white/[0.07]"} backdrop-blur-2xl sticky top-0 z-10`}>
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/dashboard" className={`${isLight ? "text-gray-400" : "text-white/30"} hover:${isLight ? "text-gray-900" : "text-white"} transition-colors`}>
+            <Link href="/dashboard" className={`${isLight ? "text-gray-400" : "text-white/30"} ${isLight ? "hover:text-gray-900" : "hover:text-white"} transition-colors`}>
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div className="flex items-center gap-2">
@@ -110,12 +111,15 @@ export default function MonitoringPage() {
             </div>
             <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>Continuous readiness dashboard</span>
           </div>
-          <Link href="/scans/new">
-            <button className={`flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl transition-all ${isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white text-black hover:bg-white/90"}`}>
-              <Plus className="w-3.5 h-3.5" />
-              New Scan
-            </button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link href="/scans/new">
+              <button className={`flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl transition-all ${isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white text-black hover:bg-white/90"}`}>
+                <Plus className="w-3.5 h-3.5" />
+                New Scan
+              </button>
+            </Link>
+          </div>
         </div>
       </nav>
 

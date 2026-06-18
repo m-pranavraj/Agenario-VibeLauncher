@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { useIsLight } from "@/hooks/use-is-light";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Github, Zap, Terminal, Code2, Globe, Package,
@@ -214,6 +215,7 @@ export default function DocsPage() {
             <span className={`text-sm hidden sm:block ${isLight ? "text-gray-500" : "text-white/40"}`}>Documentation</span>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <span className="hidden sm:flex items-center gap-1.5 text-[11px] text-green-400/70 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               API Online

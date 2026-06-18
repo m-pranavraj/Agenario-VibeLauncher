@@ -2,7 +2,7 @@
 - [Agenario project overview](agenario-overview.md) — full-stack AI app review board; stack, env vars, key files.
 - [Tier gate & scan limits](tier-gate.md) — free=2 scans/mo, creator=12, enterprise=∞; applyTierGate() gates issue 4+ and revenue leaks 3+; applied in GET /scans/:id.
 - [Groq rate limits fix](groq-rate-limits.md) — 15 agents in batch-5/1000ms; compliance + agentBatch concurrent; revenue + riskForecast concurrent; 22s per-agent timeout; 80s hard pipeline cap; max_tokens=700.
-- [Dark-only UI](dark-only-ui.md) — App is dark-only; all Sun/Moon theme toggles and isLight conditionals removed from login, register, dashboard, admin, scan-results. Always bg-[#050505]. Do not re-add light mode.
+- [Light/dark theme system](theme-system.md) — ThemeToggle component at src/components/ThemeToggle.tsx; useIsLight() hook; hover:${...} in JSX template literals breaks Babel — use ${isLight ? "hover:..." : "hover:..."} instead.
 - [Dual Groq model strategy](dual-model-strategy.md) — FAST_MODEL for per-agent calls; SMART_MODEL for synthesis. All synthesis fns (riskForecast, revenueIntelligence, compliance) use callWithFallback(), not getAnyClient() directly.
 - [Pipeline resilience](pipeline-resilience.md) — Every Promise.all leg in runAnalysisPipeline has .catch() so no single failure kills the scan. Playwright returns [] on error (not-eligible). Enrichment legs (regressionDiff, launchDNA, etc.) also individually guarded.
 - [Logo & About page](logo-about.md) — logo at /public/logo.png, founder photo at /public/founder-photo.jpeg (MOGANTI PRANAV RAJ); /about route added; logo replaces Rocket icon in all page navbars.
@@ -16,3 +16,4 @@
 - [use-scans hook](use-scans-hook.md) — useScans() hook lives at src/hooks/use-scans.ts (was missing); wraps api.scans.list() with user guard, returns { scans, loading, error }.
 - [Admin stats endpoint](admin-stats.md) — GET /api/admin/stats locked via ADMIN_EMAIL env var; checks session user email vs env var; returns user/plan/scan/monthly breakdown.
 - [Security agent accuracy](security-agent-accuracy.md) — Security agent hallucinated secrets findings conflicting with static scanner; fixed by adding explicit SCOPE RESTRICTION to its prompt: do NOT report secrets, defer entirely to Secret Scanner V2.
+- [Rescan endpoint](rescan-endpoint.md) — POST /scans/:id/rescan resets status to "running", deletes old issues, re-fires pipeline; only allowed on failed scans; frontend api.scans.rescan() calls this.
