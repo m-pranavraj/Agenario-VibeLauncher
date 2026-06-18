@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Mail, Lock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsLight } from "@/hooks/use-is-light";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const isLight = useIsLight();
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,17 +16,25 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const t = {
-    page:    "bg-[#050505]",
-    card:    "glass rounded-2xl p-7",
-    label:   "text-white/45",
-    input:   "w-full bg-white/[0.04] border border-white/[0.1] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-all text-sm",
-    icon:    "text-white/25",
-    heading: "text-white",
-    sub:     "text-white/40",
-    btn:     "bg-white hover:bg-white/90 text-black",
-    link:    "text-white/30",
-    linkAcc: "text-white/70 hover:text-white transition-colors font-medium",
-    err:     "bg-red-500/[0.08] border border-red-500/20 text-red-400",
+    page:    isLight ? "bg-gray-50" : "bg-[#050505]",
+    card:    isLight
+      ? "bg-white border border-gray-200 rounded-2xl p-7 shadow-sm"
+      : "glass rounded-2xl p-7",
+    label:   isLight ? "text-gray-500" : "text-white/45",
+    input:   isLight
+      ? "w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30 transition-all text-sm"
+      : "w-full bg-white/[0.04] border border-white/[0.1] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-all text-sm",
+    icon:    isLight ? "text-gray-400" : "text-white/25",
+    heading: isLight ? "text-gray-900" : "text-white",
+    sub:     isLight ? "text-gray-500" : "text-white/40",
+    btn:     isLight ? "bg-gray-900 hover:bg-gray-800 text-white" : "bg-white hover:bg-white/90 text-black",
+    link:    isLight ? "text-gray-400" : "text-white/30",
+    linkAcc: isLight
+      ? "text-violet-600 hover:text-violet-700 transition-colors font-medium"
+      : "text-white/70 hover:text-white transition-colors font-medium",
+    err:     isLight
+      ? "bg-red-50 border border-red-200 text-red-600"
+      : "bg-red-500/[0.08] border border-red-500/20 text-red-400",
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,16 +53,9 @@ export default function LoginPage() {
 
   return (
     <div className={`min-h-screen flex items-center justify-center px-4 ${t.page}`}>
-      {/* Ambient background */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[-15%] left-[-5%] w-[50%] h-[50%] bg-violet-600/[0.06] blur-[160px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-500/[0.04] blur-[140px] rounded-full" />
-        <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.04]" viewBox="0 0 1440 200" preserveAspectRatio="none">
-          <path fill="#8b5cf6" d="M0,80 C240,160 480,0 720,80 S1200,160 1440,80 V200 H0 Z" />
-        </svg>
-        <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.025]" viewBox="0 0 1440 200" preserveAspectRatio="none">
-          <path fill="#6366f1" d="M0,120 C360,40 720,160 1080,120 S1440,40 1440,120 V200 H0 Z" />
-        </svg>
+        <div className={`absolute top-[-15%] left-[-5%] w-[50%] h-[50%] blur-[160px] rounded-full ${isLight ? "bg-violet-300/[0.20]" : "bg-violet-600/[0.06]"}`} />
+        <div className={`absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] blur-[140px] rounded-full ${isLight ? "bg-blue-300/[0.15]" : "bg-blue-500/[0.04]"}`} />
       </div>
 
       <motion.div

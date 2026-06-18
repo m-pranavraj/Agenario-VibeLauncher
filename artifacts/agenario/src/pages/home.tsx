@@ -385,70 +385,6 @@ export default function Home() {
         {/* ── Hero ─────────────────────────────────────────────── */}
         <section className="px-6 pt-20 pb-20 lg:pt-28 lg:pb-32 max-w-7xl mx-auto relative">
 
-          {/* ── Floating antigravity items ── */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none select-none z-0">
-            {/* Left float cluster */}
-            <motion.div style={{ y: yFloat3, x: xDrift1 }}
-              animate={{ rotate: [0, 8, -4, 0] }}
-              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute left-[2%] top-[18%]">
-              <div className={`px-3 py-1.5 rounded-xl border text-xs font-semibold shadow-lg backdrop-blur-sm ${isLight ? "bg-white/90 border-pink-200/60 text-pink-600 shadow-pink-100" : "bg-white/[0.08] border-white/[0.15] text-white/70"}`}>
-                🔐 Auth Bypass
-              </div>
-            </motion.div>
-            <motion.div style={{ y: yFloat1, x: xDrift2 }}
-              animate={{ rotate: [0, -6, 4, 0] }}
-              transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
-              className="absolute left-[5%] top-[55%]">
-              <div className={`px-3 py-1.5 rounded-xl border text-xs font-semibold shadow-lg backdrop-blur-sm ${isLight ? "bg-white/90 border-blue-200/60 text-blue-600 shadow-blue-50" : "bg-white/[0.08] border-white/[0.15] text-white/70"}`}>
-                📋 GDPR Pass
-              </div>
-            </motion.div>
-            <motion.div style={{ y: yFloat4 }}
-              animate={{ rotate: [0, 5, -3, 0] }}
-              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-              className="absolute left-[8%] top-[75%]">
-              <div className={`px-3 py-1.5 rounded-xl border text-xs font-semibold shadow-lg backdrop-blur-sm ${isLight ? "bg-white/90 border-green-200/60 text-green-600 shadow-green-50" : "bg-white/[0.08] border-white/[0.15] text-white/70"}`}>
-                ✅ SQL Clean
-              </div>
-            </motion.div>
-            {/* Right float cluster */}
-            <motion.div style={{ y: yFloat2 }}
-              animate={{ rotate: [0, -7, 5, 0] }}
-              transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-              className="absolute right-[3%] top-[12%]">
-              <div className={`px-3 py-1.5 rounded-xl border text-xs font-semibold shadow-lg backdrop-blur-sm ${isLight ? "bg-white/90 border-red-200/60 text-red-600 shadow-red-50" : "bg-white/[0.08] border-white/[0.15] text-white/70"}`}>
-                🚨 CRITICAL × 2
-              </div>
-            </motion.div>
-            <motion.div style={{ y: yFloat5, x: xDrift1 }}
-              animate={{ rotate: [0, 9, -5, 0] }}
-              transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-              className="absolute right-[6%] top-[42%]">
-              <div className={`px-3 py-1.5 rounded-xl border text-xs font-semibold shadow-lg backdrop-blur-sm ${isLight ? "bg-white/90 border-amber-200/60 text-amber-600 shadow-amber-50" : "bg-white/[0.08] border-white/[0.15] text-white/70"}`}>
-                ⚡ N+1 Detected
-              </div>
-            </motion.div>
-            <motion.div style={{ y: yFloat3, x: xDrift2 }}
-              animate={{ rotate: [0, -4, 7, 0] }}
-              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-              className="absolute right-[2%] top-[70%]">
-              <div className={`px-3 py-1.5 rounded-xl border text-xs font-semibold shadow-lg backdrop-blur-sm ${isLight ? "bg-white/90 border-violet-200/60 text-violet-600 shadow-violet-50" : "bg-white/[0.08] border-white/[0.15] text-white/70"}`}>
-                💰 Revenue Leak
-              </div>
-            </motion.div>
-            {/* Score badge floating center-right */}
-            <motion.div style={{ y: yFloat1 }}
-              animate={{ scale: [1, 1.04, 1], rotate: [0, 3, -2, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
-              className="absolute right-[28%] top-[8%] hidden xl:block">
-              <div className={`w-14 h-14 rounded-2xl border flex flex-col items-center justify-center shadow-xl backdrop-blur-sm ${isLight ? "bg-white/90 border-green-200/60 shadow-green-50" : "bg-white/[0.1] border-white/[0.2]"}`}>
-                <span className={`text-xl font-extrabold font-['Syne'] ${isLight ? "text-green-600" : "text-green-400"}`}>76</span>
-                <span className={`text-[8px] font-medium ${isLight ? "text-gray-400" : "text-white/30"}`}>/100</span>
-              </div>
-            </motion.div>
-          </div>
-
           <div className="relative z-10 grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
 
             <motion.div initial="hidden" animate="show" variants={STAGGER} className="space-y-8">
@@ -776,35 +712,6 @@ export default function Home() {
                 Every capability that runs on every scan, organized by dimension. What you see is what fires — no hidden black boxes.
               </motion.p>
             </motion.div>
-
-            {/* Three marquee rows */}
-            <div className="mb-14">
-              {[
-                { items: FEATURE_ARSENAL.slice(0, 18),  dir: 1,  speed: 35 },
-                { items: FEATURE_ARSENAL.slice(16, 36), dir: -1, speed: 28 },
-                { items: FEATURE_ARSENAL.slice(32, 50), dir: 1,  speed: 42 },
-              ].map((row, ri) => (
-                <div key={ri} className="relative mb-3 last:mb-0">
-                  <div className={`pointer-events-none absolute inset-y-0 left-0 w-20 z-10 ${isLight ? "bg-gradient-to-r from-[#fdf4f8]" : "bg-gradient-to-r from-[#050505]"} to-transparent`} />
-                  <div className={`pointer-events-none absolute inset-y-0 right-0 w-20 z-10 ${isLight ? "bg-gradient-to-l from-[#fdf4f8]" : "bg-gradient-to-l from-[#050505]"} to-transparent`} />
-                  <motion.div
-                    className="flex gap-2.5 whitespace-nowrap"
-                    animate={{ x: row.dir === 1 ? ["0%", "-50%"] : ["-50%", "0%"] }}
-                    transition={{ duration: row.speed, ease: "linear", repeat: Infinity }}
-                  >
-                    {[...row.items, ...row.items, ...row.items, ...row.items].map((feat, fi) => (
-                      <div
-                        key={fi}
-                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full border shrink-0 cursor-default select-none ${isLight ? `${feat.bgLight} ${feat.colorLight}` : `${feat.bg} ${feat.color}`}`}
-                      >
-                        <span className="text-xs">{feat.icon}</span>
-                        <span className="text-xs font-medium">{feat.label}</span>
-                      </div>
-                    ))}
-                  </motion.div>
-                </div>
-              ))}
-            </div>
 
             {/* Category bento grid */}
             <motion.div
