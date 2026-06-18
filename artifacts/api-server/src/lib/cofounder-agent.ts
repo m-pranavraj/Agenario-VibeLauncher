@@ -22,8 +22,17 @@ export interface CofounderQAContext {
   riskForecast?: { executiveRecommendation?: string; revenueAtRisk?: string } | null;
 }
 
-const groq = new Groq({ apiKey: process.env["GROQ_API_KEY"] });
-const MODEL = "llama-3.3-70b-versatile";
+const OPENROUTER_BASE = "https://openrouter.ai/api/v1";
+const groq = process.env["GROQ_API_KEY"]
+  ? new Groq({ apiKey: process.env["GROQ_API_KEY"] })
+  : process.env["OPENROUTER_API_KEY"]
+  ? new Groq({ apiKey: process.env["OPENROUTER_API_KEY"], baseURL: OPENROUTER_BASE })
+  : null;
+const MODEL = process.env["GROQ_API_KEY"] ? "llama-3.3-70b-versatile" : "meta-llama/llama-3.3-70b-instruct:free";
+function getClient(): Groq {
+  if (!groq) throw new Error("No AI provider configured. Set GROQ_API_KEY or OPENROUTER_API_KEY.");
+  return groq;
+}
 
 interface CofounderInput {
   sourceType: string;

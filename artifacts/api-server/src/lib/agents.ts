@@ -1,8 +1,10 @@
 import Groq from "groq-sdk";
 import { logger } from "./logger.js";
 
-// Primary: Groq (fast, high TPM free tier)
-const groq = new Groq({ apiKey: process.env["GROQ_API_KEY"] });
+// Primary: Groq (fast, high TPM free tier) — optional if GROQ_API_KEY not set
+const groq = process.env["GROQ_API_KEY"]
+  ? new Groq({ apiKey: process.env["GROQ_API_KEY"] })
+  : null;
 
 // Secondary: OpenRouter (multiple free models for load distribution)
 const OPENROUTER_BASE = "https://openrouter.ai/api/v1";
@@ -37,6 +39,23 @@ function nextOpenRouterModel(): string {
   const m = OPENROUTER_MODELS[orModelIndex % OPENROUTER_MODELS.length];
   orModelIndex++;
   return m;
+}
+
+// Return first available AI client (for direct synthesis calls outside callWithFallback)
+function getAnyClient(): Groq {
+  const client = groq ?? openrouter ?? cerebras;
+  if (!client) throw new Error("No AI provider configured. Set GROQ_API_KEY or OPENROUTER_API_KEY.");
+  return client;
+}
+function smartModel(): string {
+  if (groq) return SMART_MODEL;
+  if (openrouter) return "meta-llama/llama-3.3-70b-instruct:free";
+  return CEREBRAS_MODEL;
+}
+function fastModel(): string {
+  if (groq) return FAST_MODEL;
+  if (openrouter) return "meta-llama/llama-3.1-8b-instruct:free";
+  return CEREBRAS_MODEL;
 }
 
 export interface AgentIssue {
@@ -520,7 +539,7 @@ async function callWithFallback(
   messages: { role: "system" | "user"; content: string }[],
   opts: { model: string; cerebrasModel?: string; maxTokens?: number },
 ): Promise<string> {
-  const messages_typed = messages as Parameters<typeof groq.chat.completions.create>[0]["messages"];
+  const messages_typed = messages as Groq.ChatCompletionMessageParam[];
 
   // Try OpenRouter first (multiple free models, no rate limits on individual)
   if (openrouter) {
@@ -539,37 +558,52 @@ async function callWithFallback(
     }
   }
 
-  // Fallback: Groq
-  try {
-    const response = await groq.chat.completions.create({
-      model: opts.model,
+  // Fallback: Groq (if key is configured)
+  if (groq) {
+    try {
+      const response = await groq.chat.completions.create({
+        model: opts.model,
+        messages: messages_typed,
+        response_format: { type: "json_object" },
+        max_tokens: opts.maxTokens ?? 1500,
+      });
+      return response.choices[0]?.message?.content ?? "{}";
+    } catch (primaryErr: unknown) {
+      const isRateLimit =
+        primaryErr instanceof Error &&
+        (primaryErr.message.includes("429") || primaryErr.message.includes("Rate limit"));
+
+      // On Groq rate limit, try Cerebras
+      if (isRateLimit && cerebras) {
+        try {
+          logger.info("Groq rate limited — falling back to Cerebras");
+          const response = await cerebras.chat.completions.create({
+            model: opts.cerebrasModel ?? CEREBRAS_MODEL,
+            messages: messages_typed,
+            response_format: { type: "json_object" },
+            max_tokens: opts.maxTokens ?? 1500,
+          });
+          return response.choices[0]?.message?.content ?? "{}";
+        } catch (cerebrasErr) {
+          logger.warn({ cerebrasErr }, "Cerebras fallback also failed");
+        }
+      }
+      throw primaryErr;
+    }
+  }
+
+  // If only Cerebras is configured
+  if (cerebras) {
+    const response = await cerebras.chat.completions.create({
+      model: opts.cerebrasModel ?? CEREBRAS_MODEL,
       messages: messages_typed,
       response_format: { type: "json_object" },
       max_tokens: opts.maxTokens ?? 1500,
     });
     return response.choices[0]?.message?.content ?? "{}";
-  } catch (primaryErr: unknown) {
-    const isRateLimit =
-      primaryErr instanceof Error &&
-      (primaryErr.message.includes("429") || primaryErr.message.includes("Rate limit"));
-
-    // On Groq rate limit, try Cerebras
-    if (isRateLimit && cerebras) {
-      try {
-        logger.info("Groq rate limited — falling back to Cerebras");
-        const response = await cerebras.chat.completions.create({
-          model: opts.cerebrasModel ?? CEREBRAS_MODEL,
-          messages: messages_typed,
-          response_format: { type: "json_object" },
-          max_tokens: opts.maxTokens ?? 1500,
-        });
-        return response.choices[0]?.message?.content ?? "{}";
-      } catch (cerebrasErr) {
-        logger.warn({ cerebrasErr }, "Cerebras fallback also failed");
-      }
-    }
-    throw primaryErr;
   }
+
+  throw new Error("No AI provider available. Set GROQ_API_KEY, OPENROUTER_API_KEY, or CEREBRAS_API_KEY.");
 }
 
 async function runAgentWithRetry(
@@ -657,8 +691,8 @@ async function runLaunchRiskForecast(
   const appType = codeContext?.businessType ?? "saas";
 
   try {
-    const response = await groq.chat.completions.create({
-      model: SMART_MODEL,
+    const response = await getAnyClient().chat.completions.create({
+      model: smartModel(),
       messages: [
         {
           role: "system",
@@ -721,8 +755,8 @@ async function runRevenueIntelligence(
   codeContext?: CodeContext | null,
 ): Promise<RevenueIntelligence> {
   try {
-    const response = await groq.chat.completions.create({
-      model: FAST_MODEL,
+    const response = await getAnyClient().chat.completions.create({
+      model: fastModel(),
       messages: [
         {
           role: "system",
@@ -790,8 +824,8 @@ async function runComplianceAnalysis(
   const frameworks = ["GDPR", "OWASP Top 10", "PCI-DSS", "HIPAA", "SOC 2", "WCAG 2.1", "CCPA", "ISO 27001"];
 
   try {
-    const response = await groq.chat.completions.create({
-      model: FAST_MODEL,
+    const response = await getAnyClient().chat.completions.create({
+      model: fastModel(),
       messages: [
         {
           role: "system",
@@ -971,8 +1005,8 @@ export async function runLaunchImpactCalculator(
       .map((i, idx) => `${idx + 1}. [${i.severity.toUpperCase()}] ${i.title}: ${i.description.slice(0, 120)}`)
       .join("\n");
 
-    const response = await groq.chat.completions.create({
-      model: SMART_MODEL,
+    const response = await getAnyClient().chat.completions.create({
+      model: smartModel(),
       messages: [
         {
           role: "system",
@@ -1053,8 +1087,8 @@ export async function runProductHuntAudit(
   codeContext?: CodeContext | null,
 ): Promise<ProductHuntScore> {
   try {
-    const response = await groq.chat.completions.create({
-      model: FAST_MODEL,
+    const response = await getAnyClient().chat.completions.create({
+      model: fastModel(),
       messages: [
         {
           role: "system",
