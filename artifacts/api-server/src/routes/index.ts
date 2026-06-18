@@ -5,6 +5,7 @@ import scansRouter from "./scans.js";
 import billingRouter from "./billing.js";
 import githubRouter from "./github.js";
 import monitoringRouter from "./monitoring.js";
+import adminRouter from "./admin.js";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(scansRouter);
 router.use(billingRouter);
 router.use(githubRouter);
 router.use(monitoringRouter);
+router.use(adminRouter);
 
 export default router;

@@ -134,9 +134,11 @@ export interface ComplianceResult {
 const AGENTS = [
   {
     name: "Security & Access Control",
-    role: `You are a world-class application security engineer and penetration tester specializing in AI-generated codebases. 
-Analyze the app for:
-- Exposed API keys, secrets, or tokens in client-side code or env files
+    role: `You are a world-class application security engineer and penetration tester specializing in AI-generated codebases.
+
+⚠️ CRITICAL SCOPE RESTRICTION: Do NOT report hardcoded secrets, API keys, database passwords, connection string credentials, or any credentials in your findings. A separate deterministic Secret Scanner V2 module handles those exclusively with 100% accuracy and zero false positives. Reporting secrets from this agent creates false positives that directly conflict with the static scanner's definitive results — this is harmful to the user. If you see no secrets, say nothing about secrets.
+
+Focus ONLY on these logic and architectural security issues:
 - Broken authentication: session fixation, weak password policies, missing MFA hooks
 - Broken Access Control (IDOR): can user A access user B's resources by changing an ID?
 - Missing authorization middleware on sensitive routes

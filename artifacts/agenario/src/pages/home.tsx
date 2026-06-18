@@ -258,10 +258,17 @@ export default function Home() {
           </div>
         </>
       ) : (
-        <>
-          <motion.div style={{ y: yBg }} className="fixed top-[-15%] left-[-5%] w-[50%] h-[50%] bg-violet-600/8 blur-[180px] rounded-full pointer-events-none z-0" />
-          <motion.div style={{ y: yBg }} className="fixed bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-500/5 blur-[160px] rounded-full pointer-events-none z-0" />
-        </>
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+          <motion.div style={{ y: yBg }} className="absolute top-[-15%] left-[-5%] w-[55%] h-[55%] bg-violet-600/[0.07] blur-[180px] rounded-full" />
+          <motion.div style={{ y: yBg }} className="absolute top-[20%] right-[-8%] w-[40%] h-[45%] bg-indigo-500/[0.05] blur-[160px] rounded-full" />
+          <motion.div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-500/[0.04] blur-[160px] rounded-full" />
+          <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.05]" viewBox="0 0 1440 200" preserveAspectRatio="none">
+            <path fill="#8b5cf6" d="M0,80 C240,160 480,0 720,80 S1200,160 1440,80 V200 H0 Z" />
+          </svg>
+          <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.03]" viewBox="0 0 1440 200" preserveAspectRatio="none">
+            <path fill="#6366f1" d="M0,120 C360,40 720,160 1080,120 S1440,40 1440,120 V200 H0 Z" />
+          </svg>
+        </div>
       )}
 
       {/* ── Navigation ──────────────────────────────────────────── */}
@@ -365,8 +372,8 @@ export default function Home() {
       <main className="relative z-10 pt-16">
 
         {/* ── Hero ─────────────────────────────────────────────── */}
-        <section className="px-6 pt-28 pb-32 max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
+        <section className="px-6 pt-20 pb-20 lg:pt-28 lg:pb-32 max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
 
             <motion.div initial="hidden" animate="show" variants={STAGGER} className="space-y-8">
               <motion.div variants={FADE_UP}>
@@ -379,7 +386,7 @@ export default function Home() {
                 </span>
               </motion.div>
 
-              <motion.h1 variants={FADE_UP} className={`text-5xl lg:text-6xl font-heading font-extrabold leading-[1.05] tracking-tight ${t.h1}`}>
+              <motion.h1 variants={FADE_UP} className={`text-4xl sm:text-5xl lg:text-6xl font-heading font-extrabold leading-[1.05] tracking-tight ${t.h1}`}>
                 Ship your AI app<br />
                 <span className={isLight
                   ? "text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-violet-500 to-indigo-500"

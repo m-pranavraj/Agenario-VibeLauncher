@@ -19,6 +19,7 @@ import IntelligencePage from "@/pages/intelligence";
 import ContactPage from "@/pages/contact";
 import ThankYouPage from "@/pages/thank-you";
 import CareersPage from "@/pages/careers";
+import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/contact" component={ContactPage} />
       <Route path="/thank-you" component={ThankYouPage} />
       <Route path="/careers" component={CareersPage} />
+      <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
   );
