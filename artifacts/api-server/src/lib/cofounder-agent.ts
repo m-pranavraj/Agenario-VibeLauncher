@@ -164,11 +164,11 @@ Return JSON (no markdown):
       ],
       max_tokens: 700,
       temperature: 0.6,
-      response_format: { type: "json_object" },
     });
 
     const raw = response.choices[0]?.message?.content ?? "";
-    const parsed = JSON.parse(raw) as { steps?: LaunchReplayStep[] };
+    const rawJson = raw.trim().startsWith("{") ? raw : (raw.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1] ?? raw.match(/(\{[\s\S]*\})/)?.[1] ?? "{}");
+    const parsed = JSON.parse(rawJson) as { steps?: LaunchReplayStep[] };
     const steps = parsed.steps;
     if (Array.isArray(steps) && steps.length > 0) {
       return steps.map((s) => ({

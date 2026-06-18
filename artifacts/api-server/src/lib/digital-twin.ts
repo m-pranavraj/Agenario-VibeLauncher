@@ -155,12 +155,12 @@ Return ONLY valid JSON:
 Generate 5-8 journeys, 4-6 chaos scenarios, 4-6 attack simulations. Base everything on the real routes and code context provided.`,
         },
       ],
-      response_format: { type: "json_object" },
       max_tokens: 2000,
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(content) as Partial<DigitalTwinResult> & { summary?: string };
+    const jsonStr = content.trim().startsWith("{") ? content : (content.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1] ?? content.match(/(\{[\s\S]*\})/)?.[1] ?? "{}");
+    const parsed = JSON.parse(jsonStr) as Partial<DigitalTwinResult> & { summary?: string };
 
     const journeys: DigitalTwinJourney[] = (parsed.journeys ?? DEFAULT_JOURNEYS).slice(0, 10);
     const chaosResults: ChaosResult[] = (parsed.chaosResults ?? DEFAULT_CHAOS).slice(0, 8);

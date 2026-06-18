@@ -44,21 +44,36 @@ function nextOpenRouterModel(): string {
   return m;
 }
 
-// Return first available AI client (for direct synthesis calls outside callWithFallback)
+// Return first available AI client — prefer OpenRouter to spread load off Groq
 function getAnyClient(): Groq {
-  const client = groq ?? openrouter ?? cerebras;
+  const client = openrouter ?? groq ?? cerebras;
   if (!client) throw new Error("No AI provider configured. Set GROQ_API_KEY or OPENROUTER_API_KEY.");
   return client;
 }
 function smartModel(): string {
-  if (groq) return SMART_MODEL;
   if (openrouter) return "meta-llama/llama-3.3-70b-instruct:free";
+  if (groq) return SMART_MODEL;
   return CEREBRAS_MODEL;
 }
 function fastModel(): string {
-  if (groq) return FAST_MODEL;
   if (openrouter) return "meta-llama/llama-3.1-8b-instruct:free";
+  if (groq) return FAST_MODEL;
   return CEREBRAS_MODEL;
+}
+
+/** Extract JSON from model output — handles markdown code fences and stray text */
+function extractJson(raw: string): string {
+  if (!raw) return "{}";
+  // Already valid JSON
+  const trimmed = raw.trim();
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) return trimmed;
+  // Strip ```json ... ``` or ``` ... ```
+  const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fence?.[1]) return fence[1].trim();
+  // Find first { ... } block
+  const obj = trimmed.match(/(\{[\s\S]*\})/);
+  if (obj?.[1]) return obj[1];
+  return "{}";
 }
 
 export interface AgentIssue {
@@ -545,6 +560,8 @@ async function callWithFallback(
   const messages_typed = messages as { role: "system" | "user" | "assistant"; content: string }[];
 
   // Try OpenRouter first — cycle through up to 3 models on failure
+  // NOTE: we do NOT pass response_format here — not all free OpenRouter models support it.
+  //       JSON is extracted by extractJson() in callers.
   if (openrouter) {
     const maxOrAttempts = Math.min(3, OPENROUTER_MODELS.length);
     for (let attempt = 0; attempt < maxOrAttempts; attempt++) {
@@ -553,27 +570,29 @@ async function callWithFallback(
         const response = await openrouter.chat.completions.create({
           model: orModel,
           messages: messages_typed,
-          response_format: { type: "json_object" },
           max_tokens: opts.maxTokens ?? 1500,
         });
-        const content = response.choices[0]?.message?.content ?? "{}";
+        const raw = response.choices[0]?.message?.content ?? "";
+        const content = extractJson(raw);
         if (content && content !== "{}") {
           if (attempt > 0) logger.info({ model: orModel, attempt }, "OpenRouter succeeded on retry");
           return content;
         }
+        logger.warn({ model: orModel, attempt }, "OpenRouter returned empty — trying next model");
       } catch (orErr: unknown) {
-        const isOverload =
+        const isTransient =
           orErr instanceof Error &&
           (orErr.message.includes("503") || orErr.message.includes("overloaded") ||
-           orErr.message.includes("429") || orErr.message.includes("unavailable"));
-        logger.warn({ model: orModel, attempt, isOverload }, "OpenRouter model failed — trying next model");
-        if (!isOverload) break; // Non-transient error — no point retrying other models
+           orErr.message.includes("429") || orErr.message.includes("unavailable") ||
+           orErr.message.includes("timeout") || orErr.message.includes("502"));
+        logger.warn({ model: orModel, attempt, isTransient, err: (orErr as Error).message }, "OpenRouter model failed — trying next");
+        if (!isTransient) break; // Non-transient error — no point retrying other models
       }
     }
     logger.warn("All OpenRouter attempts failed — falling back to Groq");
   }
 
-  // Fallback: Groq (if key is configured)
+  // Fallback: Groq — supports response_format natively
   if (groq) {
     try {
       const response = await groq.chat.completions.create({
@@ -595,10 +614,9 @@ async function callWithFallback(
           const response = await cerebras.chat.completions.create({
             model: opts.cerebrasModel ?? CEREBRAS_MODEL,
             messages: messages_typed,
-            response_format: { type: "json_object" },
             max_tokens: opts.maxTokens ?? 1500,
           });
-          return response.choices[0]?.message?.content ?? "{}";
+          return extractJson(response.choices[0]?.message?.content ?? "{}");
         } catch (cerebrasErr) {
           logger.warn({ cerebrasErr }, "Cerebras fallback also failed");
         }
@@ -612,10 +630,9 @@ async function callWithFallback(
     const response = await cerebras.chat.completions.create({
       model: opts.cerebrasModel ?? CEREBRAS_MODEL,
       messages: messages_typed,
-      response_format: { type: "json_object" },
       max_tokens: opts.maxTokens ?? 1500,
     });
-    return response.choices[0]?.message?.content ?? "{}";
+    return extractJson(response.choices[0]?.message?.content ?? "{}");
   }
 
   throw new Error("No AI provider available. Set GROQ_API_KEY, OPENROUTER_API_KEY, or CEREBRAS_API_KEY.");
@@ -636,8 +653,8 @@ async function runAgentWithRetry(
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const content = await callWithFallback(messages, { model: FAST_MODEL });
-      const parsed = JSON.parse(content) as { issues?: AgentIssue[] };
+      const raw = await callWithFallback(messages, { model: FAST_MODEL });
+      const parsed = JSON.parse(extractJson(raw)) as { issues?: AgentIssue[] };
       return {
         agentName: agent.name,
         issues: (parsed.issues ?? []).map((issue) => ({
@@ -740,12 +757,11 @@ Return ONLY valid JSON:
 }`,
         },
       ],
-      response_format: { type: "json_object" },
       max_tokens: 1024,
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    return JSON.parse(content) as RiskForecast;
+    return JSON.parse(extractJson(content)) as RiskForecast;
   } catch (err) {
     logger.error({ err }, "Risk forecast failed");
     return {
@@ -813,12 +829,11 @@ Return ONLY valid JSON:
 }`,
         },
       ],
-      response_format: { type: "json_object" },
       max_tokens: 1500,
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    return JSON.parse(content) as RevenueIntelligence;
+    return JSON.parse(extractJson(content)) as RevenueIntelligence;
   } catch (err) {
     logger.error({ err }, "Revenue intelligence failed");
     return {
@@ -877,12 +892,11 @@ For each framework:
 - riskLevel: "low"|"medium"|"high"|"critical"`,
         },
       ],
-      response_format: { type: "json_object" },
       max_tokens: 2000,
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(content) as { results?: ComplianceResult[] };
+    const parsed = JSON.parse(extractJson(content)) as { results?: ComplianceResult[] };
     return parsed.results ?? [];
   } catch (err) {
     logger.error({ err }, "Compliance analysis failed");
@@ -1061,12 +1075,11 @@ Return ONLY valid JSON:
 }`,
         },
       ],
-      response_format: { type: "json_object" },
       max_tokens: 1500,
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    return JSON.parse(content) as LaunchImpact;
+    return JSON.parse(extractJson(content)) as LaunchImpact;
   } catch (err) {
     logger.error({ err }, "Launch impact calculator failed");
     return {
@@ -1146,12 +1159,11 @@ Return ONLY valid JSON:
 }`,
         },
       ],
-      response_format: { type: "json_object" },
       max_tokens: 1500,
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    return JSON.parse(content) as ProductHuntScore;
+    return JSON.parse(extractJson(content)) as ProductHuntScore;
   } catch (err) {
     logger.error({ err }, "Product Hunt audit failed");
     return {

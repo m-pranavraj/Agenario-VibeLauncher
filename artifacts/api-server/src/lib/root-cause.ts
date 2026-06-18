@@ -219,12 +219,12 @@ Return ONLY valid JSON:
 }`,
           },
         ],
-        response_format: { type: "json_object" },
         max_tokens: 1200,
       });
 
       const content = response.choices[0]?.message?.content ?? "{}";
-      const parsed = JSON.parse(content) as {
+      const jsonStr = content.trim().startsWith("{") ? content : (content.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1] ?? content.match(/(\{[\s\S]*\})/)?.[1] ?? "{}");
+      const parsed = JSON.parse(jsonStr) as {
         hops?: RootCauseHop[];
         blastRadius?: string;
         originLayer?: RootCauseLayer;

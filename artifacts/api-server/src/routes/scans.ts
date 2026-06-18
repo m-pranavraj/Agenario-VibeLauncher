@@ -39,20 +39,20 @@ async function checkScanLimit(user: { id: number; plan: string }, res: any): Pro
   const limit = PLAN_LIMITS[user.plan] ?? 2;
   if (!isFinite(limit)) return true;
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthScans = await db
-    .select()
+  const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const allScans = await db
+    .select({ status: scansTable.status, createdAt: scansTable.createdAt })
     .from(scansTable)
     .where(eq(scansTable.userId, user.id));
-  // Only count non-failed scans — failed scans don't consume the quota
-  const thisMonthScans = monthScans.filter(
-    (s) => s.createdAt >= startOfMonth && s.status !== "failed",
+  // Only count non-failed scans this calendar month
+  const thisMonthScans = allScans.filter(
+    (s) => s.status !== "failed" && new Date(s.createdAt).getTime() >= startOfMonth.getTime(),
   );
   if (thisMonthScans.length >= limit) {
     const planLabel = user.plan === "free" ? "Free" : "Creator";
     const upgradeHint = user.plan === "free"
-      ? " Upgrade to Creator for unlimited scans."
-      : " Contact support for Enterprise unlimited access.";
+      ? " Upgrade to Creator for 12 scans/month."
+      : " Upgrade to Enterprise for unlimited scans.";
     res.status(403).json({
       error: `${planLabel} plan limit reached (${limit} scans/month).${upgradeHint}`,
     });

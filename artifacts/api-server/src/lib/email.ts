@@ -174,7 +174,15 @@ function buildRetentionEmail(data: RetentionEmailData): { subject: string; html:
   return { subject, html };
 }
 
+// Set EMAIL_ENABLED=true in environment to enable email sending.
+// Disabled by default — SMTP env vars must also be configured.
+const EMAIL_ENABLED = process.env.EMAIL_ENABLED === "true";
+
 export async function sendRetentionEmail(data: RetentionEmailData): Promise<boolean> {
+  if (!EMAIL_ENABLED) {
+    logger.info({ userEmail: data.userEmail }, "Email sending disabled (EMAIL_ENABLED != true)");
+    return false;
+  }
   const transport = createTransport();
   if (!transport) {
     logger.warn({ userEmail: data.userEmail }, "Email transport not configured — set SMTP_HOST/SMTP_USER/SMTP_PASS");

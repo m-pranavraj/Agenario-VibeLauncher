@@ -216,12 +216,12 @@ Write a 3-4 sentence predictive narrative. Be specific about what will likely br
 { "narrative": "your narrative here" }`,
         },
       ],
-      response_format: { type: "json_object" },
       max_tokens: 400,
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(content) as { narrative?: string };
+    const jsonStr = content.trim().startsWith("{") ? content : (content.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1] ?? content.match(/(\{[\s\S]*\})/)?.[1] ?? "{}");
+    const parsed = JSON.parse(jsonStr) as { narrative?: string };
 
     return {
       ...local,

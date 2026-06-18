@@ -7,6 +7,7 @@ import pkg from "pg";
 import pinoHttp from "pino-http";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
+import cron from "node-cron";
 import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
 
@@ -150,6 +151,24 @@ app.use(
 
 // ── Routes ────────────────────────────────────────────────────────────────
 app.use("/api", router);
+
+// ── In-process daily pulse cron ──────────────────────────────────────────
+// Runs at 09:00 UTC every day. Calls the pulse endpoint internally to
+// check for score drops / new CVEs (email gated by EMAIL_ENABLED env var).
+cron.schedule("0 9 * * *", () => {
+  const secret = process.env["PULSE_SECRET"] ?? "";
+  const port = process.env["PORT"] ?? "8080";
+  fetch(`http://localhost:${port}/api/monitoring/pulse`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-pulse-secret": secret,
+    },
+  })
+    .then((r) => r.json())
+    .then((data) => logger.info({ data }, "Daily pulse cron completed"))
+    .catch((err) => logger.error({ err }, "Daily pulse cron failed"));
+}, { timezone: "UTC" });
 
 // ── Global error handler ──────────────────────────────────────────────────
 app.use(
