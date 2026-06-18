@@ -299,11 +299,11 @@ function EvidenceCard({ issue, rank, scanId, isCreator }: { issue: ScanIssue; ra
                 </div>
               )}
 
-              {/* Evidence */}
+              {/* Why It Triggered */}
               {issue.evidence && (
                 <div className="bg-black/30 border border-white/[0.07] rounded-lg px-3 py-2.5">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-xs font-semibold ${conf.color}`}>Evidence</span>
+                    <span className={`text-xs font-semibold ${conf.color}`}>Why It Triggered</span>
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ml-auto ${conf.badge}`}>{conf.icon} {conf.label}</span>
                   </div>
                   <p className="text-xs text-white/35 font-mono leading-relaxed">{issue.evidence}</p>
@@ -2846,6 +2846,7 @@ export default function ScanResultsPage() {
   const [scanLoading, setScanLoading] = useState(true);
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("all");
   const [rescanning, setRescanning] = useState(false);
 
   useEffect(() => {
@@ -2969,7 +2970,10 @@ export default function ScanResultsPage() {
   const verdict = verdictKey ? VERDICT_CONFIG[verdictKey] : null;
 
   const agents = Array.from(new Set(scan.issues.map((i) => i.agentName)));
-  const filteredIssues = activeAgent ? scan.issues.filter((i) => i.agentName === activeAgent) : scan.issues;
+  const agentFiltered = activeAgent ? scan.issues.filter((i) => i.agentName === activeAgent) : scan.issues;
+  const filteredIssues = evidenceFilter === "all"
+    ? agentFiltered
+    : agentFiltered.filter((i) => (i.sourceEvidence ?? "ai_reasoning") === evidenceFilter);
   const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
   const sortedIssues = [...filteredIssues].sort(
     (a, b) => (severityOrder[a.severity as keyof typeof severityOrder] ?? 4) - (severityOrder[b.severity as keyof typeof severityOrder] ?? 4),
@@ -2977,6 +2981,10 @@ export default function ScanResultsPage() {
 
   const topThree = sortedIssues.slice(0, 3);
   const remaining = sortedIssues.slice(3);
+
+  const runtimeCount = agentFiltered.filter((i) => i.sourceEvidence === "runtime").length;
+  const staticCount = agentFiltered.filter((i) => i.sourceEvidence === "static").length;
+  const aiCount = agentFiltered.filter((i) => !i.sourceEvidence || i.sourceEvidence === "ai_reasoning").length;
 
   return (
     <div className="min-h-screen bg-[#050505]">
@@ -3408,6 +3416,67 @@ export default function ScanResultsPage() {
                 </button>
               );
             })}
+          </div>
+        )}
+
+        {/* ── Runtime Evidence Gallery ─────────────────────── */}
+        {!activeAgent && (runtimeCount > 0 || staticCount > 0 || aiCount > 0) && (
+          <div className="glass rounded-xl p-4 border border-white/[0.07]">
+            <div className="flex items-center gap-2 mb-3">
+              <ShieldCheck className="w-3.5 h-3.5 text-white/30" />
+              <span className="text-xs font-semibold text-white/40 uppercase tracking-widest">Evidence Classification</span>
+              {evidenceFilter !== "all" && (
+                <button
+                  onClick={() => setEvidenceFilter("all")}
+                  className="ml-auto text-[10px] text-white/25 hover:text-white/50 transition-colors flex items-center gap-1"
+                >
+                  <X className="w-3 h-3" />Clear filter
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setEvidenceFilter(evidenceFilter === "runtime" ? "all" : "runtime")}
+                className={`flex flex-col items-center gap-1.5 rounded-lg p-3 border transition-all ${
+                  evidenceFilter === "runtime"
+                    ? "bg-green-500/15 border-green-500/30"
+                    : "bg-green-500/[0.04] border-green-500/10 hover:bg-green-500/[0.08]"
+                }`}
+              >
+                <span className="text-lg font-bold font-['Syne'] text-green-400">{runtimeCount}</span>
+                <span className="text-[10px] font-semibold text-green-400/70">🟢 Runtime Verified</span>
+                <span className="text-[9px] text-white/20 text-center leading-tight">HTTP/browser proof</span>
+              </button>
+              <button
+                onClick={() => setEvidenceFilter(evidenceFilter === "static" ? "all" : "static")}
+                className={`flex flex-col items-center gap-1.5 rounded-lg p-3 border transition-all ${
+                  evidenceFilter === "static"
+                    ? "bg-sky-500/15 border-sky-500/30"
+                    : "bg-sky-500/[0.04] border-sky-500/10 hover:bg-sky-500/[0.08]"
+                }`}
+              >
+                <span className="text-lg font-bold font-['Syne'] text-sky-400">{staticCount}</span>
+                <span className="text-[10px] font-semibold text-sky-400/70">🔵 Static Code</span>
+                <span className="text-[9px] text-white/20 text-center leading-tight">Direct code evidence</span>
+              </button>
+              <button
+                onClick={() => setEvidenceFilter(evidenceFilter === "ai_reasoning" ? "all" : "ai_reasoning")}
+                className={`flex flex-col items-center gap-1.5 rounded-lg p-3 border transition-all ${
+                  evidenceFilter === "ai_reasoning"
+                    ? "bg-white/[0.08] border-white/15"
+                    : "bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.05]"
+                }`}
+              >
+                <span className="text-lg font-bold font-['Syne'] text-white/40">{aiCount}</span>
+                <span className="text-[10px] font-semibold text-white/30">⚪ AI Observation</span>
+                <span className="text-[9px] text-white/20 text-center leading-tight">Pattern inference</span>
+              </button>
+            </div>
+            {evidenceFilter !== "all" && (
+              <p className="text-[10px] text-white/20 mt-2 text-center">
+                Showing {filteredIssues.length} {evidenceFilter === "runtime" ? "🟢 runtime verified" : evidenceFilter === "static" ? "🔵 static code" : "⚪ AI observation"} findings
+              </p>
+            )}
           </div>
         )}
 

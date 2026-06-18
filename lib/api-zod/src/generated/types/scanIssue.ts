@@ -14,4 +14,24 @@ export interface ScanIssue {
   title: string;
   description: string;
   fixPrompt: string;
+  /** @nullable */
+  confidence?: number | null;
+  /** @nullable */
+  evidence?: string | null;
+  /** @nullable */
+  filePath?: string | null;
+  /** @nullable */
+  lineNumber?: number | null;
+  /** @nullable */
+  codeSnippet?: string | null;
+  /** @nullable */
+  impactStatement?: string | null;
+  /** @nullable */
+  retestResult?: string | null;
+  /** @nullable */
+  sourceEvidence?: string | null;
+  /** @nullable */
+  locked?: boolean | null;
+  /** @nullable */
+  promptUnlocked?: boolean | null;
 }

@@ -1,0 +1,198 @@
+What I Would Build Next (In Exact Order)
+Tier 1 — Trust Layer
+Evidence Standard V1
+
+Every issue must include:
+
+Issue
+Severity
+Confidence
+Source
+
+File:
+Line:
+
+Code Snippet:
+
+Why It Triggered
+
+Impact
+
+Fix
+
+Retest Status
+
+Example:
+
+File:
+src/routes/orders.ts
+
+Line:
+118
+
+Code:
+return db.orders.findById(orderId)
+
+Evidence:
+No ownership validation.
+
+Impact:
+Cross-user order access possible.
+
+This alone increases trust massively.
+
+Tier 2 — Playwright Proof Engine
+
+For every critical finding:
+
+Generate:
+
+Screenshot
+Viewport
+URL
+Action
+Response
+
+Example:
+
+Action:
+Changed /orders/123 → /orders/124
+
+Response:
+200 OK
+
+Screenshot:
+Attached
+
+Now you're proving.
+
+Not guessing.
+
+Tier 3 — Runtime Evidence Gallery
+
+New section:
+
+Verified Findings
+Runtime Verified
+Static Verified
+AI Observation
+
+Separate them.
+
+Never mix them.
+
+This is extremely important.
+
+Tier 4 — Business Logic Attack Packs
+
+Instead of generic security.
+
+Detect app type.
+
+E-commerce
+
+Test:
+
+Coupon abuse
+Negative pricing
+Checkout bypass
+SaaS
+
+Test:
+
+Role escalation
+Subscription bypass
+Marketplace
+
+Test:
+
+Double booking
+Unauthorized actions
+Restaurant
+
+Test:
+
+Cross-table order access
+
+This is where Agenario becomes unique.
+
+Biggest Missing Feature
+Evidence Graph
+
+Every issue:
+
+Issue
+↓
+File
+↓
+Line
+↓
+Code
+↓
+Route
+↓
+Runtime Test
+↓
+Screenshot
+↓
+Impact
+↓
+Fix
+↓
+Retest
+
+This is worth more than adding 20 new checks.
+
+Homepage Upgrade Later
+
+Current:
+
+25 agents fire in parallel
+
+Future:
+
+We attacked your app.
+
+We found what broke.
+
+We show proof.
+
+We tell you whether it deserves to launch.
+
+Much stronger.
+
+My Biggest Concern
+
+Your site currently says:
+
+Predictive Intelligence
+Digital Twin
+Root Cause Engine
+
+These sound impressive.
+
+But if a user clicks and asks:
+
+"Show me why."
+
+You need evidence.
+
+Otherwise trust collapses.
+
+Final Roadmap
+Next 7 Days
+ Evidence Standard
+ File + Line Numbers
+ Code Snippets
+ Confidence Sources
+ Runtime Proof Classification
+Next 14 Days
+ Playwright Screenshots
+ Mobile Testing
+ Replay Generation
+ Runtime Gallery
+Next 30 Days
+ Business Logic Attack Packs
+ Auto Fix + Reverify
+ Launch Insurance Score
+ Continuous Guardian

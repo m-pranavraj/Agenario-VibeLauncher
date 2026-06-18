@@ -399,6 +399,26 @@ components:
           type: string
         fixPrompt:
           type: string
+        confidence:
+          type: ["integer", "null"]
+        evidence:
+          type: ["string", "null"]
+        filePath:
+          type: ["string", "null"]
+        lineNumber:
+          type: ["integer", "null"]
+        codeSnippet:
+          type: ["string", "null"]
+        impactStatement:
+          type: ["string", "null"]
+        retestResult:
+          type: ["string", "null"]
+        sourceEvidence:
+          type: ["string", "null"]
+        locked:
+          type: ["boolean", "null"]
+        promptUnlocked:
+          type: ["boolean", "null"]
 
     ScanDetail:
       type: object

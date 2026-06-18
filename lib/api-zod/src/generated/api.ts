@@ -132,7 +132,17 @@ export const GetScanResponse = zod.object({
   "severity": zod.string(),
   "title": zod.string(),
   "description": zod.string(),
-  "fixPrompt": zod.string()
+  "fixPrompt": zod.string(),
+  "confidence": zod.number().nullish(),
+  "evidence": zod.string().nullish(),
+  "filePath": zod.string().nullish(),
+  "lineNumber": zod.number().nullish(),
+  "codeSnippet": zod.string().nullish(),
+  "impactStatement": zod.string().nullish(),
+  "retestResult": zod.string().nullish(),
+  "sourceEvidence": zod.string().nullish(),
+  "locked": zod.boolean().nullish(),
+  "promptUnlocked": zod.boolean().nullish()
 }))
 })
 
