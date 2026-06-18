@@ -180,7 +180,12 @@ async function runAnalysisPipeline(opts: {
   const [result, httpProofEvidence, browserProofEvidence] = await Promise.all([
     runAllAgents(sourceType, sourceInput, appDescription, codeContext),
     runProofEngine(sourceType, sourceInput),
-    runPlaywrightBrowserProofs(sourceType, sourceInput),
+    runPlaywrightBrowserProofs(sourceType, sourceInput, codeContext ? {
+      framework: codeContext.framework,
+      keyFiles: codeContext.keyFiles,
+      routes: codeContext.routes,
+      vibeTool: codeContext.vibeTool,
+    } : undefined),
   ]);
 
   // Merge: browser proofs (99% confidence) take precedence, deduplicate by type
