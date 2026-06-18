@@ -4561,11 +4561,13 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
   const isLight = useIsLight();
   const [openSection, setOpenSection] = useState<"journeys" | "chaos" | "attacks">("journeys");
 
-  const statusConfig = {
-    pass: { color: "text-green-400", bg: "bg-green-500/10 border-green-500/20", dot: "bg-green-400", label: "Pass" },
-    degraded: { color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", dot: "bg-amber-400", label: "Degraded" },
-    fail: { color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", dot: "bg-red-400", label: "Fail" },
+  const statusConfig: Record<string, { color: string; bg: string; dot: string; label: string }> = {
+    pass:     { color: "text-green-400", bg: "bg-green-500/10 border-green-500/20",  dot: "bg-green-400",  label: "Pass"     },
+    degraded: { color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20",  dot: "bg-amber-400",  label: "Degraded" },
+    fail:     { color: "text-red-400",   bg: "bg-red-500/10 border-red-500/20",      dot: "bg-red-400",    label: "Fail"     },
   };
+  const getStatusConfig = (s: string) =>
+    statusConfig[s] ?? { color: isLight ? "text-gray-400" : "text-white/30", bg: isLight ? "bg-gray-100 border-gray-200" : "bg-white/[0.04] border-white/[0.08]", dot: isLight ? "bg-gray-300" : "bg-white/20", label: s ?? "Unknown" };
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
@@ -4621,7 +4623,7 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
       {openSection === "journeys" && (
         <div className="divide-y divide-white/[0.04]">
           {data.journeys.map((j: any, i: any) => {
-            const sc = statusConfig[j.status];
+            const sc = getStatusConfig(j.status);
             return (
               <div key={i} className="px-6 py-3 flex items-start gap-4">
                 <span className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${sc.dot}`} />
@@ -4803,11 +4805,12 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
   const [copiedPR, setCopiedPR] = useState<number | null>(null);
 
   const LAYERS = ["Source Code", "API Layer", "DB Layer", "Infrastructure", "Network", "Third Party"];
-  const hopConfig = {
-    clean: { color: "text-green-400", bg: "bg-green-500/10 border-green-500/25", dot: "bg-green-400", label: "Clean" },
-    implicated: { color: "text-red-400", bg: "bg-red-500/10 border-red-500/25", dot: "bg-red-400", label: "Implicated" },
-    unknown: { color: "text-white/30", bg: `bg-white/[0.03] ${isLight ? "border-gray-200" : "border-white/[0.08]"}`, dot: "bg-white/20", label: "Unknown" },
+  const hopConfig: Record<string, { color: string; bg: string; dot: string; label: string }> = {
+    clean:      { color: "text-green-400",                            bg: "bg-green-500/10 border-green-500/25",                                                dot: "bg-green-400",                        label: "Clean"      },
+    implicated: { color: "text-red-400",                              bg: "bg-red-500/10 border-red-500/25",                                                    dot: "bg-red-400",                          label: "Implicated" },
+    unknown:    { color: isLight ? "text-gray-400" : "text-white/30", bg: isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.08]",      dot: isLight ? "bg-gray-300" : "bg-white/20", label: "Unknown"  },
   };
+  const getHopConfig = (s: string) => hopConfig[s] ?? hopConfig.unknown;
 
   const copyPR = async (pr: string, i: number) => {
     await navigator.clipboard.writeText(pr);
@@ -4858,7 +4861,7 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
                     {LAYERS.map((layer, li) => {
                       const hop = chain.hops.find(h => h.layer === layer);
                       const status = hop?.status ?? "unknown";
-                      const hc = hopConfig[status];
+                      const hc = getHopConfig(status);
                       return (
                         <div key={layer} className="flex items-center">
                           <div className={`rounded-xl border px-3 py-2 text-center w-28 ${hc.bg}`}>
