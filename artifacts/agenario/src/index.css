@@ -450,7 +450,41 @@
 }
 .twin-active { animation: twin-pulse 2s ease-in-out infinite; }
 
-/* ── Scrollbar ──────────────────────────────────────────────── */
+/* ── Light home theme — premium pink/wave design ─────────────── */
+
+/* When the page is in light mode, body bg matches */
+body:has(.bg-\[#fdf4f8\]) {
+  background-color: #fdf4f8 !important;
+}
+
+/* Scrollbar — light theme respects pink tones */
+body:has(.bg-\[#fdf4f8\]) ::-webkit-scrollbar-thumb {
+  background: rgba(236,72,153,0.2);
+}
+body:has(.bg-\[#fdf4f8\]) ::-webkit-scrollbar-thumb:hover {
+  background: rgba(236,72,153,0.35);
+}
+
+/* Counter glow — light mode uses soft shadows */
+body:has(.bg-\[#fdf4f8\]) .counter-glow {
+  text-shadow: 0 0 20px currentColor;
+  filter: none;
+}
+
+/* Aurora cards — disable in light mode (handled via conditional class) */
+
+/* Card hover lift — light mode */
+body:has(.bg-\[#fdf4f8\]) .card-hover:hover {
+  box-shadow: 0 8px 32px rgba(236,72,153,0.12), 0 0 0 1px rgba(236,72,153,0.08);
+  transform: translateY(-2px);
+}
+
+/* Pill shimmer — light mode */
+body:has(.bg-\[#fdf4f8\]) .pill-shimmer::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(236,72,153,0.08) 50%, transparent 100%);
+}
+
+/* ── Scrollbar (dark) ────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
