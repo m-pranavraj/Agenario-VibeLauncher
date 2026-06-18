@@ -37,16 +37,16 @@ export default function DashboardPage() {
   const { scans, loading: scansLoading } = useScans();
 
   const t = {
-    page:        isLight ? "bg-gray-50 text-gray-900 min-h-screen" : "bg-[#050505] text-white min-h-screen",
-    nav:         isLight ? "bg-white/90 border-b border-gray-200 backdrop-blur-md" : "bg-black/60 border-b border-white/[0.07] backdrop-blur-md",
+    page:        isLight ? "bg-[#fdf4f8] text-gray-900 min-h-screen" : "bg-[#050505] text-white min-h-screen",
+    nav:         isLight ? "bg-white/90 border-b border-pink-100/80 backdrop-blur-md" : "bg-black/60 border-b border-white/[0.07] backdrop-blur-md",
     logo:        isLight ? "text-gray-900" : "text-white",
     navLink:     isLight ? "text-gray-500 hover:text-gray-900 transition-colors" : "text-white/35 hover:text-white transition-colors",
     h1:          isLight ? "text-gray-900" : "text-white",
     sub:         isLight ? "text-gray-500" : "text-white/30",
     card:        isLight
-      ? "flex items-center gap-4 bg-white border border-gray-200 rounded-xl p-4 hover:border-violet-300 hover:shadow-sm transition-all group cursor-pointer block"
+      ? "flex items-center gap-4 bg-white border border-pink-100/80 rounded-xl p-4 hover:border-violet-300 hover:shadow-sm transition-all group cursor-pointer block"
       : "flex items-center gap-4 glass rounded-xl p-4 hover:bg-white/[0.07] transition-all group cursor-pointer block scan-card-aurora",
-    emptyCard:   isLight ? "text-center py-24 bg-white border border-gray-200 rounded-2xl" : "text-center py-24 glass rounded-2xl",
+    emptyCard:   isLight ? "text-center py-24 bg-white border border-pink-100/80 rounded-2xl" : "text-center py-24 glass rounded-2xl",
     scanTitle:   isLight ? "text-gray-800 text-sm font-medium truncate" : "text-white/85 text-sm font-medium truncate",
     scanMeta:    isLight ? "text-xs text-gray-400 capitalize" : "text-xs text-white/25 capitalize",
     scanDate:    isLight ? "text-xs text-gray-400" : "text-xs text-white/20",
@@ -55,7 +55,7 @@ export default function DashboardPage() {
       ? isLight ? "bg-violet-100 text-violet-700 border border-violet-200" : "bg-violet-500/20 text-violet-300 border border-violet-500/30"
       : p === "enterprise"
         ? isLight ? "bg-pink-100 text-pink-700 border border-pink-200" : "bg-pink-500/20 text-pink-300 border border-pink-500/30"
-        : isLight ? "bg-gray-100 border border-gray-200 text-gray-500" : "bg-white/[0.06] border border-white/[0.1] text-white/40",
+        : isLight ? "bg-pink-50 border border-pink-100/80 text-gray-500" : "bg-white/[0.06] border border-white/[0.1] text-white/40",
     newScanBtn:  isLight
       ? "flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm"
       : "flex items-center gap-2 bg-white hover:bg-white/90 text-black font-semibold px-5 py-2.5 rounded-xl transition-all text-sm",
@@ -91,8 +91,8 @@ export default function DashboardPage() {
   return (
     <div className={t.page}>
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className={`absolute top-[-15%] left-[-5%] w-[50%] h-[50%] blur-[180px] rounded-full ${isLight ? "bg-violet-300/[0.12]" : "bg-violet-600/[0.05]"}`} />
-        <div className={`absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] blur-[160px] rounded-full ${isLight ? "bg-blue-300/[0.10]" : "bg-blue-500/[0.04]"}`} />
+        <div className={`absolute top-[-15%] left-[-5%] w-[50%] h-[50%] blur-[180px] rounded-full ${isLight ? "bg-rose-200/[0.40]" : "bg-violet-600/[0.05]"}`} />
+        <div className={`absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] blur-[160px] rounded-full ${isLight ? "bg-purple-200/[0.30]" : "bg-blue-500/[0.04]"}`} />
       </div>
 
       <nav className={`sticky top-0 z-50 ${t.nav}`}>
@@ -166,7 +166,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             className={t.emptyCard}
           >
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 border ${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.06] border-white/[0.1]"}`}>
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 border ${isLight ? "bg-pink-50/50 border-pink-100/80" : "bg-white/[0.06] border-white/[0.1]"}`}>
               <img src="/logo.png" alt="" className="w-6 h-6 rounded-xl object-cover object-left" />
             </div>
             <h3 className={`font-bold text-lg font-['Syne'] mb-2 ${t.h1}`}>No scans yet</h3>

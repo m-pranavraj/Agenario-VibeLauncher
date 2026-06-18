@@ -17,13 +17,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const t = {
-    page:    isLight ? "bg-gray-50" : "bg-[#050505]",
+    page:    isLight ? "bg-[#fdf4f8]" : "bg-[#050505]",
     card:    isLight
-      ? "bg-white border border-gray-200 rounded-2xl p-7 shadow-sm"
+      ? "bg-white border border-pink-100/80 rounded-2xl p-7 shadow-sm"
       : "glass rounded-2xl p-7",
     label:   isLight ? "text-gray-500" : "text-white/45",
     input:   isLight
-      ? "w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30 transition-all text-sm"
+      ? "w-full bg-white border border-pink-100/80 rounded-xl pl-10 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30 transition-all text-sm"
       : "w-full bg-white/[0.04] border border-white/[0.1] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-all text-sm",
     icon:    isLight ? "text-gray-400" : "text-white/25",
     heading: isLight ? "text-gray-900" : "text-white",
@@ -55,8 +55,8 @@ export default function LoginPage() {
   return (
     <div className={`min-h-screen flex items-center justify-center px-4 ${t.page}`}>
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className={`absolute top-[-15%] left-[-5%] w-[50%] h-[50%] blur-[160px] rounded-full ${isLight ? "bg-violet-300/[0.20]" : "bg-violet-600/[0.06]"}`} />
-        <div className={`absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] blur-[140px] rounded-full ${isLight ? "bg-blue-300/[0.15]" : "bg-blue-500/[0.04]"}`} />
+        <div className={`absolute top-[-15%] left-[-5%] w-[50%] h-[50%] blur-[160px] rounded-full ${isLight ? "bg-rose-200/[0.45]" : "bg-violet-600/[0.06]"}`} />
+        <div className={`absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] blur-[140px] rounded-full ${isLight ? "bg-purple-200/[0.35]" : "bg-blue-500/[0.04]"}`} />
       </div>
       <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />

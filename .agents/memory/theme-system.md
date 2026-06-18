@@ -15,6 +15,14 @@ description: How the Agenario theme toggle works and critical JSX template liter
 - Auth pages (login, register): add in a `fixed top-4 right-4 z-50` wrapper (no navbar)
 - home.tsx: has its own inline toggle using `useTheme()` directly (do not replace with shared component)
 
+## Consistent light theme palette (ALL pages)
+- Page bg: `bg-[#fdf4f8]` (soft pink)
+- Gradient orb 1 (top-right): `rgba(252,231,243,0.7-0.8)` pink
+- Gradient orb 2 (bottom-left): `bg-purple-200/[0.20]` lavender blur-[150px]
+- Nav: `bg-white/90 border-pink-100/80 backdrop-blur-2xl`
+- Cards: `bg-white border border-pink-100/80 shadow-sm`
+- Ambient blobs (login/register/dashboard): rose-200/[0.40-0.45] + purple-200/[0.30-0.35]
+
 ## Critical JSX template literal bug
 `hover:${...}` inside JSX template literals breaks Babel/Vite's React parser.
 

@@ -196,11 +196,12 @@ export default function DocsPage() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
-    <div className={`min-h-screen ${isLight ? "bg-white text-gray-900" : "bg-[#050505] text-white"}`}>
-      <div className={`fixed inset-0 pointer-events-none ${isLight ? "bg-[radial-gradient(ellipse_at_top_left,_rgba(139,92,246,0.03)_0%,_transparent_55%)]" : "bg-[radial-gradient(ellipse_at_top_left,_rgba(139,92,246,0.06)_0%,_transparent_55%)]"}`} />
+    <div className={`min-h-screen ${isLight ? "bg-[#fdf4f8] text-gray-900" : "bg-[#050505] text-white"}`}>
+      <div className={`fixed inset-0 pointer-events-none ${isLight ? "bg-[radial-gradient(ellipse_at_top_right,_rgba(252,231,243,0.7)_0%,_transparent_55%)]" : "bg-[radial-gradient(ellipse_at_top_left,_rgba(139,92,246,0.06)_0%,_transparent_55%)]"}`} />
+      <div className={`fixed bottom-0 left-0 w-[600px] h-[400px] rounded-full blur-[150px] pointer-events-none ${isLight ? "bg-purple-200/[0.20]" : "bg-indigo-600/[0.03]"}`} />
 
       {/* Top navbar */}
-      <nav className={`fixed top-0 w-full z-50 border-b backdrop-blur-2xl ${isLight ? "border-gray-200 bg-white/85" : "border-white/[0.06] bg-[#050505]/85"}`}>
+      <nav className={`fixed top-0 w-full z-50 border-b backdrop-blur-2xl ${isLight ? "border-pink-100/80 bg-white/85" : "border-white/[0.06] bg-[#050505]/85"}`}>
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className={`flex items-center gap-2 transition-colors ${isLight ? "text-gray-400 hover:text-gray-900" : "text-white/40 hover:text-white"}`}>
@@ -220,7 +221,7 @@ export default function DocsPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               API Online
             </span>
-            <span className={`hidden sm:block text-[11px] px-2 py-1 rounded-lg border font-mono ${isLight ? "bg-gray-50 border-gray-200 text-gray-400" : "bg-white/[0.05] border-white/[0.08] text-white/30"}`}>v2.1</span>
+            <span className={`hidden sm:block text-[11px] px-2 py-1 rounded-lg border font-mono ${isLight ? "bg-pink-50/50 border-pink-100/80 text-gray-400" : "bg-white/[0.05] border-white/[0.08] text-white/30"}`}>v2.1</span>
             <Link href="/register">
               <button className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white text-black hover:bg-white/90"}`}>
                 Get Started Free
@@ -347,7 +348,7 @@ export default function DocsPage() {
                 { label: "Compliance Frameworks", value: "8", color: isLight ? "text-blue-600" : "text-blue-400" },
                 { label: "Analysis Dimensions", value: "10", color: isLight ? "text-emerald-600" : "text-emerald-400" },
               ].map((stat) => (
-                <div key={stat.label} className={`rounded-xl p-4 border ${isLight ? "bg-gray-50 border-gray-200" : "glass border-white/[0.07]"}`}>
+                <div key={stat.label} className={`rounded-xl p-4 border ${isLight ? "bg-pink-50/50 border-pink-100/80" : "glass border-white/[0.07]"}`}>
                   <div className={`text-2xl font-bold font-['Syne'] ${stat.color}`}>{stat.value}</div>
                   <div className={`text-xs mt-0.5 ${isLight ? "text-gray-500" : "text-white/30"}`}>{stat.label}</div>
                 </div>
@@ -374,7 +375,7 @@ export default function DocsPage() {
               <p className={`text-sm ${isLight ? "text-gray-600" : "text-white/45"}`}>You get a 0–100 Launch Readiness Score, top 3 action plan, 8-framework compliance audit, revenue intelligence, and 1-click fix prompts ready to paste into Cursor, Bolt, or Lovable.</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {["Launch Score 0-100", "10 Analysis Dimensions", "8 Compliance Frameworks", "Revenue Leak Detector", "1-Click Fix Prompts", "Risk Forecast"].map((f) => (
-                  <div key={f} className={`flex items-center gap-2 text-xs border rounded-xl px-3 py-2 ${isLight ? "text-gray-600 bg-gray-50 border-gray-200" : "text-white/45 bg-white/[0.03] border-white/[0.07]"}`}>
+                  <div key={f} className={`flex items-center gap-2 text-xs border rounded-xl px-3 py-2 ${isLight ? "text-gray-600 bg-pink-50/50 border-pink-100/80" : "text-white/45 bg-white/[0.03] border-white/[0.07]"}`}>
                     <CheckCircle className="w-3 h-3 text-green-400/60 flex-shrink-0" />
                     {f}
                   </div>
@@ -450,7 +451,7 @@ jobs:
               ].map((f) => {
                 const Icon = f.icon;
                 return (
-                  <div key={f.label} className={`rounded-xl p-4 flex items-start gap-3 border ${isLight ? "bg-gray-50 border-gray-200 shadow-sm" : "glass border-white/[0.07]"}`}>
+                  <div key={f.label} className={`rounded-xl p-4 flex items-start gap-3 border ${isLight ? "bg-pink-50/50 border-pink-100/80 shadow-sm" : "glass border-white/[0.07]"}`}>
                     <Icon className="w-4 h-4 text-violet-400 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className={`text-sm font-semibold ${isLight ? "text-gray-900" : "text-white"}`}>{f.label}</p>

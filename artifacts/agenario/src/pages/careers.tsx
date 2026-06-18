@@ -56,10 +56,11 @@ const VALUES = [
 export default function CareersPage() {
   const isLight = useIsLight();
   return (
-    <div className={`min-h-screen ${isLight ? "bg-white" : "bg-[#050505]"}`}>
-      <div className={`absolute inset-0 pointer-events-none ${isLight ? "bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.06)_0%,_transparent_55%)]" : "bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.05)_0%,_transparent_55%)]"}`} />
+    <div className={`min-h-screen ${isLight ? "bg-[#fdf4f8]" : "bg-[#050505]"}`}>
+      <div className={`absolute inset-0 pointer-events-none ${isLight ? "bg-[radial-gradient(ellipse_at_top_right,_rgba(252,231,243,0.75)_0%,_transparent_55%)]" : "bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.05)_0%,_transparent_55%)]"}`} />
+      <div className={`absolute bottom-0 left-0 w-[600px] h-[400px] rounded-full blur-[150px] pointer-events-none ${isLight ? "bg-purple-200/[0.20]" : "bg-indigo-600/[0.03]"}`} />
 
-      <nav className={`border-b backdrop-blur-2xl sticky top-0 z-10 ${isLight ? "border-gray-200 bg-white/90" : "border-white/[0.07] bg-[#050505]/90"}`}>
+      <nav className={`border-b backdrop-blur-2xl sticky top-0 z-10 ${isLight ? "border-pink-100/80 bg-white/90" : "border-white/[0.07] bg-[#050505]/90"}`}>
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-3">
           <Link href="/" className={`transition-colors ${isLight ? "text-gray-400 hover:text-gray-900" : "text-white/30 hover:text-white"}`}>
             <ArrowLeft className="w-5 h-5" />
@@ -90,7 +91,7 @@ export default function CareersPage() {
 
           <motion.div
             variants={FADE_UP}
-            className={`relative rounded-2xl p-8 text-center border ${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/[0.07]"}`}
+            className={`relative rounded-2xl p-8 text-center border ${isLight ? "bg-pink-50/50 border-pink-100/80" : "bg-white/[0.02] border-white/[0.07]"}`}
           >
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5 border ${isLight ? "bg-white border-gray-200" : "bg-white/[0.04] border-white/[0.08]"}`}>
               <img src="/logo.png" alt="" className="w-8 h-8 rounded-xl object-cover object-left" />

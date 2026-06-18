@@ -46,13 +46,13 @@ const STATS = [
 export default function AboutPage() {
   const isLight = useIsLight();
   return (
-    <div className={`min-h-screen overflow-x-hidden ${isLight ? "bg-white text-gray-900" : "bg-[#050505] text-white"}`}>
+    <div className={`min-h-screen overflow-x-hidden ${isLight ? "bg-[#fdf4f8] text-gray-900" : "bg-[#050505] text-white"}`}>
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] blur-3xl rounded-full ${isLight ? "bg-violet-400/[0.06]" : "bg-violet-600/[0.04]"}`} />
-        <div className={`absolute bottom-1/4 right-0 w-[500px] h-[500px] blur-3xl rounded-full ${isLight ? "bg-indigo-400/[0.05]" : "bg-indigo-600/[0.03]"}`} />
+        <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] blur-3xl rounded-full ${isLight ? "bg-rose-200/[0.40]" : "bg-violet-600/[0.04]"}`} />
+        <div className={`absolute bottom-1/4 right-0 w-[500px] h-[500px] blur-3xl rounded-full ${isLight ? "bg-purple-200/[0.30]" : "bg-indigo-600/[0.03]"}`} />
       </div>
 
-      <nav className={`border-b backdrop-blur-2xl sticky top-0 z-20 ${isLight ? "border-gray-200 bg-white/90" : "border-white/[0.07] bg-[#050505]/90"}`}>
+      <nav className={`border-b backdrop-blur-2xl sticky top-0 z-20 ${isLight ? "border-pink-100/80 bg-white/90" : "border-white/[0.07] bg-[#050505]/90"}`}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-4">
           <Link href="/" className={`transition-colors ${isLight ? "text-gray-400 hover:text-gray-900" : "text-white/30 hover:text-white"}`}>
             <ArrowLeft className="w-5 h-5" />
@@ -109,7 +109,7 @@ export default function AboutPage() {
           {STATS.map((s) => (
             <motion.div
               key={s.label} variants={FADE_UP}
-              className={`rounded-2xl p-4 sm:p-5 text-center border ${isLight ? "bg-gray-50 border-gray-200" : "border-white/[0.08] bg-gradient-to-b from-white/[0.03] to-transparent"}`}
+              className={`rounded-2xl p-4 sm:p-5 text-center border ${isLight ? "bg-pink-50/50 border-pink-100/80" : "border-white/[0.08] bg-gradient-to-b from-white/[0.03] to-transparent"}`}
             >
               <div className={`text-2xl sm:text-3xl font-black font-['Syne'] ${isLight ? "text-gray-900" : "text-white"}`}>{s.value}</div>
               <div className={`text-[11px] sm:text-xs font-semibold mt-1 ${isLight ? "text-gray-500" : "text-white/50"}`}>{s.label}</div>
@@ -131,7 +131,7 @@ export default function AboutPage() {
           <div className="max-w-xl mx-auto relative">
             <div className="absolute inset-0 bg-violet-600/[0.08] blur-3xl rounded-3xl scale-110 pointer-events-none" />
 
-            <div className={`relative rounded-3xl p-6 sm:p-8 backdrop-blur-xl overflow-hidden border ${isLight ? "bg-white border-gray-200 shadow-sm" : "border-white/[0.1] bg-gradient-to-b from-white/[0.05] to-white/[0.01]"}`}>
+            <div className={`relative rounded-3xl p-6 sm:p-8 backdrop-blur-xl overflow-hidden border ${isLight ? "bg-white border-pink-100/80 shadow-sm" : "border-white/[0.1] bg-gradient-to-b from-white/[0.05] to-white/[0.01]"}`}>
               <div className="absolute top-4 right-4 sm:top-5 sm:right-5">
                 <span className={`text-[10px] px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider border ${isLight ? "bg-violet-50 border-violet-200 text-violet-600" : "bg-violet-500/15 border-violet-500/25 text-violet-400"}`}>
                   Founder & CEO
@@ -195,7 +195,7 @@ export default function AboutPage() {
                 ].map(({ icon: Icon, label, href }) => (
                   <a
                     key={label} href={href} aria-label={label}
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border ${isLight ? "bg-gray-50 border-gray-200 text-gray-400 hover:text-gray-700 hover:bg-gray-100" : "bg-white/[0.04] border-white/[0.08] text-white/25 hover:text-white hover:bg-white/[0.07]"}`}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border ${isLight ? "bg-pink-50/50 border-pink-100/80 text-gray-400 hover:text-gray-700 hover:bg-gray-100" : "bg-white/[0.04] border-white/[0.08] text-white/25 hover:text-white hover:bg-white/[0.07]"}`}
                   >
                     <Icon className="w-4 h-4" />
                   </a>
@@ -217,7 +217,7 @@ export default function AboutPage() {
                 key={b.title}
                 initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.07 }}
-                className={`rounded-2xl p-5 sm:p-6 space-y-3 border ${isLight ? "bg-gray-50 border-gray-200" : "border-white/[0.08] bg-gradient-to-b from-white/[0.03] to-transparent"}`}
+                className={`rounded-2xl p-5 sm:p-6 space-y-3 border ${isLight ? "bg-pink-50/50 border-pink-100/80" : "border-white/[0.08] bg-gradient-to-b from-white/[0.03] to-transparent"}`}
               >
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${isLight ? "bg-white border-gray-200" : "bg-white/[0.05] border-white/[0.08]"}`}>
                   <b.icon className={`w-4 h-4 ${isLight ? "text-gray-500" : "text-white/40"}`} />
@@ -236,7 +236,7 @@ export default function AboutPage() {
         >
           <div className="relative inline-block w-full max-w-lg">
             <div className="absolute inset-0 bg-violet-600/20 blur-3xl rounded-full scale-150 pointer-events-none" />
-            <div className={`relative rounded-3xl px-8 sm:px-10 py-8 sm:py-10 space-y-5 border ${isLight ? "bg-gray-50 border-gray-200" : "border-white/[0.1] bg-gradient-to-b from-white/[0.04] to-transparent"}`}>
+            <div className={`relative rounded-3xl px-8 sm:px-10 py-8 sm:py-10 space-y-5 border ${isLight ? "bg-pink-50/50 border-pink-100/80" : "border-white/[0.1] bg-gradient-to-b from-white/[0.04] to-transparent"}`}>
               <h2 className={`text-xl sm:text-2xl font-bold font-['Syne'] ${isLight ? "text-gray-900" : "text-white"}`}>Ready to review your app?</h2>
               <p className={`text-sm max-w-sm mx-auto leading-relaxed ${isLight ? "text-gray-500" : "text-white/40"}`}>
                 Free tier, first report in under 2 minutes. No credit card required.

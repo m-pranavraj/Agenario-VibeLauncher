@@ -5752,18 +5752,18 @@ export default function ScanResultsPage() {
   const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("all");
   const [rescanning, setRescanning] = useState(false);
   const t = {
-    page: isLight ? "bg-white" : "bg-[#050505]",
-    nav: isLight ? "bg-white/90 border-gray-200 backdrop-blur-2xl" : "bg-[#050505]/80 border-white/[0.07] backdrop-blur-2xl",
+    page: isLight ? "bg-[#fdf4f8]" : "bg-[#050505]",
+    nav: isLight ? "bg-white/90 border-pink-100/80 backdrop-blur-2xl" : "bg-[#050505]/80 border-white/[0.07] backdrop-blur-2xl",
     navText: isLight ? "text-gray-500 hover:text-gray-900 transition-colors" : "text-white/30 hover:text-white transition-colors",
     navBrand: isLight ? "text-gray-900 font-bold font-['Syne'] text-sm" : "text-white font-bold font-['Syne'] text-sm",
     navMeta: isLight ? "text-gray-400 text-xs ml-2 truncate hidden sm:block max-w-xs" : "text-white/20 text-xs ml-2 truncate hidden sm:block max-w-xs",
-    tabBar: isLight ? "bg-white/95 backdrop-blur-2xl border-b border-gray-200" : "bg-[#050505]/95 backdrop-blur-2xl border-b border-white/[0.06]",
+    tabBar: isLight ? "bg-white/95 backdrop-blur-2xl border-b border-pink-100/70" : "bg-[#050505]/95 backdrop-blur-2xl border-b border-white/[0.06]",
     tabActive: isLight ? "bg-gray-900 text-white shadow-sm" : "bg-white/[0.1] border border-white/20 text-white",
     tabInactive: isLight ? "text-gray-500 hover:text-gray-900 hover:bg-gray-100" : "text-white/35 hover:text-white/60 hover:bg-white/[0.04]",
     tabCountActive:   "bg-white/15 text-white/80",
     tabCountInactive: `bg-white/[0.07] \${isLight ? "text-gray-400" : "text-white/30"}`,
     navBtn:           `flex items-center gap-1.5 text-xs \${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border \${isLight ? "border-gray-200" : "border-white/[0.07]"} hover:border-white/15`,
-    ambient:          "absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.04)_0%,_transparent_60%)] pointer-events-none",
+    ambient:          isLight ? "absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(252,231,243,0.75)_0%,_transparent_55%)] pointer-events-none" : "absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.04)_0%,_transparent_60%)] pointer-events-none",
   };
 
   useEffect(() => {
@@ -5903,6 +5903,7 @@ export default function ScanResultsPage() {
   return (
     <div className={`min-h-screen ${t.page}`}>
       <div className={t.ambient} />
+      <div className={`absolute bottom-0 left-0 w-[600px] h-[400px] rounded-full blur-[150px] pointer-events-none ${isLight ? "bg-purple-200/[0.20]" : "bg-indigo-600/[0.03]"}`} />
 
       <nav className={`border-b sticky top-0 z-10 ${t.nav}`}>
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-3">

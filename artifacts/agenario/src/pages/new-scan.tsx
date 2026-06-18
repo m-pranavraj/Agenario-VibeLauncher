@@ -298,10 +298,11 @@ export default function NewScanPage() {
   if (loading || !user) return null;
 
   return (
-    <div className={`min-h-screen ${isLight ? "bg-white" : "bg-[#050505]"}`}>
-      <div className={`absolute inset-0 ${isLight ? "bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.03)_0%,_transparent_60%)]" : "bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.05)_0%,_transparent_60%)]"} pointer-events-none`} />
+    <div className={`min-h-screen ${isLight ? "bg-[#fdf4f8]" : "bg-[#050505]"}`}>
+      <div className={`absolute inset-0 ${isLight ? "bg-[radial-gradient(ellipse_at_top_right,_rgba(252,231,243,0.8)_0%,_transparent_55%)]" : "bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.05)_0%,_transparent_60%)]"} pointer-events-none`} />
+      <div className={`absolute bottom-0 left-0 w-[600px] h-[400px] rounded-full blur-[150px] pointer-events-none ${isLight ? "bg-purple-200/[0.20]" : "bg-indigo-600/[0.03]"}`} />
 
-      <nav className={`border-b ${isLight ? "bg-white/90 border-gray-200" : "border-white/[0.07] bg-[#050505]/90"} backdrop-blur-2xl sticky top-0 z-10`}>
+      <nav className={`border-b ${isLight ? "bg-white/90 border-pink-100/80" : "border-white/[0.07] bg-[#050505]/90"} backdrop-blur-2xl sticky top-0 z-10`}>
         <div className="max-w-2xl mx-auto px-6 py-4 flex items-center gap-3">
           <Link href="/dashboard" className={`${isLight ? "text-gray-400 hover:text-gray-900" : "text-white/30 hover:text-white"} transition-colors`}>
             <ArrowLeft className="w-5 h-5" />

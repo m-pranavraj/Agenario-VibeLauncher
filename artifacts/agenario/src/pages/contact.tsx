@@ -15,8 +15,8 @@ export default function ContactPage() {
   const labelCls = `flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide ${isLight ? "text-gray-500" : "text-white/50"}`;
 
   return (
-    <div className={`min-h-screen font-sans ${isLight ? "bg-gray-50 text-gray-900" : "bg-[#050505] text-white"}`}>
-      <nav className={`fixed top-0 w-full z-50 border-b backdrop-blur-2xl ${isLight ? "border-gray-200 bg-white/90" : "border-white/[0.06] bg-[#050505]/80"}`}>
+    <div className={`min-h-screen font-sans ${isLight ? "bg-[#fdf4f8] text-gray-900" : "bg-[#050505] text-white"}`}>
+      <nav className={`fixed top-0 w-full z-50 border-b backdrop-blur-2xl ${isLight ? "border-pink-100/80 bg-white/90" : "border-white/[0.06] bg-[#050505]/80"}`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-4">
           <Link href="/">
             <button className={`flex items-center gap-2 transition-colors text-sm ${isLight ? "text-gray-400 hover:text-gray-900" : "text-white/40 hover:text-white"}`}>
