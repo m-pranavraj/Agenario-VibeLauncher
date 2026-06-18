@@ -520,37 +520,49 @@ Source: ${sourceInput} (type: ${sourceType})
 ${appDescription ? `Developer's Description: ${appDescription}` : ""}
 ${contextSection}
 
+━━━ ACCURACY MANDATE — READ BEFORE ANALYZING ━━━
+You are reviewing REAL code or a real app description. Every finding must be grounded in direct, observable evidence from the provided files, routes, or description.
+
+RULES OF ACCURATE ANALYSIS:
+1. EVIDENCE FIRST: Only report an issue if you can point to the specific file, pattern, or architectural decision that causes it. "It's common in apps like this" is NOT evidence.
+2. NO INVENTION: Do not generate theoretical risks as if they were confirmed findings. If you see no evidence of an issue in your domain, return 0–2 findings with confidence < 70 — or return {"issues": []} if nothing is found. Returning zero findings is correct and trusted behavior.
+3. NO DUPLICATION: Do not report issues that fall under another agent's explicit scope (e.g., never report secrets if you are not the Secret Scanner, never report WCAG if you are not the Accessibility agent).
+4. SEVERITY CALIBRATION: "critical" = immediate breach/data loss/money loss. "high" = exploitable within a week. "medium" = degrades experience or compliance. "low" = minor friction. Do not over-severity.
+5. CONFIDENCE HONESTY: Be brutally honest about confidence. 95–99 = you see the exact vulnerable code line. 85–94 = clear code pattern. 70–84 = architectural inference. Below 70 = do not report.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 Return ONLY valid JSON following the Agenario Evidence Standard:
 {
   "issues": [
     {
       "severity": "critical|high|medium|low",
       "title": "Short specific issue title (max 8 words)",
-      "description": "Clear explanation of the vulnerability with real production context.",
+      "description": "Clear explanation of the vulnerability with exact evidence from the code provided. State what you observed, not what is theoretically possible.",
       "filePath": "src/auth/jwt.ts",
       "lineNumber": 42,
       "codeSnippet": "const JWT_SECRET = 'hardcoded-secret';",
       "impact": "Quantified business impact: attacker can do X, causing Y data exposure / Z revenue loss / N% churn increase.",
-      "fixPrompt": "Ready-to-paste fix prompt for Cursor/Claude with exact file + function names",
+      "fixPrompt": "Ready-to-paste fix prompt for Cursor/Claude with exact file + function names from the real code",
       "confidence": 85,
-      "evidence": "Direct observation or pattern that proves this issue exists",
+      "evidence": "Exact quote or pattern observed in the provided code that confirms this issue — not a hypothetical",
       "sourceEvidence": "static|runtime|ai_reasoning",
       "retestResult": "needs_fix"
     }
   ]
 }
 
-Rules:
-- Find 2–5 realistic, high-impact issues. No filler.
+Output rules:
+- Find 2–5 realistic, high-impact issues. Quality over quantity — 2 real findings beat 5 invented ones.
 - Every issue MUST have a clear production consequence (breach, revenue loss, outage, user drop-off).
 - filePath: exact relative path from the code context (e.g. "src/routes/auth.ts"). Required when real code provided.
 - lineNumber: best estimate of the vulnerable line number. Required when filePath is set.
 - codeSnippet: the exact vulnerable code line or pattern (1–3 lines). Required when filePath is set.
 - impact: quantified statement — "Attacker can access all user records (GDPR violation, ₹20L fine risk)" not "security risk".
-- confidence: 95–99 runtime-provable, 85–94 direct code evidence, 70–84 pattern inference, 60–69 AI reasoning.
+- confidence: 95–99 runtime-provable, 85–94 direct code evidence, 70–84 pattern inference. Do NOT report below 70.
 - sourceEvidence: "static" if from code analysis, "runtime" if from HTTP/browser probe, "ai_reasoning" if inferred.
 - fixPrompt must be copy-paste ready — reference specific file/function names from the code context.
-- retestResult: always "needs_fix" for new findings.`;
+- retestResult: always "needs_fix" for new findings.
+- If the code context is clean in your domain, return {"issues": []} — this is a positive outcome, not an error.`;
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

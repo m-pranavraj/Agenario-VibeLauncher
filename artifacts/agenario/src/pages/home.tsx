@@ -107,15 +107,15 @@ const FEATURE_ARSENAL: FeaturePill[] = [
 ];
 
 const FEATURE_CATEGORIES = [
-  { label: "Runtime Security",     labelColor: "text-red-400",    labelColorLight: "text-red-600",    dot: "bg-red-400",     headerBg: "bg-red-500/[0.03]",     headerBgLight: "bg-red-50",     items: FEATURE_ARSENAL.slice(0,  8)  },
-  { label: "Compliance",           labelColor: "text-blue-400",   labelColorLight: "text-blue-600",   dot: "bg-blue-400",    headerBg: "bg-blue-500/[0.03]",    headerBgLight: "bg-blue-50",    items: FEATURE_ARSENAL.slice(8,  16) },
-  { label: "Revenue Intelligence", labelColor: "text-green-400",  labelColorLight: "text-green-700",  dot: "bg-green-400",   headerBg: "bg-green-500/[0.03]",   headerBgLight: "bg-green-50",   items: FEATURE_ARSENAL.slice(16, 24) },
-  { label: "Performance",          labelColor: "text-amber-400",  labelColorLight: "text-amber-700",  dot: "bg-amber-400",   headerBg: "bg-amber-500/[0.03]",   headerBgLight: "bg-amber-50",   items: FEATURE_ARSENAL.slice(24, 29) },
-  { label: "Reliability",          labelColor: "text-orange-400", labelColorLight: "text-orange-700", dot: "bg-orange-400",  headerBg: "bg-orange-500/[0.03]",  headerBgLight: "bg-orange-50",  items: FEATURE_ARSENAL.slice(29, 33) },
-  { label: "Data Integrity",       labelColor: "text-cyan-400",   labelColorLight: "text-cyan-700",   dot: "bg-cyan-400",    headerBg: "bg-cyan-500/[0.03]",    headerBgLight: "bg-cyan-50",    items: FEATURE_ARSENAL.slice(33, 37) },
-  { label: "Dependencies",         labelColor: "text-purple-400", labelColorLight: "text-purple-700", dot: "bg-purple-400",  headerBg: "bg-purple-500/[0.03]",  headerBgLight: "bg-purple-50",  items: FEATURE_ARSENAL.slice(37, 40) },
-  { label: "AI Code Quality",      labelColor: "text-violet-400", labelColorLight: "text-violet-700", dot: "bg-violet-400",  headerBg: "bg-violet-500/[0.03]",  headerBgLight: "bg-violet-50",  items: FEATURE_ARSENAL.slice(40, 45) },
-  { label: "Predictive Intel",     labelColor: "text-fuchsia-400",labelColorLight: "text-fuchsia-700",dot: "bg-fuchsia-400", headerBg: "bg-fuchsia-500/[0.03]", headerBgLight: "bg-fuchsia-50", items: FEATURE_ARSENAL.slice(45, 50) },
+  { label: "Runtime Security",     labelColor: "text-red-400",    labelColorLight: "text-red-600",    dot: "bg-red-400",     headerBg: "bg-red-500/[0.03]",     headerBgLight: "bg-red-50",     items: FEATURE_ARSENAL.slice(0,  8),  icon: "🔐", topGrad: "linear-gradient(90deg,#ef4444,#f97316 55%,transparent)", borderDark: "border-red-500/[0.18]",    borderLight: "border-red-200/80",    glowDark: "0 0 24px rgba(239,68,68,0.14)",    glowLight: "0 4px 20px rgba(239,68,68,0.10)"  },
+  { label: "Compliance",           labelColor: "text-blue-400",   labelColorLight: "text-blue-600",   dot: "bg-blue-400",    headerBg: "bg-blue-500/[0.03]",    headerBgLight: "bg-blue-50",    items: FEATURE_ARSENAL.slice(8,  16), icon: "📋", topGrad: "linear-gradient(90deg,#3b82f6,#6366f1 55%,transparent)", borderDark: "border-blue-500/[0.18]",   borderLight: "border-blue-200/80",   glowDark: "0 0 24px rgba(59,130,246,0.14)",   glowLight: "0 4px 20px rgba(59,130,246,0.10)" },
+  { label: "Revenue Intelligence", labelColor: "text-green-400",  labelColorLight: "text-green-700",  dot: "bg-green-400",   headerBg: "bg-green-500/[0.03]",   headerBgLight: "bg-green-50",   items: FEATURE_ARSENAL.slice(16, 24), icon: "💰", topGrad: "linear-gradient(90deg,#22c55e,#10b981 55%,transparent)", borderDark: "border-green-500/[0.18]",  borderLight: "border-green-200/80",  glowDark: "0 0 24px rgba(34,197,94,0.14)",    glowLight: "0 4px 20px rgba(34,197,94,0.10)"  },
+  { label: "Performance",          labelColor: "text-amber-400",  labelColorLight: "text-amber-700",  dot: "bg-amber-400",   headerBg: "bg-amber-500/[0.03]",   headerBgLight: "bg-amber-50",   items: FEATURE_ARSENAL.slice(24, 29), icon: "⚡", topGrad: "linear-gradient(90deg,#f59e0b,#ef4444 55%,transparent)", borderDark: "border-amber-500/[0.18]",  borderLight: "border-amber-200/80",  glowDark: "0 0 24px rgba(245,158,11,0.14)",   glowLight: "0 4px 20px rgba(245,158,11,0.10)" },
+  { label: "Reliability",          labelColor: "text-orange-400", labelColorLight: "text-orange-700", dot: "bg-orange-400",  headerBg: "bg-orange-500/[0.03]",  headerBgLight: "bg-orange-50",  items: FEATURE_ARSENAL.slice(29, 33), icon: "🛡️", topGrad: "linear-gradient(90deg,#f97316,#fb923c 55%,transparent)", borderDark: "border-orange-500/[0.18]", borderLight: "border-orange-200/80", glowDark: "0 0 24px rgba(249,115,22,0.14)",   glowLight: "0 4px 20px rgba(249,115,22,0.10)" },
+  { label: "Data Integrity",       labelColor: "text-cyan-400",   labelColorLight: "text-cyan-700",   dot: "bg-cyan-400",    headerBg: "bg-cyan-500/[0.03]",    headerBgLight: "bg-cyan-50",    items: FEATURE_ARSENAL.slice(33, 37), icon: "🗄️", topGrad: "linear-gradient(90deg,#06b6d4,#3b82f6 55%,transparent)", borderDark: "border-cyan-500/[0.18]",   borderLight: "border-cyan-200/80",   glowDark: "0 0 24px rgba(6,182,212,0.14)",    glowLight: "0 4px 20px rgba(6,182,212,0.10)"  },
+  { label: "Dependencies",         labelColor: "text-purple-400", labelColorLight: "text-purple-700", dot: "bg-purple-400",  headerBg: "bg-purple-500/[0.03]",  headerBgLight: "bg-purple-50",  items: FEATURE_ARSENAL.slice(37, 40), icon: "📦", topGrad: "linear-gradient(90deg,#a855f7,#6366f1 55%,transparent)", borderDark: "border-purple-500/[0.18]", borderLight: "border-purple-200/80", glowDark: "0 0 24px rgba(168,85,247,0.14)",   glowLight: "0 4px 20px rgba(168,85,247,0.10)" },
+  { label: "AI Code Quality",      labelColor: "text-violet-400", labelColorLight: "text-violet-700", dot: "bg-violet-400",  headerBg: "bg-violet-500/[0.03]",  headerBgLight: "bg-violet-50",  items: FEATURE_ARSENAL.slice(40, 45), icon: "🤖", topGrad: "linear-gradient(90deg,#8b5cf6,#a855f7 55%,transparent)", borderDark: "border-violet-500/[0.18]", borderLight: "border-violet-200/80", glowDark: "0 0 24px rgba(139,92,246,0.14)",   glowLight: "0 4px 20px rgba(139,92,246,0.10)" },
+  { label: "Predictive Intel",     labelColor: "text-fuchsia-400",labelColorLight: "text-fuchsia-700",dot: "bg-fuchsia-400", headerBg: "bg-fuchsia-500/[0.03]", headerBgLight: "bg-fuchsia-50", items: FEATURE_ARSENAL.slice(45, 50), icon: "🔮", topGrad: "linear-gradient(90deg,#d946ef,#8b5cf6 55%,transparent)", borderDark: "border-fuchsia-500/[0.18]",borderLight: "border-fuchsia-200/80",glowDark: "0 0 24px rgba(217,70,239,0.14)",   glowLight: "0 4px 20px rgba(217,70,239,0.10)" },
 ];
 
 const HOW_IT_WORKS = [
@@ -730,33 +730,61 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Category grid */}
+            {/* Category bento grid */}
             <motion.div
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: "-60px" }}
-              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.055 } } }}
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.045 } } }}
             >
               {FEATURE_CATEGORIES.map((cat) => (
                 <motion.div
                   key={cat.label}
-                  variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } } }}
-                  whileHover={{ y: -3, scale: 1.01, transition: { duration: 0.18 } }}
-                  className={`relative rounded-2xl overflow-hidden border transition-all duration-300 group ${isLight ? "bg-white/90 border-pink-100/80 hover:border-pink-200 hover:shadow-md shadow-sm" : "bg-white/[0.025] border-white/[0.07] hover:border-white/[0.13] hover:bg-white/[0.04] backdrop-blur-sm"}`}
+                  variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.48, ease: [0.22, 1, 0.36, 1] } } }}
+                  whileHover={{
+                    y: -6,
+                    boxShadow: isLight ? cat.glowLight : cat.glowDark,
+                    transition: { duration: 0.2, ease: "easeOut" },
+                  }}
+                  className={`relative rounded-2xl overflow-hidden flex flex-col cursor-default group transition-colors duration-300
+                    ${isLight
+                      ? `bg-white border ${cat.borderLight} shadow-sm`
+                      : `bg-white/[0.03] border ${cat.borderDark} backdrop-blur-sm`
+                    }`}
                 >
-                  <div className={`px-4 py-3 border-b flex items-center gap-2.5 ${isLight ? `${cat.headerBgLight} border-pink-100/50` : `${cat.headerBg} border-white/[0.06]`}`}>
-                    <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${isLight ? "bg-white shadow-sm" : "bg-white/[0.06]"}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${cat.dot}`} />
+                  {/* Gradient top accent bar */}
+                  <div className="h-[3px] w-full shrink-0" style={{ background: cat.topGrad }} />
+
+                  {/* Header */}
+                  <div className="px-5 pt-4 pb-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-[22px] leading-none shrink-0">{cat.icon}</span>
+                      <span className={`text-[11px] font-bold uppercase tracking-[0.16em] leading-tight ${isLight ? cat.labelColorLight : cat.labelColor}`}>
+                        {cat.label}
+                      </span>
                     </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-[0.15em] ${isLight ? cat.labelColorLight : cat.labelColor}`}>{cat.label}</span>
-                    <span className={`ml-auto text-[10px] font-mono tabular-nums ${t.bodyDim}`}>{cat.items.length}</span>
+                    <div className="flex items-baseline gap-0.5 shrink-0">
+                      <span className={`text-3xl font-black font-heading leading-none ${isLight ? cat.labelColorLight : cat.labelColor}`}>
+                        {cat.items.length}
+                      </span>
+                      <span className={`text-[9px] font-semibold uppercase tracking-wide ml-1 ${t.bodyDim}`}>checks</span>
+                    </div>
                   </div>
-                  <div className="px-4 py-3.5 space-y-2">
+
+                  {/* Hairline divider */}
+                  <div className={`mx-5 h-px ${isLight ? "bg-gray-100" : "bg-white/[0.06]"}`} />
+
+                  {/* Check items — 2-column grid */}
+                  <div className="px-4 pt-3.5 pb-4 grid grid-cols-2 gap-x-3 gap-y-2 flex-1">
                     {cat.items.map((item) => (
-                      <div key={item.label} className="flex items-center gap-2.5 group/row">
-                        <span className={`w-1 h-1 rounded-full shrink-0 ${cat.dot} opacity-35 group-hover/row:opacity-70 transition-opacity`} />
-                        <span className={`text-[11px] transition-colors leading-snug cursor-default font-medium ${isLight ? `${t.bodyDim} group-hover/row:text-gray-800` : "text-white/40 group-hover/row:text-white/70"}`}>
+                      <div key={item.label} className="flex items-start gap-1.5 group/item">
+                        <span className="text-[11px] shrink-0 mt-px leading-none">{item.icon}</span>
+                        <span className={`text-[10.5px] font-medium leading-snug transition-colors duration-150
+                          ${isLight
+                            ? `text-gray-500 group-hover/item:text-gray-800`
+                            : `text-white/38 group-hover/item:${cat.labelColor.replace("text-", "text-").replace("/80", "")} group-hover:text-white/58`
+                          }`}>
                           {item.label}
                         </span>
                       </div>
