@@ -32,9 +32,8 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover" />
-            <span className="text-white font-bold text-lg font-['Syne']">Agenario</span>
+          <Link href="/" className="inline-flex items-center mb-6">
+            <img src="/logo2-transparent.png" alt="Agenario" className="w-48 object-contain" style={{ height: "auto" }} />
           </Link>
           <h1 className="text-2xl font-bold text-white font-['Syne']">Welcome back</h1>
           <p className="text-white/40 mt-1.5 text-sm">Sign in to your review board</p>

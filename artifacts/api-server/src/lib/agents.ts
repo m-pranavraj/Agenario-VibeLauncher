@@ -28,15 +28,18 @@ const SMART_MODEL = "llama-3.3-70b-versatile";
 // Cerebras model — full 70b fallback
 const CEREBRAS_MODEL = "llama-3.3-70b";
 
-// OpenRouter free models — round-robin across these for load balancing
+// OpenRouter free models — proven reliable, round-robin for load balancing + rate limit avoidance
 const OPENROUTER_MODELS = [
-  "google/gemma-4-26b-a4b-it:free",
-  "cohere/north-mini-code:free",
-  "poolside/laguna-m.1:free",
+  "meta-llama/llama-3.3-70b-instruct:free",     // Primary: proven quality, high availability
+  "deepseek/deepseek-chat-v3-0324:free",          // Excellent reasoning, JSON-reliable
+  "google/gemma-3-27b-it:free",                   // Google, strong instruction following
+  "meta-llama/llama-3.1-8b-instruct:free",        // Fast, reliable fallback
+  "mistralai/mistral-7b-instruct:free",           // Reliable small model
+  "qwen/qwen3-14b:free",                          // Strong multilingual + code
 ];
 let orModelIndex = 0;
 function nextOpenRouterModel(): string {
-  const m = OPENROUTER_MODELS[orModelIndex % OPENROUTER_MODELS.length];
+  const m = OPENROUTER_MODELS[orModelIndex % OPENROUTER_MODELS.length]!;
   orModelIndex++;
   return m;
 }
@@ -541,21 +544,33 @@ async function callWithFallback(
 ): Promise<string> {
   const messages_typed = messages as { role: "system" | "user" | "assistant"; content: string }[];
 
-  // Try OpenRouter first (multiple free models, no rate limits on individual)
+  // Try OpenRouter first — cycle through up to 3 models on failure
   if (openrouter) {
-    const orModel = nextOpenRouterModel();
-    try {
-      const response = await openrouter.chat.completions.create({
-        model: orModel,
-        messages: messages_typed,
-        response_format: { type: "json_object" },
-        max_tokens: opts.maxTokens ?? 1500,
-      });
-      const content = response.choices[0]?.message?.content ?? "{}";
-      if (content && content !== "{}") return content;
-    } catch (orErr: unknown) {
-      logger.warn({ orErr, model: orModel }, "OpenRouter model failed — trying Groq");
+    const maxOrAttempts = Math.min(3, OPENROUTER_MODELS.length);
+    for (let attempt = 0; attempt < maxOrAttempts; attempt++) {
+      const orModel = nextOpenRouterModel();
+      try {
+        const response = await openrouter.chat.completions.create({
+          model: orModel,
+          messages: messages_typed,
+          response_format: { type: "json_object" },
+          max_tokens: opts.maxTokens ?? 1500,
+        });
+        const content = response.choices[0]?.message?.content ?? "{}";
+        if (content && content !== "{}") {
+          if (attempt > 0) logger.info({ model: orModel, attempt }, "OpenRouter succeeded on retry");
+          return content;
+        }
+      } catch (orErr: unknown) {
+        const isOverload =
+          orErr instanceof Error &&
+          (orErr.message.includes("503") || orErr.message.includes("overloaded") ||
+           orErr.message.includes("429") || orErr.message.includes("unavailable"));
+        logger.warn({ model: orModel, attempt, isOverload }, "OpenRouter model failed — trying next model");
+        if (!isOverload) break; // Non-transient error — no point retrying other models
+      }
     }
+    logger.warn("All OpenRouter attempts failed — falling back to Groq");
   }
 
   // Fallback: Groq (if key is configured)

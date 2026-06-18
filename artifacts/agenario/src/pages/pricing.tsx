@@ -220,7 +220,7 @@ export default function PricingPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover object-left" />
+            <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover" />
             <span className="text-white font-bold font-['Syne'] text-sm">Pricing</span>
           </div>
         </div>
