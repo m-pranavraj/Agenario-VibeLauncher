@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
-import { useTheme } from "next-themes";
-import { Sun, Moon, Users, ScanLine, TrendingUp, Star, BarChart3, ShieldCheck, LogOut } from "lucide-react";
+import { Users, ScanLine, TrendingUp, Star, BarChart3, ShieldCheck, LogOut } from "lucide-react";
 import { Link } from "wouter";
 
 interface AdminStats {
@@ -24,22 +23,16 @@ export default function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-  const isLight = mounted ? resolvedTheme === "light" : false;
-
   const t = {
-    page:   isLight ? "bg-[#fdf4f8] text-gray-900 min-h-screen" : "bg-[#050505] text-white min-h-screen",
-    nav:    isLight ? "bg-white/80 border-b border-pink-100/60 backdrop-blur-md" : "bg-black/60 border-b border-white/[0.07] backdrop-blur-md",
-    logo:   isLight ? "text-gray-900" : "text-white",
-    navLink: isLight ? "text-gray-400 hover:text-gray-800 transition-colors" : "text-white/30 hover:text-white transition-colors",
-    card:   isLight ? "bg-white border border-gray-100 rounded-2xl p-5 shadow-sm" : "bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5",
-    head:   isLight ? "text-gray-900 font-bold" : "text-white font-bold",
-    sub:    isLight ? "text-gray-400" : "text-white/35",
-    val:    isLight ? "text-gray-800" : "text-white/80",
-    bar:    isLight ? "bg-gray-100" : "bg-white/[0.05]",
-    toggle: isLight ? "bg-amber-50 border-amber-200/60 text-amber-600" : "bg-white/[0.06] border-white/[0.1] text-white/50",
+    page:    "bg-[#050505] text-white min-h-screen",
+    nav:     "bg-black/60 border-b border-white/[0.07] backdrop-blur-md",
+    logo:    "text-white",
+    navLink: "text-white/30 hover:text-white transition-colors",
+    card:    "bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5",
+    head:    "text-white font-bold",
+    sub:     "text-white/35",
+    val:     "text-white/80",
+    bar:     "bg-white/[0.05]",
   };
 
   useEffect(() => {
@@ -102,12 +95,6 @@ export default function AdminPage() {
             <span className={`font-heading font-bold text-sm ${t.logo}`}>Admin Console</span>
           </Link>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setTheme(isLight ? "dark" : "light")}
-              className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all ${t.toggle}`}
-            >
-              {isLight ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
-            </button>
             <Link href="/dashboard" className={`text-xs ${t.navLink}`}>Dashboard</Link>
             <button
               onClick={() => { logout(); setLocation("/login"); }}

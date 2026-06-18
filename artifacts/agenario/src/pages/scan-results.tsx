@@ -9,7 +9,7 @@ import {
   Play, Camera, Minus, Globe, GitBranch, Award, Dna, Users, Share2,
   Sparkles, ListChecks, ExternalLink, Wifi, Package, Cloud, RefreshCw,
   Network, Brain, Terminal, GitMerge, AlertCircle, ArrowUpRight, ArrowDownRight,
-  Smartphone, ShieldAlert, Star, Flame, MessageSquare, Send, X, Sun, Moon,
+  Smartphone, ShieldAlert, Star, Flame, MessageSquare, Send, X,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -19,7 +19,6 @@ import {
   type DigitalTwinResult, type PredictiveIntelResult, type RootCauseResult,
 } from "@/lib/api";
 import { motion } from "framer-motion";
-import { useTheme } from "next-themes";
 
 // Theme-agnostic severity styles — work on both light and dark backgrounds.
 // The app uses JS-conditional `isLight ? "..." : "..."` everywhere, NOT Tailwind
@@ -3082,11 +3081,9 @@ const ANALYSIS_STEPS = [
 function ScanRunningScreen({
   t,
   sourceInput,
-  isLight,
 }: {
   t: Record<string, string>;
   sourceInput?: string | null;
-  isLight: boolean;
 }) {
   const [elapsed, setElapsed] = useState(0);
   const [visibleStep, setVisibleStep] = useState(0);
@@ -3108,7 +3105,7 @@ function ScanRunningScreen({
   const circ = 2 * Math.PI * r;
   const dash = (progress / 100) * circ;
 
-  const glowColor = isLight ? "#a855f7" : "#8b5cf6";
+  const glowColor = "#8b5cf6";
 
   return (
     <div className={`min-h-screen ${t.page} flex items-center justify-center px-6`}>
@@ -3118,9 +3115,7 @@ function ScanRunningScreen({
           animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.5, 0.3] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full"
-          style={{ background: isLight
-            ? "radial-gradient(ellipse, rgba(168,85,247,0.08) 0%, transparent 70%)"
-            : "radial-gradient(ellipse, rgba(139,92,246,0.12) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(ellipse, rgba(139,92,246,0.12) 0%, transparent 70%)" }}
         />
       </div>
 
@@ -3137,7 +3132,7 @@ function ScanRunningScreen({
             />
             <svg width="130" height="130" viewBox="0 0 130 130" className="-rotate-90">
               <circle cx="65" cy="65" r={r} fill="none" strokeWidth="5"
-                stroke={isLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)"} />
+                stroke="rgba(255,255,255,0.06)" />
               {/* Animated progress arc */}
               <motion.circle cx="65" cy="65" r={r} fill="none" strokeWidth="5"
                 stroke={glowColor} strokeLinecap="round"
@@ -3151,19 +3146,19 @@ function ScanRunningScreen({
                 key={Math.round(progress)}
                 initial={{ scale: 1.15, opacity: 0.6 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className={`text-3xl font-extrabold font-['Syne'] ${isLight ? "text-gray-800" : "text-white"}`}
+                className="text-3xl font-extrabold font-['Syne'] text-white"
               >
                 {Math.round(progress)}
               </motion.span>
-              <span className={`text-[10px] font-medium ${isLight ? "text-gray-400" : "text-white/30"}`}>%</span>
+              <span className="text-[10px] font-medium text-white/30">%</span>
             </div>
           </div>
 
           <div className="text-center space-y-1.5">
-            <h2 className={`text-lg font-bold font-['Syne'] ${isLight ? "text-gray-900" : "text-white/90"}`}>
+            <h2 className="text-lg font-bold font-['Syne'] text-white/90">
               Reviewing your app
             </h2>
-            <p className={`text-sm ${isLight ? "text-gray-400" : "text-white/35"}`}>
+            <p className="text-sm text-white/35">
               {elapsed}s elapsed · auto-refreshing every 3s
             </p>
           </div>
@@ -3182,25 +3177,19 @@ function ScanRunningScreen({
                 transition={{ delay: i * 0.06, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-500 ${
                   done
-                    ? isLight
-                      ? "bg-green-50 border-green-200/60"
-                      : "bg-green-500/[0.06] border-green-500/20"
+                    ? "bg-green-500/[0.06] border-green-500/20"
                     : active
-                      ? isLight
-                        ? "bg-violet-50 border-violet-200/60 shadow-[0_0_16px_rgba(168,85,247,0.12)]"
-                        : "bg-violet-500/[0.10] border-violet-500/30 shadow-[0_0_16px_rgba(139,92,246,0.15)]"
-                      : isLight
-                        ? "bg-white/70 border-gray-100"
-                        : "bg-white/[0.02] border-white/[0.05]"
+                      ? "bg-violet-500/[0.10] border-violet-500/30 shadow-[0_0_16px_rgba(139,92,246,0.15)]"
+                      : "bg-white/[0.02] border-white/[0.05]"
                 }`}
               >
                 <span className={`text-base transition-all duration-300 ${(!done && !active) ? "grayscale opacity-30" : ""}`}>
                   {step.icon}
                 </span>
                 <span className={`text-sm flex-1 font-medium transition-all duration-300 ${
-                  done ? (isLight ? "text-green-700" : "text-green-400")
-                    : active ? (isLight ? "text-violet-700" : "text-violet-300")
-                    : (isLight ? "text-gray-300" : "text-white/20")
+                  done ? "text-green-400"
+                    : active ? "text-violet-300"
+                    : "text-white/20"
                 }`}>
                   {step.label}
                 </span>
@@ -3213,7 +3202,7 @@ function ScanRunningScreen({
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
                   >
-                    <Loader2 className={`w-4 h-4 shrink-0 ${isLight ? "text-violet-500" : "text-violet-400"}`} />
+                    <Loader2 className="w-4 h-4 shrink-0 text-violet-400" />
                   </motion.div>
                 ) : null}
               </motion.div>
@@ -3223,7 +3212,7 @@ function ScanRunningScreen({
 
         {/* ── Source chip ─── */}
         {sourceInput && (
-          <div className={`flex items-center justify-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>
+          <div className="flex items-center justify-center gap-1.5 text-xs text-white/20">
             <Search className="w-3 h-3" />
             <span className="truncate max-w-[240px]">{sourceInput}</span>
           </div>
@@ -3243,27 +3232,19 @@ export default function ScanResultsPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("all");
   const [rescanning, setRescanning] = useState(false);
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-  const isLight = mounted ? resolvedTheme === "light" : false;
-
   const t = {
-    page:    isLight ? "bg-[#f8f9fc]" : "bg-[#050505]",
-    nav:     isLight ? "border-gray-100/80 bg-white/90 backdrop-blur-2xl" : "border-white/[0.07] bg-[#050505]/90 backdrop-blur-2xl",
-    navText: isLight ? "text-gray-600 hover:text-gray-900 transition-colors" : "text-white/30 hover:text-white transition-colors",
-    navBrand: isLight ? "text-gray-900 font-bold font-['Syne'] text-sm" : "text-white font-bold font-['Syne'] text-sm",
-    navMeta: isLight ? "text-gray-400 text-xs ml-2 truncate hidden sm:block max-w-xs" : "text-white/20 text-xs ml-2 truncate hidden sm:block max-w-xs",
-    tabBar:  isLight ? "bg-white/95 backdrop-blur-2xl border-b border-gray-100" : "bg-[#050505]/95 backdrop-blur-2xl border-b border-white/[0.06]",
-    tabActive: isLight ? "bg-gray-100 border border-gray-200 text-gray-900" : "bg-white/[0.1] border border-white/20 text-white",
-    tabInactive: isLight ? "text-gray-400 hover:text-gray-700 hover:bg-gray-50" : "text-white/35 hover:text-white/60 hover:bg-white/[0.04]",
-    tabCountActive: isLight ? "bg-gray-200 text-gray-700" : "bg-white/15 text-white/80",
-    tabCountInactive: isLight ? "bg-gray-100 text-gray-400" : "bg-white/[0.07] text-white/30",
-    toggle:  isLight ? "bg-amber-50 border-amber-200/60 text-amber-600" : "bg-white/[0.06] border-white/[0.1] text-white/50",
-    navBtn:  isLight ? "flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 border border-gray-200 hover:border-gray-300 px-3 py-1.5 rounded-lg transition-all" : "flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/15",
-    ambient: isLight
-      ? "absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(236,72,153,0.04)_0%,_transparent_60%)] pointer-events-none"
-      : "absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.04)_0%,_transparent_60%)] pointer-events-none",
+    page:             "bg-[#050505]",
+    nav:              "border-white/[0.07] bg-[#050505]/90 backdrop-blur-2xl",
+    navText:          "text-white/30 hover:text-white transition-colors",
+    navBrand:         "text-white font-bold font-['Syne'] text-sm",
+    navMeta:          "text-white/20 text-xs ml-2 truncate hidden sm:block max-w-xs",
+    tabBar:           "bg-[#050505]/95 backdrop-blur-2xl border-b border-white/[0.06]",
+    tabActive:        "bg-white/[0.1] border border-white/20 text-white",
+    tabInactive:      "text-white/35 hover:text-white/60 hover:bg-white/[0.04]",
+    tabCountActive:   "bg-white/15 text-white/80",
+    tabCountInactive: "bg-white/[0.07] text-white/30",
+    navBtn:           "flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/15",
+    ambient:          "absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.04)_0%,_transparent_60%)] pointer-events-none",
   };
 
   useEffect(() => {
@@ -3313,7 +3294,7 @@ export default function ScanResultsPage() {
   );
 
   if (scan.status === "running") return (
-    <ScanRunningScreen t={t} sourceInput={scan.sourceInput} isLight={isLight} />
+    <ScanRunningScreen t={t} sourceInput={scan.sourceInput} />
   );
 
   if (scan.status === "failed") {
@@ -3399,13 +3380,6 @@ export default function ScanResultsPage() {
             {scan.score != null && (
               <ShareBadgeButton scan={scan} />
             )}
-            <button
-              onClick={() => setTheme(isLight ? "dark" : "light")}
-              className={`flex items-center justify-center w-7 h-7 rounded-lg border transition-all ${t.toggle}`}
-              aria-label="Toggle theme"
-            >
-              {isLight ? <Moon className="w-3 h-3" /> : <Sun className="w-3 h-3" />}
-            </button>
             <Link href="/portfolio">
               <button className={t.navBtn}>
                 <BarChart3 className="w-3 h-3" />Portfolio

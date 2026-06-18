@@ -763,9 +763,8 @@ async function runLaunchRiskForecast(
   const appType = codeContext?.businessType ?? "saas";
 
   try {
-    const response = await getAnyClient().chat.completions.create({
-      model: smartModel(),
-      messages: [
+    const raw = await callWithFallback(
+      [
         {
           role: "system",
           content: `You are a startup risk forecasting expert. Predict specific business failure probabilities based on app type and known issues.`,
@@ -797,11 +796,9 @@ Return ONLY valid JSON:
 }`,
         },
       ],
-      max_tokens: 1024,
-    });
-
-    const content = response.choices[0]?.message?.content ?? "{}";
-    return JSON.parse(extractJson(content)) as RiskForecast;
+      { model: SMART_MODEL, maxTokens: 1024 },
+    );
+    return JSON.parse(extractJson(raw)) as RiskForecast;
   } catch (err) {
     logger.error({ err }, "Risk forecast failed");
     return {
@@ -826,9 +823,8 @@ async function runRevenueIntelligence(
   codeContext?: CodeContext | null,
 ): Promise<RevenueIntelligence> {
   try {
-    const response = await getAnyClient().chat.completions.create({
-      model: fastModel(),
-      messages: [
+    const raw = await callWithFallback(
+      [
         {
           role: "system",
           content: `You are a revenue growth expert who identifies exactly where products lose money. Focus on concrete, specific revenue leaks with quantified impact.`,
@@ -869,11 +865,9 @@ Return ONLY valid JSON:
 }`,
         },
       ],
-      max_tokens: 1500,
-    });
-
-    const content = response.choices[0]?.message?.content ?? "{}";
-    return JSON.parse(extractJson(content)) as RevenueIntelligence;
+      { model: FAST_MODEL, maxTokens: 1500 },
+    );
+    return JSON.parse(extractJson(raw)) as RevenueIntelligence;
   } catch (err) {
     logger.error({ err }, "Revenue intelligence failed");
     return {
@@ -894,9 +888,8 @@ async function runComplianceAnalysis(
   const frameworks = ["GDPR", "OWASP Top 10", "PCI-DSS", "HIPAA", "SOC 2", "WCAG 2.1", "CCPA", "ISO 27001"];
 
   try {
-    const response = await getAnyClient().chat.completions.create({
-      model: fastModel(),
-      messages: [
+    const raw = await callWithFallback(
+      [
         {
           role: "system",
           content: `You are a multi-framework compliance auditor. Score apps against 8 compliance frameworks with specific findings.`,
@@ -932,11 +925,9 @@ For each framework:
 - riskLevel: "low"|"medium"|"high"|"critical"`,
         },
       ],
-      max_tokens: 2000,
-    });
-
-    const content = response.choices[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(extractJson(content)) as { results?: ComplianceResult[] };
+      { model: FAST_MODEL, maxTokens: 2000 },
+    );
+    const parsed = JSON.parse(extractJson(raw)) as { results?: ComplianceResult[] };
     return parsed.results ?? [];
   } catch (err) {
     logger.error({ err }, "Compliance analysis failed");

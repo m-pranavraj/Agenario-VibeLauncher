@@ -2,8 +2,9 @@
 - [Agenario project overview](agenario-overview.md) — full-stack AI app review board; stack, env vars, key files.
 - [Tier gate & scan limits](tier-gate.md) — free=2 scans/mo, creator=12, enterprise=∞; applyTierGate() gates issue 4+ and revenue leaks 3+; applied in GET /scans/:id.
 - [Groq rate limits fix](groq-rate-limits.md) — 15 agents in batch-5/1000ms; compliance + agentBatch concurrent; revenue + riskForecast concurrent; 22s per-agent timeout; 80s hard pipeline cap; max_tokens=700.
-- [Tailwind dark mode caveat](tailwind-dark-mode.md) — Tailwind v4 dark: prefix doesn't work with next-themes class-based dark mode; all theme switches use isLight ? "..." : "..." JS conditionals; severity/UI configs must use semi-transparent colors that read on both light and dark backgrounds.
-- [Dual Groq model strategy](dual-model-strategy.md) — FAST_MODEL=llama-3.1-8b-instant for all 10 per-agent calls; SMART_MODEL=llama-3.3-70b-versatile reserved for runLaunchRiskForecast + runLaunchImpactCalculator synthesis only.
+- [Dark-only UI](dark-only-ui.md) — App is dark-only; all Sun/Moon theme toggles and isLight conditionals removed from login, register, dashboard, admin, scan-results. Always bg-[#050505]. Do not re-add light mode.
+- [Dual Groq model strategy](dual-model-strategy.md) — FAST_MODEL for per-agent calls; SMART_MODEL for synthesis. All synthesis fns (riskForecast, revenueIntelligence, compliance) use callWithFallback(), not getAnyClient() directly.
+- [Pipeline resilience](pipeline-resilience.md) — Every Promise.all leg in runAnalysisPipeline has .catch() so no single failure kills the scan. Playwright returns [] on error (not-eligible). Enrichment legs (regressionDiff, launchDNA, etc.) also individually guarded.
 - [Logo & About page](logo-about.md) — logo at /public/logo.png, founder photo at /public/founder-photo.jpeg (MOGANTI PRANAV RAJ); /about route added; logo replaces Rocket icon in all page navbars.
 - [Session table must exist](session-table.md) — `session` table in PostgreSQL must be created via raw SQL before app starts; missing table causes all authenticated requests to return 500.
 - [AuthContext Fast Refresh](auth-fast-refresh.md) — split into auth-context.ts (context+types), AuthContext.tsx (AuthProvider only), hooks/use-auth.ts (useAuth); all pages import useAuth from @/hooks/use-auth.

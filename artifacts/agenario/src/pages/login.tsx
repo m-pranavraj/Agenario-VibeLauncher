@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
-import { Mail, Lock, AlertCircle, Sun, Moon } from "lucide-react";
+import { Mail, Lock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
-import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
 
 export default function LoginPage() {
@@ -13,26 +12,19 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-  const isLight = mounted ? resolvedTheme === "light" : false;
 
   const t = {
-    page:    isLight ? "bg-[#fdf4f8] text-gray-900" : "bg-[#050505]",
-    card:    isLight ? "bg-white border border-pink-100/80 shadow-[0_4px_32px_rgba(236,72,153,0.08)] rounded-2xl p-7" : "glass rounded-2xl p-7",
-    label:   isLight ? "text-gray-500" : "text-white/45",
-    input:   isLight
-      ? "w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-gray-900 placeholder-gray-300 focus:outline-none focus:border-pink-300 focus:ring-2 focus:ring-pink-100 transition-all text-sm"
-      : "w-full bg-white/[0.04] border border-white/[0.1] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-all text-sm",
-    icon:    isLight ? "text-gray-300" : "text-white/25",
-    heading: isLight ? "text-gray-900" : "text-white",
-    sub:     isLight ? "text-gray-400" : "text-white/40",
-    btn:     isLight ? "bg-gray-900 hover:bg-gray-800 text-white" : "bg-white hover:bg-white/90 text-black",
-    link:    isLight ? "text-gray-400" : "text-white/30",
-    linkAcc: isLight ? "text-pink-600 hover:text-pink-700 font-medium" : "text-white/70 hover:text-white transition-colors font-medium",
-    err:     isLight ? "bg-red-50 border border-red-200 text-red-600" : "bg-red-500/[0.08] border border-red-500/20 text-red-400",
-    toggle:  isLight ? "bg-amber-50 border-amber-200/60 text-amber-600" : "bg-white/[0.06] border-white/[0.1] text-white/50",
+    page:    "bg-[#050505]",
+    card:    "glass rounded-2xl p-7",
+    label:   "text-white/45",
+    input:   "w-full bg-white/[0.04] border border-white/[0.1] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-all text-sm",
+    icon:    "text-white/25",
+    heading: "text-white",
+    sub:     "text-white/40",
+    btn:     "bg-white hover:bg-white/90 text-black",
+    link:    "text-white/30",
+    linkAcc: "text-white/70 hover:text-white transition-colors font-medium",
+    err:     "bg-red-500/[0.08] border border-red-500/20 text-red-400",
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,38 +45,15 @@ export default function LoginPage() {
     <div className={`min-h-screen flex items-center justify-center px-4 ${t.page}`}>
       {/* Ambient background */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {isLight ? (
-          <>
-            <div className="absolute top-[-10%] left-[-8%] w-[55%] h-[55%] rounded-full opacity-50"
-              style={{ background: "radial-gradient(ellipse at center, #fce7f3 0%, #fdf2f8 50%, transparent 75%)" }} />
-            <div className="absolute bottom-0 right-0 w-[45%] h-[45%] rounded-full opacity-30"
-              style={{ background: "radial-gradient(ellipse at center, #e9d5ff 0%, #f5f3ff 50%, transparent 75%)" }} />
-            <svg className="absolute bottom-0 left-0 right-0 w-full opacity-15" viewBox="0 0 1440 200" preserveAspectRatio="none">
-              <path fill="#ec4899" d="M0,80 C240,160 480,0 720,80 S1200,160 1440,80 V200 H0 Z" />
-            </svg>
-          </>
-        ) : (
-          <>
-            <div className="absolute top-[-15%] left-[-5%] w-[50%] h-[50%] bg-violet-600/[0.06] blur-[160px] rounded-full" />
-            <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-500/[0.04] blur-[140px] rounded-full" />
-            <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.04]" viewBox="0 0 1440 200" preserveAspectRatio="none">
-              <path fill="#8b5cf6" d="M0,80 C240,160 480,0 720,80 S1200,160 1440,80 V200 H0 Z" />
-            </svg>
-            <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.025]" viewBox="0 0 1440 200" preserveAspectRatio="none">
-              <path fill="#6366f1" d="M0,120 C360,40 720,160 1080,120 S1440,40 1440,120 V200 H0 Z" />
-            </svg>
-          </>
-        )}
+        <div className="absolute top-[-15%] left-[-5%] w-[50%] h-[50%] bg-violet-600/[0.06] blur-[160px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-500/[0.04] blur-[140px] rounded-full" />
+        <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.04]" viewBox="0 0 1440 200" preserveAspectRatio="none">
+          <path fill="#8b5cf6" d="M0,80 C240,160 480,0 720,80 S1200,160 1440,80 V200 H0 Z" />
+        </svg>
+        <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.025]" viewBox="0 0 1440 200" preserveAspectRatio="none">
+          <path fill="#6366f1" d="M0,120 C360,40 720,160 1080,120 S1440,40 1440,120 V200 H0 Z" />
+        </svg>
       </div>
-
-      {/* Theme toggle */}
-      <button
-        onClick={() => setTheme(isLight ? "dark" : "light")}
-        className={`fixed top-5 right-5 z-50 flex items-center justify-center w-8 h-8 rounded-xl border transition-all ${t.toggle}`}
-        aria-label="Toggle theme"
-      >
-        {isLight ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
-      </button>
 
       <motion.div
         initial={{ opacity: 0, y: 12 }}

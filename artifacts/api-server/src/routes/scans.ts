@@ -177,15 +177,33 @@ async function runAnalysisPipeline(opts: {
   }
 
   // ── Run core agents + proof engine in parallel ────────────────
+  // Each leg is individually guarded — no single failure can kill the scan.
   const [result, httpProofEvidence, browserProofEvidence] = await Promise.all([
-    runAllAgents(sourceType, sourceInput, appDescription, codeContext),
-    runProofEngine(sourceType, sourceInput),
+    runAllAgents(sourceType, sourceInput, appDescription, codeContext).catch((err) => {
+      logger.warn({ err, scanId }, "Agent pipeline error — returning empty results (scan continues)");
+      return {
+        agentResults: [] as import("../lib/agents.js").AgentResult[],
+        summary: "AI analysis temporarily unavailable — static findings still included.",
+        launchVerdict: "caution" as const,
+        riskForecast: null,
+        revenueIntelligence: null,
+        complianceResults: null,
+      };
+    }),
+    runProofEngine(sourceType, sourceInput).catch((err) => {
+      logger.warn({ err, scanId }, "Proof engine failed — no HTTP proof evidence (scan continues)");
+      return [];
+    }),
+    // Playwright: if URL is unreachable or browser not available, return empty (not a failure)
     runPlaywrightBrowserProofs(sourceType, sourceInput, codeContext ? {
       framework: codeContext.framework,
       keyFiles: codeContext.keyFiles,
       routes: codeContext.routes,
       vibeTool: codeContext.vibeTool,
-    } : undefined),
+    } : undefined).catch((err) => {
+      logger.warn({ err, scanId }, "Browser proofs not eligible for this source — skipping");
+      return [];
+    }),
   ]);
 
   // Merge: browser proofs (99% confidence) take precedence, deduplicate by type
@@ -323,11 +341,26 @@ async function runAnalysisPipeline(opts: {
   };
 
   const [regressionDiff, benchmarkPercentile, launchDNA, cofounderNarrative, launchReplaySteps] = await Promise.all([
-    computeRegressionDiff(scanId, userId, sourceInput, finalScore),
-    computeBenchmark(scanId, finalScore, vibeTool !== "unknown" ? vibeTool : null, businessType !== "unknown" ? businessType : null),
-    generateLaunchDNA(cofounderInput),
-    generateCofounderNarrative(cofounderInput),
-    generateLaunchReplay(cofounderInput),
+    computeRegressionDiff(scanId, userId, sourceInput, finalScore).catch((err) => {
+      logger.warn({ err, scanId }, "Regression diff failed — skipping");
+      return null;
+    }),
+    computeBenchmark(scanId, finalScore, vibeTool !== "unknown" ? vibeTool : null, businessType !== "unknown" ? businessType : null).catch((err) => {
+      logger.warn({ err, scanId }, "Benchmark failed — skipping");
+      return null;
+    }),
+    generateLaunchDNA(cofounderInput).catch((err) => {
+      logger.warn({ err, scanId }, "Launch DNA failed — skipping");
+      return null;
+    }),
+    generateCofounderNarrative(cofounderInput).catch((err) => {
+      logger.warn({ err, scanId }, "Cofounder narrative failed — skipping");
+      return null;
+    }),
+    generateLaunchReplay(cofounderInput).catch((err) => {
+      logger.warn({ err, scanId }, "Launch replay failed — skipping");
+      return [];
+    }),
   ]);
 
   // ── Deep Tech Engines (Digital Twin, Predictive Intel, Root Cause) ─
