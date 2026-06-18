@@ -5,10 +5,14 @@ import { eq } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import { CreateOrderBody, VerifyPaymentBody } from "@workspace/api-zod";
 
-const razorpay = new Razorpay({
-  key_id: process.env["RAZORPAY_KEY_ID"]!,
-  key_secret: process.env["RAZORPAY_KEY_SECRET"]!,
-});
+function getRazorpay(): Razorpay {
+  const key_id = process.env["RAZORPAY_KEY_ID"];
+  const key_secret = process.env["RAZORPAY_KEY_SECRET"];
+  if (!key_id || !key_secret) {
+    throw new Error("Razorpay keys not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.");
+  }
+  return new Razorpay({ key_id, key_secret });
+}
 
 const PLAN_PRICES: Record<string, { amount: number; label: string }> = {
   creator: { amount: 29900, label: "Creator Plan — ₹299/mo" },
@@ -81,7 +85,7 @@ router.post("/billing/create-order", async (req, res): Promise<void> => {
     couponLabel = ` (${coupon.label})`;
   }
 
-  const order = await razorpay.orders.create({
+  const order = await getRazorpay().orders.create({
     amount: finalAmount,
     currency: "INR",
     receipt: `agenario_${req.session.userId}_${Date.now()}`,
@@ -113,8 +117,13 @@ router.post("/billing/verify", async (req, res): Promise<void> => {
   const { razorpayOrderId, razorpayPaymentId, razorpaySignature, plan } =
     parsed.data;
 
+  const key_secret = process.env["RAZORPAY_KEY_SECRET"];
+  if (!key_secret) {
+    res.status(503).json({ error: "Payment not configured" });
+    return;
+  }
   const expectedSignature = crypto
-    .createHmac("sha256", process.env["RAZORPAY_KEY_SECRET"]!)
+    .createHmac("sha256", key_secret)
     .update(`${razorpayOrderId}|${razorpayPaymentId}`)
     .digest("hex");
 
