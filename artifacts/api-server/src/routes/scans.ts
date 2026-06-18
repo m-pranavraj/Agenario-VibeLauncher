@@ -471,14 +471,26 @@ router.post("/scans", async (req, res): Promise<void> => {
 
       if (sourceType === "github") {
         logger.info({ scanId: scan.id, sourceType }, "Scan started — cloning repo");
-        const ingested = await ingestGitHubRepo(sourceInput, scan.id);
-        if (ingested) {
-          dir = ingested.dir;
-          packageJson = (ingested.context.packageJson ?? {}) as Record<string, unknown>;
-          fileTree = ingested.context.fileTree;
-          totalFiles = ingested.context.totalFiles;
-          keyFiles = ingested.context.keyFiles;
-          schemas = ingested.context.schemas;
+        // Wrapped in try/catch: private repo, invalid URL, or network error must NOT
+        // fail the scan. Analysis still runs with the repo URL as context.
+        try {
+          const ingested = await ingestGitHubRepo(sourceInput, scan.id);
+          if (ingested) {
+            dir = ingested.dir;
+            packageJson = (ingested.context.packageJson ?? {}) as Record<string, unknown>;
+            fileTree = ingested.context.fileTree;
+            totalFiles = ingested.context.totalFiles;
+            keyFiles = ingested.context.keyFiles;
+            schemas = ingested.context.schemas;
+          } else {
+            logger.warn({ scanId: scan.id }, "GitHub ingestion returned null — continuing with URL-only analysis");
+          }
+        } catch (err) {
+          logger.warn(
+            { scanId: scan.id, err: (err as Error).message?.slice(0, 200) },
+            "GitHub ingestion failed (private/invalid/unreachable repo) — continuing with URL-only analysis",
+          );
+          // dir stays undefined — runAnalysisPipeline runs without code context
         }
       }
 

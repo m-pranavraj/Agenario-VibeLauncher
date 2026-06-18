@@ -567,89 +567,111 @@ Output rules:
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Hard per-call timeout — no single provider call can stall the pipeline
+const CALL_TIMEOUT_MS = 16_000;
+
+function withCallTimeout<T>(fn: () => Promise<T>, label: string): Promise<T> {
+  return Promise.race([
+    fn(),
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`${label} timed out after ${CALL_TIMEOUT_MS}ms`)),
+        CALL_TIMEOUT_MS,
+      ),
+    ),
+  ]);
+}
+
+/**
+ * callWithFallback — THREE-TIER AI PROVIDER CHAIN
+ *
+ * Tier 1: OpenRouter — cycles ALL 6 free models with 16s per-call timeout.
+ *         Never breaks early; always tries every model on any failure.
+ * Tier 2: Groq      — native JSON mode, 16s timeout.
+ * Tier 3: Cerebras  — 16s timeout.
+ *
+ * NEVER THROWS. Returns "{}" when all providers fail so callers always get
+ * a parseable result and can return 0 issues rather than crashing the scan.
+ */
 async function callWithFallback(
   messages: { role: "system" | "user"; content: string }[],
   opts: { model: string; cerebrasModel?: string; maxTokens?: number },
 ): Promise<string> {
   const messages_typed = messages as { role: "system" | "user" | "assistant"; content: string }[];
+  const maxTok = opts.maxTokens ?? 700;
 
-  // Try OpenRouter first — cycle through up to 3 models on failure
-  // NOTE: we do NOT pass response_format here — not all free OpenRouter models support it.
-  //       JSON is extracted by extractJson() in callers.
+  // ── Tier 1: OpenRouter — all 6 models, round-robin, hard timeout each ────────
+  // NOTE: response_format omitted — not all free OpenRouter models support it.
   if (openrouter) {
-    const maxOrAttempts = Math.min(3, OPENROUTER_MODELS.length);
-    for (let attempt = 0; attempt < maxOrAttempts; attempt++) {
+    for (let attempt = 0; attempt < OPENROUTER_MODELS.length; attempt++) {
       const orModel = nextOpenRouterModel();
       try {
-        const response = await openrouter.chat.completions.create({
-          model: orModel,
-          messages: messages_typed,
-          max_tokens: opts.maxTokens ?? 700,
-        });
+        const response = await withCallTimeout(
+          () => openrouter!.chat.completions.create({
+            model: orModel,
+            messages: messages_typed,
+            max_tokens: maxTok,
+          }),
+          `OpenRouter[${orModel}]`,
+        );
         const raw = response.choices[0]?.message?.content ?? "";
         const content = extractJson(raw);
         if (content && content !== "{}") {
           if (attempt > 0) logger.info({ model: orModel, attempt }, "OpenRouter succeeded on retry");
           return content;
         }
-        logger.warn({ model: orModel, attempt }, "OpenRouter returned empty — trying next model");
-      } catch (orErr: unknown) {
-        const isTransient =
-          orErr instanceof Error &&
-          (orErr.message.includes("503") || orErr.message.includes("overloaded") ||
-           orErr.message.includes("429") || orErr.message.includes("unavailable") ||
-           orErr.message.includes("timeout") || orErr.message.includes("502"));
-        logger.warn({ model: orModel, attempt, isTransient, err: (orErr as Error).message }, "OpenRouter model failed — trying next");
-        if (!isTransient) break; // Non-transient error — no point retrying other models
+        logger.warn({ model: orModel, attempt }, "OpenRouter empty response — trying next model");
+      } catch (err: unknown) {
+        // Always continue to next model — never break early
+        logger.warn(
+          { model: orModel, attempt, err: (err as Error).message?.slice(0, 120) },
+          "OpenRouter model failed — trying next",
+        );
       }
     }
-    logger.warn("All OpenRouter attempts failed — falling back to Groq");
+    logger.warn("All OpenRouter models exhausted — falling back to Groq");
   }
 
-  // Fallback: Groq — supports response_format natively
+  // ── Tier 2: Groq — native JSON mode ──────────────────────────────────────────
   if (groq) {
     try {
-      const response = await groq.chat.completions.create({
-        model: opts.model,
-        messages: messages_typed,
-        response_format: { type: "json_object" },
-        max_tokens: opts.maxTokens ?? 700,
-      });
-      return response.choices[0]?.message?.content ?? "{}";
-    } catch (primaryErr: unknown) {
-      const isRateLimit =
-        primaryErr instanceof Error &&
-        (primaryErr.message.includes("429") || primaryErr.message.includes("Rate limit"));
-
-      // On Groq rate limit, try Cerebras
-      if (isRateLimit && cerebras) {
-        try {
-          logger.info("Groq rate limited — falling back to Cerebras");
-          const response = await cerebras.chat.completions.create({
-            model: opts.cerebrasModel ?? CEREBRAS_MODEL,
-            messages: messages_typed,
-            max_tokens: opts.maxTokens ?? 700,
-          });
-          return extractJson(response.choices[0]?.message?.content ?? "{}");
-        } catch (cerebrasErr) {
-          logger.warn({ cerebrasErr }, "Cerebras fallback also failed");
-        }
-      }
-      throw primaryErr;
+      const response = await withCallTimeout(
+        () => groq!.chat.completions.create({
+          model: opts.model,
+          messages: messages_typed,
+          response_format: { type: "json_object" },
+          max_tokens: maxTok,
+        }),
+        "Groq",
+      );
+      const content = response.choices[0]?.message?.content ?? "{}";
+      if (content && content !== "{}") return content;
+    } catch (err: unknown) {
+      logger.warn({ err: (err as Error).message?.slice(0, 120) }, "Groq failed — trying Cerebras");
     }
   }
 
-  // If only Cerebras is configured
+  // ── Tier 3: Cerebras ──────────────────────────────────────────────────────────
   if (cerebras) {
-    const response = await cerebras.chat.completions.create({
-      model: opts.cerebrasModel ?? CEREBRAS_MODEL,
-      messages: messages_typed,
-      max_tokens: opts.maxTokens ?? 1500,
-    });
-    return extractJson(response.choices[0]?.message?.content ?? "{}");
+    try {
+      const response = await withCallTimeout(
+        () => cerebras!.chat.completions.create({
+          model: opts.cerebrasModel ?? CEREBRAS_MODEL,
+          messages: messages_typed,
+          max_tokens: maxTok,
+        }),
+        "Cerebras",
+      );
+      const content = extractJson(response.choices[0]?.message?.content ?? "{}");
+      if (content && content !== "{}") return content;
+    } catch (err: unknown) {
+      logger.warn({ err: (err as Error).message?.slice(0, 120) }, "Cerebras also failed");
+    }
   }
 
-  throw new Error("No AI provider available. Set GROQ_API_KEY, OPENROUTER_API_KEY, or CEREBRAS_API_KEY.");
+  // ── All providers failed — return empty gracefully (agent returns 0 issues) ───
+  logger.error("All AI providers exhausted — returning empty JSON to avoid scan failure");
+  return "{}";
 }
 
 // Hard per-agent timeout — no agent can block the pipeline beyond this
