@@ -1,0 +1,273 @@
+🔥 Agenario Evidence Standard (Mandatory)
+
+Every issue must contain:
+
+Issue
+Severity
+Confidence
+Source
+File
+Line
+Code Snippet
+Evidence
+Impact
+Fix
+Retest Result
+Example 1 — Static Security Finding
+Issue:
+JWT Secret Hardcoded
+
+Severity:
+Critical
+
+Confidence:
+95%
+
+Source:
+Static Evidence
+
+File:
+src/auth/jwt.ts
+
+Line:
+42
+
+Code:
+const JWT_SECRET = "my-secret-key";
+
+Evidence:
+Hardcoded secret detected using deterministic scanner.
+
+Impact:
+Attackers can forge authentication tokens.
+
+Fix:
+Move secret to environment variables.
+
+Status:
+Needs Fix
+Example 2 — Runtime Proof Finding
+Issue:
+Cross User Order Access
+
+Severity:
+Critical
+
+Confidence:
+99%
+
+Source:
+Browser Runtime Proof
+
+URL:
+/orders/124
+
+File:
+src/routes/orders.ts
+
+Line:
+118
+
+Code:
+return db.orders.findById(orderId);
+
+Action:
+Changed orderId from 123 to 124.
+
+Result:
+Server returned another user's order.
+
+Screenshot:
+Attached
+
+Evidence:
+Playwright reproduced issue successfully.
+
+Impact:
+Customer data exposure.
+
+Fix:
+Validate order ownership before returning data.
+
+Retest:
+Not Yet Run
+Example 3 — Payment Exploit
+Issue:
+Negative Payment Accepted
+
+Severity:
+Critical
+
+Confidence:
+99%
+
+Source:
+Runtime Chaos Test
+
+Endpoint:
+POST /api/checkout
+
+File:
+src/api/checkout.ts
+
+Line:
+67
+
+Code:
+amount: z.number()
+
+Payload:
+{
+  "amount": -100
+}
+
+Response:
+HTTP 200
+
+Evidence:
+Checkout completed successfully.
+
+Impact:
+Free purchases possible.
+
+Estimated Revenue Loss:
+High
+
+Fix:
+Validate amount > 0
+
+Retest:
+Failed (still vulnerable)
+🔥 Evidence Graph (Future UI)
+
+Every issue card:
+
+Issue
+│
+├── File
+├── Line
+├── Code
+├── Evidence
+├── Screenshot
+├── Reproduction
+├── Impact
+├── Fix
+└── Retest
+
+No vague AI claims.
+
+Code Snippet Rules
+
+Always show:
+
+For Creator
+// src/auth/jwt.ts:42
+
+const JWT_SECRET = "my-secret-key";
+
+3–10 lines around the issue.
+
+For Enterprise
+
+Show:
+
+Full File Context
+Dependency Chain
+Call Stack
+Affected Routes
+Blast Radius
+Runtime Screenshot Rules
+
+When Playwright finds an issue:
+
+Store:
+
+Screenshot
+Viewport
+URL
+Timestamp
+Action Performed
+Network Request
+Network Response
+
+Example:
+
+Screenshot:
+order-leak.png
+
+Viewport:
+iPhone 15
+
+URL:
+/orders/124
+
+Action:
+Changed URL ID
+
+Response:
+200 OK
+Root Cause Tracing
+
+Not:
+
+Issue Found
+
+But:
+
+Issue
+↓
+File
+↓
+Function
+↓
+Route
+↓
+Database Table
+↓
+Impact
+
+Example:
+
+Order Access Leak
+↓
+orders.ts
+↓
+getOrder()
+↓
+/api/orders/:id
+↓
+orders table
+↓
+Customer Data Exposure
+Final Agenario Rule
+
+A finding is not allowed into a report unless it includes at least one of:
+
+✅ File + Line
+
+✅ Code Snippet
+
+✅ Runtime Screenshot
+
+✅ Network Evidence
+
+✅ Reproduction Steps
+
+✅ Stack Trace
+
+✅ Dependency Evidence
+
+Otherwise mark it:
+
+AI Observation
+Confidence: 50%
+
+and separate it from verified findings.
+
+This is probably the single most important upgrade you can give your AI agent:
+
+"Every finding must be evidence-backed. No anonymous AI claims allowed."
+
+Because Claude can generate opinions.
+
+Agenario should generate proof.

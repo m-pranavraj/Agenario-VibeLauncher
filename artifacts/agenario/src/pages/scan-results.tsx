@@ -2780,6 +2780,8 @@ export default function ScanResultsPage() {
   const [scan, setScan] = useState<ScanDetail | null>(null);
   const [scanLoading, setScanLoading] = useState(true);
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [rescanning, setRescanning] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) setLocation("/login");
@@ -2853,24 +2855,45 @@ export default function ScanResultsPage() {
     </div>
   );
 
-  if (scan.status === "failed") return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-      <div className="text-center space-y-4 max-w-sm px-6">
-        <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
-          <XCircle className="w-6 h-6 text-red-400" />
+  if (scan.status === "failed") {
+    const handleRescan = async () => {
+      if (!params?.id) return;
+      setRescanning(true);
+      try {
+        await api.scans.rescan(Number(params.id));
+        setScan((prev) => prev ? { ...prev, status: "running" } : prev);
+      } catch {
+        setRescanning(false);
+      }
+    };
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="text-center space-y-5 max-w-sm px-6">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
+            <XCircle className="w-6 h-6 text-red-400" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-white/80 text-base font-semibold">Analysis failed</h2>
+            <p className="text-white/35 text-sm">Something went wrong during the review. You can retry — failed scans don't count against your quota.</p>
+          </div>
+          <div className="flex flex-col gap-2.5">
+            <button
+              onClick={handleRescan}
+              disabled={rescanning}
+              className="flex items-center justify-center gap-2 bg-white text-black font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all disabled:opacity-50"
+            >
+              {rescanning ? <><Loader2 className="w-4 h-4 animate-spin" />Retrying…</> : <>Retry Analysis</>}
+            </button>
+            <Link href="/new-scan">
+              <button className="text-sm text-white/35 hover:text-white/55 transition-colors">
+                Start a new scan instead
+              </button>
+            </Link>
+          </div>
         </div>
-        <div className="space-y-2">
-          <h2 className="text-white/80 text-base font-semibold">Analysis failed</h2>
-          <p className="text-white/35 text-sm">Something went wrong during the review. Please try again.</p>
-        </div>
-        <Link href="/new-scan">
-          <button className="text-sm text-white/50 hover:text-white/70 underline underline-offset-2 transition-colors">
-            Start a new scan
-          </button>
-        </Link>
       </div>
-    </div>
-  );
+    );
+  }
 
   const rawVerdict = scan.launchVerdict ?? (
     scan.score != null
@@ -2957,6 +2980,40 @@ export default function ScanResultsPage() {
         {/* ── Locked Premium Insights (free users) ─────────── */}
         <LockedInsightsPanel scan={scan} plan={user.plan} />
 
+        {/* ── Section Tab Navigation ───────────────────────── */}
+        <div className="sticky top-[57px] z-[9] -mx-6 px-6 py-2.5 bg-[#050505]/95 backdrop-blur-2xl border-b border-white/[0.06]">
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-4xl">
+            {[
+              { id: "overview", label: "Overview" },
+              { id: "issues", label: "Issues", count: scan.issues.filter(i => !i.locked).length || undefined },
+              { id: "intelligence", label: "Intelligence" },
+              { id: "compliance", label: "Compliance" },
+              { id: "advanced", label: "Advanced", badge: user.plan === "creator" || user.plan === "enterprise" ? undefined : "🔒" },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 whitespace-nowrap text-xs px-3 py-1.5 rounded-lg transition-all font-medium shrink-0 ${
+                  activeTab === tab.id
+                    ? "bg-white/[0.1] border border-white/20 text-white"
+                    : "text-white/35 hover:text-white/60 hover:bg-white/[0.04]"
+                }`}
+              >
+                {tab.label}
+                {tab.count !== undefined && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === tab.id ? "bg-white/15 text-white/80" : "bg-white/[0.07] text-white/30"}`}>
+                    {tab.count}
+                  </span>
+                )}
+                {tab.badge && <span className="text-[10px] opacity-50">{tab.badge}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Overview Tab ─────────────────────────────────── */}
+        {activeTab === "overview" && <>
+
         {/* ── Executive summary row ────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="glass rounded-2xl p-5 flex flex-col items-center justify-center gap-4">
@@ -3006,6 +3063,11 @@ export default function ScanResultsPage() {
             )}
           </div>
         </div>
+
+        </>}
+
+        {/* ── Intelligence Tab ─────────────────────────────── */}
+        {activeTab === "intelligence" && <>
 
         {/* ── Launch Impact Calculator — Creator only ──────── */}
         {scan.launchImpact && (
@@ -3093,6 +3155,11 @@ export default function ScanResultsPage() {
           </motion.div>
         )}
 
+        </>}
+
+        {/* ── Compliance Tab ───────────────────────────────── */}
+        {activeTab === "compliance" && <>
+
         {/* ── Compliance Audit — Creator only ──────────────── */}
         {scan.complianceResults && scan.complianceResults.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
@@ -3141,6 +3208,11 @@ export default function ScanResultsPage() {
         {scan.packageVulns && (
           <PackageVulnsPanel data={scan.packageVulns} isCreator={user.plan === "creator" || user.plan === "enterprise"} />
         )}
+
+        </>}
+
+        {/* ── Advanced Tab ─────────────────────────────────── */}
+        {activeTab === "advanced" && <>
 
         {/* ── Digital Twin Simulation — Creator only ────────── */}
         {scan.digitalTwin && (
@@ -3193,6 +3265,11 @@ export default function ScanResultsPage() {
             </CreatorGate>
           </motion.div>
         )}
+
+        </>}
+
+        {/* ── Issues Tab ───────────────────────────────────── */}
+        {activeTab === "issues" && <>
 
         {/* ── Top 3 Action Plan ────────────────────────────── */}
         {topThree.length > 0 && (
@@ -3325,6 +3402,8 @@ export default function ScanResultsPage() {
             <CofounderQAPanel scanId={scan.id} />
           </motion.div>
         )}
+
+        </>}
 
         {/* ── Privacy footer ───────────────────────────────── */}
         <div className="flex items-center gap-2 justify-center py-4">

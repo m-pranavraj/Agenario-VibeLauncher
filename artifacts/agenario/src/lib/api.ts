@@ -445,6 +445,8 @@ export const api = {
       request<{ fix: string; language: string }>(`/scans/${scanId}/fix`, { method: "POST", body: JSON.stringify({ ...data, recommendation: data.fixPrompt }) }),
     ask: (scanId: number, question: string) =>
       request<{ answer: string }>(`/scans/${scanId}/ask`, { method: "POST", body: JSON.stringify({ question }) }),
+    rescan: (scanId: number) =>
+      request<{ scanId: number; status: string }>(`/scans/${scanId}/rescan`, { method: "POST" }),
   },
   billing: {
     createOrder: (plan: string) =>

@@ -44,11 +44,14 @@ async function checkScanLimit(user: { id: number; plan: string }, res: any): Pro
     .select()
     .from(scansTable)
     .where(eq(scansTable.userId, user.id));
-  const thisMonthScans = monthScans.filter((s) => s.createdAt >= startOfMonth);
+  // Only count non-failed scans — failed scans don't consume the quota
+  const thisMonthScans = monthScans.filter(
+    (s) => s.createdAt >= startOfMonth && s.status !== "failed",
+  );
   if (thisMonthScans.length >= limit) {
     const planLabel = user.plan === "free" ? "Free" : "Creator";
     const upgradeHint = user.plan === "free"
-      ? " Upgrade to Creator for 12 scans/month."
+      ? " Upgrade to Creator for unlimited scans."
       : " Contact support for Enterprise unlimited access.";
     res.status(403).json({
       error: `${planLabel} plan limit reached (${limit} scans/month).${upgradeHint}`,
@@ -610,6 +613,71 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
 
   responseData = applyTierGate(responseData, plan);
   res.json(responseData);
+});
+
+// ── POST /scans/:id/rescan — re-run analysis on a failed scan ────────────────
+router.post("/scans/:id/rescan", async (req, res): Promise<void> => {
+  if (!requireAuth(req, res)) return;
+
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid scan id" }); return; }
+
+  const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
+  if (!scan || scan.userId !== req.session.userId) {
+    res.status(404).json({ error: "Scan not found" }); return;
+  }
+  if (scan.status !== "failed") {
+    res.status(400).json({ error: "Only failed scans can be rescanned" }); return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId!));
+  if (!user) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+  // Reset scan status to running
+  await db.update(scansTable).set({ status: "running", score: null, summary: null }).where(eq(scansTable.id, id));
+  // Delete old issues
+  await db.delete(scanIssuesTable).where(eq(scanIssuesTable.scanId, id));
+
+  res.status(202).json({ scanId: id, status: "running" });
+
+  // Fire pipeline in background
+  (async () => {
+    try {
+      let dir: string | undefined;
+      let packageJson: Record<string, unknown> | undefined;
+      let fileTree: string | undefined;
+      let totalFiles: number | undefined;
+      let keyFiles: Array<{ path: string; content: string }> | undefined;
+      let schemas: string | undefined;
+
+      if (scan.sourceType === "github") {
+        const ingested = await ingestGitHubRepo(scan.sourceInput, scan.id);
+        if (ingested) {
+          dir = ingested.dir;
+          packageJson = (ingested.context.packageJson ?? {}) as Record<string, unknown>;
+          fileTree = ingested.context.fileTree;
+          totalFiles = ingested.context.totalFiles;
+          keyFiles = ingested.context.keyFiles;
+          schemas = ingested.context.schemas;
+        }
+      }
+
+      await runAnalysisPipeline({
+        scanId: id,
+        userId: user.id,
+        sourceType: scan.sourceType,
+        sourceInput: scan.sourceInput,
+        appDescription: scan.appDescription ?? undefined,
+        dir, packageJson, fileTree, totalFiles, keyFiles, schemas,
+      });
+    } catch (err) {
+      logger.error({ err, scanId: id }, "Rescan failed");
+      await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, id));
+    } finally {
+      if (scan.sourceType === "github") cleanupScan(id);
+    }
+  })();
 });
 
 // ── Shared: Re-ingest source for on-demand recompute ─────────────────────────

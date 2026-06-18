@@ -4,7 +4,14 @@ import { logger } from "./logger.js";
 // Primary: Groq (fast, high TPM free tier)
 const groq = new Groq({ apiKey: process.env["GROQ_API_KEY"] });
 
-// Secondary: Cerebras (OpenAI-compatible endpoint, llama-3.3-70b on wafer-scale silicon)
+// Secondary: OpenRouter (multiple free models for load distribution)
+const OPENROUTER_BASE = "https://openrouter.ai/api/v1";
+const openrouterKey = process.env["OPENROUTER_API_KEY"];
+const openrouter = openrouterKey
+  ? new Groq({ apiKey: openrouterKey, baseURL: OPENROUTER_BASE })
+  : null;
+
+// Tertiary: Cerebras (OpenAI-compatible endpoint)
 const cerebras = process.env["CEREBRAS_API_KEY"]
   ? new Groq({
       apiKey: process.env["CEREBRAS_API_KEY"],
@@ -12,12 +19,25 @@ const cerebras = process.env["CEREBRAS_API_KEY"]
     })
   : null;
 
-// Fast small model on Groq — for all 10 parallel per-agent calls
+// Fast small model on Groq — for all parallel per-agent calls
 const FAST_MODEL = "llama-3.1-8b-instant";
 // Smart model on Groq — reserved for synthesis/forecast
 const SMART_MODEL = "llama-3.3-70b-versatile";
-// Cerebras model — full 70b at ~2000 tok/s, used as fallback/secondary
+// Cerebras model — full 70b fallback
 const CEREBRAS_MODEL = "llama-3.3-70b";
+
+// OpenRouter free models — round-robin across these for load balancing
+const OPENROUTER_MODELS = [
+  "google/gemma-4-26b-a4b-it:free",
+  "cohere/north-mini-code:free",
+  "poolside/laguna-m.1:free",
+];
+let orModelIndex = 0;
+function nextOpenRouterModel(): string {
+  const m = OPENROUTER_MODELS[orModelIndex % OPENROUTER_MODELS.length];
+  orModelIndex++;
+  return m;
+}
 
 interface AgentIssue {
   severity: "critical" | "high" | "medium" | "low";
@@ -460,7 +480,25 @@ async function callWithFallback(
   opts: { model: string; cerebrasModel?: string; maxTokens?: number },
 ): Promise<string> {
   const messages_typed = messages as Parameters<typeof groq.chat.completions.create>[0]["messages"];
-  // Try primary (Groq)
+
+  // Try OpenRouter first (multiple free models, no rate limits on individual)
+  if (openrouter) {
+    const orModel = nextOpenRouterModel();
+    try {
+      const response = await openrouter.chat.completions.create({
+        model: orModel,
+        messages: messages_typed,
+        response_format: { type: "json_object" },
+        max_tokens: opts.maxTokens ?? 1500,
+      });
+      const content = response.choices[0]?.message?.content ?? "{}";
+      if (content && content !== "{}") return content;
+    } catch (orErr: unknown) {
+      logger.warn({ orErr, model: orModel }, "OpenRouter model failed — trying Groq");
+    }
+  }
+
+  // Fallback: Groq
   try {
     const response = await groq.chat.completions.create({
       model: opts.model,
@@ -474,7 +512,7 @@ async function callWithFallback(
       primaryErr instanceof Error &&
       (primaryErr.message.includes("429") || primaryErr.message.includes("Rate limit"));
 
-    // On rate limit, immediately try Cerebras before waiting
+    // On Groq rate limit, try Cerebras
     if (isRateLimit && cerebras) {
       try {
         logger.info("Groq rate limited — falling back to Cerebras");

@@ -251,9 +251,12 @@ const PRICING = [
     id: "creator",
     name: "Creator",
     price: "₹299",
+    originalPrice: "₹499",
+    discountLabel: "40% off",
+    launchBadge: "🚀 Launch Offer",
     period: "/mo",
     desc: "Full intelligence for indie founders",
-    features: ["12 scans / month", "All 25 analysis dimensions", "Digital Twin simulation", "Predictive intelligence", "Compliance checks included", "Board-memo style reports", "Priority analysis queue"],
+    features: ["Unlimited scans", "All 25 analysis dimensions", "Digital Twin simulation", "Predictive intelligence", "Compliance checks included", "Board-memo style reports", "Priority analysis queue"],
     cta: "Upgrade to Creator",
     href: "/pricing",
     highlight: true,
@@ -1105,8 +1108,21 @@ export default function Home() {
                   <div className="mb-7">
                     <h3 className="font-heading font-bold text-white text-lg mb-1">{plan.name}</h3>
                     <p className="text-white/35 text-xs mb-5">{plan.desc}</p>
-                    <div className="flex items-baseline gap-1">
+                    {"launchBadge" in plan && plan.launchBadge && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                          {plan.launchBadge as string}
+                        </span>
+                        {"discountLabel" in plan && (
+                          <span className="text-[10px] font-bold text-green-400">{plan.discountLabel as string}</span>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-heading font-bold text-white">{plan.price}</span>
+                      {"originalPrice" in plan && plan.originalPrice && (
+                        <span className="text-lg font-medium text-white/25 line-through">{plan.originalPrice as string}</span>
+                      )}
                       {plan.period && <span className="text-white/35 text-sm">{plan.period}</span>}
                     </div>
                   </div>
