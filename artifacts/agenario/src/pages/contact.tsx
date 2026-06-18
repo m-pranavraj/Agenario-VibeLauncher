@@ -2,26 +2,30 @@ import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { ArrowLeft, Building2, Mail, User, MessageSquare, Send } from "lucide-react";
 import { useState } from "react";
+import { useIsLight } from "@/hooks/use-is-light";
 
 export default function ContactPage() {
   const [submitting, setSubmitting] = useState(false);
+  const isLight = useIsLight();
 
-  const inputCls = "w-full bg-white/[0.04] border border-white/[0.10] rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 focus:outline-none focus:border-violet-500/50 focus:bg-white/[0.06] transition-all";
-  const labelCls = `flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide ${"text-white/50"}`;
+  const inputCls = isLight
+    ? "w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/20 transition-all"
+    : "w-full bg-white/[0.04] border border-white/[0.10] rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 focus:outline-none focus:border-violet-500/50 focus:bg-white/[0.06] transition-all";
+  const labelCls = `flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide ${isLight ? "text-gray-500" : "text-white/50"}`;
 
   return (
-    <div className={`min-h-screen font-sans ${"bg-[#050505] text-white"}`}>
-      <nav className={`fixed top-0 w-full z-50 border-b backdrop-blur-2xl ${"border-white/[0.06] bg-[#050505]/80"}`}>
+    <div className={`min-h-screen font-sans ${isLight ? "bg-gray-50 text-gray-900" : "bg-[#050505] text-white"}`}>
+      <nav className={`fixed top-0 w-full z-50 border-b backdrop-blur-2xl ${isLight ? "border-gray-200 bg-white/90" : "border-white/[0.06] bg-[#050505]/80"}`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-4">
           <Link href="/">
-            <button className={`flex items-center gap-2 transition-colors text-sm ${"text-white/40 hover:text-white"}`}>
+            <button className={`flex items-center gap-2 transition-colors text-sm ${isLight ? "text-gray-400 hover:text-gray-900" : "text-white/40 hover:text-white"}`}>
               <ArrowLeft className="w-4 h-4" />
               Back
             </button>
           </Link>
           <div className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-lg object-cover" />
-            <span className={`font-heading font-bold text-base tracking-tight ${"text-white"}`}>Agenario</span>
+            <span className={`font-heading font-bold text-base tracking-tight ${isLight ? "text-gray-900" : "text-white"}`}>Agenario</span>
           </div>
         </div>
       </nav>
@@ -34,12 +38,12 @@ export default function ContactPage() {
           className="space-y-10"
         >
           <div className="space-y-3">
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border ${"bg-white/[0.05] border-white/[0.09] text-white/50"}`}>
-              <Building2 className={`w-3.5 h-3.5 ${"text-violet-400"}`} />
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border ${isLight ? "bg-violet-50 border-violet-200 text-violet-600" : "bg-white/[0.05] border-white/[0.09] text-white/50"}`}>
+              <Building2 className={`w-3.5 h-3.5 ${isLight ? "text-violet-500" : "text-violet-400"}`} />
               Enterprise Plan
             </div>
-            <h1 className={`text-4xl font-heading font-bold ${"text-white"}`}>Let's talk.</h1>
-            <p className={`text-base leading-relaxed ${"text-white/45"}`}>
+            <h1 className={`text-4xl font-heading font-bold ${isLight ? "text-gray-900" : "text-white"}`}>Let's talk.</h1>
+            <p className={`text-base leading-relaxed ${isLight ? "text-gray-500" : "text-white/45"}`}>
               Custom pricing for agencies, studios, and funded teams. Tell us about your use case and we'll get back within 24 hours.
             </p>
           </div>
@@ -112,11 +116,11 @@ export default function ContactPage() {
               disabled={submitting}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`w-full flex items-center justify-center gap-2 font-bold py-3.5 rounded-xl transition-all text-sm disabled:opacity-60 ${"bg-white text-black hover:bg-white/90"}`}
+              className={`w-full flex items-center justify-center gap-2 font-bold py-3.5 rounded-xl transition-all text-sm disabled:opacity-60 ${isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white text-black hover:bg-white/90"}`}
             >
               {submitting ? (
                 <span className="flex items-center gap-2">
-                  <span className={`w-4 h-4 border-2 rounded-full animate-spin ${"border-black/30 border-t-black"}`} />
+                  <span className={`w-4 h-4 border-2 rounded-full animate-spin ${isLight ? "border-white/30 border-t-white" : "border-black/30 border-t-black"}`} />
                   Sending…
                 </span>
               ) : (
@@ -128,7 +132,7 @@ export default function ContactPage() {
             </motion.button>
           </form>
 
-          <p className={`text-center text-xs ${"text-white/20"}`}>
+          <p className={`text-center text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>
             We read every message. Typical response within 24 hours.
           </p>
         </motion.div>

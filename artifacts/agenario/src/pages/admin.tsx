@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsLight } from "@/hooks/use-is-light";
 import { motion } from "framer-motion";
 import { Users, ScanLine, TrendingUp, Star, BarChart3, ShieldCheck, LogOut } from "lucide-react";
 import { Link } from "wouter";
@@ -19,21 +20,22 @@ interface AdminStats {
 
 export default function AdminPage() {
   const { user, logout } = useAuth();
+  const isLight = useIsLight();
   const [, setLocation] = useLocation();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const t = {
-    page:    "bg-[#050505] text-white min-h-screen",
-    nav:     "bg-black/60 border-b border-white/[0.07] backdrop-blur-md",
-    logo:    "text-white",
-    navLink: "text-white/30 hover:text-white transition-colors",
-    card:    "bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5",
-    head:    "text-white font-bold",
-    sub:     "text-white/35",
-    val:     "text-white/80",
-    bar:     "bg-white/[0.05]",
+    page:    isLight ? "bg-gray-50 text-gray-900 min-h-screen" : "bg-[#050505] text-white min-h-screen",
+    nav:     isLight ? "bg-white/90 border-b border-gray-200 backdrop-blur-md" : "bg-black/60 border-b border-white/[0.07] backdrop-blur-md",
+    logo:    isLight ? "text-gray-900" : "text-white",
+    navLink: isLight ? "text-gray-500 hover:text-gray-900 transition-colors" : "text-white/30 hover:text-white transition-colors",
+    card:    isLight ? "bg-white border border-gray-200 rounded-2xl p-5" : "bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5",
+    head:    isLight ? "text-gray-900 font-bold" : "text-white font-bold",
+    sub:     isLight ? "text-gray-500" : "text-white/35",
+    val:     isLight ? "text-gray-700" : "text-white/80",
+    bar:     isLight ? "bg-gray-100" : "bg-white/[0.05]",
   };
 
   const PLAN_COLORS: Record<string, string> = {

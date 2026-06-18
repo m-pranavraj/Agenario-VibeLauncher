@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Check, Zap, ArrowLeft, Loader2, ShieldCheck, Building2, Mail, Tag, X, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsLight } from "@/hooks/use-is-light";
 import { api } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -103,6 +104,7 @@ type CouponResult = {
 };
 
 export default function PricingPage() {
+  const isLight = useIsLight();
   const { user, refresh } = useAuth();
   const [, setLocation] = useLocation();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
@@ -211,32 +213,32 @@ export default function PricingPage() {
     : "₹299";
 
   return (
-    <div className={`min-h-screen ${"bg-[#050505]"}`}>
-      <div className={`absolute inset-0 ${"bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.06)_0%,_transparent_60%)]"} pointer-events-none`} />
+    <div className={`min-h-screen ${isLight ? "bg-white" : "bg-[#050505]"}`}>
+      <div className={`absolute inset-0 ${isLight ? "bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.03)_0%,_transparent_60%)]" : "bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.06)_0%,_transparent_60%)]"} pointer-events-none`} />
 
-      <nav className={`border-b ${"bg-[#050505]/90 border-white/[0.07]"} backdrop-blur-2xl sticky top-0 z-10`}>
+      <nav className={`border-b ${isLight ? "bg-white/90 border-gray-200" : "bg-[#050505]/90 border-white/[0.07]"} backdrop-blur-2xl sticky top-0 z-10`}>
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-3">
-          <Link href={user ? "/dashboard" : "/"} className={`${"text-white/30"} hover:${"text-white"} transition-colors`}>
+          <Link href={user ? "/dashboard" : "/"} className={`${isLight ? "text-gray-400" : "text-white/30"} hover:${isLight ? "text-gray-900" : "text-white"} transition-colors`}>
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover" />
-            <span className={`font-bold font-['Syne'] text-sm ${"text-white"}`}>Pricing</span>
+            <span className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Pricing</span>
           </div>
         </div>
       </nav>
 
       <main className="max-w-5xl mx-auto px-6 py-16">
         <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }} className="text-center mb-14">
-          <motion.p variants={FADE_UP} className={`text-xs ${"text-white/30"} uppercase tracking-widest mb-4 font-medium`}>Pricing</motion.p>
-          <motion.h1 variants={FADE_UP} className={`text-4xl font-bold font-['Syne'] mb-4 ${"text-white"}`}>
+          <motion.p variants={FADE_UP} className={`text-xs ${isLight ? "text-gray-500" : "text-white/30"} uppercase tracking-widest mb-4 font-medium`}>Pricing</motion.p>
+          <motion.h1 variants={FADE_UP} className={`text-4xl font-bold font-['Syne'] mb-4 ${isLight ? "text-gray-900" : "text-white"}`}>
             Start free. Upgrade when you need it.
           </motion.h1>
-          <motion.p variants={FADE_UP} className={`text-lg ${"text-white/40"}`}>No contracts. Cancel anytime.</motion.p>
+          <motion.p variants={FADE_UP} className={`text-lg ${isLight ? "text-gray-500" : "text-white/40"}`}>No contracts. Cancel anytime.</motion.p>
         </motion.div>
 
         {success && (
-          <div className={`max-w-md mx-auto mb-10 ${"bg-green-500/[0.07] border border-green-500/20 text-green-400"} rounded-xl px-5 py-4 text-sm text-center flex items-center justify-center gap-2`}>
+          <div className={`max-w-md mx-auto mb-10 ${isLight ? "bg-green-50 border-green-200 text-green-700" : "bg-green-500/[0.07] border border-green-500/20 text-green-400"} rounded-xl px-5 py-4 text-sm text-center flex items-center justify-center gap-2`}>
             <Zap className="w-4 h-4" />
             Plan upgraded to <strong className="capitalize">{success}</strong>! Unlimited scans are now active.
           </div>
@@ -257,8 +259,8 @@ export default function PricingPage() {
                 transition={{ delay: i * 0.1 }}
                 className={`relative rounded-2xl p-7 flex flex-col aurora-card ${
                   plan.highlight
-                    ? "bg-white/[0.07] border border-white/20 aurora-card-intense"
-                    : "glass"
+                    ? isLight ? "bg-violet-600 border-violet-600 shadow-xl shadow-violet-200" : "bg-white/[0.07] border border-white/20 aurora-card-intense"
+                    : isLight ? "bg-white border-gray-200 shadow-sm" : "glass"
                 }`}
               >
                 {plan.badge && (
@@ -271,32 +273,32 @@ export default function PricingPage() {
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-4 ${
                     plan.highlight 
                       ? "bg-white/20 border border-white/30" 
-                      : "bg-white/[0.06] border border-white/[0.1]"
+                      : isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.06] border border-white/[0.1]"
                   }`}>
                     <Icon className={`w-[18px] h-[18px] ${
-                      plan.highlight ? "text-white" : false ? (plan.id === "free" || plan.id === "enterprise" ? "text-gray-400" : "text-gray-900") : plan.iconColor
+                      plan.highlight ? "text-white" : isLight ? (plan.id === "free" || plan.id === "enterprise" ? "text-gray-400" : "text-gray-900") : plan.iconColor
                     }`} />
                   </div>
-                  <h3 className={`font-bold font-['Syne'] text-xl mb-1 ${plan.highlight ? "text-white" : "text-white"}`}>{plan.name}</h3>
-                  <p className={`text-xs mb-5 ${plan.highlight ? "text-white/80" : "text-white/30"}`}>{plan.description}</p>
+                  <h3 className={`font-bold font-['Syne'] text-xl mb-1 ${plan.highlight ? "text-white" : isLight ? "text-gray-900" : "text-white"}`}>{plan.name}</h3>
+                  <p className={`text-xs mb-5 ${plan.highlight ? "text-white/80" : isLight ? "text-gray-500" : "text-white/30"}`}>{plan.description}</p>
 
                   <div className="flex items-baseline gap-2 flex-wrap">
                     {isCreator && couponResult?.valid ? (
                       <>
-                        <span className={`text-lg font-bold font-['Syne'] line-through ${plan.highlight ? "text-white/40" : "text-white/25"}`}>{"originalPrice" in plan ? plan.originalPrice : plan.price}</span>
-                        <span className={`text-3xl font-bold font-['Syne'] ${plan.highlight ? "text-white" : "text-white"}`}>{displayPrice}</span>
-                        <span className={`text-sm ${plan.highlight ? "text-white/60" : "text-white/30"}`}>{plan.period}</span>
+                        <span className={`text-lg font-bold font-['Syne'] line-through ${plan.highlight ? "text-white/40" : isLight ? "text-gray-300" : "text-white/25"}`}>{"originalPrice" in plan ? plan.originalPrice : plan.price}</span>
+                        <span className={`text-3xl font-bold font-['Syne'] ${plan.highlight ? "text-white" : isLight ? "text-gray-900" : "text-white"}`}>{displayPrice}</span>
+                        <span className={`text-sm ${plan.highlight ? "text-white/60" : isLight ? "text-gray-400" : "text-white/30"}`}>{plan.period}</span>
                       </>
                     ) : isCreator && "originalPrice" in plan ? (
                       <>
-                        <span className={`text-lg font-bold font-['Syne'] line-through ${plan.highlight ? "text-white/40" : "text-white/25"}`}>{plan.originalPrice as string}</span>
-                        <span className={`text-3xl font-bold font-['Syne'] ${plan.highlight ? "text-white" : "text-white"}`}>{plan.price}</span>
-                        <span className={`text-sm ${plan.highlight ? "text-white/60" : "text-white/30"}`}>{plan.period}</span>
+                        <span className={`text-lg font-bold font-['Syne'] line-through ${plan.highlight ? "text-white/40" : isLight ? "text-gray-300" : "text-white/25"}`}>{plan.originalPrice as string}</span>
+                        <span className={`text-3xl font-bold font-['Syne'] ${plan.highlight ? "text-white" : isLight ? "text-gray-900" : "text-white"}`}>{plan.price}</span>
+                        <span className={`text-sm ${plan.highlight ? "text-white/60" : isLight ? "text-gray-400" : "text-white/30"}`}>{plan.period}</span>
                       </>
                     ) : (
                       <>
-                        <span className={`text-3xl font-bold font-['Syne'] ${plan.highlight ? "text-white" : "text-white"}`}>{plan.price}</span>
-                        {plan.period && <span className={`text-sm ${plan.highlight ? "text-white/60" : "text-white/30"}`}>{plan.period}</span>}
+                        <span className={`text-3xl font-bold font-['Syne'] ${plan.highlight ? "text-white" : isLight ? "text-gray-900" : "text-white"}`}>{plan.price}</span>
+                        {plan.period && <span className={`text-sm ${plan.highlight ? "text-white/60" : isLight ? "text-gray-400" : "text-white/30"}`}>{plan.period}</span>}
                       </>
                     )}
                   </div>
@@ -310,7 +312,7 @@ export default function PricingPage() {
                       }`}>
                         40% off
                       </span>
-                      <span className={`text-[10px] font-medium ${plan.highlight ? "text-white/50" : "text-white/25"}`}>initial launch offer · limited time</span>
+                      <span className={`text-[10px] font-medium ${plan.highlight ? "text-white/50" : isLight ? "text-gray-400" : "text-white/25"}`}>initial launch offer · limited time</span>
                     </div>
                   )}
 
@@ -324,7 +326,7 @@ export default function PricingPage() {
 
                 <ul className="space-y-3 flex-1 mb-6">
                   {plan.features.map((feat, j) => (
-                    <li key={j} className={`flex items-center gap-2.5 text-sm ${plan.highlight ? "text-white/90" : "text-white/55"}`}>
+                    <li key={j} className={`flex items-center gap-2.5 text-sm ${plan.highlight ? "text-white/90" : isLight ? "text-gray-600" : "text-white/55"}`}>
                       <Check className={`w-3.5 h-3.5 shrink-0 ${plan.highlight ? "text-white" : "text-green-400"}`} />
                       {feat}
                     </li>
@@ -341,7 +343,7 @@ export default function PricingPage() {
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
                           onClick={() => setCouponOpen(true)}
-                          className={`flex items-center gap-1.5 text-xs transition-colors ${plan.highlight ? "text-white/60 hover:text-white" : "text-white/35 hover:text-white/60"}`}
+                          className={`flex items-center gap-1.5 text-xs transition-colors ${plan.highlight ? "text-white/60 hover:text-white" : isLight ? "text-gray-400 hover:text-gray-600" : "text-white/35 hover:text-white/60"}`}
                         >
                           <Tag className="w-3 h-3" />
                           Have a coupon code?
@@ -359,13 +361,13 @@ export default function PricingPage() {
                             <div className={`flex items-center gap-2 rounded-xl px-3 py-2 ${
                               plan.highlight 
                                 ? "bg-white/20 border border-white/30" 
-                                : "bg-green-500/[0.08] border border-green-500/20"
+                                : isLight ? "bg-green-50 border-green-200" : "bg-green-500/[0.08] border border-green-500/20"
                             }`}>
                               <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 ${plan.highlight ? "text-white" : "text-green-400"}`} />
                               <span className={`text-xs flex-1 font-mono font-bold ${plan.highlight ? "text-white" : "text-green-400"}`}>{couponResult.code}</span>
                               <button
                                 onClick={removeCoupon}
-                                className={`transition-colors ${plan.highlight ? "text-white/50 hover:text-white" : "text-white/30 hover:text-white/60"}`}
+                                className={`transition-colors ${plan.highlight ? "text-white/50 hover:text-white" : isLight ? "text-gray-400 hover:text-gray-600" : "text-white/30 hover:text-white/60"}`}
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
@@ -382,7 +384,9 @@ export default function PricingPage() {
                                   className={`flex-1 rounded-xl px-3 py-2 text-xs font-mono transition-all uppercase focus:outline-none ${
                                     plan.highlight
                                       ? "bg-white/20 border border-white/30 text-white placeholder-white/40 focus:bg-white/30"
-                                      : "bg-white/[0.04] border border-white/[0.1] text-white placeholder-white/20 focus:border-white/25 focus:bg-white/[0.06]"
+                                      : isLight 
+                                        ? "bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-violet-300" 
+                                        : "bg-white/[0.04] border border-white/[0.1] text-white placeholder-white/20 focus:border-white/25 focus:bg-white/[0.06]"
                                   }`}
                                 />
                                 <button
@@ -391,7 +395,9 @@ export default function PricingPage() {
                                   className={`px-3 py-2 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                                     plan.highlight
                                       ? "bg-white text-violet-600 hover:bg-white/90"
-                                      : "bg-white/[0.07] border border-white/[0.12] text-white/60 hover:text-white hover:bg-white/[0.12]"
+                                      : isLight
+                                        ? "bg-gray-900 text-white hover:bg-gray-800"
+                                        : "bg-white/[0.07] border border-white/[0.12] text-white/60 hover:text-white hover:bg-white/[0.12]"
                                   }`}
                                 >
                                   {couponLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Apply"}
@@ -417,12 +423,12 @@ export default function PricingPage() {
                   data-testid={`button-plan-${plan.id}`}
                   className={`w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                     isCurrent
-                      ? "bg-white/[0.04] border border-white/[0.08] text-white/25 cursor-default"
+                      ? isLight ? "bg-gray-100 text-gray-400 cursor-default" : "bg-white/[0.04] border border-white/[0.08] text-white/25 cursor-default"
                       : plan.id === "free"
-                        ? "bg-white/[0.04] border border-white/[0.08] text-white/25 cursor-default"
+                        ? isLight ? "bg-gray-100 text-gray-400 cursor-default" : "bg-white/[0.04] border border-white/[0.08] text-white/25 cursor-default"
                         : plan.highlight
-                          ? "bg-white text-black hover:bg-white/90"
-                          : "bg-white/[0.07] border border-white/[0.12] text-white hover:bg-white/[0.12]"
+                          ? isLight ? "bg-white text-violet-600 hover:bg-white/90" : "bg-white text-black hover:bg-white/90"
+                          : isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white/[0.07] border border-white/[0.12] text-white hover:bg-white/[0.12]"
                   }`}
                 >
                   {isLoading
@@ -439,11 +445,11 @@ export default function PricingPage() {
         </div>
 
         <div className="flex flex-col items-center gap-3 mt-12">
-          <div className={`flex items-center gap-2 text-xs ${"text-white/25"}`}>
+          <div className={`flex items-center gap-2 text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>
             <ShieldCheck className="w-3.5 h-3.5 text-green-400/60" />
             Secure payments via Razorpay · All prices in INR + GST · Cancel anytime
           </div>
-          <p className={`text-xs ${"text-white/15"}`}>Your code is never stored. Analyzed in-session only.</p>
+          <p className={`text-xs ${isLight ? "text-gray-300" : "text-white/15"}`}>Your code is never stored. Analyzed in-session only.</p>
         </div>
       </main>
     </div>
