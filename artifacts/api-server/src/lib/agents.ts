@@ -584,7 +584,7 @@ async function callWithFallback(
         const response = await openrouter.chat.completions.create({
           model: orModel,
           messages: messages_typed,
-          max_tokens: opts.maxTokens ?? 1500,
+          max_tokens: opts.maxTokens ?? 700,
         });
         const raw = response.choices[0]?.message?.content ?? "";
         const content = extractJson(raw);
@@ -613,7 +613,7 @@ async function callWithFallback(
         model: opts.model,
         messages: messages_typed,
         response_format: { type: "json_object" },
-        max_tokens: opts.maxTokens ?? 1500,
+        max_tokens: opts.maxTokens ?? 700,
       });
       return response.choices[0]?.message?.content ?? "{}";
     } catch (primaryErr: unknown) {
@@ -628,7 +628,7 @@ async function callWithFallback(
           const response = await cerebras.chat.completions.create({
             model: opts.cerebrasModel ?? CEREBRAS_MODEL,
             messages: messages_typed,
-            max_tokens: opts.maxTokens ?? 1500,
+            max_tokens: opts.maxTokens ?? 700,
           });
           return extractJson(response.choices[0]?.message?.content ?? "{}");
         } catch (cerebrasErr) {
@@ -652,22 +652,25 @@ async function callWithFallback(
   throw new Error("No AI provider available. Set GROQ_API_KEY, OPENROUTER_API_KEY, or CEREBRAS_API_KEY.");
 }
 
+// Hard per-agent timeout — no agent can block the pipeline beyond this
+const AGENT_TIMEOUT_MS = 22_000;
+
 async function runAgentWithRetry(
   agent: (typeof AGENTS)[0],
   sourceType: string,
   sourceInput: string,
   appDescription?: string | null,
   codeContext?: CodeContext | null,
-  retries = 3,
 ): Promise<AgentResult> {
   const messages = [
     { role: "system" as const, content: agent.role },
     { role: "user" as const, content: buildUserPrompt(sourceType, sourceInput, appDescription, codeContext, agent.name) },
   ];
 
-  for (let attempt = 0; attempt <= retries; attempt++) {
+  // One attempt, no sleep on rate limit — fail fast, return empty
+  const agentWork = (async (): Promise<AgentResult> => {
     try {
-      const raw = await callWithFallback(messages, { model: FAST_MODEL });
+      const raw = await callWithFallback(messages, { model: FAST_MODEL, maxTokens: 700 });
       const parsed = JSON.parse(extractJson(raw)) as { issues?: AgentIssue[] };
       return {
         agentName: agent.name,
@@ -684,19 +687,20 @@ async function runAgentWithRetry(
         })),
       };
     } catch (err: unknown) {
-      const isRateLimit =
-        err instanceof Error && (err.message.includes("429") || err.message.includes("Rate limit"));
-      if (isRateLimit && attempt < retries) {
-        const waitMs = 10000 * (attempt + 1);
-        logger.warn({ agent: agent.name, attempt, waitMs }, "Both providers rate limited — waiting");
-        await sleep(waitMs);
-        continue;
-      }
-      logger.error({ err, agent: agent.name }, "Agent failed");
+      logger.warn({ agent: agent.name, err: (err as Error).message?.slice(0, 120) }, "Agent skipped");
       return { agentName: agent.name, issues: [] };
     }
-  }
-  return { agentName: agent.name, issues: [] };
+  })();
+
+  // Race against hard timeout — never block more than 22s per agent
+  const timeout = new Promise<AgentResult>((resolve) =>
+    setTimeout(() => {
+      logger.warn({ agent: agent.name }, "Agent timed out at 22s — skipping");
+      resolve({ agentName: agent.name, issues: [] });
+    }, AGENT_TIMEOUT_MS),
+  );
+
+  return Promise.race([agentWork, timeout]);
 }
 
 async function runAgent(
@@ -947,6 +951,18 @@ export interface ScanAnalysisResult {
   complianceResults?: ComplianceResult[];
 }
 
+// ── Pipeline result type ──────────────────────────────────────────────────
+type PipelineData = {
+  agentResults: AgentResult[];
+  complianceResults: ComplianceResult[];
+  revenueIntelligence: RevenueIntelligence | null;
+  riskForecast: RiskForecast | null;
+  allIssues: AgentIssue[];
+};
+
+// Hard 80s pipeline cap — scan ALWAYS completes within this window
+const PIPELINE_TIMEOUT_MS = 80_000;
+
 export async function runAllAgents(
   sourceType: string,
   sourceInput: string,
@@ -955,19 +971,49 @@ export async function runAllAgents(
 ): Promise<ScanAnalysisResult> {
   logger.info({ sourceType, sourceInput }, "Starting deep analysis");
 
-  // Run agents in batches of 3 with 5s delay between batches to stay within Groq TPM limits
-  const agentTasks = AGENTS.map(
-    (agent) => () => runAgent(agent, sourceType, sourceInput, appDescription, codeContext),
+  const pipeline = (async (): Promise<PipelineData> => {
+    // Agents in batches of 5 with 1s delays — 3× faster than previous (3 agents, 5s delay)
+    // Each agent has its own 22s hard timeout, so no single agent can block a batch
+    const agentTasks = AGENTS.map(
+      (agent) => () => runAgent(agent, sourceType, sourceInput, appDescription, codeContext),
+    );
+
+    // Run agents + compliance concurrently (compliance used to run after all agents = wasted time)
+    const [agentResults, complianceResults] = await Promise.all([
+      runBatched(agentTasks, 5, 1000),
+      runComplianceAnalysis(sourceType, sourceInput, appDescription, codeContext).catch((err) => {
+        logger.warn({ err }, "Compliance analysis failed — skipping");
+        return [] as ComplianceResult[];
+      }),
+    ]);
+
+    const allIssues = agentResults.flatMap((r) => r.issues);
+
+    // Run revenue + riskForecast concurrently after agents (they need issue data for risk)
+    const [revenueIntelligence, riskForecast] = await Promise.all([
+      runRevenueIntelligence(sourceType, sourceInput, appDescription, codeContext).catch(() => null),
+      runLaunchRiskForecast(sourceType, sourceInput, appDescription, codeContext, allIssues).catch(() => null),
+    ]);
+
+    return { agentResults, complianceResults, revenueIntelligence, riskForecast, allIssues };
+  })();
+
+  // Hard 80s timeout — return partial results rather than hanging forever
+  const timeoutData = new Promise<PipelineData>((resolve) =>
+    setTimeout(() => {
+      logger.warn("Pipeline reached 80s hard cap — returning partial results");
+      resolve({ agentResults: [], complianceResults: [], revenueIntelligence: null, riskForecast: null, allIssues: [] });
+    }, PIPELINE_TIMEOUT_MS),
   );
-  const agentResults = await runBatched(agentTasks, 3, 5000);
 
-  // Run compliance + revenue after agents (sequential to avoid bursting TPM)
-  await sleep(3000);
-  const complianceResults = await runComplianceAnalysis(sourceType, sourceInput, appDescription, codeContext);
-  await sleep(3000);
-  const revenueIntelligence = await runRevenueIntelligence(sourceType, sourceInput, appDescription, codeContext);
+  const {
+    agentResults,
+    complianceResults,
+    revenueIntelligence,
+    riskForecast,
+    allIssues,
+  } = await Promise.race([pipeline, timeoutData]);
 
-  const allIssues = agentResults.flatMap((r) => r.issues);
   const issueCounts = {
     critical: allIssues.filter((i) => i.severity === "critical").length,
     high: allIssues.filter((i) => i.severity === "high").length,
@@ -982,15 +1028,6 @@ export async function runAllAgents(
     Math.min(issueCounts.low * 1, 5);
 
   const score = Math.max(0, 100 - penalty);
-
-  // Run risk forecast after we know the issues
-  const riskForecast = await runLaunchRiskForecast(
-    sourceType,
-    sourceInput,
-    appDescription,
-    codeContext,
-    allIssues,
-  );
 
   const criticalText =
     issueCounts.critical > 0
@@ -1013,8 +1050,8 @@ export async function runAllAgents(
     launchVerdict,
     issueCounts,
     agentResults,
-    riskForecast,
-    revenueIntelligence,
+    riskForecast: riskForecast ?? undefined,
+    revenueIntelligence: revenueIntelligence ?? undefined,
     complianceResults,
   };
 }

@@ -1,7 +1,8 @@
 - [connect-pg-simple bundling](connect-pg-simple-bundling.md) — createTableIfMissing fails after esbuild; create session table via raw SQL instead.
 - [Agenario project overview](agenario-overview.md) — full-stack AI app review board; stack, env vars, key files.
 - [Tier gate & scan limits](tier-gate.md) — free=2 scans/mo, creator=12, enterprise=∞; applyTierGate() gates issue 4+ and revenue leaks 3+; applied in GET /scans/:id.
-- [Groq rate limits fix](groq-rate-limits.md) — 10 agents + compliance + revenue = 12+ parallel calls caused scan failures; batched to groups of 4 with 400ms pause.
+- [Groq rate limits fix](groq-rate-limits.md) — 15 agents in batch-5/1000ms; compliance + agentBatch concurrent; revenue + riskForecast concurrent; 22s per-agent timeout; 80s hard pipeline cap; max_tokens=700.
+- [Tailwind dark mode caveat](tailwind-dark-mode.md) — Tailwind v4 dark: prefix doesn't work with next-themes class-based dark mode; all theme switches use isLight ? "..." : "..." JS conditionals; severity/UI configs must use semi-transparent colors that read on both light and dark backgrounds.
 - [Dual Groq model strategy](dual-model-strategy.md) — FAST_MODEL=llama-3.1-8b-instant for all 10 per-agent calls; SMART_MODEL=llama-3.3-70b-versatile reserved for runLaunchRiskForecast + runLaunchImpactCalculator synthesis only.
 - [Logo & About page](logo-about.md) — logo at /public/logo.png, founder photo at /public/founder-photo.jpeg (MOGANTI PRANAV RAJ); /about route added; logo replaces Rocket icon in all page navbars.
 - [Session table must exist](session-table.md) — `session` table in PostgreSQL must be created via raw SQL before app starts; missing table causes all authenticated requests to return 500.

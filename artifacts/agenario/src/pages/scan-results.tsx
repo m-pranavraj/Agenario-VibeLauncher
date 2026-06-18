@@ -21,30 +21,33 @@ import {
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
 
+// Theme-agnostic severity styles — work on both light and dark backgrounds.
+// The app uses JS-conditional `isLight ? "..." : "..."` everywhere, NOT Tailwind
+// dark: prefix (incompatible with this Tailwind v4 + next-themes class setup).
 const SEVERITY_CONFIG = {
   critical: {
-    color: "text-red-400",
-    bg: "bg-red-500/[0.07] border-red-500/20",
-    badge: "bg-red-500/15 text-red-400",
-    dot: "bg-red-400",
+    color: "text-red-500",
+    bg: "bg-red-500/[0.08] border-red-400/25",
+    badge: "bg-red-500/15 text-red-600",
+    dot: "bg-red-500",
   },
   high: {
-    color: "text-amber-400",
-    bg: "bg-amber-500/[0.06] border-amber-500/18",
-    badge: "bg-amber-500/12 text-amber-400",
-    dot: "bg-amber-400",
+    color: "text-amber-500",
+    bg: "bg-amber-500/[0.07] border-amber-400/22",
+    badge: "bg-amber-500/15 text-amber-700",
+    dot: "bg-amber-500",
   },
   medium: {
-    color: "text-yellow-400",
-    bg: "bg-yellow-500/[0.05] border-yellow-500/15",
-    badge: "bg-yellow-500/12 text-yellow-400",
-    dot: "bg-yellow-400",
+    color: "text-yellow-600",
+    bg: "bg-yellow-500/[0.06] border-yellow-400/20",
+    badge: "bg-yellow-500/15 text-yellow-700",
+    dot: "bg-yellow-500",
   },
   low: {
-    color: "text-white/35",
-    bg: "bg-white/[0.02] border-white/[0.07]",
-    badge: "bg-white/[0.07] text-white/35",
-    dot: "bg-white/30",
+    color: "text-gray-400",
+    bg: "bg-gray-400/[0.05] border-gray-300/25",
+    badge: "bg-gray-100 text-gray-500",
+    dot: "bg-gray-400",
   },
 };
 
@@ -3064,6 +3067,172 @@ function CofounderQAPanel({ scanId }: { scanId: number }) {
   );
 }
 
+/* ── Premium Animated Scan Loading Screen ─────────────────────────────── */
+const ANALYSIS_STEPS = [
+  { label: "Security & Authentication", icon: "🔐", color: "#f87171" },
+  { label: "Compliance & Regulatory",   icon: "📋", color: "#60a5fa" },
+  { label: "Revenue Intelligence",      icon: "💰", color: "#34d399" },
+  { label: "Performance Analysis",      icon: "⚡", color: "#fbbf24" },
+  { label: "UX & Conversion",           icon: "👁️", color: "#a78bfa" },
+  { label: "Reliability & Errors",      icon: "🛡️", color: "#fb923c" },
+  { label: "Data & Architecture",       icon: "🗄️", color: "#22d3ee" },
+  { label: "Synthesizing Report",       icon: "✨", color: "#f472b6" },
+];
+
+function ScanRunningScreen({
+  t,
+  sourceInput,
+  isLight,
+}: {
+  t: Record<string, string>;
+  sourceInput?: string | null;
+  isLight: boolean;
+}) {
+  const [elapsed, setElapsed] = useState(0);
+  const [visibleStep, setVisibleStep] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    if (visibleStep >= ANALYSIS_STEPS.length - 1) return;
+    const avgPerStep = 8;
+    const expected = Math.floor(elapsed / avgPerStep);
+    setVisibleStep((s) => Math.min(expected, ANALYSIS_STEPS.length - 2));
+  }, [elapsed]);
+
+  const progress = Math.min((elapsed / 70) * 100, 93);
+  const r = 52;
+  const circ = 2 * Math.PI * r;
+  const dash = (progress / 100) * circ;
+
+  const glowColor = isLight ? "#a855f7" : "#8b5cf6";
+
+  return (
+    <div className={`min-h-screen ${t.page} flex items-center justify-center px-6`}>
+      {/* ── Ambient glow ─── */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <motion.div
+          animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full"
+          style={{ background: isLight
+            ? "radial-gradient(ellipse, rgba(168,85,247,0.08) 0%, transparent 70%)"
+            : "radial-gradient(ellipse, rgba(139,92,246,0.12) 0%, transparent 70%)" }}
+        />
+      </div>
+
+      <div className="relative max-w-sm w-full space-y-8 z-10">
+        {/* ── Progress ring ─── */}
+        <div className="flex flex-col items-center gap-5">
+          <div className="relative">
+            {/* Outer glow ring */}
+            <motion.div
+              animate={{ opacity: [0.4, 0.8, 0.4] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute inset-[-8px] rounded-full"
+              style={{ boxShadow: `0 0 32px 8px ${glowColor}25` }}
+            />
+            <svg width="130" height="130" viewBox="0 0 130 130" className="-rotate-90">
+              <circle cx="65" cy="65" r={r} fill="none" strokeWidth="5"
+                stroke={isLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)"} />
+              {/* Animated progress arc */}
+              <motion.circle cx="65" cy="65" r={r} fill="none" strokeWidth="5"
+                stroke={glowColor} strokeLinecap="round"
+                strokeDasharray={`${dash} ${circ - dash}`}
+                animate={{ strokeDasharray: [`${dash} ${circ - dash}`] }}
+                style={{ filter: `drop-shadow(0 0 6px ${glowColor}80)`, transition: "stroke-dasharray 1.2s ease" }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <motion.span
+                key={Math.round(progress)}
+                initial={{ scale: 1.15, opacity: 0.6 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className={`text-3xl font-extrabold font-['Syne'] ${isLight ? "text-gray-800" : "text-white"}`}
+              >
+                {Math.round(progress)}
+              </motion.span>
+              <span className={`text-[10px] font-medium ${isLight ? "text-gray-400" : "text-white/30"}`}>%</span>
+            </div>
+          </div>
+
+          <div className="text-center space-y-1.5">
+            <h2 className={`text-lg font-bold font-['Syne'] ${isLight ? "text-gray-900" : "text-white/90"}`}>
+              Reviewing your app
+            </h2>
+            <p className={`text-sm ${isLight ? "text-gray-400" : "text-white/35"}`}>
+              {elapsed}s elapsed · auto-refreshing every 3s
+            </p>
+          </div>
+        </div>
+
+        {/* ── Analysis step list ─── */}
+        <div className="space-y-2">
+          {ANALYSIS_STEPS.map((step, i) => {
+            const done = i < visibleStep;
+            const active = i === visibleStep;
+            return (
+              <motion.div
+                key={step.label}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.06, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-500 ${
+                  done
+                    ? isLight
+                      ? "bg-green-50 border-green-200/60"
+                      : "bg-green-500/[0.06] border-green-500/20"
+                    : active
+                      ? isLight
+                        ? "bg-violet-50 border-violet-200/60 shadow-[0_0_16px_rgba(168,85,247,0.12)]"
+                        : "bg-violet-500/[0.10] border-violet-500/30 shadow-[0_0_16px_rgba(139,92,246,0.15)]"
+                      : isLight
+                        ? "bg-white/70 border-gray-100"
+                        : "bg-white/[0.02] border-white/[0.05]"
+                }`}
+              >
+                <span className={`text-base transition-all duration-300 ${(!done && !active) ? "grayscale opacity-30" : ""}`}>
+                  {step.icon}
+                </span>
+                <span className={`text-sm flex-1 font-medium transition-all duration-300 ${
+                  done ? (isLight ? "text-green-700" : "text-green-400")
+                    : active ? (isLight ? "text-violet-700" : "text-violet-300")
+                    : (isLight ? "text-gray-300" : "text-white/20")
+                }`}>
+                  {step.label}
+                </span>
+                {done ? (
+                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400 }}>
+                    <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+                  </motion.div>
+                ) : active ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Loader2 className={`w-4 h-4 shrink-0 ${isLight ? "text-violet-500" : "text-violet-400"}`} />
+                  </motion.div>
+                ) : null}
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* ── Source chip ─── */}
+        {sourceInput && (
+          <div className={`flex items-center justify-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>
+            <Search className="w-3 h-3" />
+            <span className="truncate max-w-[240px]">{sourceInput}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ScanResultsPage() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -3144,29 +3313,7 @@ export default function ScanResultsPage() {
   );
 
   if (scan.status === "running") return (
-    <div className={`min-h-screen ${t.page} flex items-center justify-center`}>
-      <div className="text-center space-y-6 max-w-sm px-6">
-        <div className="w-16 h-16 rounded-3xl glass flex items-center justify-center mx-auto relative">
-          <Loader2 className="w-7 h-7 text-white/60 animate-spin" />
-          <div className="absolute inset-0 rounded-3xl bg-white/[0.03] animate-pulse" />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-white/90 text-lg font-semibold tracking-tight">Analysing your app</h2>
-          <p className="text-white/35 text-sm leading-relaxed">
-            Running multi-dimensional review across security, compliance, revenue, performance, and more.
-            This takes 1–3 minutes.
-          </p>
-        </div>
-        <div className="flex items-center justify-center gap-1.5">
-          {["Security", "Compliance", "Revenue", "UX", "Reliability"].map((label) => (
-            <span key={label} className="text-[10px] text-white/25 bg-white/[0.04] border border-white/[0.07] rounded-full px-2 py-0.5">
-              {label}
-            </span>
-          ))}
-        </div>
-        <p className="text-white/20 text-xs">Updating automatically…</p>
-      </div>
-    </div>
+    <ScanRunningScreen t={t} sourceInput={scan.sourceInput} isLight={isLight} />
   );
 
   if (scan.status === "failed") {
