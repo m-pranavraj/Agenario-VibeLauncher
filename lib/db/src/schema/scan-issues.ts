@@ -12,6 +12,13 @@ export const scanIssuesTable = pgTable("scan_issues", {
   fixPrompt: text("fix_prompt").notNull(),
   confidence: integer("confidence"),
   evidence: text("evidence"),
+  // Evidence Standard fields
+  filePath: text("file_path"),
+  lineNumber: integer("line_number"),
+  codeSnippet: text("code_snippet"),
+  impactStatement: text("impact_statement"),
+  retestResult: text("retest_result"),
+  sourceEvidence: text("source_evidence"),
 });
 
 export const insertScanIssueSchema = createInsertSchema(scanIssuesTable).omit({ id: true });

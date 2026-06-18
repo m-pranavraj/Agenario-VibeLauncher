@@ -9,3 +9,5 @@
 - [Async scan pipeline](async-scan-pipeline.md) — POST /api/scans returns 202 immediately; pipeline runs fire-and-forget; scan-results.tsx polls every 3s while status==="running".
 - [Cerebras available models](cerebras-models.md) — only "zai-glm-4.7" and "gpt-oss-120b" are available; llama model names cause 404. Use gpt-oss-120b as CEREBRAS_MODEL.
 - [scanLimiter scope](scan-rate-limiter.md) — app.use("/api/scans", scanLimiter) applies to GETs too; must gate only POST methods or GET polling exhausts the 30/hr limit instantly.
+- [Evidence Standard schema](evidence-standard.md) — scan_issues has 6 new nullable cols (file_path, line_number, code_snippet, impact_statement, retest_result, source_evidence); AgentIssue is now exported from agents.ts; agents output all 11 Evidence Standard fields.
+- [Agent roster](agent-roster.md) — 15 agents in AGENTS[]; "Competitive Gap Analysis" replaced by "Business Logic Attack Lab"; "AI Code Quality" has VibeCode tool pattern database (Replit/Cursor/Lovable/Bolt/Copilot signatures).

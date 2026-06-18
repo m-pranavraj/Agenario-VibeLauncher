@@ -58,6 +58,13 @@ export interface ScanIssue {
   locked?: boolean;
   promptUnlocked?: boolean;
   owaspMapping?: OwaspMapping;
+  // Evidence Standard fields
+  filePath?: string | null;
+  lineNumber?: number | null;
+  codeSnippet?: string | null;
+  impactStatement?: string | null;
+  retestResult?: string | null;
+  sourceEvidence?: string | null;
 }
 
 export interface IssueCounts {

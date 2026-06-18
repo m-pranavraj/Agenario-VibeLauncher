@@ -81,6 +81,7 @@ const AGENT_ICONS: Record<string, React.FC<{ className?: string }>> = {
   "Supply Chain Security": Package,
   "Cloud Cost Efficiency": Cloud,
   "Competitive Gap Analysis": Target,
+  "Business Logic Attack Lab": ShieldAlert,
 };
 
 const VERDICT_CONFIG = {
@@ -248,17 +249,81 @@ function EvidenceCard({ issue, rank, scanId, isCreator }: { issue: ScanIssue; ra
         <div className="px-4 pb-4 space-y-3 border-t border-white/[0.05] pt-3">
           <p className="text-sm text-white/55 leading-relaxed">{issue.description}</p>
 
-          {issue.evidence && (
-            <div className="bg-black/30 border border-white/[0.07] rounded-lg px-3 py-2.5">
-              <div className="flex items-center gap-2 mb-1">
-                <span className={`text-xs font-semibold ${conf.color}`}>Evidence</span>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ml-auto ${conf.badge}`}>{conf.icon} {conf.label}</span>
-              </div>
-              <p className="text-xs text-white/35 font-mono leading-relaxed">{issue.evidence}</p>
+          {/* ── Evidence Graph Chain ──────────────────────────────── */}
+          {(issue.filePath || issue.codeSnippet || issue.impactStatement || issue.evidence) && (
+            <div className="space-y-2">
+              {/* File + Line badge row */}
+              {issue.filePath && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1.5 bg-amber-500/[0.07] border border-amber-500/20 rounded-lg px-2.5 py-1.5">
+                    <FileText className="w-3 h-3 text-amber-400/70 shrink-0" />
+                    <code className="text-[11px] font-mono text-amber-300/80">{issue.filePath}</code>
+                    {issue.lineNumber && (
+                      <span className="ml-1 text-[10px] font-bold text-amber-500/60 bg-amber-500/10 px-1.5 py-0.5 rounded">:{issue.lineNumber}</span>
+                    )}
+                  </div>
+                  {issue.sourceEvidence && (
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                      issue.sourceEvidence === "runtime"
+                        ? "bg-green-500/10 text-green-400 border-green-500/20"
+                        : issue.sourceEvidence === "static"
+                        ? "bg-sky-500/10 text-sky-400 border-sky-500/20"
+                        : "bg-white/[0.05] text-white/35 border-white/[0.08]"
+                    }`}>
+                      {issue.sourceEvidence === "runtime" ? "🟢 Runtime" : issue.sourceEvidence === "static" ? "🔵 Static" : "⚪ AI Reasoning"}
+                    </span>
+                  )}
+                  {issue.retestResult && (
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                      issue.retestResult === "fixed"
+                        ? "bg-green-500/10 text-green-400 border-green-500/20"
+                        : "bg-red-500/10 text-red-400/70 border-red-500/20"
+                    }`}>
+                      {issue.retestResult === "fixed" ? "✓ Fixed" : "⚠ Needs Fix"}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Code Snippet */}
+              {issue.codeSnippet && (
+                <div className="bg-black/50 border border-amber-500/15 rounded-lg overflow-hidden">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/[0.06] border-b border-amber-500/10">
+                    <Terminal className="w-3 h-3 text-amber-400/50" />
+                    <span className="text-[10px] text-amber-400/50 font-medium uppercase tracking-wide">Vulnerable Code</span>
+                    {issue.lineNumber && <span className="text-[10px] text-amber-500/40 ml-auto">Line {issue.lineNumber}</span>}
+                  </div>
+                  <pre className="px-3 py-2.5 text-[11px] font-mono text-red-300/80 leading-relaxed overflow-x-auto whitespace-pre-wrap">
+                    {issue.codeSnippet}
+                  </pre>
+                </div>
+              )}
+
+              {/* Evidence */}
+              {issue.evidence && (
+                <div className="bg-black/30 border border-white/[0.07] rounded-lg px-3 py-2.5">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-xs font-semibold ${conf.color}`}>Evidence</span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ml-auto ${conf.badge}`}>{conf.icon} {conf.label}</span>
+                  </div>
+                  <p className="text-xs text-white/35 font-mono leading-relaxed">{issue.evidence}</p>
+                </div>
+              )}
+
+              {/* Impact Statement */}
+              {issue.impactStatement && (
+                <div className="bg-red-500/[0.05] border border-red-500/15 rounded-lg px-3 py-2.5">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <AlertTriangle className="w-3 h-3 text-red-400/60" />
+                    <span className="text-[10px] font-semibold text-red-400/70 uppercase tracking-wide">Business Impact</span>
+                  </div>
+                  <p className="text-xs text-white/55 leading-relaxed">{issue.impactStatement}</p>
+                </div>
+              )}
             </div>
           )}
 
-          {!issue.evidence && (
+          {!issue.filePath && !issue.codeSnippet && !issue.impactStatement && !issue.evidence && (
             <div className="flex items-center gap-2">
               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${conf.badge}`}>{conf.icon} {conf.label}</span>
             </div>

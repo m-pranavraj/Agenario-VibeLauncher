@@ -39,16 +39,23 @@ function nextOpenRouterModel(): string {
   return m;
 }
 
-interface AgentIssue {
+export interface AgentIssue {
   severity: "critical" | "high" | "medium" | "low";
   title: string;
   description: string;
   fixPrompt: string;
   confidence?: number;
   evidence?: string;
+  // Evidence Standard fields
+  filePath?: string;
+  lineNumber?: number;
+  codeSnippet?: string;
+  impact?: string;
+  sourceEvidence?: string;
+  retestResult?: string;
 }
 
-interface AgentResult {
+export interface AgentResult {
   agentName: string;
   issues: AgentIssue[];
 }
@@ -224,20 +231,24 @@ Score: would a new engineer be able to debug a production incident in < 1 hour?`
   },
   {
     name: "AI Code Quality",
-    role: `You are the world's leading expert on AI-generated code quality and vibe-coding anti-patterns.
-Analyze for:
+    role: `You are the world's leading expert on AI-generated code quality and vibe-coding anti-patterns, with a pattern database of known failures from each major AI coding tool.
+
+VIBE TOOL SIGNATURES (identify which tool built this, then apply its known failure patterns):
+- REPLIT AI: monolithic App.tsx (900+ lines), PORT hardcoded, express with no helmet/rate-limiting, no .env.example, secrets referenced directly from process.env without validation, missing CORS origins whitelist
+- CURSOR AI: multiple conflicting implementations of same function (different AI sessions), "TODO: implement this" placeholders in production paths, inconsistent TypeScript strictness (some files strict, others not), over-use of 'as' type casts
+- LOVABLE/BOLT: Firebase/Supabase with no RLS enabled (all data publicly readable), API keys in client-side code, auth checked only on frontend (no server-side guard), single-file components exceeding 2000 lines
+- WINDSURF/CODEIUM: duplicate utility functions with slight variations, missing cleanup in useEffect, async functions without try-catch in 60%+ of cases
+- GITHUB COPILOT: boilerplate security gaps (auth checking with comment "// TODO: validate user"), SQL queries with string interpolation, error swallowing (catch(e) {}), debug console.logs left in
 
 HALLUCINATED APIS: Import statements for libraries that don't exist, methods called on wrong types
-AI COPY-PASTE DEBT: Duplicate implementations of the same logic from different AI sessions, inconsistent patterns
-MONOLITHIC FILES: 500+ line components that AI generated but should be 5 separate files
-OVER-ENGINEERING: AI generated a complex state machine for a simple toggle, Redux for a 2-screen app
-INCORRECT HOOKS: useEffect with wrong deps array, missing cleanup, stale closure bugs (AI classic)
-AI SECURITY PATTERNS: console.log(password), hardcoded test credentials left in, debug flags in production
-PROMPT ARTIFACT DEBT: Comments like "TODO: add auth" from original AI prompt still in code
-AI SCAFFOLDING BLOAT: Unused imports, dead components, placeholder text left in production UI
-VIBE TOOL DETECTION: Identify which AI tool(s) likely built this (Cursor/Replit/Lovable/Bolt) and their known failure patterns
+AI COPY-PASTE DEBT: Duplicate logic from different AI sessions — same validation written 3 different ways
+MONOLITHIC FILES: 500+ line components that AI generated but should be split into 5+ files
+INCORRECT HOOKS: useEffect with wrong/missing deps array, stale closures, missing cleanup
+AI SECURITY PATTERNS: console.log(password), hardcoded test credentials, NODE_ENV=production hardcoded
+PROMPT ARTIFACT DEBT: Comments "TODO: add auth here", "placeholder", "replace with real data" in production
+AI SCAFFOLDING BLOAT: Unused imports from AI scaffolding, dead components never rendered, mockData in prod
 
-Be opinionated — AI code has specific, recognizable quality patterns.`,
+For each finding: cite the exact file + line from the code context. The vibe tool detection finding should state the tool name, confidence level, and top 3 tool-specific failure patterns found.`,
   },
   {
     name: "Founder Blind Spots",
@@ -330,22 +341,41 @@ COST BLIND SPOTS: No billing alerts, no cost allocation tags, no budget caps set
 Estimate monthly cost impact in USD/INR for each finding.`,
   },
   {
-    name: "Competitive Gap Analysis",
-    role: `You are a product strategist and competitive intelligence analyst.
-Analyze this app versus what the top 3 competitors in its category offer:
+    name: "Business Logic Attack Lab",
+    role: `You are an elite application security researcher specializing in business logic vulnerabilities — the class of exploits that steal real money and bypass all standard security controls. These require deep understanding of how the app is supposed to work and where implementation diverges from intent.
 
-FEATURE GAPS: Table-stakes features present in competitors but missing here
-ONBOARDING DELTA: Competitor onboarding is 3 steps — this app's is 8 steps
-PRICING POSITIONING: Is the price/value ratio competitive? Is there a free tier if competitors offer one?
-TRUST SIGNALS: Missing elements competitors use (testimonials, case studies, security badges)
-INTEGRATION GAPS: Missing webhooks, Zapier, or API access that competitors offer
-MOBILE PARITY: Mobile experience vs competitor native apps
-PERFORMANCE DELTA: Competitors load in 1.2s — this app loads in 4.8s
-DATA PORTABILITY: Competitors offer CSV export — no export here (lock-in risk)
-AI FEATURE GAP: Competitors have AI-powered features — this app has none (or vice versa)
-DIFFERENTIATION: What does this app do better than competitors? (highlight 1-2 genuine strengths)
+SUBSCRIPTION & ENTITLEMENT BYPASS:
+- Downgrade attack: subscribe to paid plan → cancel → continue accessing paid features (missing server-side plan check on every request)
+- Trial abuse: multiple accounts from same IP/email pattern to extend trials indefinitely
+- Plan hopping: upgrade during high-usage period → immediately downgrade (prorating edge case)
+- Feature flag bypass: paid features gated only by frontend flag, not validated on API endpoint
 
-Be specific about which competitor category (not brand names). Frame findings as product priorities.`,
+PRICE & PAYMENT MANIPULATION:
+- Negative quantity attack: add -1 items to cart to receive credit (missing server-side quantity validation > 0)
+- Price parameter tampering: POST /checkout with {price: 1} — does server accept client-provided price?
+- Discount stacking: apply multiple promo codes simultaneously (race condition on coupon redemption)
+- Coupon reuse: apply same coupon after refund/cancellation (no redemption count reset guard)
+- Currency confusion: submit price in different currency unit (cents vs rupees vs dollars)
+
+RACE CONDITION EXPLOITS:
+- Double-purchase: send identical checkout request twice simultaneously (missing idempotency key)
+- Inventory oversell: multiple users purchase last item simultaneously (no SKIP LOCKED / SELECT FOR UPDATE)
+- Referral self-abuse: refer yourself via multiple accounts to earn rewards
+- Reward double-claim: claim reward, then trigger refund to keep both reward and refund
+
+MULTI-STEP FLOW ABUSE:
+- Checkout step-skip: complete order without going through payment step (only last step validates?)
+- Email verification bypass: complete signup without confirming email (feature gating missing downstream)
+- OTP replay: reuse one-time password within validity window by replaying intercepted request
+- State machine bypass: navigate directly to /onboarding/step-5 without completing steps 1-4
+
+FRAUD VECTORS:
+- Chargeback after digital delivery: purchase, receive digital goods, dispute with bank
+- Account takeover via password reset timing: predictable reset token or no expiry
+- API rate limit bypass: same action via different user agents, IPs, or API versions
+- Free-tier API abuse: call a paid endpoint through the free-tier route
+
+For each finding: provide exact HTTP request to reproduce (method, path, body), business impact in ₹/$ (estimated monthly loss if exploited), and the specific code path that's vulnerable.`,
   },
 ];
 
@@ -368,7 +398,7 @@ const AGENT_FILE_KEYWORDS: Record<string, string[]> = {
   "i18n & Accessibility Deep Scan": ["component", "page", "form", "button", "input", "aria", "label", "i18n", "locale", "translate"],
   "Supply Chain Security": ["package", "package.json", "node_modules", "yarn.lock", "package-lock", "dependency", "dep"],
   "Cloud Cost Efficiency": ["config", "env", "api", "fetch", "cache", "db", "database", "query", "upload", "storage", "log"],
-  "Competitive Gap Analysis": [],
+  "Business Logic Attack Lab": ["payment", "billing", "stripe", "razorpay", "checkout", "subscription", "plan", "price", "charge", "invoice", "webhook", "order", "cart", "coupon", "promo", "refund", "trial", "auth", "session", "middleware", "route"],
 };
 
 function selectFilesForAgent(
@@ -451,26 +481,37 @@ Source: ${sourceInput} (type: ${sourceType})
 ${appDescription ? `Developer's Description: ${appDescription}` : ""}
 ${contextSection}
 
-Return ONLY valid JSON:
+Return ONLY valid JSON following the Agenario Evidence Standard:
 {
   "issues": [
     {
       "severity": "critical|high|medium|low",
-      "title": "Short specific issue title",
-      "description": "Clear explanation with real production impact. Be specific and concrete.",
-      "fixPrompt": "Ready-to-paste Cursor/Claude fix prompt",
-      "confidence": 60,
-      "evidence": "File path, code pattern, or specific reason (omit if pure reasoning)"
+      "title": "Short specific issue title (max 8 words)",
+      "description": "Clear explanation of the vulnerability with real production context.",
+      "filePath": "src/auth/jwt.ts",
+      "lineNumber": 42,
+      "codeSnippet": "const JWT_SECRET = 'hardcoded-secret';",
+      "impact": "Quantified business impact: attacker can do X, causing Y data exposure / Z revenue loss / N% churn increase.",
+      "fixPrompt": "Ready-to-paste fix prompt for Cursor/Claude with exact file + function names",
+      "confidence": 85,
+      "evidence": "Direct observation or pattern that proves this issue exists",
+      "sourceEvidence": "static|runtime|ai_reasoning",
+      "retestResult": "needs_fix"
     }
   ]
 }
 
 Rules:
 - Find 2–5 realistic, high-impact issues. No filler.
-- Every issue must have a clear production consequence (breach, revenue loss, outage, user drop-off).
+- Every issue MUST have a clear production consequence (breach, revenue loss, outage, user drop-off).
+- filePath: exact relative path from the code context (e.g. "src/routes/auth.ts"). Required when real code provided.
+- lineNumber: best estimate of the vulnerable line number. Required when filePath is set.
+- codeSnippet: the exact vulnerable code line or pattern (1–3 lines). Required when filePath is set.
+- impact: quantified statement — "Attacker can access all user records (GDPR violation, ₹20L fine risk)" not "security risk".
 - confidence: 95–99 runtime-provable, 85–94 direct code evidence, 70–84 pattern inference, 60–69 AI reasoning.
-- fixPrompt must be copy-paste ready — specific file/function names where possible.
-- Reference exact file paths in evidence when you have real code context.`;
+- sourceEvidence: "static" if from code analysis, "runtime" if from HTTP/browser probe, "ai_reasoning" if inferred.
+- fixPrompt must be copy-paste ready — reference specific file/function names from the code context.
+- retestResult: always "needs_fix" for new findings.`;
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -554,6 +595,12 @@ async function runAgentWithRetry(
           ...issue,
           confidence: issue.confidence ?? 65,
           evidence: issue.evidence ?? undefined,
+          filePath: issue.filePath ?? undefined,
+          lineNumber: issue.lineNumber ?? undefined,
+          codeSnippet: issue.codeSnippet ?? undefined,
+          impact: issue.impact ?? undefined,
+          sourceEvidence: issue.sourceEvidence ?? "ai_reasoning",
+          retestResult: issue.retestResult ?? "needs_fix",
         })),
       };
     } catch (err: unknown) {

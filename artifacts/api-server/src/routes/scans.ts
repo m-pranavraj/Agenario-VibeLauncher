@@ -198,6 +198,12 @@ async function runAnalysisPipeline(opts: {
       fixPrompt: issue.fixPrompt,
       confidence: issue.confidence ?? 60,
       evidence: issue.evidence ?? null,
+      filePath: issue.filePath ?? null,
+      lineNumber: issue.lineNumber ?? null,
+      codeSnippet: issue.codeSnippet ?? null,
+      impactStatement: issue.impact ?? null,
+      retestResult: issue.retestResult ?? "needs_fix",
+      sourceEvidence: issue.sourceEvidence ?? "ai_reasoning",
     })),
   );
 
