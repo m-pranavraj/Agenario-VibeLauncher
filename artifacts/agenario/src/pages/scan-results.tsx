@@ -9,7 +9,7 @@ import {
   Play, Camera, Minus, Globe, GitBranch, Award, Dna, Users, Share2,
   Sparkles, ListChecks, ExternalLink, Wifi, Package, Cloud, RefreshCw,
   Network, Brain, Terminal, GitMerge, AlertCircle, ArrowUpRight, ArrowDownRight,
-  Smartphone, ShieldAlert, Star, Flame, MessageSquare, Send, X,
+  Smartphone, ShieldAlert, Star, Flame, MessageSquare, Send, X, Sun, Moon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -19,6 +19,7 @@ import {
   type DigitalTwinResult, type PredictiveIntelResult, type RootCauseResult,
 } from "@/lib/api";
 import { motion } from "framer-motion";
+import { useTheme } from "next-themes";
 
 const SEVERITY_CONFIG = {
   critical: {
@@ -3073,6 +3074,28 @@ export default function ScanResultsPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("all");
   const [rescanning, setRescanning] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const isLight = mounted ? resolvedTheme === "light" : false;
+
+  const t = {
+    page:    isLight ? "bg-[#f8f9fc]" : "bg-[#050505]",
+    nav:     isLight ? "border-gray-100/80 bg-white/90 backdrop-blur-2xl" : "border-white/[0.07] bg-[#050505]/90 backdrop-blur-2xl",
+    navText: isLight ? "text-gray-600 hover:text-gray-900 transition-colors" : "text-white/30 hover:text-white transition-colors",
+    navBrand: isLight ? "text-gray-900 font-bold font-['Syne'] text-sm" : "text-white font-bold font-['Syne'] text-sm",
+    navMeta: isLight ? "text-gray-400 text-xs ml-2 truncate hidden sm:block max-w-xs" : "text-white/20 text-xs ml-2 truncate hidden sm:block max-w-xs",
+    tabBar:  isLight ? "bg-white/95 backdrop-blur-2xl border-b border-gray-100" : "bg-[#050505]/95 backdrop-blur-2xl border-b border-white/[0.06]",
+    tabActive: isLight ? "bg-gray-100 border border-gray-200 text-gray-900" : "bg-white/[0.1] border border-white/20 text-white",
+    tabInactive: isLight ? "text-gray-400 hover:text-gray-700 hover:bg-gray-50" : "text-white/35 hover:text-white/60 hover:bg-white/[0.04]",
+    tabCountActive: isLight ? "bg-gray-200 text-gray-700" : "bg-white/15 text-white/80",
+    tabCountInactive: isLight ? "bg-gray-100 text-gray-400" : "bg-white/[0.07] text-white/30",
+    toggle:  isLight ? "bg-amber-50 border-amber-200/60 text-amber-600" : "bg-white/[0.06] border-white/[0.1] text-white/50",
+    navBtn:  isLight ? "flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 border border-gray-200 hover:border-gray-300 px-3 py-1.5 rounded-lg transition-all" : "flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/15",
+    ambient: isLight
+      ? "absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(236,72,153,0.04)_0%,_transparent_60%)] pointer-events-none"
+      : "absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.04)_0%,_transparent_60%)] pointer-events-none",
+  };
 
   useEffect(() => {
     if (!loading && !user) setLocation("/login");
@@ -3104,7 +3127,7 @@ export default function ScanResultsPage() {
   if (loading || !user) return null;
 
   if (scanLoading) return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+    <div className={`min-h-screen ${t.page} flex items-center justify-center`}>
       <div className="text-center space-y-4">
         <div className="w-12 h-12 rounded-2xl glass flex items-center justify-center mx-auto">
           <Loader2 className="w-5 h-5 text-white/60 animate-spin" />
@@ -3115,13 +3138,13 @@ export default function ScanResultsPage() {
   );
 
   if (!scan) return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+    <div className={`min-h-screen ${t.page} flex items-center justify-center`}>
       <p className="text-white/25">Report not found</p>
     </div>
   );
 
   if (scan.status === "running") return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+    <div className={`min-h-screen ${t.page} flex items-center justify-center`}>
       <div className="text-center space-y-6 max-w-sm px-6">
         <div className="w-16 h-16 rounded-3xl glass flex items-center justify-center mx-auto relative">
           <Loader2 className="w-7 h-7 text-white/60 animate-spin" />
@@ -3158,7 +3181,7 @@ export default function ScanResultsPage() {
       }
     };
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+      <div className={`min-h-screen ${t.page} flex items-center justify-center`}>
         <div className="text-center space-y-5 max-w-sm px-6">
           <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
             <XCircle className="w-6 h-6 text-red-400" />
@@ -3212,25 +3235,32 @@ export default function ScanResultsPage() {
   const aiCount = agentFiltered.filter((i) => !i.sourceEvidence || i.sourceEvidence === "ai_reasoning").length;
 
   return (
-    <div className="min-h-screen bg-[#050505]">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.04)_0%,_transparent_60%)] pointer-events-none" />
+    <div className={`min-h-screen ${t.page}`}>
+      <div className={t.ambient} />
 
-      <nav className="border-b border-white/[0.07] bg-[#050505]/90 backdrop-blur-2xl sticky top-0 z-10">
+      <nav className={`border-b sticky top-0 z-10 ${t.nav}`}>
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-3">
-          <Link href="/dashboard" className="text-white/30 hover:text-white transition-colors">
+          <Link href="/dashboard" className={t.navText}>
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover" />
-            <span className="text-white font-bold font-['Syne'] text-sm">Launch Report</span>
+            <span className={t.navBrand}>Launch Report</span>
           </div>
-          <span className="text-white/20 text-xs ml-2 truncate hidden sm:block max-w-xs">{scan.sourceInput}</span>
+          <span className={t.navMeta}>{scan.sourceInput}</span>
           <div className="ml-auto flex items-center gap-2">
             {scan.score != null && (
               <ShareBadgeButton scan={scan} />
             )}
+            <button
+              onClick={() => setTheme(isLight ? "dark" : "light")}
+              className={`flex items-center justify-center w-7 h-7 rounded-lg border transition-all ${t.toggle}`}
+              aria-label="Toggle theme"
+            >
+              {isLight ? <Moon className="w-3 h-3" /> : <Sun className="w-3 h-3" />}
+            </button>
             <Link href="/portfolio">
-              <button className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/15">
+              <button className={t.navBtn}>
                 <BarChart3 className="w-3 h-3" />Portfolio
               </button>
             </Link>
@@ -3279,7 +3309,7 @@ export default function ScanResultsPage() {
         <LockedInsightsPanel scan={scan} plan={user.plan} />
 
         {/* ── Section Tab Navigation ───────────────────────── */}
-        <div className="sticky top-[57px] z-[9] -mx-6 px-6 py-2.5 bg-[#050505]/95 backdrop-blur-2xl border-b border-white/[0.06]">
+        <div className={`sticky top-[57px] z-[9] -mx-6 px-6 py-2.5 ${t.tabBar}`}>
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-4xl">
             {[
               { id: "overview", label: "Overview" },
@@ -3292,14 +3322,12 @@ export default function ScanResultsPage() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-1.5 whitespace-nowrap text-xs px-3 py-1.5 rounded-lg transition-all font-medium shrink-0 ${
-                  activeTab === tab.id
-                    ? "bg-white/[0.1] border border-white/20 text-white"
-                    : "text-white/35 hover:text-white/60 hover:bg-white/[0.04]"
+                  activeTab === tab.id ? t.tabActive : t.tabInactive
                 }`}
               >
                 {tab.label}
                 {tab.count !== undefined && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === tab.id ? "bg-white/15 text-white/80" : "bg-white/[0.07] text-white/30"}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === tab.id ? t.tabCountActive : t.tabCountInactive}`}>
                     {tab.count}
                   </span>
                 )}

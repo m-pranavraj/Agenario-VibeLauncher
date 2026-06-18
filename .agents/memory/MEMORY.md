@@ -11,3 +11,6 @@
 - [scanLimiter scope](scan-rate-limiter.md) — app.use("/api/scans", scanLimiter) applies to GETs too; must gate only POST methods or GET polling exhausts the 30/hr limit instantly.
 - [Evidence Standard schema](evidence-standard.md) — scan_issues has 6 new nullable cols (file_path, line_number, code_snippet, impact_statement, retest_result, source_evidence); AgentIssue is now exported from agents.ts; agents output all 11 Evidence Standard fields.
 - [Agent roster](agent-roster.md) — 15 agents in AGENTS[]; "Competitive Gap Analysis" replaced by "Business Logic Attack Lab"; "AI Code Quality" has VibeCode tool pattern database (Replit/Cursor/Lovable/Bolt/Copilot signatures).
+- [use-scans hook](use-scans-hook.md) — useScans() hook lives at src/hooks/use-scans.ts (was missing); wraps api.scans.list() with user guard, returns { scans, loading, error }.
+- [Admin stats endpoint](admin-stats.md) — GET /api/admin/stats locked via ADMIN_EMAIL env var; checks session user email vs env var; returns user/plan/scan/monthly breakdown.
+- [Security agent accuracy](security-agent-accuracy.md) — Security agent hallucinated secrets findings conflicting with static scanner; fixed by adding explicit SCOPE RESTRICTION to its prompt: do NOT report secrets, defer entirely to Secret Scanner V2.
