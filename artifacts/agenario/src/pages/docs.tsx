@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
-import { useIsLight } from "@/hooks/use-is-light";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Github, Zap, Terminal, Code2, Globe, Package,
@@ -58,7 +57,6 @@ function useActiveSection(sectionIds: string[]) {
 
 function CodeBlock({ code, lang = "bash", filename }: { code: string; lang?: string; filename?: string }) {
   const [copied, setCopied] = useState(false);
-  const isLight = useIsLight();
 
   const langColors: Record<string, string> = {
     bash: "text-emerald-400/70",
@@ -79,8 +77,8 @@ function CodeBlock({ code, lang = "bash", filename }: { code: string; lang?: str
   };
 
   return (
-    <div className={`rounded-2xl overflow-hidden border shadow-2xl ${isLight ? "bg-gray-900 border-gray-700" : "bg-gradient-to-b from-white/[0.03] to-black/40 border-white/[0.08]"}`}>
-      <div className={`flex items-center justify-between px-4 py-2.5 border-b ${isLight ? "border-gray-700 bg-black/20" : "border-white/[0.07] bg-white/[0.02]"}`}>
+    <div className={`rounded-2xl overflow-hidden border shadow-2xl ${"bg-gradient-to-b from-white/[0.03] to-black/40 border-white/[0.08]"}`}>
+      <div className={`flex items-center justify-between px-4 py-2.5 border-b ${"border-white/[0.07] bg-white/[0.02]"}`}>
         <div className="flex items-center gap-2.5">
           <div className="flex gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
@@ -88,7 +86,7 @@ function CodeBlock({ code, lang = "bash", filename }: { code: string; lang?: str
             <span className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
           </div>
           {filename && (
-            <span className={`text-[11px] font-mono ml-1 ${isLight ? "text-gray-300" : "text-white/35"}`}>{filename}</span>
+            <span className={`text-[11px] font-mono ml-1 ${"text-white/35"}`}>{filename}</span>
           )}
         </div>
         <div className="flex items-center gap-3">
@@ -102,7 +100,7 @@ function CodeBlock({ code, lang = "bash", filename }: { code: string; lang?: str
               setCopied(true);
               setTimeout(() => setCopied(false), 2000);
             }}
-            className={`flex items-center gap-1.5 text-[11px] transition-colors px-2 py-1 rounded-lg ${isLight ? "text-gray-400 hover:text-white hover:bg-white/[0.05]" : "text-white/40 hover:text-white hover:bg-white/[0.05]"}`}
+            className={`flex items-center gap-1.5 text-[11px] transition-colors px-2 py-1 rounded-lg ${"text-white/40 hover:text-white hover:bg-white/[0.05]"}`}
           >
             {copied ? <><CheckCheck className="w-3 h-3 text-green-400" /><span className="text-green-400">Copied</span></> : <><Copy className="w-3 h-3" />Copy</>}
           </button>
@@ -114,37 +112,35 @@ function CodeBlock({ code, lang = "bash", filename }: { code: string; lang?: str
 }
 
 function SectionHeader({ number, title, desc }: { number: string; title: string; desc?: string }) {
-  const isLight = useIsLight();
   return (
     <div className="flex items-start gap-4 pb-2">
-      <span className={`flex-shrink-0 w-8 h-8 rounded-xl bg-gradient-to-br border flex items-center justify-center text-xs font-bold font-mono ${isLight ? "from-violet-500/10 to-indigo-500/10 border-violet-500/20 text-violet-600" : "from-violet-500/20 to-indigo-500/20 border-violet-500/25 text-violet-400"}`}>
+      <span className={`flex-shrink-0 w-8 h-8 rounded-xl bg-gradient-to-br border flex items-center justify-center text-xs font-bold font-mono ${"from-violet-500/20 to-indigo-500/20 border-violet-500/25 text-violet-400"}`}>
         {number}
       </span>
       <div>
-        <h2 className={`text-xl font-bold font-['Syne'] tracking-tight ${isLight ? "text-gray-900" : "text-white"}`}>{title}</h2>
-        {desc && <p className={`text-sm mt-0.5 leading-relaxed ${isLight ? "text-gray-500" : "text-white/40"}`}>{desc}</p>}
+        <h2 className={`text-xl font-bold font-['Syne'] tracking-tight ${"text-white"}`}>{title}</h2>
+        {desc && <p className={`text-sm mt-0.5 leading-relaxed ${"text-white/40"}`}>{desc}</p>}
       </div>
     </div>
   );
 }
 
 function Callout({ type, children }: { type: "info" | "warning" | "tip" | "success"; children: React.ReactNode }) {
-  const isLight = useIsLight();
   const configs = {
     info: { 
-      cls: isLight ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-blue-500/[0.06] border-blue-500/20 text-blue-300", 
+      cls: "bg-blue-500/[0.06] border-blue-500/20 text-blue-300", 
       icon: "ℹ️" 
     },
     warning: { 
-      cls: isLight ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-amber-500/[0.06] border-amber-500/20 text-amber-300", 
+      cls: "bg-amber-500/[0.06] border-amber-500/20 text-amber-300", 
       icon: "⚠️" 
     },
     tip: { 
-      cls: isLight ? "bg-violet-50 border-violet-200 text-violet-700" : "bg-violet-500/[0.06] border-violet-500/20 text-violet-300", 
+      cls: "bg-violet-500/[0.06] border-violet-500/20 text-violet-300", 
       icon: "💡" 
     },
     success: { 
-      cls: isLight ? "bg-green-50 border-green-200 text-green-700" : "bg-green-500/[0.06] border-green-500/20 text-green-300", 
+      cls: "bg-green-500/[0.06] border-green-500/20 text-green-300", 
       icon: "✅" 
     },
   };
@@ -158,15 +154,14 @@ function Callout({ type, children }: { type: "info" | "warning" | "tip" | "succe
 }
 
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
-  const isLight = useIsLight();
   return (
     <div className="flex gap-4">
       <div className="flex flex-col items-center">
-        <span className={`w-7 h-7 rounded-full border flex items-center justify-center text-xs font-bold flex-shrink-0 ${isLight ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white/[0.07] border-white/[0.12] text-white/60"}`}>{n}</span>
-        <div className={`w-px flex-1 mt-2 ${isLight ? "bg-gray-200" : "bg-white/[0.06]"}`} />
+        <span className={`w-7 h-7 rounded-full border flex items-center justify-center text-xs font-bold flex-shrink-0 ${"bg-white/[0.07] border-white/[0.12] text-white/60"}`}>{n}</span>
+        <div className={`w-px flex-1 mt-2 ${"bg-white/[0.06]"}`} />
       </div>
       <div className="pb-6 flex-1">
-        <h3 className={`text-sm font-bold mb-2 ${isLight ? "text-gray-900" : "text-white"}`}>{title}</h3>
+        <h3 className={`text-sm font-bold mb-2 ${"text-white"}`}>{title}</h3>
         <div className="space-y-3">{children}</div>
       </div>
     </div>
@@ -174,59 +169,57 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 }
 
 function EndpointRow({ method, path, desc }: { method: "GET" | "POST" | "DELETE"; path: string; desc: string }) {
-  const isLight = useIsLight();
   const colors = { 
-    GET: isLight ? "text-green-700 bg-green-50 border-green-200" : "text-green-400 bg-green-500/10 border-green-500/20", 
-    POST: isLight ? "text-blue-700 bg-blue-50 border-blue-200" : "text-blue-400 bg-blue-500/10 border-blue-500/20", 
-    DELETE: isLight ? "text-red-700 bg-red-50 border-red-200" : "text-red-400 bg-red-500/10 border-red-500/20" 
+    GET: "text-green-400 bg-green-500/10 border-green-500/20", 
+    POST: "text-blue-400 bg-blue-500/10 border-blue-500/20", 
+    DELETE: "text-red-400 bg-red-500/10 border-red-500/20" 
   };
   return (
-    <div className={`flex items-start gap-3 py-3 border-b last:border-0 ${isLight ? "border-gray-100" : "border-white/[0.05]"}`}>
+    <div className={`flex items-start gap-3 py-3 border-b last:border-0 ${"border-white/[0.05]"}`}>
       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border font-mono flex-shrink-0 ${colors[method]}`}>{method}</span>
-      <code className={`text-sm font-mono flex-1 ${isLight ? "text-gray-700" : "text-white/70"}`}>{path}</code>
-      <span className={`text-xs text-right max-w-[180px] hidden sm:block ${isLight ? "text-gray-400" : "text-white/30"}`}>{desc}</span>
+      <code className={`text-sm font-mono flex-1 ${"text-white/70"}`}>{path}</code>
+      <span className={`text-xs text-right max-w-[180px] hidden sm:block ${"text-white/30"}`}>{desc}</span>
     </div>
   );
 }
 
 export default function DocsPage() {
-  const isLight = useIsLight();
   const activeSection = useActiveSection(SECTIONS.map((s) => s.id));
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
-    <div className={`min-h-screen ${isLight ? "bg-white text-gray-900" : "bg-[#050505] text-white"}`}>
-      <div className={`fixed inset-0 pointer-events-none ${isLight ? "bg-[radial-gradient(ellipse_at_top_left,_rgba(139,92,246,0.03)_0%,_transparent_55%)]" : "bg-[radial-gradient(ellipse_at_top_left,_rgba(139,92,246,0.06)_0%,_transparent_55%)]"}`} />
+    <div className={`min-h-screen ${"bg-[#050505] text-white"}`}>
+      <div className={`fixed inset-0 pointer-events-none ${"bg-[radial-gradient(ellipse_at_top_left,_rgba(139,92,246,0.06)_0%,_transparent_55%)]"}`} />
 
       {/* Top navbar */}
-      <nav className={`fixed top-0 w-full z-50 border-b backdrop-blur-2xl ${isLight ? "border-gray-200 bg-white/85" : "border-white/[0.06] bg-[#050505]/85"}`}>
+      <nav className={`fixed top-0 w-full z-50 border-b backdrop-blur-2xl ${"border-white/[0.06] bg-[#050505]/85"}`}>
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className={`flex items-center gap-2 transition-colors ${isLight ? "text-gray-400 hover:text-gray-900" : "text-white/40 hover:text-white"}`}>
+            <Link href="/" className={`flex items-center gap-2 transition-colors ${"text-white/40 hover:text-white"}`}>
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div className={`w-px h-4 ${isLight ? "bg-gray-200" : "bg-white/[0.1]"}`} />
+            <div className={`w-px h-4 ${"bg-white/[0.1]"}`} />
             <Link href="/" className="flex items-center gap-2">
               <img src="/logo.png" alt="Agenario" className="w-6 h-6 rounded-lg object-cover" />
-              <span className={`font-bold text-sm font-['Syne'] ${isLight ? "text-gray-900" : "text-white"}`}>Agenario</span>
+              <span className={`font-bold text-sm font-['Syne'] ${"text-white"}`}>Agenario</span>
             </Link>
-            <ChevronRight className={`w-3.5 h-3.5 ${isLight ? "text-gray-300" : "text-white/20"}`} />
-            <span className={`text-sm hidden sm:block ${isLight ? "text-gray-500" : "text-white/40"}`}>Documentation</span>
+            <ChevronRight className={`w-3.5 h-3.5 ${"text-white/20"}`} />
+            <span className={`text-sm hidden sm:block ${"text-white/40"}`}>Documentation</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="hidden sm:flex items-center gap-1.5 text-[11px] text-green-400/70 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               API Online
             </span>
-            <span className={`hidden sm:block text-[11px] px-2 py-1 rounded-lg border font-mono ${isLight ? "bg-gray-50 border-gray-200 text-gray-400" : "bg-white/[0.05] border-white/[0.08] text-white/30"}`}>v2.1</span>
+            <span className={`hidden sm:block text-[11px] px-2 py-1 rounded-lg border font-mono ${"bg-white/[0.05] border-white/[0.08] text-white/30"}`}>v2.1</span>
             <Link href="/register">
-              <button className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white text-black hover:bg-white/90"}`}>
+              <button className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${"bg-white text-black hover:bg-white/90"}`}>
                 Get Started Free
               </button>
             </Link>
             {/* Mobile nav toggle */}
             <button
-              className={`md:hidden flex items-center justify-center w-8 h-8 rounded-lg border ${isLight ? "border-gray-200 bg-gray-50 text-gray-600" : "border-white/[0.1] bg-white/[0.04] text-white/60"}`}
+              className={`md:hidden flex items-center justify-center w-8 h-8 rounded-lg border ${"border-white/[0.1] bg-white/[0.04] text-white/60"}`}
               onClick={() => setMobileNavOpen((v) => !v)}
             >
               {mobileNavOpen ? <X className="w-3.5 h-3.5" /> : <Menu className="w-3.5 h-3.5" />}
@@ -237,9 +230,9 @@ export default function DocsPage() {
 
       <div className="flex pt-14 max-w-7xl mx-auto">
         {/* Sidebar — desktop */}
-        <aside className={`hidden md:flex w-64 flex-col flex-shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-8 pr-4 pl-6 border-r ${isLight ? "border-gray-200 bg-gray-50" : "border-white/[0.05]"}`}>
+        <aside className={`hidden md:flex w-64 flex-col flex-shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-8 pr-4 pl-6 border-r ${"border-white/[0.05]"}`}>
           <div className="mb-6">
-            <p className={`text-[10px] uppercase tracking-widest font-semibold mb-3 ${isLight ? "text-gray-400" : "text-white/20"}`}>Getting Started</p>
+            <p className={`text-[10px] uppercase tracking-widest font-semibold mb-3 ${"text-white/20"}`}>Getting Started</p>
           </div>
           <nav className="space-y-1">
             {SECTIONS.map((s) => {
@@ -251,33 +244,33 @@ export default function DocsPage() {
                   href={`#${s.id}`}
                   className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
                     isActive
-                      ? (isLight ? "bg-violet-50 text-violet-700 border border-violet-200" : "bg-white/[0.07] text-white border border-white/[0.1]")
-                      : (isLight ? "text-gray-500 hover:text-gray-900 hover:bg-gray-100" : "text-white/40 hover:text-white/70 hover:bg-white/[0.03]")
+                      ? ("bg-white/[0.07] text-white border border-white/[0.1]")
+                      : ("text-white/40 hover:text-white/70 hover:bg-white/[0.03]")
                   }`}
                 >
-                  <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${isActive ? (isLight ? "text-violet-600" : "text-violet-400") : (isLight ? "text-gray-400 group-hover:text-gray-600" : "text-white/25 group-hover:text-white/40")}`} />
+                  <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${isActive ? ("text-violet-400") : ("text-white/25 group-hover:text-white/40")}`} />
                   <span className="flex-1 font-medium">{s.label}</span>
                   {s.badge && (
                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide ${
-                      s.badge === "New" ? (isLight ? "bg-violet-100 text-violet-600" : "bg-violet-500/20 text-violet-400") : (isLight ? "bg-gray-200 text-gray-500" : "bg-white/[0.06] text-white/25")
+                      s.badge === "New" ? ("bg-violet-500/20 text-violet-400") : ("bg-white/[0.06] text-white/25")
                     }`}>{s.badge}</span>
                   )}
-                  {isActive && <div className={`w-1 h-1 rounded-full ${isLight ? "bg-violet-600" : "bg-violet-400"}`} />}
+                  {isActive && <div className={`w-1 h-1 rounded-full ${"bg-violet-400"}`} />}
                 </a>
               );
             })}
           </nav>
 
-          <div className={`mt-8 pt-6 border-t ${isLight ? "border-gray-200" : "border-white/[0.06]"}`}>
-            <p className={`text-[10px] uppercase tracking-widest font-semibold mb-3 ${isLight ? "text-gray-400" : "text-white/20"}`}>Analysis Dimensions</p>
+          <div className={`mt-8 pt-6 border-t ${"border-white/[0.06]"}`}>
+            <p className={`text-[10px] uppercase tracking-widest font-semibold mb-3 ${"text-white/20"}`}>Analysis Dimensions</p>
             <div className="space-y-2">
               {FEATURES_OVERVIEW.map((f) => {
                 const Icon = f.icon;
                 return (
                   <div key={f.label} className="flex items-center gap-2.5 px-3 py-1.5">
-                    <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isLight ? "text-gray-400" : "text-white/20"}`} />
+                    <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${"text-white/20"}`} />
                     <div>
-                      <p className={`text-[11px] font-medium ${isLight ? "text-gray-500" : "text-white/40"}`}>{f.label}</p>
+                      <p className={`text-[11px] font-medium ${"text-white/40"}`}>{f.label}</p>
                     </div>
                   </div>
                 );
@@ -293,9 +286,9 @@ export default function DocsPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className={`md:hidden fixed inset-0 top-14 z-40 backdrop-blur-xl p-6 overflow-y-auto ${isLight ? "bg-white/95" : "bg-[#050505]/95"}`}
+              className={`md:hidden fixed inset-0 top-14 z-40 backdrop-blur-xl p-6 overflow-y-auto ${"bg-[#050505]/95"}`}
             >
-              <p className={`text-[10px] uppercase tracking-widest font-semibold mb-4 ${isLight ? "text-gray-400" : "text-white/20"}`}>Jump to Section</p>
+              <p className={`text-[10px] uppercase tracking-widest font-semibold mb-4 ${"text-white/20"}`}>Jump to Section</p>
               <nav className="space-y-1">
                 {SECTIONS.map((s) => {
                   const Icon = s.icon;
@@ -304,11 +297,11 @@ export default function DocsPage() {
                       key={s.id}
                       href={`#${s.id}`}
                       onClick={() => setMobileNavOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all ${isLight ? "text-gray-600 hover:text-gray-900 hover:bg-gray-100" : "text-white/50 hover:text-white hover:bg-white/[0.05]"}`}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all ${"text-white/50 hover:text-white hover:bg-white/[0.05]"}`}
                     >
-                      <Icon className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/25"}`} />
+                      <Icon className={`w-4 h-4 ${"text-white/25"}`} />
                       {s.label}
-                      {s.badge && <span className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase ${isLight ? "bg-gray-200 text-gray-500" : "bg-white/[0.06] text-white/25"}`}>{s.badge}</span>}
+                      {s.badge && <span className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase ${"bg-white/[0.06] text-white/25"}`}>{s.badge}</span>}
                     </a>
                   );
                 })}
@@ -323,31 +316,31 @@ export default function DocsPage() {
           {/* Docs hero */}
           <motion.div initial="hidden" animate="show" variants={STAGGER} className="space-y-5">
             <motion.div variants={FADE_UP} className="flex flex-wrap items-center gap-2">
-              <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full border ${isLight ? "bg-violet-50 border-violet-200 text-violet-600" : "bg-violet-500/10 border-violet-500/20 text-violet-400"}`}>
+              <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full border ${"bg-violet-500/10 border-violet-500/20 text-violet-400"}`}>
                 <Sparkles className="w-3 h-3" /> Developer Documentation
               </span>
-              <span className={`inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full border ${isLight ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white/[0.05] border-white/[0.08] text-white/30"}`}>
+              <span className={`inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full border ${"bg-white/[0.05] border-white/[0.08] text-white/30"}`}>
                 REST API · Webhooks · CI/CD
               </span>
             </motion.div>
-            <motion.h1 variants={FADE_UP} className={`text-4xl font-bold font-['Syne'] leading-tight ${isLight ? "text-gray-900" : "text-white"}`}>
+            <motion.h1 variants={FADE_UP} className={`text-4xl font-bold font-['Syne'] leading-tight ${"text-white"}`}>
               Integrate Agenario<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-indigo-400 to-blue-400">
                 everywhere you ship.
               </span>
             </motion.h1>
-            <motion.p variants={FADE_UP} className={`text-base leading-relaxed max-w-xl ${isLight ? "text-gray-600" : "text-white/45"}`}>
+            <motion.p variants={FADE_UP} className={`text-base leading-relaxed max-w-xl ${"text-white/45"}`}>
               Connect Agenario to your CI/CD pipeline, IDE, deployment platform, or custom toolchain. Full REST API with HMAC webhook support.
             </motion.p>
             <motion.div variants={FADE_UP} className="grid sm:grid-cols-3 gap-3">
               {[
-                { label: "API Endpoints", value: "12+", color: isLight ? "text-violet-600" : "text-violet-400" },
-                { label: "Compliance Frameworks", value: "8", color: isLight ? "text-blue-600" : "text-blue-400" },
-                { label: "Analysis Dimensions", value: "10", color: isLight ? "text-emerald-600" : "text-emerald-400" },
+                { label: "API Endpoints", value: "12+", color: "text-violet-400" },
+                { label: "Compliance Frameworks", value: "8", color: "text-blue-400" },
+                { label: "Analysis Dimensions", value: "10", color: "text-emerald-400" },
               ].map((stat) => (
-                <div key={stat.label} className={`rounded-xl p-4 border ${isLight ? "bg-gray-50 border-gray-200" : "glass border-white/[0.07]"}`}>
+                <div key={stat.label} className={`rounded-xl p-4 border ${"glass border-white/[0.07]"}`}>
                   <div className={`text-2xl font-bold font-['Syne'] ${stat.color}`}>{stat.value}</div>
-                  <div className={`text-xs mt-0.5 ${isLight ? "text-gray-500" : "text-white/30"}`}>{stat.label}</div>
+                  <div className={`text-xs mt-0.5 ${"text-white/30"}`}>{stat.label}</div>
                 </div>
               ))}
             </motion.div>
@@ -358,21 +351,21 @@ export default function DocsPage() {
             <SectionHeader number="01" title="Quickstart" desc="From zero to your first scan report in under 5 minutes." />
 
             <Step n={1} title="Create your account">
-              <p className={`text-sm ${isLight ? "text-gray-600" : "text-white/45"}`}>Sign up at <Link href="/register" className="text-violet-400 hover:underline">agenario.app/register</Link> — free plan includes 2 scans/month with no credit card required.</p>
+              <p className={`text-sm ${"text-white/45"}`}>Sign up at <Link href="/register" className="text-violet-400 hover:underline">agenario.app/register</Link> — free plan includes 2 scans/month with no credit card required.</p>
             </Step>
 
             <Step n={2} title="Submit your app for analysis">
-              <p className={`text-sm mb-3 ${isLight ? "text-gray-600" : "text-white/45"}`}>Paste a GitHub URL, upload a ZIP, enter a live URL, or describe your stack. Agenario works with any framework or language.</p>
+              <p className={`text-sm mb-3 ${"text-white/45"}`}>Paste a GitHub URL, upload a ZIP, enter a live URL, or describe your stack. Agenario works with any framework or language.</p>
               <Callout type="tip">
                 <strong>Best accuracy:</strong> Provide a GitHub repo URL. Agenario can analyze your full codebase including package.json, .env examples, and API route definitions.
               </Callout>
             </Step>
 
             <Step n={3} title="Read your board-memo report">
-              <p className={`text-sm ${isLight ? "text-gray-600" : "text-white/45"}`}>You get a 0–100 Launch Readiness Score, top 3 action plan, 8-framework compliance audit, revenue intelligence, and 1-click fix prompts ready to paste into Cursor, Bolt, or Lovable.</p>
+              <p className={`text-sm ${"text-white/45"}`}>You get a 0–100 Launch Readiness Score, top 3 action plan, 8-framework compliance audit, revenue intelligence, and 1-click fix prompts ready to paste into Cursor, Bolt, or Lovable.</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {["Launch Score 0-100", "10 Analysis Dimensions", "8 Compliance Frameworks", "Revenue Leak Detector", "1-Click Fix Prompts", "Risk Forecast"].map((f) => (
-                  <div key={f} className={`flex items-center gap-2 text-xs border rounded-xl px-3 py-2 ${isLight ? "text-gray-600 bg-gray-50 border-gray-200" : "text-white/45 bg-white/[0.03] border-white/[0.07]"}`}>
+                  <div key={f} className={`flex items-center gap-2 text-xs border rounded-xl px-3 py-2 ${"text-white/45 bg-white/[0.03] border-white/[0.07]"}`}>
                     <CheckCircle className="w-3 h-3 text-green-400/60 flex-shrink-0" />
                     {f}
                   </div>
@@ -381,7 +374,7 @@ export default function DocsPage() {
             </Step>
 
             <Callout type="success">
-              First scan? Try submitting <code className={`px-1.5 py-0.5 rounded text-xs font-mono ${isLight ? "bg-violet-100 text-violet-700" : "bg-white/[0.07] text-violet-300"}`}>github.com/your-username/your-app</code> — results arrive in ~45 seconds.
+              First scan? Try submitting <code className={`px-1.5 py-0.5 rounded text-xs font-mono ${"bg-white/[0.07] text-violet-300"}`}>github.com/your-username/your-app</code> — results arrive in ~45 seconds.
             </Callout>
           </section>
 
@@ -448,11 +441,11 @@ jobs:
               ].map((f) => {
                 const Icon = f.icon;
                 return (
-                  <div key={f.label} className={`rounded-xl p-4 flex items-start gap-3 border ${isLight ? "bg-gray-50 border-gray-200 shadow-sm" : "glass border-white/[0.07]"}`}>
+                  <div key={f.label} className={`rounded-xl p-4 flex items-start gap-3 border ${"glass border-white/[0.07]"}`}>
                     <Icon className="w-4 h-4 text-violet-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className={`text-sm font-semibold ${isLight ? "text-gray-900" : "text-white"}`}>{f.label}</p>
-                      <p className={`text-xs mt-0.5 ${isLight ? "text-gray-500" : "text-white/35"}`}>{f.desc}</p>
+                      <p className={`text-sm font-semibold ${"text-white"}`}>{f.label}</p>
+                      <p className={`text-xs mt-0.5 ${"text-white/35"}`}>{f.desc}</p>
                     </div>
                   </div>
                 );
@@ -464,13 +457,13 @@ jobs:
           <section id="api" className="scroll-mt-20 space-y-6">
             <SectionHeader number="03" title="REST API Reference" desc="Full programmatic access to scan submission, results, and portfolio data." />
 
-            <div className={`rounded-2xl overflow-hidden border ${isLight ? "bg-white border-gray-200 shadow-sm" : "glass border-white/[0.08]"}`}>
-              <div className={`px-5 py-3.5 border-b flex items-center gap-3 ${isLight ? "border-gray-100 bg-gray-50/50" : "border-white/[0.07]"}`}>
-                <Terminal className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
-                <span className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white"}`}>Endpoints</span>
-                <span className={`ml-auto text-[10px] font-mono ${isLight ? "text-gray-400" : "text-white/25"}`}>Base: /api</span>
+            <div className={`rounded-2xl overflow-hidden border ${"glass border-white/[0.08]"}`}>
+              <div className={`px-5 py-3.5 border-b flex items-center gap-3 ${"border-white/[0.07]"}`}>
+                <Terminal className={`w-4 h-4 ${"text-white/30"}`} />
+                <span className={`text-sm font-bold ${"text-white"}`}>Endpoints</span>
+                <span className={`ml-auto text-[10px] font-mono ${"text-white/25"}`}>Base: /api</span>
               </div>
-              <div className={`px-5 divide-y ${isLight ? "divide-gray-100" : "divide-white/[0.04]"}`}>
+              <div className={`px-5 divide-y ${"divide-white/[0.04]"}`}>
                 <EndpointRow method="POST" path="/auth/register" desc="Create account" />
                 <EndpointRow method="POST" path="/auth/login" desc="Authenticate" />
                 <EndpointRow method="GET"  path="/auth/me" desc="Current user" />

@@ -5,14 +5,13 @@ import {
   ArrowRight, XCircle, Code2, FileText, BarChart,
   Check, ShieldAlert, Cpu, Star, Users, Building2,
   BadgeCheck, Scale, Database, Fingerprint, CreditCard,
-  ChevronRight, Sparkles, Menu, Sun, Moon,
+  ChevronRight, Sparkles, Menu,
   Layers, GitBranch, Telescope, Wand2, FlaskConical,
   Target, Flame, Bug, BarChart2, Shield, X,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useTheme } from "next-themes";
 import type { Variants } from "framer-motion";
 
 /* ── Animation variants ─────────────────────────────────────── */
@@ -209,43 +208,38 @@ export default function Home() {
   const yWave1   = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
   const yWave2   = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-  const isLight = mounted ? resolvedTheme === "light" : false;
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
   /* ── theme class helper ─────────────────────────────────── */
   const t = {
-    page:       isLight ? "bg-[#fdf4f8] text-gray-900" : "bg-[#050505] text-white",
-    nav:        isLight ? "border-pink-100/70 bg-white/90 backdrop-blur-2xl" : "border-white/[0.06] bg-[#050505]/80 backdrop-blur-2xl",
-    navLink:    isLight ? "text-gray-500 hover:text-gray-900" : "text-white/45 hover:text-white",
-    navLogo:    isLight ? "text-gray-900" : "text-white",
-    mobileMenu: isLight ? "bg-white/95 border-t border-pink-100/50 backdrop-blur-2xl" : "bg-[#050505]/95 border-t border-white/[0.06] backdrop-blur-2xl",
-    mobileLink: isLight ? "text-gray-600 hover:text-gray-900 hover:bg-pink-50" : "text-white/55 hover:text-white hover:bg-white/[0.05]",
-    label:      isLight ? "text-gray-400 uppercase tracking-widest text-xs font-medium" : "text-white/35 uppercase tracking-widest text-xs font-medium",
-    h1:         isLight ? "text-gray-900" : "text-white",
-    h2:         isLight ? "text-gray-900" : "text-white",
-    h2dim:      isLight ? "text-gray-400" : "text-white/40",
-    body:       isLight ? "text-gray-600" : "text-white/50",
-    bodyDim:    isLight ? "text-gray-400" : "text-white/30",
-    card:       isLight ? "bg-white/90 border border-pink-100/80 shadow-[0_2px_16px_rgba(236,72,153,0.06)] backdrop-blur-sm" : "glass",
-    cardHover:  isLight ? "hover:shadow-[0_4px_24px_rgba(236,72,153,0.1)] hover:-translate-y-1 transition-all" : "glass-hover transition-all",
-    sectionBg:  isLight ? "bg-pink-50/50 border-y border-pink-100/60" : "bg-white/[0.015] border-y border-white/[0.06]",
-    pill:       isLight ? "bg-white border border-pink-100/80 text-gray-600 shadow-sm" : "bg-white/[0.06] border border-white/[0.1] text-white/60",
-    pillActive: isLight ? "bg-pink-50 border-pink-200/60 text-pink-700" : "bg-violet-500/[0.08] border-violet-500/20 text-violet-300/80",
-    primaryBtn: isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white text-black hover:bg-white/90",
-    secondaryBtn: isLight ? "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50" : "bg-white/[0.06] border border-white/[0.1] text-white hover:bg-white/[0.1]",
-    auroraCard: isLight ? "" : "aurora-card",
-    toggleBg:   isLight ? "bg-amber-50 border-amber-200/60 text-amber-600" : "bg-white/[0.06] border-white/[0.1] text-white/50",
+    page:       "bg-[#050505] text-white",
+    nav:        "border-white/[0.06] bg-[#050505]/80 backdrop-blur-2xl",
+    navLink:    "text-white/45 hover:text-white",
+    navLogo:    "text-white",
+    mobileMenu: "bg-[#050505]/95 border-t border-white/[0.06] backdrop-blur-2xl",
+    mobileLink: "text-white/55 hover:text-white hover:bg-white/[0.05]",
+    label:      "text-white/35 uppercase tracking-widest text-xs font-medium",
+    h1:         "text-white",
+    h2:         "text-white",
+    h2dim:      "text-white/40",
+    body:       "text-white/50",
+    bodyDim:    "text-white/30",
+    card:       "glass",
+    cardHover:  "glass-hover transition-all",
+    sectionBg:  "bg-white/[0.015] border-y border-white/[0.06]",
+    pill:       "bg-white/[0.06] border border-white/[0.1] text-white/60",
+    pillActive: "bg-violet-500/[0.08] border-violet-500/20 text-violet-300/80",
+    primaryBtn: "bg-white text-black hover:bg-white/90",
+    secondaryBtn: "bg-white/[0.06] border border-white/[0.1] text-white hover:bg-white/[0.1]",
+    auroraCard: "aurora-card",
   };
 
   return (
-    <div className={`min-h-screen overflow-x-hidden font-sans ${t.page} ${isLight ? "selection:bg-pink-200/50 selection:text-gray-900" : "selection:bg-violet-500/20 selection:text-white"}`}>
+    <div className={`min-h-screen overflow-x-hidden font-sans ${t.page} ${"selection:bg-violet-500/20 selection:text-white"}`}>
 
       {/* ── Ambient background ───────────────────────────────── */}
-      {isLight ? (
+      {false ? (
         <>
           <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
             <motion.div
@@ -299,17 +293,6 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            {/* Theme toggle */}
-            <motion.button
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.93 }}
-              onClick={() => setTheme(isLight ? "dark" : "light")}
-              className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all ${t.toggleBg}`}
-              aria-label="Toggle theme"
-            >
-              {isLight ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
-            </motion.button>
-
             {user ? (
               <motion.button
                 whileHover={{ scale: 1.03 }}
@@ -400,9 +383,7 @@ export default function Home() {
 
               <motion.h1 variants={FADE_UP} className={`text-4xl sm:text-5xl lg:text-6xl font-heading font-extrabold leading-[1.05] tracking-tight ${t.h1}`}>
                 Ship your AI app<br />
-                <span className={isLight
-                  ? "text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-violet-500 to-indigo-500"
-                  : "text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40"
+                <span className={"text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40"
                 }>
                   with certainty.
                 </span>
@@ -412,12 +393,12 @@ export default function Home() {
                 Your AI wrote the code. Agenario decides if it's production-ready. 10 parallel agent dimensions — compliance, revenue, security, performance, UX, and more — before launch day surprises hit.
               </motion.p>
 
-              <motion.div variants={FADE_UP} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${isLight ? "bg-green-50 border border-green-200/60 text-green-700" : "bg-green-500/[0.08] border border-green-500/20 text-green-400"}`}>
+              <motion.div variants={FADE_UP} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${"bg-green-500/[0.08] border border-green-500/20 text-green-400"}`}>
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Your code is never stored. Analyzed in-session only.
               </motion.div>
 
-              <motion.div variants={FADE_UP} className={`space-y-3 p-5 rounded-2xl border ${isLight ? "bg-gray-50/80 border-gray-100" : "bg-white/[0.03] border-white/[0.08]"}`}>
+              <motion.div variants={FADE_UP} className={`space-y-3 p-5 rounded-2xl border ${"bg-white/[0.03] border-white/[0.08]"}`}>
                 <div className="flex items-center gap-3">
                   <XCircle className="w-4 h-4 text-red-400/70 shrink-0" />
                   <span className={`text-sm line-through ${t.bodyDim}`}>Prompt → Deploy → Production surprises hit your users</span>
@@ -432,7 +413,7 @@ export default function Home() {
                 <Link href="/register">
                   <motion.div
                     className="relative rounded-xl p-[1.5px] cursor-pointer"
-                    animate={isLight ? {} : {
+                    animate={false ? {} : {
                       background: [
                         "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(139,92,246,0.5) 50%, rgba(255,255,255,0.3) 100%)",
                         "linear-gradient(225deg, rgba(139,92,246,0.5) 0%, rgba(255,255,255,0.3) 50%, rgba(6,182,212,0.4) 100%)",
@@ -440,7 +421,7 @@ export default function Home() {
                         "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(139,92,246,0.5) 50%, rgba(255,255,255,0.3) 100%)",
                       ],
                     }}
-                    style={isLight ? { background: "linear-gradient(135deg, #ec4899, #a855f7, #6366f1)" } : {}}
+                    style={false ? { background: "linear-gradient(135deg, #ec4899, #a855f7, #6366f1)" } : {}}
                     transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                   >
                     <motion.button
@@ -472,12 +453,12 @@ export default function Home() {
               initial={{ opacity: 0, x: 30, y: 10 }}
               animate={{ opacity: 1, x: 0, y: 0 }}
               transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className={`relative rounded-2xl p-6 shadow-2xl overflow-hidden ${t.card} ${!isLight ? "aurora-card aurora-card-intense" : ""}`}
+              className={`relative rounded-2xl p-6 shadow-2xl overflow-hidden ${t.card}`}
             >
-              {!isLight && <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.05] via-transparent to-blue-500/[0.04] pointer-events-none rounded-2xl" />}
-              {isLight && <div className="absolute inset-0 bg-gradient-to-br from-pink-500/[0.04] via-transparent to-violet-500/[0.03] pointer-events-none rounded-2xl" />}
+              {<div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.05] via-transparent to-blue-500/[0.04] pointer-events-none rounded-2xl" />}
+              
               <div className="relative z-10 space-y-5">
-                <div className={`flex items-center justify-between pb-4 border-b ${isLight ? "border-pink-100/60" : "border-white/[0.07]"}`}>
+                <div className={`flex items-center justify-between pb-4 border-b ${"border-white/[0.07]"}`}>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <Github className={`w-3.5 h-3.5 ${t.bodyDim}`} />
@@ -493,9 +474,9 @@ export default function Home() {
 
                 <div className="space-y-2.5">
                   {[
-                    { severity: "CRITICAL", title: "Stripe key exposed in client bundle",  bg: isLight ? "bg-red-50 border-red-200/60"  : "bg-red-500/[0.08] border-red-500/25",   badge: isLight ? "bg-red-100 text-red-700"   : "bg-red-500/15 text-red-400"   },
-                    { severity: "HIGH",     title: "No GDPR consent banner present",       bg: isLight ? "bg-amber-50 border-amber-200/60" : "bg-amber-500/[0.07] border-amber-500/20", badge: isLight ? "bg-amber-100 text-amber-700" : "bg-amber-500/12 text-amber-400" },
-                    { severity: "MEDIUM",   title: "Checkout missing loading state",       bg: isLight ? "bg-gray-50 border-gray-200/60" : "bg-white/[0.03] border-white/[0.07]",  badge: isLight ? "bg-gray-100 text-gray-600"  : "bg-white/8 text-white/50"     },
+                    { severity: "CRITICAL", title: "Stripe key exposed in client bundle",  bg: false ? "bg-red-50 border-red-200/60"  : "bg-red-500/[0.08] border-red-500/25",   badge: false ? "bg-red-100 text-red-700"   : "bg-red-500/15 text-red-400"   },
+                    { severity: "HIGH",     title: "No GDPR consent banner present",       bg: "bg-amber-500/[0.07] border-amber-500/20", badge: "bg-amber-500/12 text-amber-400" },
+                    { severity: "MEDIUM",   title: "Checkout missing loading state",       bg: "bg-white/[0.03] border-white/[0.07]",  badge: false ? "bg-gray-100 text-gray-600"  : "bg-white/8 text-white/50"     },
                   ].map((item, i) => (
                     <motion.div
                       key={i}
@@ -523,7 +504,7 @@ export default function Home() {
                   ))}
                 </div>
 
-                <button className={`w-full flex items-center justify-center gap-2 text-xs font-semibold py-2.5 rounded-xl transition-all ${isLight ? "bg-violet-50 border border-violet-200/60 text-violet-700 hover:bg-violet-100" : "bg-violet-500/[0.1] border border-violet-500/20 text-violet-300 hover:bg-violet-500/[0.18]"}`}>
+                <button className={`w-full flex items-center justify-center gap-2 text-xs font-semibold py-2.5 rounded-xl transition-all ${"bg-violet-500/[0.1] border border-violet-500/20 text-violet-300 hover:bg-violet-500/[0.18]"}`}>
                   <Sparkles className="w-3.5 h-3.5" />
                   Generate 1-Click Fix Prompts
                 </button>
@@ -533,7 +514,7 @@ export default function Home() {
         </section>
 
         {/* ── Stats Bar ────────────────────────────────────────── */}
-        <section className={`py-12 border-y ${isLight ? "border-pink-100/60 bg-white/60" : "border-white/[0.05] bg-white/[0.012]"}`}>
+        <section className={`py-12 border-y ${"border-white/[0.05] bg-white/[0.012]"}`}>
           <div className="max-w-4xl mx-auto px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
@@ -580,7 +561,7 @@ export default function Home() {
                 whileHover={CARD_HOVER}
                 className={`rounded-2xl p-8 text-center ${t.card} ${t.cardHover} group ${t.auroraCard}`}
               >
-                <div className={`text-4xl font-heading font-bold mb-5 transition-colors ${isLight ? "text-pink-100 group-hover:text-pink-200" : "text-white/[0.06] group-hover:text-white/[0.12]"}`}>{step.step}</div>
+                <div className={`text-4xl font-heading font-bold mb-5 transition-colors ${"text-white/[0.06] group-hover:text-white/[0.12]"}`}>{step.step}</div>
                 <h3 className={`text-lg font-heading font-bold mb-3 ${t.h2}`}>{step.title}</h3>
                 <p className={`text-sm leading-relaxed ${t.body}`}>{step.desc}</p>
               </motion.div>
@@ -617,10 +598,10 @@ export default function Home() {
                   className={`rounded-2xl p-5 cursor-default group ${t.card} ${t.cardHover} ${t.auroraCard}`}
                 >
                   <motion.div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center mb-4 transition-colors ${isLight ? "bg-pink-50 border border-pink-100 group-hover:bg-pink-100" : "bg-white/[0.06] border border-white/[0.08] group-hover:bg-white/[0.1]"}`}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center mb-4 transition-colors ${"bg-white/[0.06] border border-white/[0.08] group-hover:bg-white/[0.1]"}`}
                     whileHover={{ rotate: [0, -8, 8, 0], transition: { duration: 0.4 } }}
                   >
-                    <d.icon className={`w-4 h-4 ${isLight ? "text-pink-600" : "text-white/70"}`} />
+                    <d.icon className={`w-4 h-4 ${"text-white/70"}`} />
                   </motion.div>
                   <h3 className={`font-heading font-bold text-sm mb-1.5 ${t.h2}`}>{d.label}</h3>
                   <p className={`text-[11px] leading-relaxed ${t.body}`}>{d.desc}</p>
@@ -651,7 +632,7 @@ export default function Home() {
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.07 }}
                     whileHover={{ scale: 1.06, y: -2 }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-default border ${isLight ? `bg-white border-gray-100 shadow-sm ${c.colorLight}` : `glass ${c.color}`}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-default border ${`glass ${c.color}`}`}
                   >
                     <BadgeCheck className="w-3.5 h-3.5" />
                     {c.label}
@@ -665,7 +646,7 @@ export default function Home() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.65 }}
-              className={`rounded-2xl p-7 space-y-4 ${t.card} ${!isLight ? "aurora-card aurora-card-slow" : ""}`}
+              className={`rounded-2xl p-7 space-y-4 ${t.card}`}
             >
               <h3 className={`font-heading font-bold text-lg mb-5 ${t.h2}`}>Sample Compliance Check</h3>
               {[
@@ -681,7 +662,7 @@ export default function Home() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.09 }}
-                  className={`flex items-start gap-3 py-2.5 border-b last:border-0 ${isLight ? "border-pink-100/50" : "border-white/[0.05]"}`}
+                  className={`flex items-start gap-3 py-2.5 border-b last:border-0 ${"border-white/[0.05]"}`}
                 >
                   {item.status === "fail"
                     ? <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
@@ -727,13 +708,11 @@ export default function Home() {
                   variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.48, ease: [0.22, 1, 0.36, 1] } } }}
                   whileHover={{
                     y: -6,
-                    boxShadow: isLight ? cat.glowLight : cat.glowDark,
+                    boxShadow: false ? cat.glowLight : cat.glowDark,
                     transition: { duration: 0.2, ease: "easeOut" },
                   }}
                   className={`relative rounded-2xl overflow-hidden flex flex-col cursor-default group transition-colors duration-300
-                    ${isLight
-                      ? `bg-white border ${cat.borderLight} shadow-sm`
-                      : `bg-white/[0.03] border ${cat.borderDark} backdrop-blur-sm`
+                    ${`bg-white/[0.03] border ${cat.borderDark} backdrop-blur-sm`
                     }`}
                 >
                   {/* Gradient top accent bar */}
@@ -743,12 +722,12 @@ export default function Home() {
                   <div className="px-5 pt-4 pb-3 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-[22px] leading-none shrink-0">{cat.icon}</span>
-                      <span className={`text-[11px] font-bold uppercase tracking-[0.16em] leading-tight ${isLight ? cat.labelColorLight : cat.labelColor}`}>
+                      <span className={`text-[11px] font-bold uppercase tracking-[0.16em] leading-tight ${cat.labelColor}`}>
                         {cat.label}
                       </span>
                     </div>
                     <div className="flex items-baseline gap-0.5 shrink-0">
-                      <span className={`text-3xl font-black font-heading leading-none ${isLight ? cat.labelColorLight : cat.labelColor}`}>
+                      <span className={`text-3xl font-black font-heading leading-none ${cat.labelColor}`}>
                         {cat.items.length}
                       </span>
                       <span className={`text-[9px] font-semibold uppercase tracking-wide ml-1 ${t.bodyDim}`}>checks</span>
@@ -756,7 +735,7 @@ export default function Home() {
                   </div>
 
                   {/* Hairline divider */}
-                  <div className={`mx-5 h-px ${isLight ? "bg-gray-100" : "bg-white/[0.06]"}`} />
+                  <div className={`mx-5 h-px ${"bg-white/[0.06]"}`} />
 
                   {/* Check items — 2-column grid */}
                   <div className="px-4 pt-3.5 pb-4 grid grid-cols-2 gap-x-3 gap-y-2 flex-1">
@@ -764,9 +743,7 @@ export default function Home() {
                       <div key={item.label} className="flex items-start gap-1.5 group/item">
                         <span className="text-[11px] shrink-0 mt-px leading-none">{item.icon}</span>
                         <span className={`text-[10.5px] font-medium leading-snug transition-colors duration-150
-                          ${isLight
-                            ? `text-gray-500 group-hover/item:text-gray-800`
-                            : `text-white/38 group-hover/item:${cat.labelColor.replace("text-", "text-").replace("/80", "")} group-hover:text-white/58`
+                          ${`text-white/38 group-hover/item:${cat.labelColor.replace("text-", "text-").replace("/80", "")} group-hover:text-white/58`
                           }`}>
                           {item.label}
                         </span>
@@ -794,13 +771,13 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className={`rounded-2xl p-6 md:col-span-2 ${t.card} ${!isLight ? "aurora-card aurora-card-slow" : ""}`}
+              className={`rounded-2xl p-6 md:col-span-2 ${t.card}`}
             >
               <div className="flex items-center gap-2 mb-4">
                 <FileText className={`w-4 h-4 ${t.bodyDim}`} />
                 <h3 className={`font-heading font-bold text-sm ${t.h2}`}>Executive Summary</h3>
               </div>
-              <p className={`text-sm leading-relaxed p-4 rounded-xl border ${isLight ? "bg-gray-50/80 border-gray-100 text-gray-600" : "bg-white/[0.03] border-white/[0.06] text-white/55"}`}>
+              <p className={`text-sm leading-relaxed p-4 rounded-xl border ${"bg-white/[0.03] border-white/[0.06] text-white/55"}`}>
                 "The app is structurally sound for MVP traffic, but has 2 critical blockers before launch. A Stripe secret key is exposed in the client bundle and will be scraped by bots within hours of going live. Additionally, there is no GDPR consent mechanism — this creates immediate regulatory exposure for EU users. Revenue impact: ~₹35,000/mo at risk."
               </p>
               <div className="mt-4 space-y-2">
@@ -817,7 +794,7 @@ export default function Home() {
                     viewport={{ once: true }}
                     className={`flex items-start gap-3 text-sm ${t.body}`}
                   >
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 ${isLight ? "bg-gray-100 border border-gray-200 text-gray-500" : "bg-white/[0.07] border border-white/[0.1] text-white/50"}`}>{a.n}</span>
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 ${"bg-white/[0.07] border border-white/[0.1] text-white/50"}`}>{a.n}</span>
                     {a.text}
                   </motion.div>
                 ))}
@@ -829,13 +806,13 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.15 }}
-              className={`rounded-2xl p-6 ${t.card} ${!isLight ? "aurora-card" : ""}`}
+              className={`rounded-2xl p-6 ${t.card}`}
             >
               <div className="flex items-center gap-2 mb-4">
                 <Code2 className={`w-4 h-4 ${t.bodyDim}`} />
                 <h3 className={`font-heading font-bold text-sm ${t.h2}`}>1-Click Fix Prompt</h3>
               </div>
-              <div className={`p-4 rounded-xl border font-mono text-xs leading-relaxed ${isLight ? "bg-gray-900 border-gray-700 text-gray-400" : "bg-black/40 border-white/[0.07] text-white/40"}`}>
+              <div className={`p-4 rounded-xl border font-mono text-xs leading-relaxed ${"bg-black/40 border-white/[0.07] text-white/40"}`}>
                 <span className="text-violet-400">@workspace</span> Move the Stripe publishable key to a VITE_ env variable. Create .env.example with VITE_STRIPE_PUBLISHABLE_KEY=pk_... Move the secret key to server-side only. Never import it in any file under /src/client/.
               </div>
               <button className={`w-full mt-4 flex items-center justify-center gap-2 text-sm font-medium py-2.5 rounded-xl transition-all border ${t.secondaryBtn}`} data-testid="output-copy-prompt-btn">
@@ -865,14 +842,12 @@ export default function Home() {
                   whileHover={{ y: -5, transition: { duration: 0.2 } }}
                   className={`relative rounded-2xl p-7 flex flex-col ${
                     plan.highlight
-                      ? isLight
-                        ? "bg-gradient-to-b from-violet-600 to-pink-600 text-white shadow-xl"
-                        : "bg-white/[0.07] border border-white/20 shadow-[0_0_60px_rgba(255,255,255,0.05)] aurora-card aurora-card-intense"
-                      : t.card + " " + (!isLight ? "aurora-card" : "")
+                      ? "bg-white/[0.07] border border-white/20 shadow-[0_0_60px_rgba(255,255,255,0.05)] aurora-card aurora-card-intense"
+                      : t.card
                   }`}
                 >
                   {plan.highlight && (
-                    <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide ${isLight ? "bg-white text-violet-600 shadow-sm" : "bg-white text-black"}`}>
+                    <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide ${"bg-white text-black"}`}>
                       Most Popular
                     </div>
                   )}
@@ -881,7 +856,7 @@ export default function Home() {
                     <p className={`text-xs mb-5 ${plan.highlight ? "text-white/60" : t.bodyDim}`}>{plan.desc}</p>
                     {"launchBadge" in plan && plan.launchBadge && (
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${plan.highlight ? "bg-white/15 border-white/20 text-white" : isLight ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-amber-500/15 border-amber-500/25 text-amber-400"}`}>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${plan.highlight ? "bg-white/15 border-white/20 text-white" : "bg-amber-500/15 border-amber-500/25 text-amber-400"}`}>
                           {plan.launchBadge as string}
                         </span>
                         {"discountLabel" in plan && (
@@ -945,7 +920,7 @@ export default function Home() {
               <Link href="/register">
                 <motion.div
                   className="relative rounded-xl p-[1.5px] cursor-pointer"
-                  animate={isLight ? {} : {
+                  animate={false ? {} : {
                     background: [
                       "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(139,92,246,0.55) 50%, rgba(255,255,255,0.35) 100%)",
                       "linear-gradient(225deg, rgba(139,92,246,0.55) 0%, rgba(255,255,255,0.35) 50%, rgba(6,182,212,0.45) 100%)",
@@ -953,7 +928,7 @@ export default function Home() {
                       "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(139,92,246,0.55) 50%, rgba(255,255,255,0.35) 100%)",
                     ],
                   }}
-                  style={isLight ? { background: "linear-gradient(135deg, #ec4899, #a855f7, #6366f1)" } : {}}
+                  style={false ? { background: "linear-gradient(135deg, #ec4899, #a855f7, #6366f1)" } : {}}
                   transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                 >
                   <motion.button
@@ -982,10 +957,10 @@ export default function Home() {
         </section>
 
         {/* ── Footer ──────────────────────────────────────────── */}
-        <footer className={`border-t px-6 py-10 ${isLight ? "border-pink-100/60 bg-white/40" : "border-white/[0.06]"}`}>
+        <footer className={`border-t px-6 py-10 ${"border-white/[0.06]"}`}>
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
-              <div className={`w-7 h-7 rounded-xl overflow-hidden border ${isLight ? "border-pink-100" : "border-white/[0.1]"}`}>
+              <div className={`w-7 h-7 rounded-xl overflow-hidden border ${"border-white/[0.1]"}`}>
                 <img src="/logo.png" alt="Agenario" className="w-full h-full object-cover object-left" />
               </div>
               <span className={`font-heading font-bold text-sm ${t.bodyDim}`}>Agenario</span>

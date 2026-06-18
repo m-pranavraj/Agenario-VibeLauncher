@@ -1,0 +1,215 @@
+build it procced end to end tested no api failures thats the most imporatnt , if failed scan retry should be there 
+
+
+
+how many users login in same accoutn ensure u show whats the history of scans and all
+
+
+
+ensure u use openrouter , groq and all very effectively ,groq has a limit , so ensure u dont over depend on it ,i hope u have already fixed api issues , just reconfirmation
+
+
+
+Three more corruption spots. Let me run the full backtick scanner to find ALL remaining corrupt lines in one shot:
+
+
+
+
+
+2 actions
+
+There are 80+ systematically corrupted lines — a subagent introduced the same broken pattern everywhere. Rather than fixing line-by-line, I'll fix everything in one programmatic pass:
+
+
+
+
+
+4 actions
+
+Still corruption at 232, 342, 372, 420. Let me read all these spots simultaneously:
+
+
+
+
+
+5 actions
+
+Lines 342, 372, 381 are still broken — my hover: fix partially worked but left dangling syntax. Let me run the parity check to find remaining issues:
+
+
+
+
+
+2 actions
+
+Let me run a comprehensive second-pass fix script addressing all remaining patterns at once:
+
+
+
+
+
+4 actions
+
+Still errors cascading from a few spots. Let me read all the current problem areas at once:
+
+
+
+
+
+4 actions
+
+Line 342 is close — it just needs } after the closing backtick. But errors at 232 and 420 suggest an unclosed template literal earlier. Let me check before line 220 and also look at lines 372/381:
+
+
+
+
+
+3 actions
+
+The root cause — line 228 opens a template literal with shrink-0"> instead of shrink-0`}>. Let me find all such unclosed patterns programmatically:
+
+
+
+
+
+Ran cd
+
+$ cd /home/runner/workspace && node -e " const fs = require('fs'); const content = fs.readFileSync('artifacts/agenario/src/pages/scan-results.tsx', 'utf8'); const lines = content.split('\n'); // Find lines where a template literal opens but closes with \" instead of \` for (let i = 0; i < lines.length; i++) { const l = lines[i]; // Pattern: className={\` that ends the line without closing \`} if (l.includes('className={\`') || l.includes('className={\`')) { const backticks = (l.match(/\`/g) || []).length; if (backticks === 1) { // Only opening backtick, no closing console.log(i+1, '|', l.trim().substring(0, 130)); } } } " 2>&1 | head -50
+
+
+
+Three more corruption spots. Let me run the full backtick scanner to find ALL remaining corrupt lines in one shot:
+
+
+
+
+
+2 actions
+
+There are 80+ systematically corrupted lines — a subagent introduced the same broken pattern everywhere. Rather than fixing line-by-line, I'll fix everything in one programmatic pass:
+
+
+
+
+
+4 actions
+
+Still corruption at 232, 342, 372, 420. Let me read all these spots simultaneously:
+
+
+
+
+
+5 actions
+
+Lines 342, 372, 381 are still broken — my hover: fix partially worked but left dangling syntax. Let me run the parity check to find remaining issues:
+
+
+
+
+
+2 actions
+
+Let me run a comprehensive second-pass fix script addressing all remaining patterns at once:
+
+
+
+
+
+4 actions
+
+Still errors cascading from a few spots. Let me read all the current problem areas at once:
+
+
+
+
+
+4 actions
+
+Line 342 is close — it just needs } after the closing backtick. But errors at 232 and 420 suggest an unclosed template literal earlier. Let me check before line 220 and also look at lines 372/381:
+
+
+
+
+
+3 actions
+
+The root cause — line 228 opens a template literal with shrink-0"> instead of shrink-0`}>. Let me find all such unclosed patterns programmatically:
+
+
+
+
+
+Ran cd
+
+$ cd /home/runner/workspace && node -e " const fs = require('fs'); const content = fs.readFileSync('artifacts/agenario/src/pages/scan-results.tsx', 'utf8'); const lines = content.split('\n'); // Find lines where a template literal opens but closes with \" instead of \` for (let i = 0; i < lines.length; i++) { const l = lines[i]; // Pattern: className={\` that ends the line without closing \`} if (l.includes('className={\`') || l.includes('className={\`')) { const backticks = (l.match(/\`/g) || []).length; if (backticks === 1) { // Only opening backtick, no closing console.log(i+1, '|', l.trim().substring(0, 130)); } } } " 2>&1 | head -50
+
+
+
+03:11:28.879 
+
+232 |          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide shrink-0 ${cfg.badge...
+
+03:11:28.879 
+
+    |                            ^
+
+03:11:28.879 
+
+233 |            {issue.severity}
+
+03:11:28.879 
+
+234 |          </span>
+
+03:11:28.879 
+
+03:11:28.879 
+
+    at failureErrorWithLog (/vercel/path0/node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/lib/main.js:1467:15)
+
+03:11:28.879 
+
+    at /vercel/path0/node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/lib/main.js:736:50
+
+03:11:28.879 
+
+    at responseCallbacks.<computed> (/vercel/path0/node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/lib/main.js:603:9)
+
+03:11:28.879 
+
+    at handleIncomingPacket (/vercel/path0/node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/lib/main.js:658:12)
+
+03:11:28.879 
+
+    at Socket.readFromStdout (/vercel/path0/node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/lib/main.js:581:7)
+
+03:11:28.880 
+
+    at Socket.emit (node:events:509:28)
+
+03:11:28.880 
+
+    at addChunk (node:internal/streams/readable:563:12)
+
+03:11:28.880 
+
+    at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+
+03:11:28.880 
+
+    at Readable.push (node:internal/streams/readable:394:5)
+
+03:11:28.880 
+
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+
+03:11:28.909 
+
+ ELIFECYCLE  Command failed with exit code 1.
+
+03:11:28.928 
+
+Error: Command "pnpm run build" exited with 1 
+
+

@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { ArrowLeft, Mail, Zap, Heart, Globe, Code2 } from "lucide-react";
-import { useIsLight } from "@/hooks/use-is-light";
 
 const FADE_UP = {
   hidden: { opacity: 0, y: 20 },
@@ -53,19 +52,18 @@ const VALUES = [
 ];
 
 export default function CareersPage() {
-  const isLight = useIsLight();
   return (
-    <div className={`min-h-screen ${isLight ? "bg-white" : "bg-[#050505]"}`}>
-      <div className={`absolute inset-0 pointer-events-none ${isLight ? "bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.06)_0%,_transparent_55%)]" : "bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.05)_0%,_transparent_55%)]"}`} />
+    <div className={`min-h-screen ${"bg-[#050505]"}`}>
+      <div className={`absolute inset-0 pointer-events-none ${"bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.05)_0%,_transparent_55%)]"}`} />
 
-      <nav className={`border-b backdrop-blur-2xl sticky top-0 z-10 ${isLight ? "border-gray-200 bg-white/90" : "border-white/[0.07] bg-[#050505]/90"}`}>
+      <nav className={`border-b backdrop-blur-2xl sticky top-0 z-10 ${"border-white/[0.07] bg-[#050505]/90"}`}>
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-3">
-          <Link href="/" className={`transition-colors ${isLight ? "text-gray-400 hover:text-gray-900" : "text-white/30 hover:text-white"}`}>
+          <Link href="/" className={`transition-colors ${"text-white/30 hover:text-white"}`}>
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover object-left" />
-            <span className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Careers</span>
+            <span className={`font-bold font-['Syne'] text-sm ${"text-white"}`}>Careers</span>
           </div>
         </div>
       </nav>
@@ -74,32 +72,32 @@ export default function CareersPage() {
         <motion.div initial="hidden" animate="show" variants={STAGGER} className="space-y-16">
 
           <div className="text-center space-y-5">
-            <motion.p variants={FADE_UP} className={`text-xs uppercase tracking-widest font-medium ${isLight ? "text-gray-400" : "text-white/30"}`}>
+            <motion.p variants={FADE_UP} className={`text-xs uppercase tracking-widest font-medium ${"text-white/30"}`}>
               Careers at Agenario
             </motion.p>
-            <motion.h1 variants={FADE_UP} className={`text-4xl md:text-5xl font-bold font-['Syne'] leading-tight ${isLight ? "text-gray-900" : "text-white"}`}>
+            <motion.h1 variants={FADE_UP} className={`text-4xl md:text-5xl font-bold font-['Syne'] leading-tight ${"text-white"}`}>
               Build the review layer<br />
-              <span className={isLight ? "text-gray-400" : "text-white/40"}>for the AI-built web.</span>
+              <span className={"text-white/40"}>for the AI-built web.</span>
             </motion.h1>
-            <motion.p variants={FADE_UP} className={`text-lg max-w-2xl mx-auto leading-relaxed ${isLight ? "text-gray-500" : "text-white/40"}`}>
+            <motion.p variants={FADE_UP} className={`text-lg max-w-2xl mx-auto leading-relaxed ${"text-white/40"}`}>
               We're a small team on a big mission — making production-ready standards accessible to every founder who ships with AI.
             </motion.p>
           </div>
 
           <motion.div
             variants={FADE_UP}
-            className={`relative rounded-2xl p-8 text-center border ${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/[0.07]"}`}
+            className={`relative rounded-2xl p-8 text-center border ${"bg-white/[0.02] border-white/[0.07]"}`}
           >
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5 border ${isLight ? "bg-white border-gray-200" : "bg-white/[0.04] border-white/[0.08]"}`}>
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5 border ${"bg-white/[0.04] border-white/[0.08]"}`}>
               <img src="/logo.png" alt="" className="w-8 h-8 rounded-xl object-cover object-left" />
             </div>
-            <h2 className={`text-xl font-bold font-['Syne'] mb-3 ${isLight ? "text-gray-900" : "text-white"}`}>No open roles right now</h2>
-            <p className={`text-sm max-w-md mx-auto leading-relaxed mb-6 ${isLight ? "text-gray-500" : "text-white/40"}`}>
+            <h2 className={`text-xl font-bold font-['Syne'] mb-3 ${"text-white"}`}>No open roles right now</h2>
+            <p className={`text-sm max-w-md mx-auto leading-relaxed mb-6 ${"text-white/40"}`}>
               We're a lean founding team and we're not actively hiring yet. But we're always interested in exceptional people who care deeply about developer experience, AI quality, and helping founders ship confidently.
             </p>
             <a
               href="mailto:hello@agenario.tech?subject=I'd love to work with Agenario"
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border ${isLight ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50" : "bg-white/[0.07] border-white/[0.12] text-white hover:bg-white/[0.12]"}`}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border ${"bg-white/[0.07] border-white/[0.12] text-white hover:bg-white/[0.12]"}`}
             >
               <Mail className="w-4 h-4" />
               Send us your story
@@ -107,20 +105,20 @@ export default function CareersPage() {
           </motion.div>
 
           <motion.div variants={FADE_UP} className="space-y-5">
-            <h3 className={`text-xs uppercase tracking-widest font-medium text-center ${isLight ? "text-gray-400" : "text-white/25"}`}>What we value</h3>
+            <h3 className={`text-xs uppercase tracking-widest font-medium text-center ${"text-white/25"}`}>What we value</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {VALUES.map((v) => {
                 const Icon = v.icon;
                 return (
                   <div
                     key={v.title}
-                    className={`rounded-2xl p-6 border space-y-2.5 ${isLight ? v.bg : v.bgDark}`}
+                    className={`rounded-2xl p-6 border space-y-2.5 ${false ? v.bg : v.bgDark}`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className={`w-4 h-4 ${isLight ? v.color : v.colorDark}`} />
-                      <h4 className={`font-semibold text-sm font-['Syne'] ${isLight ? "text-gray-900" : "text-white"}`}>{v.title}</h4>
+                      <Icon className={`w-4 h-4 ${false ? v.color : v.colorDark}`} />
+                      <h4 className={`font-semibold text-sm font-['Syne'] ${"text-white"}`}>{v.title}</h4>
                     </div>
-                    <p className={`text-sm leading-relaxed ${isLight ? "text-gray-500" : "text-white/40"}`}>{v.desc}</p>
+                    <p className={`text-sm leading-relaxed ${"text-white/40"}`}>{v.desc}</p>
                   </div>
                 );
               })}
@@ -128,20 +126,20 @@ export default function CareersPage() {
           </motion.div>
 
           <motion.div variants={FADE_UP} className="text-center space-y-3 pb-8">
-            <p className={`text-sm ${isLight ? "text-gray-400" : "text-white/25"}`}>Stay in the loop — follow us for future openings</p>
+            <p className={`text-sm ${"text-white/25"}`}>Stay in the loop — follow us for future openings</p>
             <div className="flex items-center justify-center gap-4">
               <a
                 href="https://x.com/agenario_tech"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`text-xs font-medium transition-colors ${isLight ? "text-gray-400 hover:text-gray-700" : "text-white/30 hover:text-white/60"}`}
+                className={`text-xs font-medium transition-colors ${"text-white/30 hover:text-white/60"}`}
               >
                 @agenario_tech on X
               </a>
-              <span className={isLight ? "text-gray-200" : "text-white/10"}>·</span>
+              <span className={"text-white/10"}>·</span>
               <a
                 href="mailto:hello@agenario.tech"
-                className={`text-xs font-medium transition-colors ${isLight ? "text-gray-400 hover:text-gray-700" : "text-white/30 hover:text-white/60"}`}
+                className={`text-xs font-medium transition-colors ${"text-white/30 hover:text-white/60"}`}
               >
                 hello@agenario.tech
               </a>
