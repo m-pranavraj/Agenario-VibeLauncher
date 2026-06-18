@@ -1096,6 +1096,231 @@ function BenchmarkPanel({ data }: { data: BenchmarkData }) {
   );
 }
 
+// ── VibeCode Intelligence Network ────────────────────────────────────────────
+
+const VIBE_TOOL_PATTERNS: Record<string, {
+  label: string;
+  emoji: string;
+  color: string;
+  bg: string;
+  border: string;
+  patterns: string[];
+  riskPhrase: string;
+}> = {
+  "replit": {
+    label: "Replit AI",
+    emoji: "🟠",
+    color: "text-orange-400",
+    bg: "bg-orange-500/[0.06]",
+    border: "border-orange-500/20",
+    riskPhrase: "Common Replit pattern",
+    patterns: [
+      "Monolithic App.tsx / index.ts (900+ lines) — should be split across modules",
+      "PORT hardcoded in source instead of environment variable",
+      "Express server missing helmet + rate-limiting middleware",
+      "Secrets referenced directly from process.env without validation",
+      "CORS origins whitelist missing or set to wildcard *",
+    ],
+  },
+  "cursor": {
+    label: "Cursor AI",
+    emoji: "🔵",
+    color: "text-sky-400",
+    bg: "bg-sky-500/[0.06]",
+    border: "border-sky-500/20",
+    riskPhrase: "Common Cursor pattern",
+    patterns: [
+      "Multiple conflicting implementations of the same function from different AI sessions",
+      '"TODO: implement this" placeholders left in production code paths',
+      "Inconsistent TypeScript strictness — some files strict, others permissive",
+      "Over-use of 'as' type casts to silence TS errors instead of fixing types",
+      "Dead branches from earlier AI sessions never cleaned up",
+    ],
+  },
+  "lovable": {
+    label: "Lovable",
+    emoji: "🩷",
+    color: "text-pink-400",
+    bg: "bg-pink-500/[0.06]",
+    border: "border-pink-500/20",
+    riskPhrase: "Common Lovable pattern",
+    patterns: [
+      "Supabase / Firebase RLS not enabled — all rows publicly readable",
+      "API keys or service credentials exposed in client-side code",
+      "Auth checked only on frontend — no server-side guard on protected endpoints",
+      "Single-file components exceeding 2,000 lines",
+      "No environment separation — same keys used in dev and prod",
+    ],
+  },
+  "bolt": {
+    label: "Bolt",
+    emoji: "⚡",
+    color: "text-yellow-400",
+    bg: "bg-yellow-500/[0.06]",
+    border: "border-yellow-500/20",
+    riskPhrase: "Common Bolt pattern",
+    patterns: [
+      "Supabase / Firebase RLS not enabled — all rows publicly readable",
+      "API keys or service credentials exposed in client-side code",
+      "Auth checked only on frontend — no server-side guard on protected endpoints",
+      "Single-file components exceeding 2,000 lines",
+      "No environment separation — same keys used in dev and prod",
+    ],
+  },
+  "windsurf": {
+    label: "Windsurf / Codeium",
+    emoji: "🌊",
+    color: "text-cyan-400",
+    bg: "bg-cyan-500/[0.06]",
+    border: "border-cyan-500/20",
+    riskPhrase: "Common Windsurf pattern",
+    patterns: [
+      "Duplicate utility functions with slight variations across files",
+      "useEffect hooks missing cleanup functions — causes memory leaks",
+      "Async functions without try-catch in 60%+ of cases",
+      "State mutations inside render — causes unexpected re-renders",
+      "Missing dependency arrays or stale closures in hooks",
+    ],
+  },
+  "copilot": {
+    label: "GitHub Copilot",
+    emoji: "🤖",
+    color: "text-violet-400",
+    bg: "bg-violet-500/[0.06]",
+    border: "border-violet-500/20",
+    riskPhrase: "Common Copilot pattern",
+    patterns: [
+      'Auth check commented out: // TODO: validate user — left in production',
+      "SQL queries with string interpolation — SQL injection risk",
+      "Error swallowing: catch(e) {} with no logging or retry",
+      "Debug console.log() statements left in production paths",
+      "Boilerplate security stubs never implemented",
+    ],
+  },
+};
+
+function VibeCodeIntelPanel({ vibeTool, issues, vibeToolRank }: {
+  vibeTool: string;
+  issues: ScanIssue[];
+  vibeToolRank?: string | null;
+}) {
+  const normalised = vibeTool.toLowerCase().replace(/[^a-z]/g, "");
+  const cfg = VIBE_TOOL_PATTERNS[normalised] ?? VIBE_TOOL_PATTERNS["copilot"];
+  const aiIssues = issues.filter((i) => i.agentName === "AI Code Quality");
+  const criticalOrHigh = aiIssues.filter((i) => i.severity === "critical" || i.severity === "high");
+
+  const [expanded, setExpanded] = useState(false);
+  const displayIssues = expanded ? aiIssues : aiIssues.slice(0, 3);
+
+  return (
+    <div className={`glass rounded-2xl overflow-hidden border ${cfg.border}`}>
+      {/* Header */}
+      <div className={`${cfg.bg} px-6 py-4 flex items-center gap-3 border-b border-white/[0.05]`}>
+        <span className="text-xl">{cfg.emoji}</span>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <h2 className="text-white font-bold font-['Syne'] text-sm">VibeCode Intelligence</h2>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${cfg.bg} ${cfg.color} ${cfg.border}`}>
+              {cfg.label}
+            </span>
+          </div>
+          <p className="text-[11px] text-white/30 mt-0.5">
+            Pattern-matched against known {cfg.label} failure signatures
+          </p>
+        </div>
+        {criticalOrHigh.length > 0 && (
+          <div className="shrink-0 text-right">
+            <div className="text-lg font-bold font-['Syne'] text-red-400">{criticalOrHigh.length}</div>
+            <div className="text-[9px] text-white/25">High-risk patterns</div>
+          </div>
+        )}
+      </div>
+
+      <div className="p-6 space-y-5">
+        {/* vibeToolRank badge */}
+        {vibeToolRank && (
+          <div className={`${cfg.bg} border ${cfg.border} rounded-xl px-4 py-2.5`}>
+            <span className={`text-xs font-semibold ${cfg.color}`}>{vibeToolRank}</span>
+          </div>
+        )}
+
+        {/* Known failure patterns for this tool */}
+        <div>
+          <div className="text-[10px] text-white/25 uppercase tracking-widest font-medium mb-2.5">
+            Known {cfg.label} failure patterns — checked in your code
+          </div>
+          <div className="space-y-1.5">
+            {cfg.patterns.map((p, i) => {
+              const matched = aiIssues.some((issue) =>
+                issue.title?.toLowerCase().split(" ").some((w) => p.toLowerCase().includes(w)) ||
+                issue.description?.toLowerCase().split(" ").some((w) => w.length > 5 && p.toLowerCase().includes(w)),
+              );
+              return (
+                <div key={i} className="flex items-start gap-2.5 text-xs">
+                  <span className={`mt-0.5 shrink-0 text-sm ${matched ? "text-red-400" : "text-white/15"}`}>
+                    {matched ? "⚠" : "✓"}
+                  </span>
+                  <span className={matched ? "text-white/60" : "text-white/20"}>
+                    {p}
+                  </span>
+                  {matched && (
+                    <span className="ml-auto shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/20">
+                      {cfg.riskPhrase}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* AI Code Quality issues from agent */}
+        {aiIssues.length > 0 && (
+          <div>
+            <div className="text-[10px] text-white/25 uppercase tracking-widest font-medium mb-2.5">
+              AI Code Quality findings ({aiIssues.length} total)
+            </div>
+            <div className="space-y-2">
+              {displayIssues.map((issue) => {
+                const sev = SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
+                return (
+                  <div key={issue.id} className={`rounded-xl border px-3 py-2.5 ${sev.bg}`}>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${sev.badge} shrink-0`}>
+                        {issue.severity.toUpperCase()}
+                      </span>
+                      <span className="text-xs text-white/80 font-medium">{issue.title}</span>
+                      {issue.filePath && (
+                        <span className="ml-auto text-[10px] text-white/20 font-mono shrink-0 truncate max-w-[120px]">
+                          {issue.filePath.split("/").pop()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {aiIssues.length > 3 && (
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="mt-2 text-[11px] text-white/25 hover:text-white/50 transition-colors w-full text-center"
+              >
+                {expanded ? "Show less" : `Show ${aiIssues.length - 3} more findings`}
+              </button>
+            )}
+          </div>
+        )}
+
+        {aiIssues.length === 0 && (
+          <div className="text-center py-4">
+            <p className="text-xs text-white/20">No AI code quality issues detected for {cfg.label} patterns.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function LaunchDNAPanel({ dna }: { dna: LaunchDNA }) {
   const profiles = [
     { key: "risk", data: dna.riskProfile, accent: "text-red-400", bg: "bg-red-500/[0.05] border-red-500/15" },
@@ -3136,6 +3361,17 @@ export default function ScanResultsPage() {
             )}
           </div>
         </div>
+
+        {/* ── VibeCode Intelligence Network ─────────────────── */}
+        {scan.vibeTool && scan.vibeTool !== "unknown" && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+            <VibeCodeIntelPanel
+              vibeTool={scan.vibeTool}
+              issues={scan.issues}
+              vibeToolRank={scan.benchmarkPercentile?.vibeToolRank}
+            />
+          </motion.div>
+        )}
 
         </>}
 

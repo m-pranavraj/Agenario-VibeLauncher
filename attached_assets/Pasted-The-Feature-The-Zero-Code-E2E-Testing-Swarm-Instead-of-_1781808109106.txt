@@ -1,0 +1,51 @@
+The Feature: The Zero-Code E2E Testing Swarm
+Instead of writing manual testing code using Playwright or Cypress (which developers absolutely despise doing), the founder hands their repo to Agenario. Your system builds, launches, and aggressively clicks through their application to find logical dead-ends.
+
+How It Works Under the Hood
+The Route Crawler: Your background agent analyzes the code structure (e.g., Next.js App Router files) to map out every single possible URL path (/dashboard, /settings, /billing, /pricing).
+
+The Headless Sandbox: Agenario boots up the application inside an ephemeral container and launches a headless browser (using Playwright).
+
+The Chaos Clicker Swarm: Instead of running a linear script, your AI agents take control of the mouse and keyboard. They behave like unpredictable, impatient real-world users.
+
+[Repository Ingestion] 
+       │
+       ▼
+[Ephemeral Container Setup] ──> Launches App on localhost:3000
+       │
+       ▼
+[Playwright Headless Browser] ──> AI Agents take control of mouse/keyboard
+       │
+       ▼
+[Chaos Actions Executed] ──> Double-clicking submit, entering 500-char strings, 
+                               reversing steps, rapid navigation
+3 Chaos Actions the Swarm Executes (That LLMs Can't Mimic)
+1. The "Impatient User" Double-Click Test
+The Scenario: A user clicks a "Submit Payment" or "Generate AI Image" button three times rapidly because the server is taking 2 seconds to respond.
+
+The Reality: In poorly structured apps, this triggers three separate database writes, charges the card multiple times, or crashes the API route.
+
+Agenario's Execution: The agent actively double-clicks every primary button while tracking database states or network responses, flagging duplicate request failures.
+
+2. State Disconnection & Hydration Checks
+The Scenario: A user opens a dashboard link directly without going through the onboarding flow, or clicks "back" midway through a complex form multi-step process.
+
+The Reality: Global state (like Zustand or Redux) clears out, resulting in the dreaded white screen of death or Cannot read properties of undefined (reading 'user').
+
+Agenario's Execution: The browser agent intentionally jumps deep into private routes with empty local storage or sessions to see exactly where the app breaks cleanly versus where it completely crashes visually.
+
+3. Dynamic Form Abuse (Beyond Simple Input)
+The Scenario: A user uploads a broken 0-byte file, an emoji-laden string into a phone number field, or spaces instead of a name.
+
+The Reality: Frontend validation might catch basic errors, but if the unhandled data hits the server components or database, it throws a 500 Internal Server Error.
+
+Agenario's Execution: Agents aggressively fuzz inputs inside the actual browser rendering tree, observing console logs for unhandled frontend exceptions.
+
+The Premium Deliverable (Why They Pay ₹10,000+)
+Big Tech tools give you a text response. Agenario gives them a literal Production-Grade QA Infrastructure without writing a line of code:
+
+Visual Video Playback: A downloadable video or GIF showing the exact 4-second sequence where the UI froze or went blank.
+
+The Console/Network Trace: A clean log showing exactly which frontend line threw the unhandled error and what the network response payload looked like at that exact split-second.
+
+Auto-Generated Playwright Scripts: Agenario writes the actual .spec.ts testing files for the bugs it found and injects them directly into the user's repo via a Pull Request. Moving forward, they have a permanent regression test suite built for them automaticall
