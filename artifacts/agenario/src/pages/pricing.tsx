@@ -152,7 +152,7 @@ export default function PricingPage() {
     if (!user) { setLocation("/register"); return; }
     if (planId === "free" || planId === user.plan) return;
     if (planId === "enterprise" || amount == null) {
-      window.open("mailto:hello@agenario.tech?subject=Enterprise Plan Inquiry", "_blank");
+      window.open("mailto:support@agenario.tech?subject=Enterprise Plan Inquiry", "_blank");
       return;
     }
 

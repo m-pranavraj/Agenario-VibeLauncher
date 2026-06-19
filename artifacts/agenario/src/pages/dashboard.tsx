@@ -36,8 +36,10 @@ export default function DashboardPage() {
   const [, setLocation] = useLocation();
   const { scans, loading: scansLoading } = useScans();
 
+  const visibleScans = (scans ?? []).filter((s) => s.status !== "failed");
+
   const t = {
-    page:        isLight ? "bg-[#fdf4f8] text-gray-900 min-h-screen" : "bg-[#050505] text-white min-h-screen",
+    page:        isLight ? "bg-[#fdf4f8] text-gray-900 min-h-screen overflow-x-hidden" : "bg-[#050505] text-white min-h-screen overflow-x-hidden",
     nav:         isLight ? "bg-white/90 border-b border-pink-100/80 backdrop-blur-md" : "bg-black/60 border-b border-white/[0.07] backdrop-blur-md",
     logo:        isLight ? "text-gray-900" : "text-white",
     navLink:     isLight ? "text-gray-500 hover:text-gray-900 transition-colors" : "text-white/35 hover:text-white transition-colors",
@@ -168,7 +170,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-center py-24">
             <Loader2 className={`w-6 h-6 animate-spin ${isLight ? "text-gray-300" : "text-white/30"}`} />
           </div>
-        ) : scans.length === 0 ? (
+        ) : visibleScans.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -193,7 +195,7 @@ export default function DashboardPage() {
           </motion.div>
         ) : (
           <div className="space-y-2.5">
-            {scans.map((scan, i) => (
+            {visibleScans.map((scan, i) => (
               <motion.div
                 key={scan.id}
                 initial={{ opacity: 0, y: 12 }}

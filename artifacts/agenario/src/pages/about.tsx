@@ -199,7 +199,7 @@ export default function AboutPage() {
                   { icon: Twitter, label: "Twitter / X", href: "#" },
                   { icon: Linkedin, label: "LinkedIn", href: "#" },
                   { icon: Globe, label: "Website", href: "#" },
-                  { icon: Mail, label: "Email", href: "mailto:hello@agenario.app" },
+                  { icon: Mail, label: "Email", href: "mailto:support@agenario.tech" },
                 ].map(({ icon: Icon, label, href }) => (
                   <a
                     key={label} href={href} aria-label={label}

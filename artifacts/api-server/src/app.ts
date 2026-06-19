@@ -170,6 +170,15 @@ cron.schedule("0 9 * * *", () => {
     .catch((err) => logger.error({ err }, "Daily pulse cron failed"));
 }, { timezone: "UTC" });
 
+// ── SPA fallback for non-API routes (production only) ─────────────────────
+// In development, Vite handles all non-/api requests; in production this
+// prevents 404s when the user refreshes a deep route.
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api")) return next();
+  // Redirect to the root for SPA to handle client-side routing
+  res.redirect("/");
+});
+
 // ── Global error handler ──────────────────────────────────────────────────
 app.use(
   (

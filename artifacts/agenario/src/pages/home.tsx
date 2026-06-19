@@ -995,7 +995,7 @@ export default function Home() {
               <Link href="/pricing" className="hover:opacity-70 transition-opacity">Pricing</Link>
               <Link href="/docs" className="hover:opacity-70 transition-opacity">Docs</Link>
               <Link href="/careers" className="hover:opacity-70 transition-opacity">Careers</Link>
-              <a href="mailto:hello@agenario.tech" className="hover:opacity-70 transition-opacity">Contact</a>
+              <a href="mailto:support@agenario.tech" className="hover:opacity-70 transition-opacity">Contact</a>
             </div>
           </div>
         </footer>

@@ -101,7 +101,7 @@ export default function CareersPage() {
               We're a lean founding team and we're not actively hiring yet. But we're always interested in exceptional people who care deeply about developer experience, AI quality, and helping founders ship confidently.
             </p>
             <a
-              href="mailto:hello@agenario.tech?subject=I'd love to work with Agenario"
+              href="mailto:support@agenario.tech?subject=I'd love to work with Agenario"
               className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border ${isLight ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50" : "bg-white/[0.07] border-white/[0.12] text-white hover:bg-white/[0.12]"}`}
             >
               <Mail className="w-4 h-4" />
@@ -143,10 +143,10 @@ export default function CareersPage() {
               </a>
               <span className={isLight ? "text-gray-200" : "text-white/10"}>·</span>
               <a
-                href="mailto:hello@agenario.tech"
+                href="mailto:support@agenario.tech"
                 className={`text-xs font-medium transition-colors ${isLight ? "text-gray-400 hover:text-gray-700" : "text-white/30 hover:text-white/60"}`}
               >
-                hello@agenario.tech
+                support@agenario.tech
               </a>
             </div>
           </motion.div>

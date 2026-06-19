@@ -52,6 +52,27 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
   });
 });
 
+const DISPOSABLE_DOMAINS = new Set([
+  "mailinator.com","guerrillamail.com","tempmail.com","throwaway.email","yopmail.com",
+  "10minutemail.com","trashmail.com","fakeinbox.com","sharklasers.com","guerrillamailblock.com",
+  "grr.la","guerrillamail.info","guerrillamail.biz","guerrillamail.de","guerrillamail.net",
+  "guerrillamail.org","spam4.me","maildrop.cc","spamgourmet.com","dispostable.com",
+  "mailnull.com","spamhereplease.com","spamspot.com","wegwerfmail.de","wegwerfmail.net",
+  "wegwerfmail.org","tempinbox.com","tempr.email","discard.email","spamoff.de",
+  "spamgap.com","filzmail.com","spamfree24.org","e4ward.com","mailnew.com",
+  "spamfree.eu","abwesend.de","receiveee.com","trbvm.com","crap.la","mailnesia.com",
+]);
+
+function isValidEmail(email: string): boolean {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  if (!re.test(email)) return false;
+  const domain = email.split("@")[1]?.toLowerCase();
+  if (!domain) return false;
+  if (DISPOSABLE_DOMAINS.has(domain)) return false;
+  if (domain.includes("mailinator") || domain.includes("guerrilla") || domain.includes("yopmail")) return false;
+  return true;
+}
+
 // ── Register ──────────────────────────────────────────────────────────────
 router.post("/auth/register", async (req, res): Promise<void> => {
   const parsed = RegisterUserBody.safeParse(req.body);
@@ -61,6 +82,11 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   }
 
   const { email, name, password } = parsed.data;
+
+  if (!isValidEmail(email)) {
+    res.status(400).json({ error: "Please use a valid, non-disposable email address." });
+    return;
+  }
 
   // Phone + OTP fields (optional for now, required once SMS is live)
   const phone: string | undefined = typeof req.body.phone === "string" ? req.body.phone : undefined;

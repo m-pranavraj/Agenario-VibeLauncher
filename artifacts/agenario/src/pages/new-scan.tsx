@@ -103,6 +103,12 @@ function ScanAnimation({ isDeep }: { isDeep: boolean }) {
   const [phase, setPhase] = useState(0);
   const [completedDims, setCompletedDims] = useState<number[]>([]);
   const [activeDim, setActiveDim] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     let p = 0;
@@ -166,7 +172,7 @@ function ScanAnimation({ isDeep }: { isDeep: boolean }) {
           </motion.h2>
         </AnimatePresence>
         <p className={`text-sm ${isLight ? "text-gray-500" : "text-white/35"}`}>
-          {isDeep ? "~60–90 seconds for deep code analysis" : "~30 seconds"}. Stay on this page.
+          Estimated time: {isDeep ? "60–90 seconds" : "~30 seconds"} · {elapsed < 60 ? `${elapsed}s elapsed` : `${Math.floor(elapsed / 60)}m ${elapsed % 60}s elapsed`}
         </p>
       </div>
 

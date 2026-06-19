@@ -3187,9 +3187,12 @@ function RevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligence 
       </div>
 
       {revenue.estimatedMonthlyImpact && (
-        <div className="bg-amber-500/[0.05] border border-amber-500/15 rounded-xl px-4 py-3">
-          <div className="text-[10px] text-amber-400/70 uppercase tracking-wide mb-1">Estimated Monthly Revenue Impact</div>
+        <div className="bg-amber-500/[0.05] border border-amber-500/15 rounded-xl px-4 py-3 space-y-1">
+          <div className="text-[10px] text-amber-400/70 uppercase tracking-wide">Proportional Revenue Exposure</div>
           <div className="text-sm font-bold text-amber-400">{revenue.estimatedMonthlyImpact}</div>
+          <div className="text-[10px] text-amber-400/50 leading-relaxed">
+            This is a proportional estimate — actual exposure scales with your revenue. A ₹1Cr/mo business would see roughly this exposure; a ₹10Cr/mo business, ~10×.
+          </div>
         </div>
       )}
 
@@ -5755,7 +5758,7 @@ export default function ScanResultsPage() {
   const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("all");
   const [rescanning, setRescanning] = useState(false);
   const t = {
-    page: isLight ? "bg-[#fdf4f8]" : "bg-[#050505]",
+    page: isLight ? "bg-[#fdf4f8] text-gray-900 overflow-x-hidden" : "bg-[#050505] text-white overflow-x-hidden",
     nav: isLight ? "bg-white/90 border-pink-100/80 backdrop-blur-2xl" : "bg-[#050505]/80 border-white/[0.07] backdrop-blur-2xl",
     navText: isLight ? "text-gray-500 hover:text-gray-900 transition-colors" : "text-white/30 hover:text-white transition-colors",
     navBrand: isLight ? "text-gray-900 font-bold font-['Syne'] text-sm" : "text-white font-bold font-['Syne'] text-sm",
@@ -5782,10 +5785,26 @@ export default function ScanResultsPage() {
       const result = await api.scans.get(id).catch(() => null);
       if (!active) return;
       if (result) {
-        setScan(result);
-        setScanLoading(false);
-        if (result.status === "running") {
+        if (result.status === "failed") {
+          // Auto-retry silently — show running state while we restart
+          try {
+            await api.scans.rescan(id);
+          } catch {
+            // If rescan fails (e.g. already retried), just show the scan as-is
+            setScan(result);
+            setScanLoading(false);
+            return;
+          }
+          if (!active) return;
+          setScan({ ...result, status: "running" });
+          setScanLoading(false);
           setTimeout(load, 3000);
+        } else {
+          setScan(result);
+          setScanLoading(false);
+          if (result.status === "running") {
+            setTimeout(load, 3000);
+          }
         }
       } else {
         setScanLoading(false);
@@ -5827,6 +5846,7 @@ export default function ScanResultsPage() {
       try {
         await api.scans.rescan(Number(params.id));
         setScan((prev: any) => prev ? { ...prev, status: "running" } : prev);
+        setRescanning(false);
       } catch {
         setRescanning(false);
       }
@@ -5834,24 +5854,23 @@ export default function ScanResultsPage() {
     return (
       <div className={`min-h-screen ${t.page} flex items-center justify-center`}>
         <div className="text-center space-y-5 max-w-sm px-6">
-          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
-            <XCircle className="w-6 h-6 text-red-400" />
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto ${isLight ? "bg-white border border-gray-200" : "glass"}`}>
+            <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover" />
           </div>
           <div className="space-y-2">
-            <h2 className={`${isLight ? "text-gray-800" : "text-white/80"} text-base font-semibold`}>Analysis failed</h2>
-            <p className={`${isLight ? "text-gray-400" : "text-white/35"} text-sm`}>Something went wrong during the review. You can retry - failed scans don't count against your quota.</p>
+            <h2 className={`${isLight ? "text-gray-800" : "text-white/80"} text-base font-semibold`}>Sorry for the trouble!</h2>
+            <p className={`${isLight ? "text-gray-500" : "text-white/40"} text-sm leading-relaxed`}>We ran into an issue during your review. Don't worry — this doesn't count against your quota. Hit the button below and we'll get your scan right back.</p>
           </div>
           <div className="flex flex-col gap-2.5">
             <button
               onClick={handleRescan}
               disabled={rescanning}
-              className="flex items-center justify-center gap-2 bg-white text-black font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all disabled:opacity-50"
+              className={`flex items-center justify-center gap-2 font-bold text-sm px-5 py-2.5 rounded-xl transition-all disabled:opacity-50 ${isLight ? "bg-gray-900 hover:bg-gray-800 text-white" : "bg-white hover:bg-white/90 text-black"}`}
             >
-              {rescanning ? <><Loader2 className="w-4 h-4 animate-spin" />Retrying…</> : <>Retry Analysis</>}
+              {rescanning ? <><Loader2 className="w-4 h-4 animate-spin" />Getting your scan back…</> : <>Try Again — Get My Scan Back</>}
             </button>
-            <Link href="/new-scan">
-              <button className={`text-sm ${isLight ? "text-gray-400" : "text-white/35"} ${isLight ? "hover:text-gray-500" : "hover:text-white/55"} transition-colors`}
-              >
+            <Link href="/scans/new">
+              <button className={`text-sm ${isLight ? "text-gray-400 hover:text-gray-600" : "text-white/35 hover:text-white/55"} transition-colors`}>
                 Start a new scan instead
               </button>
             </Link>
@@ -6190,19 +6209,39 @@ export default function ScanResultsPage() {
             )}
 
             {/* ── Visual Evidence Gallery (Runtime Proofs) ─────── */}
-            {scan.proofEvidence && scan.proofEvidence.length > 0 && (
+            {scan.proofEvidence && scan.proofEvidence.length > 0 ? (
+              <>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 }}
+                >
+                  <ProofEvidencePanel evidence={scan.proofEvidence} />
+                </motion.div>
+                <ConfidenceBadges evidence={scan.proofEvidence} />
+              </>
+            ) : (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 }}
+                className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 aurora-card`}
               >
-                <ProofEvidencePanel evidence={scan.proofEvidence} />
+                <div className="flex items-center gap-2 mb-4">
+                  <Camera className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+                  <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Live Sandbox Proofs</h2>
+                </div>
+                <div className={`rounded-xl border border-dashed p-6 text-center ${isLight ? "border-gray-200 bg-gray-50/50" : "border-white/[0.07] bg-white/[0.02]"}`}>
+                  <div className={`text-sm font-medium mb-1.5 ${isLight ? "text-gray-500" : "text-white/50"}`}>
+                    {scan.sourceType === "description"
+                      ? "This analysis used a text description — live sandbox proofs require actual code or a live URL."
+                      : "This code isn't eligible for live proofs — our sandbox couldn't execute it in a controlled environment."}
+                  </div>
+                  <div className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>
+                    Submit a GitHub repo or ZIP for screenshot-backed runtime evidence.
+                  </div>
+                </div>
               </motion.div>
-            )}
-
-            {/* ── Confidence Badges ─────────────────────────────── */}
-            {scan.proofEvidence && scan.proofEvidence.length > 0 && (
-              <ConfidenceBadges evidence={scan.proofEvidence} />
             )}
 
             {/* ── Launch DNA ────────────────────────────────────── */}
