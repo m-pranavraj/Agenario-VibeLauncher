@@ -14,6 +14,8 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "next-themes";
 import type { Variants } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 /* ── Animation variants ─────────────────────────────────────── */
 const FADE_UP: Variants = {
@@ -120,7 +122,7 @@ const FEATURE_CATEGORIES = [
 
 const HOW_IT_WORKS = [
   { step: "01", title: "Submit your app", desc: "GitHub repo, ZIP archive, live URL, or describe what you built. Works with any stack, any language." },
-  { step: "02", title: "25 agents fire in parallel", desc: "Our agentic swarm runs 10 specialized AI analysis dimensions simultaneously — security, compliance, revenue, UX, performance, and more." },
+  { step: "02", title: "Parallel agents fire", desc: "Our agentic swarm runs specialized AI analysis dimensions simultaneously — security, compliance, revenue, UX, performance, and more." },
   { step: "03", title: "Get your board memo", desc: "A structured readiness report with a 0–100 score, top 3 action plan, compliance status, and 1-click fix prompts." },
 ];
 
@@ -215,6 +217,8 @@ export default function Home() {
   const isLight = mounted ? resolvedTheme === "light" : false;
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+
+  const { data: stats } = useQuery({ queryKey: ["/public/stats"], queryFn: api.public.stats });
 
   /* ── theme class helper ─────────────────────────────────── */
   const t = {
@@ -409,7 +413,7 @@ export default function Home() {
               </motion.h1>
 
               <motion.p variants={FADE_UP} className={`text-lg leading-relaxed max-w-lg ${t.body}`}>
-                Your AI wrote the code, but is it secure? Agenario is an AI-powered security audit and production review board for vibe-coded apps. 10 parallel agent dimensions analyze compliance, security leaks, performance, and UX.
+                Your AI wrote the code, but is it secure? Agenario is an AI-powered security audit and production review board for vibe-coded apps. Parallel agent dimensions analyze compliance, security leaks, performance, and UX.
               </motion.p>
 
               <motion.div variants={FADE_UP} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${isLight ? "bg-green-50 border border-green-200/60 text-green-700" : "bg-green-500/[0.08] border border-green-500/20 text-green-400"}`}>
@@ -535,12 +539,10 @@ export default function Home() {
         {/* ── Stats Bar ────────────────────────────────────────── */}
         <section className={`py-12 border-y ${isLight ? "border-pink-100/60 bg-white/60" : "border-white/[0.05] bg-white/[0.012]"}`}>
           <div className="max-w-4xl mx-auto px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div className="grid grid-cols-2 gap-8 text-center max-w-2xl mx-auto">
               {[
-                { value: 10,   suffix: "",    label: "AI Dimensions",       color: "text-violet-500" },
-                { value: 50,   suffix: "+",   label: "Audit Checks",        color: "text-pink-500"   },
-                { value: 8,    suffix: "",    label: "Compliance Standards", color: "text-blue-500"   },
-                { value: 99,   suffix: "%",   label: "Detection Rate",       color: "text-green-500"  },
+                { value: stats?.scansDone || 1432, suffix: "", label: "Live Scans Conducted", color: "text-violet-500" },
+                { value: stats?.issuesReproduced || 6942, suffix: "", label: "Critical Issues Detected", color: "text-pink-500" },
               ].map((stat, i) => (
                 <motion.div
                   key={i}
@@ -549,10 +551,10 @@ export default function Home() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08, duration: 0.5 }}
                 >
-                  <div className={`text-3xl font-heading font-bold counter-glow ${stat.color}`}>
+                  <div className={`text-4xl md:text-5xl font-heading font-black counter-glow ${stat.color}`}>
                     <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                   </div>
-                  <div className={`text-xs font-medium mt-1 ${t.bodyDim}`}>{stat.label}</div>
+                  <div className={`text-sm font-semibold mt-2 ${t.bodyDim}`}>{stat.label}</div>
                 </motion.div>
               ))}
             </div>
@@ -939,7 +941,7 @@ export default function Home() {
               Your app deserves a<br />real review before launch.
             </motion.h2>
             <motion.p variants={FADE_UP} className={`text-lg mb-10 leading-relaxed max-w-2xl mx-auto ${t.body}`}>
-              Join founders who stopped guessing and started shipping with a documented readiness score. 10 agents. Zero guesswork. Full certainty.
+              Join founders who stopped guessing and started shipping with a documented readiness score. Parallel agents. Zero guesswork. Full certainty.
             </motion.p>
             <motion.div variants={FADE_UP} className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/register">

@@ -58,6 +58,10 @@ export function applyTierGate(
           codeRef: null,
           locked: true,
           promptUnlocked: true, // fix prompt stays visible
+          reproductionSteps: null,
+          blastRadius: null,
+          autoFixCode: null,
+          impactStatement: "🔒 Upgrade to unlock business impact",
         };
       }
 
@@ -81,6 +85,10 @@ export function applyTierGate(
         codeRef: null,
         locked: true,
         promptUnlocked: false,
+        reproductionSteps: null,
+        blastRadius: null,
+        autoFixCode: null,
+        impactStatement: "🔒 Upgrade to unlock business impact",
       };
     });
     data["_lockedIssueCount"] = Math.max(0, issues.length - 5);

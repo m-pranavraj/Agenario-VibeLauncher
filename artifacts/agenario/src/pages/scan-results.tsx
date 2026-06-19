@@ -11,6 +11,7 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { useQuery } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { useLocation, useRoute, Link } from "wouter";
 import {
@@ -23,6 +24,7 @@ import {
   Zap,
   Eye,
   Layers,
+  Download,
   Bot,
   Activity,
   Loader2,
@@ -79,9 +81,11 @@ import {
   LayoutDashboard,
   HelpCircle,
   ChevronLeft,
+  Link as LinkIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
+import { toast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   api,
@@ -362,6 +366,12 @@ function EvidenceCard({
     SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ??
     SEVERITY_CONFIG.low;
   const conf = getConfidenceStyle(issue.confidence ?? 60);
+
+  const { data: commImpact } = useQuery({
+    queryKey: ["/intelligence/failures", issue.title],
+    queryFn: () => api.intelligence.failures(issue.title).catch(() => null),
+    enabled: expanded,
+  });
 
   const copy = async () => {
     await navigator.clipboard.writeText(issue.fixPrompt);
@@ -2721,11 +2731,50 @@ function EvidenceCard({
                 <div className="bg-black/50 border border-amber-500/15 rounded-lg overflow-hidden">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/[0.06] border-b border-amber-500/10">
                     <Terminal className="w-3 h-3 text-amber-400/50" />
-                    <span className="text-[10px] text-amber-400/50 font-medium uppercase tracking-wide">Vulnerable Code</span>
+                    <span className="text-[10px] text-amber-400/50 font-medium uppercase tracking-wide">Vulnerable Code {issue.functionName ? `— Function: ${issue.functionName}` : ""}</span>
                     {issue.lineNumber && <span className="text-[10px] text-amber-500/40 ml-auto">Line {issue.lineNumber}</span>}
                   </div>
                   <pre className="px-3 py-2.5 text-[11px] font-mono text-red-300/80 leading-relaxed overflow-x-auto whitespace-pre-wrap">
                     {issue.codeSnippet}
+                  </pre>
+                </div>
+              )}
+
+              {/* Reproduction Steps */}
+              {issue.reproductionSteps && issue.reproductionSteps.length > 0 && (
+                <div className="bg-blue-500/[0.05] border border-blue-500/15 rounded-lg px-3 py-2.5">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Play className="w-3 h-3 text-blue-400/60" />
+                    <span className="text-[10px] font-semibold text-blue-400/70 uppercase tracking-wide">Replay Timeline</span>
+                  </div>
+                  <div className="relative border-l border-blue-500/20 ml-2 pl-4 space-y-4 py-2 mt-1">
+                    {issue.reproductionSteps.map((step: any, i: number) => (
+                      <div key={i} className="relative">
+                        <div className={`absolute -left-[21px] top-1 w-2.5 h-2.5 bg-blue-500 rounded-full ring-4 ${isLight ? "ring-white" : "ring-[#111]"}`}></div>
+                        <div className={`text-[11px] font-mono ${isLight ? "text-gray-600 bg-white border-gray-200" : "text-white/60 bg-black/20 border-white/5"} border p-2.5 rounded-lg flex flex-col gap-1.5`}>
+                          <div className="font-bold text-blue-400/90">{step.action}</div>
+                          <div className="opacity-75">{step.response}</div>
+                          {step.screenshotUrl && (
+                            <div className="mt-2 border border-blue-500/20 rounded overflow-hidden">
+                              <img src={step.screenshotUrl} alt="Replay Screenshot" className="w-full opacity-80 hover:opacity-100 transition-opacity" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Blast Radius */}
+              {issue.blastRadius && (
+                <div className="bg-purple-500/[0.05] border border-purple-500/15 rounded-lg px-3 py-2.5">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Target className="w-3 h-3 text-purple-400/60" />
+                    <span className="text-[10px] font-semibold text-purple-400/70 uppercase tracking-wide">Blast Radius</span>
+                  </div>
+                  <pre className="px-2 py-2 text-[10px] font-mono text-purple-300/70 leading-relaxed overflow-x-auto whitespace-pre-wrap bg-black/20 rounded">
+                    {JSON.stringify(issue.blastRadius, null, 2)}
                   </pre>
                 </div>
               )}
@@ -2751,6 +2800,26 @@ function EvidenceCard({
                   <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/55"} leading-relaxed`}>{issue.impactStatement}</p>
                 </div>
               )}
+
+              {/* Community Impact */}
+              {commImpact && (
+                <div className="bg-blue-500/[0.05] border border-blue-500/15 rounded-lg px-3 py-2.5">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <Globe className="w-3 h-3 text-blue-400/60" />
+                      <span className="text-[10px] font-semibold text-blue-400/70 uppercase tracking-wide">Community Intelligence</span>
+                    </div>
+                    {commImpact.percentOfApps > 25 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">Common Attack Vector</span>
+                    )}
+                  </div>
+                  <p className={`text-xs ${isLight ? "text-gray-600" : "text-white/50"}`}>
+                    Found in <strong className={isLight ? "text-blue-600" : "text-blue-400"}>{commImpact.percentOfApps.toFixed(1)}%</strong> of analyzed Next.js apps.
+                    <br/>
+                    Usually stems from: <span className="italic">{commImpact.frameworkRootCause}</span>
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -2760,21 +2829,47 @@ function EvidenceCard({
             </div>
           )}
 
-          <div className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-black/40 border-white/[0.07]"} rounded-lg p-3 border`}>
-            <div className="flex items-center justify-between mb-2">
-              <span className={`text-xs font-semibold ${isLight ? "text-gray-600" : "text-white/50"}`}>1-Click Fix Prompt</span>
-              <button
-                onClick={copy}
-                data-testid={`button-copy-${issue.id}`}
-                className={`flex items-center gap-1 text-xs ${isLight ? "text-gray-500 hover:text-gray-800" : "text-white/30 hover:text-white"} transition-colors`}
-              >
-                {copied
-                  ? <><CheckCheck className="w-3.5 h-3.5 text-green-400" />Copied!</>
-                  : <><Copy className="w-3.5 h-3.5" />Copy</>}
-              </button>
+          {issue.autoFixCode ? (
+            <div className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-black/40 border-white/[0.07]"} rounded-lg p-3 border`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-xs font-semibold ${isLight ? "text-gray-600" : "text-white/50"} flex items-center gap-1.5`}><Sparkles className="w-3.5 h-3.5 text-violet-400" /> Direct Auto-Fix Available</span>
+                <button
+                  onClick={() => {
+                    const blob = new Blob([issue.autoFixCode!], { type: "text/plain" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `fix-${issue.findingId || "patch"}.patch`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  }}
+                  className={`flex items-center gap-1 text-xs ${isLight ? "text-violet-600 bg-violet-50 hover:bg-violet-100" : "text-violet-300 bg-violet-500/20 hover:bg-violet-500/30"} px-2 py-1 rounded transition-colors`}
+                >
+                  <Download className="w-3.5 h-3.5" />Download .patch
+                </button>
+              </div>
+              <pre className={`text-xs ${isLight ? "text-gray-700 bg-white" : "text-white/70 bg-black/50"} font-mono leading-relaxed p-2 rounded overflow-x-auto whitespace-pre-wrap border ${isLight ? "border-gray-200" : "border-white/10"}`}>
+                {issue.autoFixCode}
+              </pre>
             </div>
-            <p className={`text-xs ${isLight ? "text-gray-700" : "text-white/45"} font-mono leading-relaxed`}>{issue.fixPrompt}</p>
-          </div>
+          ) : (
+            <div className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-black/40 border-white/[0.07]"} rounded-lg p-3 border`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-xs font-semibold ${isLight ? "text-gray-600" : "text-white/50"}`}>1-Click Fix Prompt</span>
+                <button
+                  onClick={copy}
+                  data-testid={`button-copy-${issue.id}`}
+                  className={`flex items-center gap-1 text-xs ${isLight ? "text-gray-500 hover:text-gray-800" : "text-white/30 hover:text-white"} transition-colors`}
+                >
+                  {copied
+                    ? <><CheckCheck className="w-3.5 h-3.5 text-green-400" />Copied!</>
+                    : <><Copy className="w-3.5 h-3.5" />Copy</>}
+                </button>
+              </div>
+              <p className={`text-xs ${isLight ? "text-gray-700" : "text-white/45"} font-mono leading-relaxed`}>{issue.fixPrompt}</p>
+            </div>
+          )}
 
           {/* ── AI Fix Generator ─────────────────── */}
           {scanId && (
@@ -6620,7 +6715,6 @@ function TargetHighlight({ rect }: { rect: DOMRect | null }) {
   );
 }
 
-// ── Section Divider ───────────────────────────────────────────────────────
 function SectionLabel({ label, icon: Icon, isLight }: { label: string; icon?: React.ElementType; isLight: boolean }) {
   return (
     <div className="flex items-center gap-3 mt-1">
@@ -6630,6 +6724,75 @@ function SectionLabel({ label, icon: Icon, isLight }: { label: string; icon?: Re
         {label}
       </div>
       <div className={`h-px flex-1 ${isLight ? "bg-gray-100" : "bg-white/[0.05]"}`} />
+    </div>
+  );
+}
+
+// ── Knowledge Graph Component ──────────────────────────────────────────────
+function KnowledgeGraphExplorer({ data, issues, isLight }: { data: any, issues?: any[], isLight: boolean }) {
+  if (!data || !data.nodes || data.nodes.length === 0) {
+    return <div className="text-center p-10 opacity-50">No Knowledge Graph Data Available for this Scan.</div>;
+  }
+
+  const nodes: RFNode[] = data.nodes.map((n: any, i: number) => ({
+    id: n.id,
+    position: { x: (i % 6) * 180, y: Math.floor(i / 6) * 100 },
+    data: { label: `${n.type === 'table' ? '📦' : n.type === 'route' ? '🔗' : n.type === 'function' ? '⚡' : '📄'} ${n.id.split('/').pop()}` },
+    style: {
+      background: isLight ? "#fff" : "#111",
+      color: isLight ? "#000" : "#fff",
+      border: `1px solid ${isLight ? "#eee" : "#333"}`,
+      borderRadius: "6px",
+      padding: "8px",
+      fontSize: "11px",
+      fontFamily: "monospace",
+      maxWidth: "150px",
+      wordWrap: "break-word"
+    }
+  }));
+
+  const edges: RFEdge[] = data.edges.map((e: any, i: number) => ({
+    id: `e-${i}`,
+    source: e.source || e.from,
+    target: e.target || e.to,
+    animated: true,
+    style: { stroke: isLight ? "#999" : "#666" }
+  }));
+
+  if (issues) {
+    let issueNodeIdx = nodes.length;
+    issues.forEach((issue) => {
+      if (issue.findingId) {
+        nodes.push({
+          id: issue.findingId,
+          position: { x: (issueNodeIdx % 6) * 180, y: Math.floor(issueNodeIdx / 6) * 100 + 150 },
+          data: { label: `🔴 ${issue.findingId}` },
+          style: {
+            background: isLight ? "rgba(239, 68, 68, 0.1)" : "rgba(239, 68, 68, 0.2)",
+            color: isLight ? "#dc2626" : "#fca5a5",
+            border: `1px solid ${isLight ? "#f87171" : "#dc2626"}`,
+            borderRadius: "6px",
+            padding: "8px",
+            fontSize: "11px",
+            fontWeight: "bold",
+            maxWidth: "150px"
+          }
+        });
+        issueNodeIdx++;
+
+        if (issue.filePath && nodes.some(n => n.id === issue.filePath)) {
+          edges.push({ id: `e-issue-${issue.findingId}-file`, source: issue.findingId, target: issue.filePath, animated: true, style: { stroke: "#dc2626", strokeWidth: 2 } });
+        }
+      }
+    });
+  }
+
+  return (
+    <div className={`w-full h-[600px] rounded-xl border ${isLight ? "bg-gray-50 border-gray-200" : "bg-black/40 border-white/10"} overflow-hidden`}>
+      <ReactFlow nodes={nodes} edges={edges} fitView>
+        <Background color={isLight ? "#ccc" : "#444"} gap={16} />
+        <Controls className={isLight ? "bg-white" : "bg-black fill-white"} />
+      </ReactFlow>
     </div>
   );
 }
@@ -6806,11 +6969,15 @@ export default function ScanResultsPage() {
           (i: any) => (i.sourceEvidence ?? "ai_reasoning") === evidenceFilter,
         );
   const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-  const sortedIssues = [...filteredIssues].sort(
-    (a, b) =>
-      (severityOrder[a.severity as keyof typeof severityOrder] ?? 4) -
-      (severityOrder[b.severity as keyof typeof severityOrder] ?? 4),
-  );
+  
+  // Sort by Evidence Quality first, then severity
+  const sortedIssues = [...filteredIssues].sort((a, b) => {
+    const qa = a.evidenceQuality ?? 40;
+    const qb = b.evidenceQuality ?? 40;
+    if (qa !== qb) return qb - qa; // Higher quality first
+    return (severityOrder[a.severity as keyof typeof severityOrder] ?? 4) -
+           (severityOrder[b.severity as keyof typeof severityOrder] ?? 4);
+  });
 
   const topThree = sortedIssues.slice(0, 3);
   const remaining = sortedIssues.slice(3);
@@ -6824,6 +6991,8 @@ export default function ScanResultsPage() {
   const aiCount = agentFiltered.filter(
     (i: any) => !i.sourceEvidence || i.sourceEvidence === "ai_reasoning",
   ).length;
+
+  const [exportOpen, setExportOpen] = useState(false);
 
   return (
     <div className={`min-h-screen ${t.page}`}>
@@ -6852,8 +7021,44 @@ export default function ScanResultsPage() {
             <span className={t.navBrand}>Launch Report</span>
           </div>
           <span className={t.navMeta}>{scan.sourceInput}</span>
+          {scan.businessType && scan.businessType !== "unknown" && (
+            <div className={`px-2 py-0.5 rounded-full border text-xs font-medium flex items-center gap-1.5 ${isLight ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-amber-500/10 text-amber-400 border-amber-500/20"}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+              {scan.businessType.charAt(0).toUpperCase() + scan.businessType.slice(1)} Attack Pack Active
+            </div>
+          )}
           <div className="ml-auto flex items-center gap-2">
             {scan.score != null && <ShareBadgeButton scan={scan} />}
+            {scan.certId && (
+              <button 
+                onClick={async () => {
+                  const url = `${window.location.origin}/cert/${scan.certId}`;
+                  await navigator.clipboard.writeText(url);
+                  toast({ title: "Certificate URL Copied", description: "Share this link to prove your launch readiness.", duration: 3000 });
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all ${isLight ? "bg-gradient-to-b from-white to-gray-50 border-gray-200 text-gray-700 shadow-sm hover:border-gray-300" : "bg-[#161616] border-white/10 text-white/80 hover:text-white hover:border-white/20"}`}
+              >
+                <LinkIcon className="w-3.5 h-3.5" />
+                Share Certificate
+              </button>
+            )}
+            <div className="relative">
+              <button 
+                onClick={() => setExportOpen(!exportOpen)}
+                className={t.navBtn}
+              >
+                <Download className="w-3 h-3" />
+                Export
+              </button>
+              {exportOpen && (
+                <div className={`absolute right-0 top-full mt-2 w-48 rounded-xl border p-1 shadow-lg z-50 ${isLight ? "bg-white border-gray-200" : "bg-[#111] border-white/10"}`}>
+                  <a href={`/api/scans/${scan.id}/export?format=certification`} download className={`block px-3 py-2 text-sm rounded-lg hover:bg-violet-500/10 hover:text-violet-500 ${isLight ? "text-gray-700" : "text-white/80"}`}>Launch Certificate</a>
+                  <a href={`/api/scans/${scan.id}/export?format=investor`} download className={`block px-3 py-2 text-sm rounded-lg hover:bg-violet-500/10 hover:text-violet-500 ${isLight ? "text-gray-700" : "text-white/80"}`}>Investor Report</a>
+                  <a href={`/api/scans/${scan.id}/export?format=agency`} download className={`block px-3 py-2 text-sm rounded-lg hover:bg-violet-500/10 hover:text-violet-500 ${isLight ? "text-gray-700" : "text-white/80"}`}>Agency Fix Plan</a>
+                  <a href={`/api/scans/${scan.id}/export?format=json`} download className={`block px-3 py-2 text-sm rounded-lg hover:bg-violet-500/10 hover:text-violet-500 ${isLight ? "text-gray-700" : "text-white/80"}`}>Raw JSON</a>
+                </div>
+              )}
+            </div>
             <Link href="/portfolio">
               <button className={t.navBtn}>
                 <BarChart3 className="w-3 h-3" />
@@ -6966,7 +7171,14 @@ export default function ScanResultsPage() {
                   }`}
                 >
                   <TabIcon className="w-3 h-3 shrink-0" />
-                  {tab.label}
+                  {tab.id === "issues" && scan.issues?.length > 0 && scan.issues[0]?.findingId ? (
+                    <span className="flex items-center gap-1">
+                      {tab.label}
+                      <span className="ml-1 text-[9px] bg-violet-500/20 text-violet-400 px-1 py-0.5 rounded font-bold uppercase">VFI Validated</span>
+                    </span>
+                  ) : (
+                    tab.label
+                  )}
                   {tab.count !== undefined && (
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${isActive ? t.tabCountActive : t.tabCountInactive}`}>
                       {tab.count}
@@ -6984,6 +7196,28 @@ export default function ScanResultsPage() {
         {/* ── Overview Tab ─────────────────────────────────── */}
         {activeTab === "overview" && (
           <>
+            {/* ── Launch Certification Badge ───────────────────── */}
+            {scan.launchVerdict && (
+              <div className={`${isLight ? "bg-white border-gray-200" : "bg-[#111] border-white/10"} border rounded-2xl p-6 mb-4 flex items-center justify-between`}>
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${scan.launchVerdict === "ready" ? "bg-green-500/20 text-green-500" : scan.launchVerdict === "caution" ? "bg-yellow-500/20 text-yellow-500" : "bg-red-500/20 text-red-500"}`}>
+                    <ShieldCheck className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className={`font-bold text-lg ${isLight ? "text-gray-900" : "text-white"}`}>Launch Certification</h2>
+                    <p className={`text-sm ${isLight ? "text-gray-500" : "text-white/50"}`}>
+                      Verdict: <strong className="uppercase">{scan.launchVerdict}</strong>
+                    </p>
+                  </div>
+                </div>
+                {scan.launchVerdict === "ready" && (
+                  <div className="bg-green-500/10 border border-green-500/20 text-green-400 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider">
+                    Ready For Production
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* ── Executive summary row ────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div
@@ -7086,6 +7320,43 @@ export default function ScanResultsPage() {
                 )}
               </div>
             </div>
+
+            {/* ── Benchmark Network ────────────────────────────── */}
+            {scan.benchmarkData && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`${isLight ? "bg-white border-gray-200" : "bg-[#111] border-white/10"} border rounded-2xl p-6 mt-4`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Network className={`w-5 h-5 ${isLight ? "text-violet-500" : "text-violet-400"}`} />
+                    <h2 className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Benchmark Network</h2>
+                  </div>
+                  <div className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>
+                    Compared against <strong className={isLight ? "text-gray-900" : "text-white"}>{scan.benchmarkData.totalCompared.toLocaleString()}</strong> React SaaS Apps
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { label: "Security", val: scan.benchmarkData.percentiles.security, icon: ShieldCheck, color: "text-green-500", bg: "bg-green-500/10" },
+                    { label: "Reliability", val: scan.benchmarkData.percentiles.reliability, icon: Zap, color: "text-blue-500", bg: "bg-blue-500/10" },
+                    { label: "Revenue Risk", val: scan.benchmarkData.percentiles.revenueRisk, icon: Activity, color: "text-amber-500", bg: "bg-amber-500/10" },
+                  ].map((b) => (
+                    <div key={b.label} className={`flex items-center gap-4 ${isLight ? "bg-gray-50 border-gray-200" : "bg-black/30 border-white/[0.05]"} border rounded-xl p-4`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${b.bg} ${b.color}`}>
+                        <b.icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className={`text-[10px] font-bold uppercase tracking-wider ${isLight ? "text-gray-500" : "text-white/40"} mb-0.5`}>{b.label}</div>
+                        <div className={`font-bold ${isLight ? "text-gray-900" : "text-white"}`}>{b.val}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* ── Architecture Audit ───────────────────────────── */}
             <SectionLabel label="Architecture Audit" icon={Network} isLight={isLight} />
@@ -7713,6 +7984,17 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
           </>
+        )}
+
+        {/* ── Knowledge Graph Tab ──────────────────────────── */}
+        {activeTab === "graph" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className={`font-bold ${isLight ? "text-gray-900" : "text-white"}`}>Workspace Knowledge Graph</h2>
+              <span className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>Auto-discovered dependencies & files</span>
+            </div>
+            <KnowledgeGraphExplorer data={scan.knowledgeGraph} issues={scan.issues} isLight={isLight} />
+          </div>
         )}
 
         {/* ── Privacy footer ───────────────────────────────── */}

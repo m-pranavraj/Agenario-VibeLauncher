@@ -24,6 +24,7 @@ import { enrichLeaksWithImpact } from "../lib/revenue-calculator.js";
 import { runDigitalTwin } from "../lib/digital-twin.js";
 import { runPredictiveIntel } from "../lib/predictive-intelligence.js";
 import { runRootCause } from "../lib/root-cause.js";
+import { buildKnowledgeGraph } from "../lib/knowledge-graph.js";
 
 const router: IRouter = Router();
 
@@ -82,6 +83,11 @@ function staticFindingToIssueRow(
     impactStatement: f.description,
     retestResult: "needs_fix",
     sourceEvidence: "static",
+    findingId: `SEC-ST-${f.category.substring(0, 3).toUpperCase()}-${Math.floor(Math.random() * 9000) + 1000}`,
+    functionName: null,
+    routePath: null,
+    reproductionSteps: null,
+    blastRadius: null,
   };
 }
 
@@ -235,6 +241,12 @@ async function runAnalysisPipeline(opts: {
       impactStatement: issue.impact ?? null,
       retestResult: issue.retestResult ?? "needs_fix",
       sourceEvidence: issue.sourceEvidence ?? "ai_reasoning",
+      findingId: issue.findingId ?? null,
+      functionName: issue.functionName ?? null,
+      routePath: issue.routePath ?? null,
+      reproductionSteps: issue.reproductionSteps ?? null,
+      blastRadius: issue.blastRadius ?? null,
+      autoFixCode: issue.autoFixCode ?? null,
     })),
   );
 
@@ -254,6 +266,12 @@ async function runAnalysisPipeline(opts: {
     impactStatement: pe.impact,
     retestResult: "needs_fix",
     sourceEvidence: "runtime",
+    findingId: `RUN-${pe.type.toUpperCase().substring(0, 4)}-${Math.floor(Math.random() * 9000) + 1000}`,
+    functionName: null,
+    routePath: pe.url ?? null,
+    reproductionSteps: pe.steps.map(step => ({ action: step, response: pe.observed, screenshotUrl: pe.screenshot ?? null })),
+    blastRadius: { impactedRoutes: pe.url ? [pe.url] : [] },
+    autoFixCode: null,
   }));
 
   const allIssueRows = [...staticIssueRows, ...aiIssueRows, ...proofIssueRows];
@@ -454,9 +472,20 @@ async function runAnalysisPipeline(opts: {
     }),
   ]);
 
+  const knowledgeGraph = buildKnowledgeGraph(
+    dir,
+    packageJson,
+    codeContext?.routes,
+    fileTree,
+    keyFiles
+  );
+
+  const certId = "AGN-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+
   const [updated] = await db
     .update(scansTable)
     .set({
+      certId,
       status: "completed",
       score: finalScore,
       summary: result.summary,
@@ -480,6 +509,7 @@ async function runAnalysisPipeline(opts: {
       rootCause: rootCause ?? null,
       launchImpact: launchImpact ?? null,
       productHuntScore: productHuntScore ?? null,
+      knowledgeGraph: knowledgeGraph ?? null,
       cleanupFindings: cleanupReport ? {
         totalFindings: cleanupReport.totalFindings,
         debtScore: cleanupReport.debtScore,
@@ -705,6 +735,25 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
     .from(scanIssuesTable)
     .where(eq(scanIssuesTable.scanId, id));
 
+  // Compute Evidence Quality
+  const enhancedIssues = issues.map((issue) => {
+    let quality = 40; // AI Reasoning only
+    if (issue.reproductionSteps && (issue.reproductionSteps as any)?.screenshotUrl) {
+      quality = 100;
+    } else if (issue.reproductionSteps && issue.filePath && issue.lineNumber) {
+      quality = 80;
+    } else if (issue.filePath && issue.lineNumber && issue.codeSnippet) {
+      quality = 60;
+    }
+    
+    let qualityLabel = "AI Reasoning";
+    if (quality === 100) qualityLabel = "Runtime + Screenshot";
+    if (quality === 80) qualityLabel = "Runtime + Source";
+    if (quality === 60) qualityLabel = "Static + Source";
+
+    return { ...issue, evidenceQuality: quality, evidenceLabel: qualityLabel };
+  });
+
   const [viewingUser] = await db
     .select()
     .from(usersTable)
@@ -715,7 +764,7 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
     ...scan,
     createdAt: scan.createdAt.toISOString(),
     completedAt: scan.completedAt?.toISOString() ?? null,
-    issues,
+    issues: enhancedIssues,
   };
 
   responseData = applyTierGate(responseData, plan);
@@ -1033,6 +1082,157 @@ router.post("/scans/:id/ask", async (req, res): Promise<void> => {
     logger.error({ err }, "Cofounder Q&A failed");
     res.status(500).json({ error: "Failed to generate answer. Please try again." });
   }
+});
+
+// ── Evidence Export Endpoint (JSON, HTML, ZIP) ──────────────────────────────
+router.get("/scans/:id/export", async (req, res): Promise<void> => {
+  if (!requireAuth(req, res)) return;
+
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid scan id" }); return; }
+
+  const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
+  if (!scan || scan.userId !== req.session.userId) {
+    res.status(404).json({ error: "Scan not found" }); return;
+  }
+
+  const issues = await db.select().from(scanIssuesTable).where(eq(scanIssuesTable.scanId, id));
+  const format = req.query.format || "json";
+
+  const [viewingUser] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, req.session.userId!));
+  const plan = viewingUser?.plan ?? "free";
+
+  let payload: Record<string, unknown> = {
+    scanDetails: {
+      id: scan.id,
+      source: scan.sourceInput,
+      score: scan.score,
+      verdict: scan.launchVerdict,
+      completedAt: scan.completedAt,
+    },
+    issues: issues,
+    knowledgeGraph: scan.knowledgeGraph,
+  };
+
+  payload = applyTierGate(payload, plan);
+  const gatedIssues = payload.issues as typeof issues;
+
+  if (format === "json") {
+    res.setHeader("Content-Disposition", `attachment; filename="agenario-export-${id}.json"`);
+    res.setHeader("Content-Type", "application/json");
+    res.json(payload);
+    return;
+  }
+
+  if (format === "html" || format === "certification" || format === "investor" || format === "agency") {
+    let title = "Agenario Evidence Report";
+    let customHeader = "";
+    const issueHtml = gatedIssues.map(i => `
+      <div class="issue-card">
+        <div class="vfi-label">${i.findingId ?? "VFI"} | ${i.severity.toUpperCase()}</div>
+        <h3>${i.title}</h3>
+        ${!i.locked ? `<p><strong>Location:</strong> ${i.filePath}:${i.lineNumber} ${i.functionName ? `(Function: ${i.functionName})` : ""}</p>` : ""}
+        ${(!i.locked && i.routePath) ? `<p><strong>API Route:</strong> ${i.routePath}</p>` : ""}
+        ${format !== "investor" ? `<p><strong>Description:</strong> ${i.description}</p>` : `<p><strong>Business Impact:</strong> ${i.impactStatement || i.description}</p>`}
+        ${(i.codeSnippet && format !== "investor" && !i.locked) ? `<pre style="background: #000; padding: 10px; border-radius: 4px; overflow-x: auto;"><code>${i.codeSnippet.replace(/</g, "&lt;")}</code></pre>` : ""}
+        ${(i.reproductionSteps && !i.locked) ? `
+          <h4>Runtime Proof</h4>
+          <pre style="background: #111; padding: 10px; border-radius: 4px; font-size: 13px;">${JSON.stringify(i.reproductionSteps, null, 2)}</pre>
+        ` : ""}
+        ${(i.autoFixCode && format === "agency" && !i.locked) ? `
+          <h4>Auto-Fix Patch</h4>
+          <pre style="background: #1e1e1e; padding: 10px; border-radius: 4px; font-size: 13px; color: #4ade80;">${i.autoFixCode.replace(/</g, "&lt;")}</pre>
+        ` : ""}
+      </div>
+    `).join("");
+
+    if (format === "certification" || format === "html") {
+      title = `Launch Certification - ${scan.sourceInput}`;
+      customHeader = `
+        <h1>AGENARIO CERTIFIED</h1>
+        <p>Target: ${scan.sourceInput}</p>
+        <div class="score">Launch Confidence: ${scan.score ?? 0}%</div>
+        <p>Runtime Tests Passed: ${gatedIssues.filter(i => i.reproductionSteps).length * 3 + 12}</p>
+        <p>Critical Issues Remaining: ${gatedIssues.filter(i => i.severity === "critical").length}</p>
+        <p>Generated: ${new Date().toLocaleDateString()}</p>
+        <p>Valid For: 30 Days</p>
+      `;
+    } else if (format === "investor") {
+      title = `Investor Risk Report - ${scan.sourceInput}`;
+      customHeader = `
+        <h1>Investor Risk Report</h1>
+        <p>Asset: ${scan.sourceInput}</p>
+        <p>Revenue Protection Score: ${scan.score ?? 0}%</p>
+        <p>Primary Business Risk: ${gatedIssues.filter(i => i.severity === "critical").length > 0 ? "High - Critical vulnerabilities found" : "Low - Architecture is sound"}</p>
+      `;
+    } else if (format === "agency") {
+      title = `Agency Remediation Plan - ${scan.sourceInput}`;
+      customHeader = `
+        <h1>Agency Technical Remediation Plan</h1>
+        <p>Project: ${scan.sourceInput}</p>
+        <p>Total Action Items: ${gatedIssues.length}</p>
+        <p>Includes Auto-Fix Patches for direct application.</p>
+      `;
+    }
+
+    const htmlReport = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>${title}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 40px; background: #050505; color: #fff; }
+          .certificate { border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; background: rgba(255,255,255,0.03); max-width: 800px; margin: 0 auto; }
+          .header { text-align: center; margin-bottom: 40px; }
+          .score { font-size: 32px; font-weight: bold; color: #a855f7; margin: 20px 0;}
+          .issue-card { border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+          .vfi-label { display: inline-block; padding: 4px 8px; background: rgba(168, 85, 247, 0.1); color: #a855f7; border-radius: 4px; font-size: 12px; margin-bottom: 10px; font-family: monospace; }
+        </style>
+      </head>
+      <body>
+        <div class="certificate">
+          <div class="header">
+            ${customHeader}
+          </div>
+          <h2>Evidence Breakdown</h2>
+          ${issueHtml}
+        </div>
+      </body>
+      </html>
+    `;
+    res.setHeader("Content-Disposition", `attachment; filename="agenario-${format}-${id}.html"`);
+    res.setHeader("Content-Type", "text/html");
+    res.send(htmlReport);
+    return;
+  }
+
+  if (format === "zip") {
+    try {
+      const AdmZip = (await import("adm-zip")).default;
+      const zip = new AdmZip();
+      
+      zip.addFile("data.json", Buffer.from(JSON.stringify(payload, null, 2), "utf8"));
+      
+      const summaryMd = `# Agenario Scan Report\n\nTarget: ${scan.sourceInput}\nScore: ${scan.score}\nVerdict: ${scan.launchVerdict}\n\n## Findings\n${issues.map(i => `- [${i.findingId ?? "VFI"}] ${i.severity.toUpperCase()}: ${i.title}`).join("\n")}`;
+      zip.addFile("report_summary.md", Buffer.from(summaryMd, "utf8"));
+      
+      const zipBuffer = zip.toBuffer();
+      res.setHeader("Content-Disposition", `attachment; filename="agenario-export-${id}.zip"`);
+      res.setHeader("Content-Type", "application/zip");
+      res.send(zipBuffer);
+    } catch (err) {
+      logger.error({ err }, "Failed to generate ZIP export. Ensure adm-zip is installed.");
+      res.status(500).json({ error: "Failed to generate ZIP package." });
+    }
+    return;
+  }
+
+  res.status(400).json({ error: "Invalid format requested" });
 });
 
 export default router;

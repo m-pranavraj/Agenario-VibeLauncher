@@ -1,41 +1,26 @@
 import Groq from "groq-sdk";
 import { logger } from "./logger.js";
+import { getAttackPackPrompt, getAttackPack } from "./attack-packs.js";
 
-// Primary: Groq (fast, high TPM free tier) — optional if GROQ_API_KEY not set
-const groq = process.env["GROQ_API_KEY"]
-  ? new Groq({ apiKey: process.env["GROQ_API_KEY"] })
-  : null;
+import { KeyRotator } from "./key-rotator.js";
 
-// Secondary: OpenRouter (multiple free models for load distribution)
+const groqRotator = new KeyRotator("Groq", process.env["GROQ_API_KEY"] ?? process.env["GROQ_KEYS"]);
+const openRouterRotator = new KeyRotator("OpenRouter", process.env["OPENROUTER_API_KEY"] ?? process.env["OPENROUTER_KEYS"]);
+const cerebrasRotator = new KeyRotator("Cerebras", process.env["CEREBRAS_API_KEY"] ?? process.env["CEREBRAS_KEYS"]);
+
 const OPENROUTER_BASE = "https://openrouter.ai/api/v1";
-const openrouterKey = process.env["OPENROUTER_API_KEY"];
-const openrouter = openrouterKey
-  ? new Groq({ apiKey: openrouterKey, baseURL: OPENROUTER_BASE })
-  : null;
 
-// Tertiary: Cerebras (OpenAI-compatible endpoint)
-const cerebras = process.env["CEREBRAS_API_KEY"]
-  ? new Groq({
-      apiKey: process.env["CEREBRAS_API_KEY"],
-      baseURL: "https://api.cerebras.ai/v1",
-    })
-  : null;
-
-// Fast small model on Groq — for all parallel per-agent calls
 const FAST_MODEL = "llama-3.1-8b-instant";
-// Smart model on Groq — reserved for synthesis/forecast
 const SMART_MODEL = "llama-3.3-70b-versatile";
-// Cerebras model — full 70b fallback
 const CEREBRAS_MODEL = "llama-3.3-70b";
 
-// OpenRouter free models — proven reliable, round-robin for load balancing + rate limit avoidance
 const OPENROUTER_MODELS = [
-  "meta-llama/llama-3.3-70b-instruct:free",     // Primary: proven quality, high availability
-  "deepseek/deepseek-chat-v3-0324:free",          // Excellent reasoning, JSON-reliable
-  "google/gemma-3-27b-it:free",                   // Google, strong instruction following
-  "meta-llama/llama-3.1-8b-instruct:free",        // Fast, reliable fallback
-  "mistralai/mistral-7b-instruct:free",           // Reliable small model
-  "qwen/qwen3-14b:free",                          // Strong multilingual + code
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "deepseek/deepseek-chat-v3-0324:free",
+  "google/gemma-3-27b-it:free",
+  "meta-llama/llama-3.1-8b-instruct:free",
+  "mistralai/mistral-7b-instruct:free",
+  "qwen/qwen3-14b:free",
 ];
 let orModelIndex = 0;
 function nextOpenRouterModel(): string {
@@ -44,20 +29,24 @@ function nextOpenRouterModel(): string {
   return m;
 }
 
-// Return first available AI client — prefer OpenRouter to spread load off Groq
 function getAnyClient(): Groq {
-  const client = openrouter ?? groq ?? cerebras;
-  if (!client) throw new Error("No AI provider configured. Set GROQ_API_KEY or OPENROUTER_API_KEY.");
-  return client;
+  const orKey = openRouterRotator.getNextKey();
+  if (orKey) return new Groq({ apiKey: orKey, baseURL: OPENROUTER_BASE });
+  const groqKey = groqRotator.getNextKey();
+  if (groqKey) return new Groq({ apiKey: groqKey });
+  const cerebrasKey = cerebrasRotator.getNextKey();
+  if (cerebrasKey) return new Groq({ apiKey: cerebrasKey, baseURL: "https://api.cerebras.ai/v1" });
+  throw new Error("No AI provider keys available.");
 }
+
 function smartModel(): string {
-  if (openrouter) return "meta-llama/llama-3.3-70b-instruct:free";
-  if (groq) return SMART_MODEL;
+  if (openRouterRotator.hasKeys()) return "meta-llama/llama-3.3-70b-instruct:free";
+  if (groqRotator.hasKeys()) return SMART_MODEL;
   return CEREBRAS_MODEL;
 }
 function fastModel(): string {
-  if (openrouter) return "meta-llama/llama-3.1-8b-instruct:free";
-  if (groq) return FAST_MODEL;
+  if (openRouterRotator.hasKeys()) return "meta-llama/llama-3.1-8b-instruct:free";
+  if (groqRotator.hasKeys()) return FAST_MODEL;
   return CEREBRAS_MODEL;
 }
 
@@ -81,9 +70,15 @@ export interface AgentIssue {
   title: string;
   description: string;
   fixPrompt: string;
+  autoFixCode?: string;
   confidence?: number;
   evidence?: string;
   // Evidence Standard fields
+  findingId?: string;
+  functionName?: string;
+  routePath?: string;
+  reproductionSteps?: any;
+  blastRadius?: any;
   filePath?: string;
   lineNumber?: number;
   codeSnippet?: string;
@@ -535,14 +530,20 @@ Return ONLY valid JSON following the Agenario Evidence Standard:
 {
   "issues": [
     {
+      "findingId": "SEC-0021 (Prefix with category like SEC, REV, PER, etc.)",
       "severity": "critical|high|medium|low",
       "title": "Short specific issue title (max 8 words)",
       "description": "Clear explanation of the vulnerability with exact evidence from the code provided. State what you observed, not what is theoretically possible.",
+      "functionName": "Name of the vulnerable function if applicable",
+      "routePath": "Name of the API route if applicable",
       "filePath": "src/auth/jwt.ts",
       "lineNumber": 42,
       "codeSnippet": "const JWT_SECRET = 'hardcoded-secret';",
+      "reproductionSteps": [{"action": "Trigger payload", "response": "401 expected, got 200"}],
+      "blastRadius": {"impactedFiles": ["src/api/orders.ts"], "impactedTables": ["orders"], "downstreamEffects": "Privilege escalation"},
       "impact": "Quantified business impact: attacker can do X, causing Y data exposure / Z revenue loss / N% churn increase.",
-      "fixPrompt": "Ready-to-paste fix prompt for Cursor/Claude with exact file + function names from the real code",
+      "fixPrompt": "Detailed explanation and context of the architectural issue. Use this field to provide instructions to the developer to fix the issue. Make it as detailed as possible.",
+      "autoFixCode": "If the fix is small/isolated (under 20 lines), provide the exact git patch code here. Otherwise leave null.",
       "confidence": 85,
       "evidence": "Exact quote or pattern observed in the provided code that confirms this issue — not a hypothetical",
       "sourceEvidence": "static|runtime|ai_reasoning",
@@ -560,7 +561,8 @@ Output rules:
 - impact: quantified statement — "Attacker can access all user records (GDPR violation, ₹20L fine risk)" not "security risk".
 - confidence: 95–99 runtime-provable, 85–94 direct code evidence, 70–84 pattern inference. Do NOT report below 70.
 - sourceEvidence: "static" if from code analysis, "runtime" if from HTTP/browser probe, "ai_reasoning" if inferred.
-- fixPrompt must be copy-paste ready — reference specific file/function names from the code context.
+- fixPrompt: Must provide high-level contextual instructions or deep architectural guides for Cursor/Claude.
+- autoFixCode: Only populate this if the fix is a simple, direct patch. Format as raw code without markdown blocks.
 - retestResult: always "needs_fix" for new findings.
 - If the code context is clean in your domain, return {"issues": []} — this is a positive outcome, not an error.`;
 }
@@ -600,14 +602,16 @@ async function callWithFallback(
   const messages_typed = messages as { role: "system" | "user" | "assistant"; content: string }[];
   const maxTok = opts.maxTokens ?? 700;
 
-  // ── Tier 1: OpenRouter — all 6 models, round-robin, hard timeout each ────────
-  // NOTE: response_format omitted — not all free OpenRouter models support it.
-  if (openrouter) {
+  // ── Tier 1: OpenRouter ───────────────────────────────────────────────
+  if (openRouterRotator.hasKeys()) {
     for (let attempt = 0; attempt < OPENROUTER_MODELS.length; attempt++) {
       const orModel = nextOpenRouterModel();
+      const orKey = openRouterRotator.getNextKey();
+      if (!orKey) break;
+      const orClient = new Groq({ apiKey: orKey, baseURL: OPENROUTER_BASE });
       try {
         const response = await withCallTimeout(
-          () => openrouter!.chat.completions.create({
+          () => orClient.chat.completions.create({
             model: orModel,
             messages: messages_typed,
             max_tokens: maxTok,
@@ -617,60 +621,63 @@ async function callWithFallback(
         const raw = response.choices[0]?.message?.content ?? "";
         const content = extractJson(raw);
         if (content && content !== "{}") {
-          if (attempt > 0) logger.info({ model: orModel, attempt }, "OpenRouter succeeded on retry");
           return content;
         }
-        logger.warn({ model: orModel, attempt }, "OpenRouter empty response — trying next model");
-      } catch (err: unknown) {
-        // Always continue to next model — never break early
-        logger.warn(
-          { model: orModel, attempt, err: (err as Error).message?.slice(0, 120) },
-          "OpenRouter model failed — trying next",
-        );
+      } catch (err: any) {
+        if (err?.status === 429) openRouterRotator.markRateLimited(orKey);
+        logger.warn({ model: orModel, attempt, err: err?.message?.slice(0, 120) }, "OpenRouter failed");
       }
     }
-    logger.warn("All OpenRouter models exhausted — falling back to Groq");
   }
 
-  // ── Tier 2: Groq — native JSON mode ──────────────────────────────────────────
-  if (groq) {
-    try {
-      const response = await withCallTimeout(
-        () => groq!.chat.completions.create({
-          model: opts.model,
-          messages: messages_typed,
-          response_format: { type: "json_object" },
-          max_tokens: maxTok,
-        }),
-        "Groq",
-      );
-      const content = response.choices[0]?.message?.content ?? "{}";
-      if (content && content !== "{}") return content;
-    } catch (err: unknown) {
-      logger.warn({ err: (err as Error).message?.slice(0, 120) }, "Groq failed — trying Cerebras");
+  // ── Tier 2: Groq ───────────────────────────────────────────────────────
+  if (groqRotator.hasKeys()) {
+    const groqKey = groqRotator.getNextKey();
+    if (groqKey) {
+      const groqClient = new Groq({ apiKey: groqKey });
+      try {
+        const response = await withCallTimeout(
+          () => groqClient.chat.completions.create({
+            model: opts.model,
+            messages: messages_typed,
+            response_format: { type: "json_object" },
+            max_tokens: maxTok,
+          }),
+          "Groq",
+        );
+        const content = response.choices[0]?.message?.content ?? "{}";
+        if (content && content !== "{}") return content;
+      } catch (err: any) {
+        if (err?.status === 429) groqRotator.markRateLimited(groqKey);
+        logger.warn({ err: err?.message?.slice(0, 120) }, "Groq failed");
+      }
     }
   }
 
-  // ── Tier 3: Cerebras ──────────────────────────────────────────────────────────
-  if (cerebras) {
-    try {
-      const response = await withCallTimeout(
-        () => cerebras!.chat.completions.create({
-          model: opts.cerebrasModel ?? CEREBRAS_MODEL,
-          messages: messages_typed,
-          max_tokens: maxTok,
-        }),
-        "Cerebras",
-      );
-      const content = extractJson(response.choices[0]?.message?.content ?? "{}");
-      if (content && content !== "{}") return content;
-    } catch (err: unknown) {
-      logger.warn({ err: (err as Error).message?.slice(0, 120) }, "Cerebras also failed");
+  // ── Tier 3: Cerebras ───────────────────────────────────────────────────
+  if (cerebrasRotator.hasKeys()) {
+    const cerebrasKey = cerebrasRotator.getNextKey();
+    if (cerebrasKey) {
+      const cerebrasClient = new Groq({ apiKey: cerebrasKey, baseURL: "https://api.cerebras.ai/v1" });
+      try {
+        const response = await withCallTimeout(
+          () => cerebrasClient.chat.completions.create({
+            model: opts.cerebrasModel ?? CEREBRAS_MODEL,
+            messages: messages_typed,
+            max_tokens: maxTok,
+          }),
+          "Cerebras",
+        );
+        const content = extractJson(response.choices[0]?.message?.content ?? "{}");
+        if (content && content !== "{}") return content;
+      } catch (err: any) {
+        if (err?.status === 429) cerebrasRotator.markRateLimited(cerebrasKey);
+        logger.warn({ err: err?.message?.slice(0, 120) }, "Cerebras failed");
+      }
     }
   }
 
-  // ── All providers failed — return empty gracefully (agent returns 0 issues) ───
-  logger.error("All AI providers exhausted — returning empty JSON to avoid scan failure");
+  logger.error("All AI providers exhausted — returning empty JSON");
   return "{}";
 }
 
@@ -684,8 +691,14 @@ async function runAgentWithRetry(
   appDescription?: string | null,
   codeContext?: CodeContext | null,
 ): Promise<AgentResult> {
+  // Inject business-type-specific attack vectors for security-adjacent agents
+  const securityAgents = ["Security & Access Control", "Revenue & Business Logic", "Business Logic Attack Lab", "Data Integrity & Architecture", "Supply Chain Security"];
+  let systemPrompt = agent.role;
+  if (codeContext?.businessType && codeContext.businessType !== "unknown" && securityAgents.includes(agent.name)) {
+    systemPrompt += getAttackPackPrompt(codeContext.businessType);
+  }
   const messages = [
-    { role: "system" as const, content: agent.role },
+    { role: "system" as const, content: systemPrompt },
     { role: "user" as const, content: buildUserPrompt(sourceType, sourceInput, appDescription, codeContext, agent.name) },
   ];
 
@@ -698,8 +711,14 @@ async function runAgentWithRetry(
         agentName: agent.name,
         issues: (parsed.issues ?? []).map((issue) => ({
           ...issue,
+          findingId: issue.findingId ?? undefined,
+          functionName: issue.functionName ?? undefined,
+          routePath: issue.routePath ?? undefined,
+          reproductionSteps: issue.reproductionSteps ?? undefined,
+          blastRadius: issue.blastRadius ?? undefined,
           confidence: issue.confidence ?? 65,
           evidence: issue.evidence ?? undefined,
+          autoFixCode: issue.autoFixCode ?? undefined,
           filePath: issue.filePath ?? undefined,
           lineNumber: issue.lineNumber ?? undefined,
           codeSnippet: issue.codeSnippet ?? undefined,

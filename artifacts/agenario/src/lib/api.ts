@@ -108,18 +108,26 @@ export interface ScanIssue {
   title: string;
   description: string;
   fixPrompt: string;
+  autoFixCode?: string | null;
   confidence?: number;
   evidence?: string | null;
   locked?: boolean;
   promptUnlocked?: boolean;
   owaspMapping?: OwaspMapping;
   // Evidence Standard fields
+  findingId?: string | null;
+  functionName?: string | null;
+  routePath?: string | null;
+  reproductionSteps?: any;
+  blastRadius?: any;
   filePath?: string | null;
   lineNumber?: number | null;
   codeSnippet?: string | null;
   impactStatement?: string | null;
-  retestResult?: string | null;
   sourceEvidence?: string | null;
+  retestResult?: string | null;
+  evidenceQuality?: number;
+  evidenceLabel?: string;
 }
 
 export interface IssueCounts {
@@ -244,6 +252,7 @@ export interface LaunchReplayStep {
 
 export interface Scan {
   id: number;
+  certId?: string;
   userId: number;
   sourceType: string;
   sourceInput: string;
@@ -462,6 +471,8 @@ export interface RootCauseResult {
 
 export interface ScanDetail extends Scan {
   issues: ScanIssue[];
+  benchmarkData?: any;
+  knowledgeGraph?: any;
   _lockedIssueCount?: number;
 }
 
@@ -541,4 +552,11 @@ export const api = {
   admin: {
     stats: () => request<AdminStats>("/admin/stats"),
   },
+  public: {
+    stats: () => request<{ scansDone: number; issuesReproduced: number; fixesGenerated: number; proofsGenerated: number; screenshotsCaptured: string }>("/public/stats"),
+    cert: (certId: string) => request<{ certId: string; source: string; score: number; verdict: string; completedAt: string; criticalIssues: number; totalIssues: number }>(`/public/cert/${certId}`),
+  },
+  intelligence: {
+    failures: (issueTitle: string) => request<{ issueTitle: string; boltPercent: number; cursorPercent: number; replitPercent: number; totalAnalyzed: number }>(`/intelligence/failures?issueTitle=${encodeURIComponent(issueTitle)}`),
+  }
 };

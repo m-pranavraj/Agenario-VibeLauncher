@@ -299,6 +299,11 @@ export const scansTable = pgTable("scans", {
     topBlockers: string[];
     readyToHunt: boolean;
   }>(),
+  knowledgeGraph: jsonb("knowledge_graph").$type<{
+    nodes: Array<{ id: string; label: string; type: "file" | "function" | "route" | "table" | "dependency" }>;
+    edges: Array<{ from: string; to: string; label?: string }>;
+  }>(),
+  certId: text("cert_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp("completed_at", { withTimezone: true }),
 });
