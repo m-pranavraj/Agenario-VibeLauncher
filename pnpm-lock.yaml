@@ -441,9 +441,6 @@ importers:
         specifier: ^2.9.6
         version: 2.9.6
     devDependencies:
-      '@types/adm-zip':
-        specifier: ^0.5.8
-        version: 0.5.8
       '@types/bcryptjs':
         specifier: ^2.4.6
         version: 2.4.6
@@ -1759,9 +1756,6 @@ packages:
     resolution: {integrity: sha512-Oa44XkaI3kCNN6ME0KByU3xT3SEUNOMfZpHxL6+wFoTm+OeUFYHKdeYVe0aOXlRDm/f15sgLwEt2HDorIdW8+A==}
     peerDependencies:
       react: ^18 || ^19
-
-  '@types/adm-zip@0.5.8':
-    resolution: {integrity: sha512-RVVH7QvZYbN+ihqZ4kX/dMiowf6o+Jk1fNwiSdx0NahBJLU787zkULhGhJM8mf/obmLGmgdMM0bXsQTmyfbR7Q==}
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -5159,10 +5153,6 @@ snapshots:
     dependencies:
       '@tanstack/query-core': 5.100.9
       react: 19.1.0
-
-  '@types/adm-zip@0.5.8':
-    dependencies:
-      '@types/node': 25.6.2
 
   '@types/babel__core@7.20.5':
     dependencies:
