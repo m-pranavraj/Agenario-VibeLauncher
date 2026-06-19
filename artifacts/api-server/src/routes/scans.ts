@@ -192,7 +192,7 @@ async function runAnalysisPipeline(opts: {
     }),
     runProofEngine(sourceType, sourceInput).catch((err) => {
       logger.warn({ err, scanId }, "Proof engine failed — no HTTP proof evidence (scan continues)");
-      return [];
+      return [] as Awaited<ReturnType<typeof runProofEngine>>;
     }),
     // Playwright: if URL is unreachable or browser not available, return empty (not a failure)
     runPlaywrightBrowserProofs(sourceType, sourceInput, codeContext ? {
@@ -202,7 +202,7 @@ async function runAnalysisPipeline(opts: {
       vibeTool: codeContext.vibeTool,
     } : undefined).catch((err) => {
       logger.warn({ err, scanId }, "Browser proofs not eligible for this source — skipping");
-      return [];
+      return [] as Awaited<ReturnType<typeof runPlaywrightBrowserProofs>>;
     }),
   ]);
 

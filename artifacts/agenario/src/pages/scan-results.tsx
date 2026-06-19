@@ -1,4 +1,16 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MarkerType,
+  Handle,
+  Position as RFPosition,
+  type Node as RFNode,
+  type Edge as RFEdge,
+  type NodeProps,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 import { createPortal } from "react-dom";
 import { useLocation, useRoute, Link } from "wouter";
 import {
@@ -5963,10 +5975,9 @@ function ScanRunningScreen({
   );
 }
 
-// ── Architecture Diagram Panel ────────────────────────────────────────────
-// Renders a Mermaid.js architecture flowchart from scan metadata.
-// Nodes are coloured by worst-severity issue. Expandable per-node issue
-// cards below the diagram show explanations and upgrade suggestions.
+// ── Architecture Diagram Panel — React Flow ───────────────────────────────
+// World-class interactive architecture map with glassmorphism nodes,
+// severity glow-rings, animated edges, and red issue-count badges.
 
 const NODE_KEYWORDS: Record<string, string[]> = {
   frontend: ["ux", "performance", "ai code", "accessibility", "mobile", "ui ", "react", "next", "css", "rendering", "bundle", "lighthouse", "web vital", "vibe"],
@@ -6007,44 +6018,7 @@ function archWorstSev(issues: ScanIssue[]): string {
   return "clean";
 }
 
-function buildMermaidCode(scan: ScanDetail, nodeMap: Map<string, ScanIssue[]>, isLight: boolean): string {
-  const sev2class: Record<string, string> = {
-    critical: "nCrit", high: "nHigh", medium: "nMed", low: "nLow", clean: "nClean",
-  };
-  const cls = (id: string) => sev2class[archWorstSev(nodeMap.get(id) ?? [])] ?? "nClean";
-  const hasPayments = nodeMap.has("payments") || ["ecommerce", "saas", "marketplace"].some((k) => (scan.businessType ?? "").toLowerCase().includes(k));
-  const hasCompliance = nodeMap.has("compliance");
-  const hasObs = nodeMap.has("observability");
-
-  const lines = [
-    `%%{init: {'theme': '${isLight ? "default" : "dark"}', 'flowchart': {'curve': 'basis', 'padding': 15}}}%%`,
-    "flowchart TD",
-    "  classDef nCrit fill:#7f1d1d,stroke:#ef4444,color:#fca5a5,stroke-width:2px",
-    "  classDef nHigh fill:#78350f,stroke:#f97316,color:#fed7aa,stroke-width:2px",
-    "  classDef nMed fill:#451a03,stroke:#eab308,color:#fef08a,stroke-width:1px",
-    "  classDef nLow fill:#052e16,stroke:#22c55e,color:#bbf7d0,stroke-width:1px",
-    "  classDef nClean fill:#0d1117,stroke:#30363d,color:#8b949e,stroke-width:1px",
-    `  User(["👤 User"]):::nClean`,
-    `  Frontend["⚛️ Frontend${scan.framework ? `\\n${scan.framework}` : ""}"]:::${cls("frontend")}`,
-    `  Auth[["🔐 Auth Layer"]]:::${cls("auth")}`,
-    `  API["⚡ API / Backend${scan.vibeTool ? `\\n${scan.vibeTool}` : ""}"]:::${cls("api")}`,
-    `  DB[("💾 Database")]:::${cls("db")}`,
-    ...(hasPayments ? [`  Payments[["💳 Payments"]]:::${cls("payments")}`] : []),
-    ...(hasCompliance ? [`  Compliance["📋 Compliance"]:::${cls("compliance")}`] : []),
-    ...(hasObs ? [`  Obs["📊 Observability"]:::${cls("observability")}`] : []),
-    "  User --> Frontend",
-    "  Frontend --> Auth",
-    "  Frontend --> API",
-    "  Auth --> API",
-    "  API --> DB",
-    ...(hasPayments ? ["  API --> Payments"] : []),
-    ...(hasCompliance ? ["  Frontend -.->|GDPR| Compliance", "  API -.->|Audit| Compliance"] : []),
-    ...(hasObs ? ["  API -.->|Logs| Obs"] : []),
-  ];
-  return lines.join("\n");
-}
-
-function generateNodeSuggestions(nodeId: string, issues: ScanIssue[], scan: ScanDetail): string[] {
+function generateNodeSuggestions(nodeId: string, issues: ScanIssue[], _scan: ScanDetail): string[] {
   const hay = issues.map((i) => (i.title ?? "").toLowerCase()).join(" ");
   const worst = archWorstSev(issues);
   const out: string[] = [];
@@ -6083,92 +6057,235 @@ function generateNodeSuggestions(nodeId: string, issues: ScanIssue[], scan: Scan
   return out.slice(0, 3);
 }
 
+// ── Severity colour palette ────────────────────────────────────────────────
+const SEV_COLORS: Record<string, { border: string; glow: string; badgeBg: string; badgeText: string; nodeBg: string; labelColor: string }> = {
+  critical: { border: "#ef4444", glow: "rgba(239,68,68,0.45)", badgeBg: "#ef4444", badgeText: "#fff", nodeBg: "rgba(127,29,29,0.82)", labelColor: "#fca5a5" },
+  high:     { border: "#f97316", glow: "rgba(249,115,22,0.35)", badgeBg: "#f97316", badgeText: "#fff", nodeBg: "rgba(120,53,15,0.82)", labelColor: "#fed7aa" },
+  medium:   { border: "#eab308", glow: "rgba(234,179,8,0.30)", badgeBg: "#ca8a04", badgeText: "#fff", nodeBg: "rgba(69,26,3,0.82)",  labelColor: "#fef08a" },
+  low:      { border: "#22c55e", glow: "rgba(34,197,94,0.25)",  badgeBg: "#16a34a", badgeText: "#fff", nodeBg: "rgba(5,46,22,0.82)",  labelColor: "#bbf7d0" },
+  clean:    { border: "#374151", glow: "rgba(55,65,81,0.0)",    badgeBg: "#374151", badgeText: "#9ca3af", nodeBg: "rgba(17,24,39,0.75)", labelColor: "#9ca3af" },
+};
+const SEV_COLORS_LIGHT: Record<string, { border: string; glow: string; badgeBg: string; badgeText: string; nodeBg: string; labelColor: string }> = {
+  critical: { border: "#dc2626", glow: "rgba(220,38,38,0.3)", badgeBg: "#dc2626", badgeText: "#fff", nodeBg: "rgba(254,226,226,0.97)", labelColor: "#991b1b" },
+  high:     { border: "#ea580c", glow: "rgba(234,88,12,0.25)", badgeBg: "#ea580c", badgeText: "#fff", nodeBg: "rgba(255,237,213,0.97)", labelColor: "#9a3412" },
+  medium:   { border: "#ca8a04", glow: "rgba(202,138,4,0.2)",  badgeBg: "#ca8a04", badgeText: "#fff", nodeBg: "rgba(254,252,232,0.97)", labelColor: "#854d0e" },
+  low:      { border: "#16a34a", glow: "rgba(22,163,74,0.2)",  badgeBg: "#16a34a", badgeText: "#fff", nodeBg: "rgba(220,252,231,0.97)", labelColor: "#14532d" },
+  clean:    { border: "#d1d5db", glow: "rgba(209,213,219,0.0)", badgeBg: "#9ca3af", badgeText: "#fff", nodeBg: "rgba(249,250,251,0.97)", labelColor: "#6b7280" },
+};
+
+// ── Custom React Flow node component ──────────────────────────────────────
+type ArchNodeData = {
+  icon: string;
+  label: string;
+  sublabel?: string;
+  severity: string;
+  issueCount: number;
+  isUser?: boolean;
+};
+
+function ArchFlowNode({ data }: NodeProps & { data: ArchNodeData }) {
+  const isLight = useIsLight();
+  const sev = data.severity ?? "clean";
+  const issueCount = data.issueCount ?? 0;
+  const palette = isLight ? SEV_COLORS_LIGHT[sev] ?? SEV_COLORS_LIGHT.clean : SEV_COLORS[sev] ?? SEV_COLORS.clean;
+  const isUser = data.isUser ?? false;
+
+  return (
+    <div style={{ position: "relative" }}>
+      <Handle type="target" position={RFPosition.Top} style={{ opacity: 0, pointerEvents: "none" }} />
+      <div
+        style={{
+          padding: isUser ? "10px 18px" : "14px 18px",
+          borderRadius: isUser ? "9999px" : "14px",
+          border: `1.5px solid ${palette.border}`,
+          background: palette.nodeBg,
+          backdropFilter: "blur(14px)",
+          boxShadow: issueCount > 0
+            ? `0 0 0 1px ${palette.border}22, 0 0 18px ${palette.glow}, 0 6px 28px rgba(0,0,0,0.45)`
+            : `0 2px 10px rgba(0,0,0,0.25)`,
+          minWidth: isUser ? 90 : 140,
+          cursor: "default",
+          transition: "box-shadow 0.2s",
+        }}
+      >
+        <div style={{ fontSize: 20, lineHeight: 1, marginBottom: 5 }}>{data.icon}</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: isLight ? "#111827" : "#f9fafb", fontFamily: "Syne, sans-serif", lineHeight: 1.2 }}>
+          {data.label}
+        </div>
+        {data.sublabel && (
+          <div style={{ fontSize: 10, color: palette.labelColor, marginTop: 3, fontWeight: 500 }}>
+            {data.sublabel}
+          </div>
+        )}
+      </div>
+      {issueCount > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            top: -9,
+            right: -9,
+            width: 22,
+            height: 22,
+            borderRadius: "50%",
+            background: palette.badgeBg,
+            color: palette.badgeText,
+            fontSize: 10,
+            fontWeight: 800,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: `2px solid ${isLight ? "#fff" : "#0d1117"}`,
+            boxShadow: `0 2px 8px ${palette.glow}`,
+            zIndex: 10,
+            pointerEvents: "none",
+          }}
+        >
+          {issueCount}
+        </div>
+      )}
+      <Handle type="source" position={RFPosition.Bottom} style={{ opacity: 0, pointerEvents: "none" }} />
+    </div>
+  );
+}
+
+const rfNodeTypes = { archNode: ArchFlowNode };
+
+function buildFlowGraph(
+  scan: ScanDetail,
+  nodeMap: Map<string, ScanIssue[]>,
+): { nodes: RFNode[]; edges: RFEdge[] } {
+  const sev = (id: string) => archWorstSev(nodeMap.get(id) ?? []);
+  const cnt = (id: string) => (nodeMap.get(id) ?? []).length;
+  const hasPayments = nodeMap.has("payments") || ["ecommerce", "saas", "marketplace"].some((k) => (scan.businessType ?? "").toLowerCase().includes(k));
+  const hasCompliance = nodeMap.has("compliance");
+  const hasObs = nodeMap.has("observability");
+
+  // ── node positions ────────────────────────────────────────────────────────
+  const nodes: RFNode[] = [
+    { id: "user",     type: "archNode", position: { x: 230, y: 0   }, data: { icon: "👤", label: "User",       isUser: true,  severity: "clean",        issueCount: 0 } },
+    { id: "frontend", type: "archNode", position: { x: 130, y: 110 }, data: { icon: "⚛️", label: "Frontend",   sublabel: scan.framework ?? "", severity: sev("frontend"), issueCount: cnt("frontend") } },
+    { id: "auth",     type: "archNode", position: { x: 390, y: 110 }, data: { icon: "🔐", label: "Auth Layer",  severity: sev("auth"),     issueCount: cnt("auth") } },
+    { id: "api",      type: "archNode", position: { x: 230, y: 240 }, data: { icon: "⚡", label: "API / Backend", sublabel: scan.vibeTool ?? "", severity: sev("api"),      issueCount: cnt("api") } },
+    { id: "db",       type: "archNode", position: { x: 230, y: 370 }, data: { icon: "💾", label: "Database",    severity: sev("db"),       issueCount: cnt("db") } },
+    ...(hasPayments  ? [{ id: "payments",    type: "archNode", position: { x: 430, y: 370 }, data: { icon: "💳", label: "Payments",    severity: sev("payments"),    issueCount: cnt("payments") } }] : []),
+    ...(hasCompliance? [{ id: "compliance",  type: "archNode", position: { x: 10,  y: 370 }, data: { icon: "📋", label: "Compliance",  severity: sev("compliance"),  issueCount: cnt("compliance") } }] : []),
+    ...(hasObs       ? [{ id: "observability",type: "archNode",position: { x: 430, y: 240 }, data: { icon: "📊", label: "Observability",severity: sev("observability"),issueCount: cnt("observability") } }] : []),
+  ];
+
+  const mkEdge = (id: string, src: string, tgt: string, label?: string, dashed?: boolean): RFEdge => ({
+    id, source: src, target: tgt,
+    label,
+    animated: !dashed,
+    type: dashed ? "default" : "smoothstep",
+    style: { stroke: dashed ? "#4b5563" : "#6366f1", strokeWidth: dashed ? 1 : 1.5, strokeDasharray: dashed ? "4 4" : undefined, opacity: 0.7 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: dashed ? "#4b5563" : "#6366f1", width: 14, height: 14 },
+    labelStyle: { fontSize: 9, fill: "#9ca3af", fontWeight: 600 },
+    labelBgStyle: { fill: "transparent" },
+  });
+
+  const edges: RFEdge[] = [
+    mkEdge("e-u-f",  "user",     "frontend"),
+    mkEdge("e-f-a",  "frontend", "auth"),
+    mkEdge("e-f-api","frontend", "api"),
+    mkEdge("e-a-api","auth",     "api"),
+    mkEdge("e-api-db","api",     "db"),
+    ...(hasPayments   ? [mkEdge("e-api-pay","api","payments")] : []),
+    ...(hasCompliance ? [mkEdge("e-f-comp","frontend","compliance","GDPR",true), mkEdge("e-api-comp","api","compliance","Audit",true)] : []),
+    ...(hasObs        ? [mkEdge("e-api-obs","api","observability","Logs",true)] : []),
+  ];
+
+  return { nodes, edges };
+}
+
 function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
   const isLight = useIsLight();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [rendered, setRendered] = useState(false);
   const [expandedNode, setExpandedNode] = useState<string | null>(null);
-
   const nodeMap = useMemo(() => mapIssuesToNodes(scan.issues), [scan.issues]);
-  const mermaidCode = useMemo(() => buildMermaidCode(scan, nodeMap, isLight), [scan, nodeMap, isLight]);
+  const { nodes, edges } = useMemo(() => buildFlowGraph(scan, nodeMap), [scan, nodeMap]);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const { default: mermaid } = await import("mermaid");
-        mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: isLight ? "default" : "dark" });
-        const id = `arch-${Math.random().toString(36).slice(2)}`;
-        const { svg } = await mermaid.render(id, mermaidCode);
-        if (!cancelled && containerRef.current) {
-          containerRef.current.innerHTML = svg;
-          const svgEl = containerRef.current.querySelector("svg");
-          if (svgEl) { svgEl.style.width = "100%"; svgEl.style.height = "auto"; svgEl.style.maxWidth = "100%"; svgEl.style.display = "block"; }
-          setRendered(true);
-        }
-      } catch {
-        if (!cancelled) setRendered(true);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [mermaidCode, isLight]);
-
-  const ARCH_NODE_META: { id: string; label: string; icon: string }[] = [
-    { id: "frontend", label: "Frontend UI", icon: "⚛️" },
-    { id: "auth", label: "Auth Layer", icon: "🔐" },
-    { id: "api", label: "API / Backend", icon: "⚡" },
-    { id: "db", label: "Database", icon: "💾" },
-    { id: "payments", label: "Payments", icon: "💳" },
-    { id: "compliance", label: "Compliance", icon: "📋" },
-    { id: "observability", label: "Observability", icon: "📊" },
+  const ARCH_NODE_META = [
+    { id: "frontend", label: "Frontend UI",     icon: "⚛️" },
+    { id: "auth",     label: "Auth Layer",       icon: "🔐" },
+    { id: "api",      label: "API / Backend",    icon: "⚡" },
+    { id: "db",       label: "Database",         icon: "💾" },
+    { id: "payments", label: "Payments",         icon: "💳" },
+    { id: "compliance","label": "Compliance",    icon: "📋" },
+    { id: "observability","label":"Observability",icon: "📊" },
   ];
   const affectedNodes = ARCH_NODE_META.filter((n) => nodeMap.has(n.id));
 
+  // Determine diagram height dynamically
+  const flowHeight = 420 + (affectedNodes.length > 4 ? 40 : 0);
+
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden aurora-card`}>
-      {/* Header */}
+      {/* ── Header ────────────────────────────────────────────────── */}
       <div className={`flex items-center gap-2.5 px-6 py-4 border-b ${isLight ? "border-gray-100" : "border-white/[0.06]"}`}>
-        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isLight ? "bg-blue-50 border border-blue-200" : "bg-blue-500/15 border border-blue-500/25"}`}>
-          <Network className="w-3.5 h-3.5 text-blue-500" />
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isLight ? "bg-violet-50 border border-violet-200" : "bg-violet-500/15 border border-violet-500/25"}`}>
+          <Network className="w-3.5 h-3.5 text-violet-500" />
         </div>
         <h2 className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Architecture Audit</h2>
-        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${isLight ? "bg-blue-50 border-blue-200 text-blue-600" : "bg-blue-500/10 border-blue-500/20 text-blue-400"}`}>
-          AI-Generated · Mermaid
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${isLight ? "bg-violet-50 border-violet-200 text-violet-600" : "bg-violet-500/10 border-violet-500/20 text-violet-400"}`}>
+          Interactive Map
         </span>
         <div className="ml-auto hidden sm:flex items-center gap-3">
           {[
-            { label: "Critical", cls: "bg-red-500" }, { label: "High", cls: "bg-orange-500" },
-            { label: "Medium", cls: "bg-yellow-500" }, { label: "Clean", cls: "bg-green-500" },
+            { label: "Critical", color: "#ef4444" }, { label: "High", color: "#f97316" },
+            { label: "Medium",   color: "#eab308" }, { label: "Clean",  color: "#6b7280" },
           ].map((l) => (
-            <div key={l.label} className="flex items-center gap-1">
-              <div className={`w-2 h-2 rounded-full ${l.cls}`} />
+            <div key={l.label} className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{ background: l.color }} />
               <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"}`}>{l.label}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Mermaid diagram canvas */}
-      <div className={`px-4 pt-5 pb-3 ${isLight ? "bg-gray-50/60" : "bg-black/25"}`}>
-        {!rendered && (
-          <div className="min-h-[180px] flex flex-col items-center justify-center gap-2">
-            <Loader2 className={`w-5 h-5 animate-spin ${isLight ? "text-gray-300" : "text-white/20"}`} />
-            <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>Rendering architecture map…</p>
-          </div>
-        )}
-        <div ref={containerRef} className={`${rendered ? "" : "hidden"} overflow-x-auto`} />
-        <p className={`text-[10px] text-center mt-2 ${isLight ? "text-gray-300" : "text-white/15"}`}>
-          Generated from detected stack · node colour = worst issue severity · red = immediate fix required
-        </p>
+      {/* ── React Flow canvas ─────────────────────────────────────── */}
+      <div
+        style={{ height: flowHeight }}
+        className={`w-full relative ${isLight ? "bg-gray-50/80" : "bg-[#080c14]"}`}
+      >
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={rfNodeTypes}
+          fitView
+          fitViewOptions={{ padding: 0.35 }}
+          panOnDrag
+          zoomOnScroll
+          zoomOnPinch
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={false}
+          proOptions={{ hideAttribution: true }}
+        >
+          <Background
+            color={isLight ? "#e5e7eb" : "#1f2937"}
+            gap={28}
+            size={1}
+            style={{ opacity: 0.5 }}
+          />
+          <Controls
+            showInteractive={false}
+            style={{
+              background: isLight ? "rgba(255,255,255,0.9)" : "rgba(17,24,39,0.9)",
+              border: isLight ? "1px solid #e5e7eb" : "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 10,
+            }}
+          />
+        </ReactFlow>
+        <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] px-3 py-1 rounded-full ${isLight ? "bg-white/80 text-gray-400 border border-gray-100" : "bg-black/40 text-white/20 border border-white/[0.04]"}`}>
+          Numbers on nodes = issue count · red glow = needs immediate fix · drag &amp; scroll to explore
+        </div>
       </div>
 
-      {/* Per-node issue breakdown */}
+      {/* ── Per-node issue breakdown ───────────────────────────────── */}
       {affectedNodes.length > 0 ? (
         <div className={`border-t ${isLight ? "border-gray-100" : "border-white/[0.05]"}`}>
           <div className={`px-6 py-2.5 ${isLight ? "bg-gray-50" : "bg-white/[0.01]"}`}>
             <p className={`text-[10px] font-semibold uppercase tracking-widest ${isLight ? "text-gray-400" : "text-white/25"}`}>
-              Affected Components — click to expand issues &amp; suggestions
+              Affected Components — click to expand issues &amp; upgrade suggestions
             </p>
           </div>
           <div className={`divide-y ${isLight ? "divide-gray-50" : "divide-white/[0.03]"}`}>
@@ -6222,11 +6339,11 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
                         )}
                       </div>
                       {suggestions.length > 0 && (
-                        <div className={`rounded-xl border p-4 space-y-2 ${isLight ? "bg-blue-50/80 border-blue-100" : "bg-blue-500/[0.07] border-blue-500/20"}`}>
-                          <div className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isLight ? "text-blue-600" : "text-blue-400"}`}>💡 Upgrade Suggestions</div>
+                        <div className={`rounded-xl border p-4 space-y-2 ${isLight ? "bg-violet-50/80 border-violet-100" : "bg-violet-500/[0.07] border-violet-500/20"}`}>
+                          <div className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isLight ? "text-violet-600" : "text-violet-400"}`}>💡 Upgrade Suggestions</div>
                           {suggestions.map((s, i) => (
-                            <div key={i} className={`flex items-start gap-2 text-xs leading-relaxed ${isLight ? "text-blue-700" : "text-blue-300/80"}`}>
-                              <ArrowRight className="w-3 h-3 shrink-0 mt-0.5 text-blue-400" />
+                            <div key={i} className={`flex items-start gap-2 text-xs leading-relaxed ${isLight ? "text-violet-700" : "text-violet-300/80"}`}>
+                              <ArrowRight className="w-3 h-3 shrink-0 mt-0.5 text-violet-400" />
                               {s}
                             </div>
                           ))}
@@ -6241,7 +6358,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
         </div>
       ) : (
         <div className="px-6 pb-5 pt-2 text-center">
-          <p className={`text-sm font-semibold ${isLight ? "text-green-600" : "text-green-400"}`}>✅ No critical architecture issues detected</p>
+          <p className={`text-sm font-semibold ${isLight ? "text-green-600" : "text-green-400"}`}>✅ No architecture issues detected</p>
         </div>
       )}
     </div>

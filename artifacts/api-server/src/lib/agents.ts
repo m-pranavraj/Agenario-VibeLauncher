@@ -964,6 +964,77 @@ export interface ScanAnalysisResult {
   complianceResults?: ComplianceResult[];
 }
 
+// ── Post-pipeline conflict resolution & deduplication ─────────────────────
+// Prevents the #1 trust killer: two agents contradicting each other.
+//
+// Rule 1 — Secrets ownership:
+//   Any finding that looks like a credential/secret DETECTION must come
+//   exclusively from "Secret Scanner V2". All other agents are forbidden
+//   from reporting secrets by their system prompts, but LLMs can still
+//   hallucinate these. We strip them here as a deterministic guard.
+//
+// Rule 2 — Cross-agent deduplication:
+//   Same vulnerability reported by multiple agents → keep the one with
+//   the highest confidence. Identical severity + near-identical title
+//   (first 40 normalised chars) = duplicate.
+
+const SECRET_SCANNER_NAMES = new Set([
+  "Secret Scanner V2", "Secret Scanner", "Secrets Scanner", "Secret & Credential Scanner",
+]);
+
+function isSecretsDetectionFinding(title: string): boolean {
+  const t = title.toLowerCase();
+  // Pattern: "X detected/exposed/found/leaked/hardcoded" where X is a credential noun
+  const credentialNouns = /\b(api[_\s-]?key|secret|password|credential|token|access[_\s-]?key|private[_\s-]?key|connection[_\s-]?string|service[_\s-]?account)\b/;
+  const detectionVerbs = /\b(detected|exposed|found|leaked|hardcoded|hard-coded|committed|embedded|visible|plain.?text|in\s+(code|source|env|client|bundle|repo))\b/;
+  // Also catch "Supabase/Firebase/DB password/key" patterns
+  const serviceCredentials = /\b(supabase|firebase|postgres|mysql|mongo|redis|stripe|razorpay|openai|twilio|sendgrid|aws|gcp|azure)\s+(password|key|url|credential|secret|token)\b/;
+  return (credentialNouns.test(t) && detectionVerbs.test(t)) || serviceCredentials.test(t);
+}
+
+function reconcileIssues(agentResults: AgentResult[]): AgentResult[] {
+  // ── Step 1: Strip secrets-detection findings from non-scanner agents ──────
+  const step1 = agentResults.map((result) => {
+    if (SECRET_SCANNER_NAMES.has(result.agentName)) return result; // canonical scanner untouched
+    const filtered = result.issues.filter((issue) => {
+      if (isSecretsDetectionFinding(issue.title)) {
+        logger.warn(
+          { agentName: result.agentName, title: issue.title },
+          "reconcile: removing conflicting secrets finding from non-scanner agent",
+        );
+        return false;
+      }
+      return true;
+    });
+    return { ...result, issues: filtered };
+  });
+
+  // ── Step 2: Cross-agent deduplication by fingerprint ─────────────────────
+  type Tagged = { agentIdx: number; issueIdx: number; confidence: number };
+  const bestByFp = new Map<string, Tagged>();
+
+  step1.forEach((result, ai) => {
+    result.issues.forEach((issue, ii) => {
+      // Fingerprint: severity + first 40 chars of normalised title
+      const fp = `${issue.severity}:${issue.title.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim().slice(0, 40)}`;
+      const conf = issue.confidence ?? 75;
+      const existing = bestByFp.get(fp);
+      if (!existing || conf > existing.confidence) {
+        bestByFp.set(fp, { agentIdx: ai, issueIdx: ii, confidence: conf });
+      }
+    });
+  });
+
+  const keepKeys = new Set(
+    [...bestByFp.values()].map((t) => `${t.agentIdx}:${t.issueIdx}`),
+  );
+
+  return step1.map((result, ai) => ({
+    ...result,
+    issues: result.issues.filter((_, ii) => keepKeys.has(`${ai}:${ii}`)),
+  }));
+}
+
 // ── Pipeline result type ──────────────────────────────────────────────────
 type PipelineData = {
   agentResults: AgentResult[];
@@ -1000,7 +1071,9 @@ export async function runAllAgents(
       }),
     ]);
 
-    const allIssues = agentResults.flatMap((r) => r.issues);
+    // ── Conflict resolution: strip contradictory findings & deduplicate ───
+    const reconciledResults = reconcileIssues(agentResults);
+    const allIssues = reconciledResults.flatMap((r) => r.issues);
 
     // Run revenue + riskForecast concurrently after agents (they need issue data for risk)
     const [revenueIntelligence, riskForecast] = await Promise.all([
@@ -1008,7 +1081,7 @@ export async function runAllAgents(
       runLaunchRiskForecast(sourceType, sourceInput, appDescription, codeContext, allIssues).catch(() => null),
     ]);
 
-    return { agentResults, complianceResults, revenueIntelligence, riskForecast, allIssues };
+    return { agentResults: reconciledResults, complianceResults, revenueIntelligence, riskForecast, allIssues };
   })();
 
   // Hard 80s timeout — return partial results rather than hanging forever
