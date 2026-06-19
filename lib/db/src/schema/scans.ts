@@ -12,6 +12,7 @@ export interface ProofEvidence {
   observed: string;
   impact: string;
   screenshot?: string;
+  videoUrl?: string;
   codeRef?: string;
 }
 

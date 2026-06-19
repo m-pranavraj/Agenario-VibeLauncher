@@ -128,6 +128,8 @@ export interface ScanIssue {
   retestResult?: string | null;
   evidenceQuality?: number;
   evidenceLabel?: string;
+  videoUrl?: string | null;
+  retestStatus?: string | null;
 }
 
 export interface IssueCounts {
@@ -516,6 +518,8 @@ export const api = {
       request<ScanDetail>("/scans", { method: "POST", body: JSON.stringify(data) }),
     generateFix: (scanId: number, data: { title: string; description: string; fixPrompt: string; agentName: string }) =>
       request<{ fix: string; language: string }>(`/scans/${scanId}/fix`, { method: "POST", body: JSON.stringify({ ...data, recommendation: data.fixPrompt }) }),
+    retest: (scanId: number, issueId: number) =>
+      request<{ status: string }>(`/scans/${scanId}/issues/${issueId}/retest`, { method: "POST" }),
     ask: (scanId: number, question: string) =>
       request<{ answer: string }>(`/scans/${scanId}/ask`, { method: "POST", body: JSON.stringify({ question }) }),
     rescan: (scanId: number) =>

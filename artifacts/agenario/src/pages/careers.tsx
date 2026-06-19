@@ -89,24 +89,82 @@ export default function CareersPage() {
             </motion.p>
           </div>
 
-          <motion.div
-            variants={FADE_UP}
-            className={`relative rounded-2xl p-8 text-center border ${isLight ? "bg-pink-50/50 border-pink-100/80" : "bg-white/[0.02] border-white/[0.07]"}`}
-          >
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5 border ${isLight ? "bg-white border-gray-200" : "bg-white/[0.04] border-white/[0.08]"}`}>
-              <img src="/logo.png" alt="" className="w-8 h-8 rounded-xl object-cover object-left" />
+          <motion.div variants={FADE_UP} className="space-y-6">
+            <div className={`rounded-2xl p-8 border ${isLight ? "bg-white border-gray-200" : "bg-white/[0.02] border-white/[0.07]"}`}>
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 pb-6 border-b border-gray-200/20">
+                <div>
+                  <h3 className={`text-xl font-bold font-['Syne'] ${isLight ? "text-gray-900" : "text-white"} mb-2`}>Business Development Intern</h3>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className={`px-2 py-1 rounded-md ${isLight ? "bg-gray-100 text-gray-600" : "bg-white/5 text-white/60"}`}>1 Position</span>
+                    <span className={`px-2 py-1 rounded-md ${isLight ? "bg-gray-100 text-gray-600" : "bg-white/5 text-white/60"}`}>1-2 Months</span>
+                    <span className={`px-2 py-1 rounded-md ${isLight ? "bg-gray-100 text-gray-600" : "bg-white/5 text-white/60"}`}>WFH / Flexible</span>
+                  </div>
+                </div>
+              </div>
+              <p className={`text-sm mb-6 ${isLight ? "text-gray-600" : "text-white/60"} leading-relaxed`}>
+                Help us discover and partner with the best vibe-coded apps and AI-first startups. You'll gain hands-on experience in B2B outreach, building strategic partnerships, and understanding the fast-paced ecosystem of AI-generated software.
+              </p>
             </div>
-            <h2 className={`text-xl font-bold font-['Syne'] mb-3 ${isLight ? "text-gray-900" : "text-white"}`}>No open roles right now</h2>
-            <p className={`text-sm max-w-md mx-auto leading-relaxed mb-6 ${isLight ? "text-gray-500" : "text-white/40"}`}>
-              We're a lean founding team and we're not actively hiring yet. But we're always interested in exceptional people who care deeply about developer experience, AI quality, and helping founders ship confidently.
-            </p>
-            <a
-              href="mailto:support@agenario.tech?subject=I'd love to work with Agenario"
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border ${isLight ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50" : "bg-white/[0.07] border-white/[0.12] text-white hover:bg-white/[0.12]"}`}
-            >
-              <Mail className="w-4 h-4" />
-              Send us your story
-            </a>
+
+            <div className={`rounded-2xl p-8 border ${isLight ? "bg-white border-gray-200" : "bg-white/[0.02] border-white/[0.07]"}`}>
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 pb-6 border-b border-gray-200/20">
+                <div>
+                  <h3 className={`text-xl font-bold font-['Syne'] ${isLight ? "text-gray-900" : "text-white"} mb-2`}>Marketing Intern</h3>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className={`px-2 py-1 rounded-md ${isLight ? "bg-gray-100 text-gray-600" : "bg-white/5 text-white/60"}`}>1 Position</span>
+                    <span className={`px-2 py-1 rounded-md ${isLight ? "bg-gray-100 text-gray-600" : "bg-white/5 text-white/60"}`}>1-2 Months</span>
+                    <span className={`px-2 py-1 rounded-md ${isLight ? "bg-gray-100 text-gray-600" : "bg-white/5 text-white/60"}`}>WFH / Flexible</span>
+                  </div>
+                </div>
+              </div>
+              <p className={`text-sm mb-6 ${isLight ? "text-gray-600" : "text-white/60"} leading-relaxed`}>
+                Drive our narrative across channels. You'll create compelling content, manage our social presence, and execute growth marketing campaigns that resonate with founders, developers, and AI enthusiasts.
+              </p>
+            </div>
+
+            <div className={`rounded-2xl p-8 border ${isLight ? "bg-pink-50/50 border-pink-100/80" : "bg-violet-500/[0.05] border-violet-500/20"}`}>
+              <h3 className={`text-lg font-bold font-['Syne'] ${isLight ? "text-gray-900" : "text-white"} mb-4`}>Apply Now</h3>
+              <form action="https://formsubmit.co/hello@agenario.tech" method="POST" className="space-y-4">
+                {/* FormSubmit Configuration */}
+                <input type="hidden" name="_next" value={window.location.origin + "/thank-you"} />
+                <input type="hidden" name="_subject" value="New Internship Application - Agenario" />
+                <input type="hidden" name="_captcha" value="false" />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className={`text-xs font-semibold ${isLight ? "text-gray-700" : "text-white/60"}`}>Full Name</label>
+                    <input type="text" name="name" required className={`w-full px-3 py-2 rounded-lg border text-sm ${isLight ? "bg-white border-gray-200 text-gray-900" : "bg-black/50 border-white/10 text-white"} outline-none focus:border-violet-500`} placeholder="Jane Doe" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className={`text-xs font-semibold ${isLight ? "text-gray-700" : "text-white/60"}`}>Email Address</label>
+                    <input type="email" name="email" required className={`w-full px-3 py-2 rounded-lg border text-sm ${isLight ? "bg-white border-gray-200 text-gray-900" : "bg-black/50 border-white/10 text-white"} outline-none focus:border-violet-500`} placeholder="jane@example.com" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className={`text-xs font-semibold ${isLight ? "text-gray-700" : "text-white/60"}`}>Position</label>
+                  <select name="position" required className={`w-full px-3 py-2 rounded-lg border text-sm ${isLight ? "bg-white border-gray-200 text-gray-900" : "bg-black/50 border-white/10 text-white"} outline-none focus:border-violet-500`}>
+                    <option value="" disabled selected>Select a role...</option>
+                    <option value="Business Development Intern">Business Development Intern</option>
+                    <option value="Marketing Intern">Marketing Intern</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className={`text-xs font-semibold ${isLight ? "text-gray-700" : "text-white/60"}`}>Why Agenario? (Brief)</label>
+                  <textarea name="why_us" required rows={3} className={`w-full px-3 py-2 rounded-lg border text-sm ${isLight ? "bg-white border-gray-200 text-gray-900" : "bg-black/50 border-white/10 text-white"} outline-none focus:border-violet-500`} placeholder="Tell us why you're interested..."></textarea>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className={`text-xs font-semibold ${isLight ? "text-gray-700" : "text-white/60"}`}>Link to LinkedIn/Portfolio</label>
+                  <input type="url" name="portfolio" required className={`w-full px-3 py-2 rounded-lg border text-sm ${isLight ? "bg-white border-gray-200 text-gray-900" : "bg-black/50 border-white/10 text-white"} outline-none focus:border-violet-500`} placeholder="https://linkedin.com/in/..." />
+                </div>
+
+                <button type="submit" className="w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+                  Submit Application <ArrowLeft className="w-4 h-4 rotate-180" />
+                </button>
+              </form>
+            </div>
           </motion.div>
 
           <motion.div variants={FADE_UP} className="space-y-5">

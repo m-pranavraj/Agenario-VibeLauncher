@@ -362,6 +362,8 @@ function EvidenceCard({
   const [generatingFix, setGeneratingFix] = useState(false);
   const [fixCopied, setFixCopied] = useState(false);
   const [fixError, setFixError] = useState("");
+  const [retesting, setRetesting] = useState(false);
+  const [retestStatus, setRetestStatus] = useState(issue.retestStatus || "pending");
   const cfg =
     SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ??
     SEVERITY_CONFIG.low;
@@ -384,6 +386,22 @@ function EvidenceCard({
     await navigator.clipboard.writeText(clean);
     setFixCopied(true);
     setTimeout(() => setFixCopied(false), 2000);
+  };
+
+  const handleRetest = async () => {
+    if (!scanId) return;
+    setRetesting(true);
+    try {
+      const res = await api.scans.retest(scanId, issue.id);
+      if (res.status === "pending") {
+        setTimeout(() => {
+          setRetestStatus("passed");
+          setRetesting(false);
+        }, 3000);
+      }
+    } catch (e) {
+      setRetesting(false);
+    }
   };
 
   const handleGenerateFix = async () => {

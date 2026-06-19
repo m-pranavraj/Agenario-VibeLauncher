@@ -181,6 +181,9 @@ app.use(
 // ── Routes ────────────────────────────────────────────────────────────────
 app.use("/api", router);
 
+// Serve recorded videos
+app.use("/api/videos", express.static(path.resolve(process.cwd(), "uploads/videos")));
+
 // ── In-process daily pulse cron ──────────────────────────────────────────
 // Runs at 09:00 UTC every day. Calls the pulse endpoint internally to
 // check for score drops / new CVEs (email gated by EMAIL_ENABLED env var).

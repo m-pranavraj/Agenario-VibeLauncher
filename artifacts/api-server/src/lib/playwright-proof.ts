@@ -20,6 +20,8 @@
  *  8. Code-based proofs    — for non-URL source types
  */
 
+import path from "path";
+import fs from "fs";
 import { logger } from "./logger.js";
 import type { ProofEvidence } from "@workspace/db/schema";
 import {
@@ -112,21 +114,26 @@ async function launchBrowser(): Promise<{ browser: any; available: boolean }> {
   }
 }
 
-async function safePage(browser: any, url: string): Promise<{ page: any; ok: boolean; finalUrl: string; content: string }> {
+async function safePage(browser: any, url: string): Promise<{ page: any; ok: boolean; finalUrl: string; content: string; context: any }> {
   try {
+    const videoDir = path.resolve(process.cwd(), "uploads/videos");
+    if (!fs.existsSync(videoDir)) {
+      fs.mkdirSync(videoDir, { recursive: true });
+    }
     const ctx = await browser.newContext({
       userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
       viewport: { width: 1280, height: 900 },
       ignoreHTTPSErrors: true,
+      recordVideo: { dir: videoDir, size: { width: 1280, height: 900 } }
     });
     const page = await ctx.newPage();
     page.setDefaultTimeout(NAV_TIMEOUT);
     const resp = await page.goto(url, { waitUntil: "domcontentloaded", timeout: NAV_TIMEOUT });
     const finalUrl = page.url();
     const content = await page.content().catch(() => "");
-    return { page, ok: resp?.ok() ?? false, finalUrl, content };
+    return { page, ok: resp?.ok() ?? false, finalUrl, content, context: ctx };
   } catch {
-    return { page: null, ok: false, finalUrl: url, content: "" };
+    return { page: null, ok: false, finalUrl: url, content: "", context: null };
   }
 }
 
@@ -593,7 +600,29 @@ async function probeWithRealBrowser(browser: any, baseUrl: string): Promise<Proo
 
     const hasPII = /email|phone|name|password|token/i.test(content);
     if (ok && hasPII) {
+      await page.evaluate(() => {
+        const div = document.createElement("div");
+        div.style.position = "fixed";
+        div.style.top = "0"; div.style.left = "0"; div.style.width = "100%"; div.style.height = "100%";
+        div.style.boxShadow = "inset 0 0 0 15px rgba(239, 68, 68, 0.8)";
+        div.style.pointerEvents = "none";
+        div.style.zIndex = "999999";
+        const banner = document.createElement("div");
+        banner.style.position = "absolute"; banner.style.top = "20px"; banner.style.left = "50%"; banner.style.transform = "translateX(-50%)";
+        banner.style.background = "rgba(239, 68, 68, 0.9)"; banner.style.color = "white"; banner.style.padding = "10px 20px";
+        banner.style.borderRadius = "8px"; banner.style.fontFamily = "monospace"; banner.style.fontWeight = "bold"; banner.style.fontSize = "20px";
+        banner.innerText = "🚨 EXPLOIT DETECTED: PII LEAK 🚨";
+        div.appendChild(banner);
+        document.body.appendChild(div);
+      });
+      await new Promise(r => setTimeout(r, 2000)); // Record 2s video
+
       const shot = await browserScreenshot(page);
+      let videoUrl = undefined;
+      const videoPath = await page.video()?.path().catch(() => null);
+      if (videoPath) {
+        videoUrl = "/api/videos/" + path.basename(videoPath);
+      }
       await page.context().close().catch(() => {});
 
       if (shot) {
@@ -607,6 +636,7 @@ async function probeWithRealBrowser(browser: any, baseUrl: string): Promise<Proo
           observed: `Real Chromium browser accessed ${path} and received PII-containing response without authentication.`,
           impact: `Full IDOR confirmed via browser automation — attacker can enumerate all user records.`,
           screenshot: shot,
+          videoUrl,
           codeRef: `Add auth middleware to all resource routes`,
         });
         break;
@@ -626,6 +656,23 @@ async function probeWithRealBrowser(browser: any, baseUrl: string): Promise<Proo
     const redirectedToLogin = finalUrl.includes("/login") || finalUrl.includes("/signin") || /sign.?in|log.?in/i.test(content);
 
     if (ok && !redirectedToLogin) {
+      await page.evaluate(() => {
+        const div = document.createElement("div");
+        div.style.position = "fixed";
+        div.style.top = "0"; div.style.left = "0"; div.style.width = "100%"; div.style.height = "100%";
+        div.style.boxShadow = "inset 0 0 0 15px rgba(239, 68, 68, 0.8)";
+        div.style.pointerEvents = "none";
+        div.style.zIndex = "999999";
+        const banner = document.createElement("div");
+        banner.style.position = "absolute"; banner.style.top = "20px"; banner.style.left = "50%"; banner.style.transform = "translateX(-50%)";
+        banner.style.background = "rgba(239, 68, 68, 0.9)"; banner.style.color = "white"; banner.style.padding = "10px 20px";
+        banner.style.borderRadius = "8px"; banner.style.fontFamily = "monospace"; banner.style.fontWeight = "bold"; banner.style.fontSize = "20px";
+        banner.innerText = "🚨 EXPLOIT DETECTED: UNAUTHORIZED ACCESS 🚨";
+        div.appendChild(banner);
+        document.body.appendChild(div);
+      });
+      await new Promise(r => setTimeout(r, 2000));
+
       const shot = (await browserScreenshot(page)) ?? generateAccessControlScreenshot({
         url: baseUrl,
         attackUrl: targetUrl,
@@ -633,6 +680,13 @@ async function probeWithRealBrowser(browser: any, baseUrl: string): Promise<Proo
         resourceType: path.replace("/", ""),
         statusCode: 200,
       });
+
+      let videoUrl = undefined;
+      const videoPath = await page.video()?.path().catch(() => null);
+      if (videoPath) {
+        videoUrl = "/api/videos/" + path.basename(videoPath);
+      }
+
       await page.context().close().catch(() => {});
 
       results.push({
@@ -645,6 +699,7 @@ async function probeWithRealBrowser(browser: any, baseUrl: string): Promise<Proo
         observed: `Real Chromium browser accessed ${path} without any session cookie and received page content without redirect.`,
         impact: `Complete authentication bypass — any visitor can access protected pages.`,
         screenshot: shot,
+        videoUrl,
         codeRef: `Add global auth guard middleware`,
       });
       break;
