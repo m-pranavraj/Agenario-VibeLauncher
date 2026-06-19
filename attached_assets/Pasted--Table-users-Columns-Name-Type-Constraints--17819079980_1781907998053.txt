@@ -1,0 +1,101 @@
+## Table `users`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `email` | `text` |  Unique |
+| `name` | `text` |  |
+| `password_hash` | `text` |  |
+| `plan` | `text` |  |
+| `phone` | `text` |  Nullable Unique |
+| `phone_verified` | `bool` |  Nullable |
+| `razorpay_customer_id` | `text` |  Nullable |
+| `created_at` | `timestamptz` |  |
+| `updated_at` | `timestamptz` |  |
+
+## Table `scans`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `user_id` | `int4` |  |
+| `source_type` | `text` |  |
+| `source_input` | `text` |  |
+| `app_description` | `text` |  Nullable |
+| `status` | `text` |  |
+| `score` | `int4` |  Nullable |
+| `summary` | `text` |  Nullable |
+| `launch_verdict` | `text` |  Nullable |
+| `framework` | `text` |  Nullable |
+| `vibe_tool` | `text` |  Nullable |
+| `business_type` | `text` |  Nullable |
+| `issue_counts` | `jsonb` |  Nullable |
+| `risk_forecast` | `jsonb` |  Nullable |
+| `revenue_intelligence` | `jsonb` |  Nullable |
+| `compliance_results` | `jsonb` |  Nullable |
+| `proof_evidence` | `jsonb` |  Nullable |
+| `regression_diff` | `jsonb` |  Nullable |
+| `benchmark_percentile` | `jsonb` |  Nullable |
+| `launch_dna` | `jsonb` |  Nullable |
+| `cofounder_narrative` | `text` |  Nullable |
+| `shadow_api_findings` | `jsonb` |  Nullable |
+| `launch_replay_steps` | `jsonb` |  Nullable |
+| `secret_scan_results` | `jsonb` |  Nullable |
+| `package_vulns` | `jsonb` |  Nullable |
+| `cleanup_report` | `jsonb` |  Nullable |
+| `cleanup_findings` | `jsonb` |  Nullable |
+| `digital_twin` | `jsonb` |  Nullable |
+| `predictive_intel` | `jsonb` |  Nullable |
+| `root_cause` | `jsonb` |  Nullable |
+| `launch_impact` | `jsonb` |  Nullable |
+| `product_hunt_score` | `jsonb` |  Nullable |
+| `created_at` | `timestamptz` |  |
+| `completed_at` | `timestamptz` |  Nullable |
+| `knowledge_graph` | `jsonb` |  Nullable |
+| `sandbox_meta` | `jsonb` |  Nullable |
+| `cert_id` | `text` |  Nullable |
+
+## Table `scan_issues`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `scan_id` | `int4` |  |
+| `agent_name` | `text` |  |
+| `severity` | `text` |  |
+| `title` | `text` |  |
+| `description` | `text` |  |
+| `fix_prompt` | `text` |  |
+| `confidence` | `int4` |  Nullable |
+| `evidence` | `text` |  Nullable |
+| `file_path` | `text` |  Nullable |
+| `line_number` | `int4` |  Nullable |
+| `code_snippet` | `text` |  Nullable |
+| `impact_statement` | `text` |  Nullable |
+| `retest_result` | `text` |  Nullable |
+| `source_evidence` | `text` |  Nullable |
+| `finding_id` | `text` |  Nullable |
+| `function_name` | `text` |  Nullable |
+| `route_path` | `text` |  Nullable |
+| `reproduction_steps` | `jsonb` |  Nullable |
+| `blast_radius` | `jsonb` |  Nullable |
+| `auto_fix_code` | `text` |  Nullable |
+| `video_url` | `text` |  Nullable |
+| `retest_status` | `text` |  Nullable |
+
+## Table `session`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `sid` | `text` | Primary |
+| `sess` | `json` |  |
+| `expire` | `timestamp` |  |
+

@@ -5461,7 +5461,7 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
   });
   const [copied, setCopied] = useState(false);
 
-  const unlockedIssues = scan.issues.filter((i: any) => !i.locked);
+  const unlockedIssues = (scan.issues ?? []).filter((i: any) => !i.locked);
   if (unlockedIssues.length === 0) return null;
 
   const groups: Array<{ label: string; color: string; dot: string; items: typeof unlockedIssues }> = [
@@ -6347,7 +6347,7 @@ function buildFlowGraph(
 function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
   const isLight = useIsLight();
   const [expandedNode, setExpandedNode] = useState<string | null>(null);
-  const nodeMap = useMemo(() => mapIssuesToNodes(scan.issues), [scan.issues]);
+  const nodeMap = useMemo(() => mapIssuesToNodes(scan.issues ?? []), [scan.issues]);
   const { nodes, edges } = useMemo(() => buildFlowGraph(scan, nodeMap), [scan, nodeMap]);
 
   const ARCH_NODE_META = [
@@ -6861,8 +6861,8 @@ export default function ScanResultsPage() {
 
   useEffect(() => {
     if (scan?.issues) {
-      const hasRuntime = scan.issues.some((i: any) => i.sourceEvidence === "runtime");
-      const hasStatic = scan.issues.some((i: any) => i.sourceEvidence === "static");
+      const hasRuntime = (scan.issues ?? []).some((i: any) => i.sourceEvidence === "runtime");
+      const hasStatic = (scan.issues ?? []).some((i: any) => i.sourceEvidence === "static");
       if (hasRuntime) {
         setEvidenceFilter("runtime");
       } else if (hasStatic) {
@@ -7009,10 +7009,11 @@ export default function ScanResultsPage() {
   const verdictKey = rawVerdict as keyof typeof VERDICT_CONFIG | null;
   const verdict = verdictKey ? VERDICT_CONFIG[verdictKey] : null;
 
-  const agents = Array.from(new Set(scan.issues.map((i: any) => i.agentName)));
+  const safeIssues = scan.issues ?? [];
+  const agents = Array.from(new Set(safeIssues.map((i: any) => i.agentName)));
   const agentFiltered = activeAgent
-    ? scan.issues.filter((i: any) => i.agentName === activeAgent)
-    : scan.issues;
+    ? safeIssues.filter((i: any) => i.agentName === activeAgent)
+    : safeIssues;
   const filteredIssues =
     evidenceFilter === "all"
       ? agentFiltered
@@ -7198,7 +7199,7 @@ export default function ScanResultsPage() {
                 label: "Issues",
                 icon: ShieldAlert,
                 tourId: "tab-issues",
-                count: scan.issues.filter((i) => !i.locked).length || undefined,
+                count: (scan.issues ?? []).filter((i) => !i.locked).length || undefined,
               },
               { id: "intelligence", label: "Intelligence", icon: Sparkles, tourId: "tab-intelligence" },
               { id: "compliance", label: "Compliance", icon: Scale, tourId: undefined },
@@ -7434,7 +7435,7 @@ export default function ScanResultsPage() {
               >
                 <VibeCodeIntelPanel
                   vibeTool={scan.vibeTool}
-                  issues={scan.issues}
+                  issues={scan.issues ?? []}
                   vibeToolRank={scan.benchmarkPercentile?.vibeToolRank}
                 />
               </motion.div>
@@ -7784,7 +7785,7 @@ export default function ScanResultsPage() {
             )}
 
             {/* ── Pre-Launch Checklist ─────────────────────────── */}
-            {!activeAgent && scan.issues.length > 0 && (
+            {!activeAgent && (scan.issues ?? []).length > 0 && (
               <PreLaunchChecklist scan={scan} />
             )}
 
@@ -7849,7 +7850,7 @@ export default function ScanResultsPage() {
                 </button>
                 {agents.map((agent) => {
                   const Icon = AGENT_ICONS[agent] ?? Bot;
-                  const count = scan.issues.filter(
+                  const count = (scan.issues ?? []).filter(
                     (i: any) => i.agentName === agent,
                   ).length;
                   return (
@@ -8045,7 +8046,7 @@ export default function ScanResultsPage() {
               <h2 className={`font-bold ${isLight ? "text-gray-900" : "text-white"}`}>Workspace Knowledge Graph</h2>
               <span className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>Auto-discovered dependencies & files</span>
             </div>
-            <KnowledgeGraphExplorer data={scan.knowledgeGraph} issues={scan.issues} isLight={isLight} />
+            <KnowledgeGraphExplorer data={scan.knowledgeGraph} issues={scan.issues ?? []} isLight={isLight} />
           </div>
         )}
 
