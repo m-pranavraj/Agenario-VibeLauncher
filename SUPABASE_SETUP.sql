@@ -168,7 +168,7 @@ WHERE table_schema = 'public'
 ORDER BY table_name;
 
 -- Expected output:
--- scan_issues  |  22
--- scans        |  38
+-- scan_issues  |  23
+-- scans        |  37
 -- session      |   3
 -- users        |  10
