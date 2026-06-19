@@ -827,7 +827,8 @@ async function runRevenueIntelligence(
       [
         {
           role: "system",
-          content: `You are a revenue growth expert who identifies exactly where products lose money. Focus on concrete, specific revenue leaks with quantified impact.`,
+          content: `You are a revenue growth expert who identifies exactly where products lose money. Focus on concrete, specific revenue leaks.
+CRITICAL CONSTRAINT: Do NOT guess or show absolute currency leakage amounts (such as lakhs of Rupees or thousands of Dollars) unless the target is explicitly verified as a large-scale, high-traffic enterprise company. For small repositories, indie projects, personal portfolios, or simple tools, do NOT use absolute financial leak figures (especially Lakhs of Rupees); instead, specify impacts in terms of percentages (e.g., "15% of checkout flow") or qualitative terms (e.g., "Loss of potential conversions").`,
         },
         {
           role: "user",
@@ -855,12 +856,12 @@ Return ONLY valid JSON:
     {
       "category": "Onboarding|Checkout|Retention|Pricing|Upsell|Payments|Fraud",
       "severity": "critical|high|medium|low",
-      "impact": "e.g. ₹20,000-₹80,000/mo revenue impact",
+      "impact": "Describe the leakage scale. For small/medium apps, specify percentages or qualitative impact (e.g., '10-15% conversion drop'). Do NOT output absolute Lakhs/Thousands rupee figures unless it is a verified big enterprise/company.",
       "description": "Specific description of the revenue leak",
       "fix": "Concrete fix prompt for Cursor/Claude"
     }
   ],
-  "estimatedMonthlyImpact": "Total estimated monthly revenue impact across all leaks",
+  "estimatedMonthlyImpact": "Use qualitative terms or percentage scale for small/medium apps. Do NOT output high rupee/dollar amounts unless verified enterprise.",
   "quickWins": ["Quick win 1 that can be done in < 1 day", "Quick win 2", "Quick win 3"]
 }`,
         },

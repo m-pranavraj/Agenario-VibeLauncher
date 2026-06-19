@@ -358,10 +358,17 @@ async function runAnalysisPipeline(opts: {
 
   // ── OWASP & Revenue enrichment (in-memory) ────────────────────
   const owaspEnrichedIssues = enrichIssuesWithOwasp(allIssues);
+
+  const isBigCompany = !!(
+    (sourceInput && /(microsoft|google|amazon|meta|apple|netflix|stripe|paypal|shopify|salesforce|hubspot|adobe|uber|airbnb|slack|github|atlassian|zoom|enterprise|fortune500|corporation|inc|corp|co\b)/i.test(sourceInput)) ||
+    (appDescription && /(enterprise|fortune 500|fortune500|large scale|millions of users|high traffic|corporate|billion dollar|multi-national|multinational|corp\b|corporation)/i.test(appDescription)) ||
+    (businessType === "enterprise")
+  );
+
   const revenueWithImpact = result.revenueIntelligence
     ? {
         ...result.revenueIntelligence,
-        leaks: enrichLeaksWithImpact(result.revenueIntelligence.leaks ?? []),
+        leaks: enrichLeaksWithImpact(result.revenueIntelligence.leaks ?? [], isBigCompany),
       }
     : result.revenueIntelligence;
 

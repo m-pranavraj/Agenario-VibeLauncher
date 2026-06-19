@@ -222,13 +222,50 @@ export function calculateRevenueImpact(
   };
 }
 
+const PERCENTAGE_DATABASE: Record<RevenueLeakType, string> = {
+  "checkout-abandonment": "2.5%–8.0% MRR risk",
+  "payment-failure-silent": "1.5%–5.0% MRR risk",
+  "webhook-missing": "1.0%–3.0% MRR risk",
+  "stripe-key-exposed": "100% MRR risk (Critical)",
+  "double-charge-risk": "0.5%–2.0% MRR risk",
+  "free-tier-abuse": "1.5%–4.5% MRR risk",
+  "subscription-not-enforced": "2.0%–6.0% MRR risk",
+  "missing-retry-logic": "0.8%–2.5% MRR risk",
+  "no-idempotency": "0.4%–1.5% MRR risk",
+  "currency-precision": "0.1%–0.5% MRR risk",
+  "missing-refund-flow": "0.5%–1.8% MRR risk",
+  "plan-downgrade-gap": "0.6%–2.0% MRR risk",
+  "promo-code-bypass": "1.0%–3.5% MRR risk",
+  "trial-abuse": "1.2%–4.0% MRR risk",
+  "billing-grace-period": "0.5%–1.5% MRR risk",
+  "generic": "1.0%–3.0% MRR risk",
+};
+
 export function enrichLeaksWithImpact<T extends { category: string; description: string }>(
   leaks: T[],
+  isBigCompany = false,
 ): Array<T & { revenueImpact?: RevenueImpact }> {
-  return leaks.map((leak) => ({
-    ...leak,
-    revenueImpact: calculateRevenueImpact(leak.category, leak.description),
-  }));
+  return leaks.map((leak) => {
+    const rawImpact = calculateRevenueImpact(leak.category, leak.description);
+    if (!isBigCompany) {
+      const type = rawImpact.findingType;
+      const percentageLabel = PERCENTAGE_DATABASE[type] || "1.0%–3.0% MRR risk";
+      return {
+        ...leak,
+        revenueImpact: {
+          ...rawImpact,
+          impactLabel: percentageLabel,
+          // Scale down the absolute values so we don't return large numbers in DB either
+          impactMinMonthly: Math.round(rawImpact.impactMinMonthly / 100),
+          impactMaxMonthly: Math.round(rawImpact.impactMaxMonthly / 100),
+        },
+      };
+    }
+    return {
+      ...leak,
+      revenueImpact: rawImpact,
+    };
+  });
 }
 
 export function formatImpactLabel(min: number, max: number): string {
