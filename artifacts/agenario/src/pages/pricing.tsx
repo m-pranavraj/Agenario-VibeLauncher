@@ -124,7 +124,7 @@ export default function PricingPage() {
     setCouponError("");
     setCouponResult(null);
     try {
-      const res = await fetch("/api/billing/validate-coupon", {
+      const res = await fetch((import.meta.env.VITE_API_URL || "") + "/api/billing/validate-coupon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ coupon: code }),
@@ -160,7 +160,7 @@ export default function PricingPage() {
     try {
       await loadRazorpay();
 
-      const res = await fetch("/api/billing/create-order", {
+      const res = await fetch((import.meta.env.VITE_API_URL || "") + "/api/billing/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

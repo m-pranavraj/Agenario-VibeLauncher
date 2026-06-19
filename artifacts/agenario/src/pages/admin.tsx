@@ -53,7 +53,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!user) { setLocation("/login"); return; }
-    fetch("/api/admin/stats", { credentials: "include" })
+    fetch((import.meta.env.VITE_API_URL || "") + "/api/admin/stats", { credentials: "include" })
       .then(async (r) => {
         if (!r.ok) { setError((await r.json()).error ?? "Access denied"); return; }
         setStats(await r.json());

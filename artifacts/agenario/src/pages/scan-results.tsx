@@ -2732,12 +2732,12 @@ function EvidenceCard({
 
               {/* Why It Triggered */}
               {issue.evidence && (
-                <div className={`bg-black/30 border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-lg px-3 py-2.5`}>
+                <div className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-black/30 border-white/[0.07]"} border rounded-lg px-3 py-2.5`}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-xs font-semibold ${conf.color}`}>Why It Triggered</span>
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ml-auto ${conf.badge}`}>{conf.icon} {conf.label}</span>
                   </div>
-                  <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/35"} font-mono leading-relaxed`}>{issue.evidence}</p>
+                  <p className={`text-xs ${isLight ? "text-gray-700" : "text-white/35"} font-mono leading-relaxed`}>{issue.evidence}</p>
                 </div>
               )}
 
@@ -2760,20 +2760,20 @@ function EvidenceCard({
             </div>
           )}
 
-          <div className={`bg-black/40 rounded-lg p-3 border ${isLight ? "border-gray-200" : "border-white/[0.07]"}`}>
+          <div className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-black/40 border-white/[0.07]"} rounded-lg p-3 border`}>
             <div className="flex items-center justify-between mb-2">
-              <span className={`text-xs font-semibold ${isLight ? "text-gray-500" : "text-white/50"}`}>1-Click Fix Prompt</span>
+              <span className={`text-xs font-semibold ${isLight ? "text-gray-600" : "text-white/50"}`}>1-Click Fix Prompt</span>
               <button
                 onClick={copy}
                 data-testid={`button-copy-${issue.id}`}
-                className={`flex items-center gap-1 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white transition-colors`}
+                className={`flex items-center gap-1 text-xs ${isLight ? "text-gray-500 hover:text-gray-800" : "text-white/30 hover:text-white"} transition-colors`}
               >
                 {copied
                   ? <><CheckCheck className="w-3.5 h-3.5 text-green-400" />Copied!</>
                   : <><Copy className="w-3.5 h-3.5" />Copy</>}
               </button>
             </div>
-            <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/45"} font-mono leading-relaxed`}>{issue.fixPrompt}</p>
+            <p className={`text-xs ${isLight ? "text-gray-700" : "text-white/45"} font-mono leading-relaxed`}>{issue.fixPrompt}</p>
           </div>
 
           {/* ── AI Fix Generator ─────────────────── */}
@@ -2876,19 +2876,19 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
           {issue.description && (
             <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/35"} leading-relaxed italic`}>{issue.description}</p>
           )}
-          <div className={`bg-black/40 rounded-lg p-3 border ${isLight ? "border-gray-200" : "border-white/[0.07]"}`}>
+          <div className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-black/40 border-white/[0.07]"} rounded-lg p-3 border`}>
             <div className="flex items-center justify-between mb-2">
-              <span className={`text-xs font-semibold ${isLight ? "text-gray-500" : "text-white/50"}`}>1-Click Fix Prompt</span>
+              <span className={`text-xs font-semibold ${isLight ? "text-gray-600" : "text-white/50"}`}>1-Click Fix Prompt</span>
               <button
                 onClick={copy}
-                className={`flex items-center gap-1 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white transition-colors`}
+                className={`flex items-center gap-1 text-xs ${isLight ? "text-gray-500 hover:text-gray-800" : "text-white/30 hover:text-white"} transition-colors`}
               >
                 {copied
                   ? <><CheckCheck className="w-3.5 h-3.5 text-green-400" />Copied!</>
                   : <><Copy className="w-3.5 h-3.5" />Copy</>}
               </button>
             </div>
-            <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/45"} font-mono leading-relaxed`}>{issue.fixPrompt}</p>
+            <p className={`text-xs ${isLight ? "text-gray-700" : "text-white/45"} font-mono leading-relaxed`}>{issue.fixPrompt}</p>
           </div>
           <div className="flex items-center justify-between pt-1">
             <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"}`}>Full evidence + AI patch locked</span>
@@ -2902,15 +2902,15 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
       ) : fixPreview ? (
         /* Blurred fix prompt preview */
         <div className="px-4 pb-4">
-          <div className={`bg-black/30 border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-lg px-3 py-2.5 relative overflow-hidden`}>
-            <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} mb-1`}>1-Click Fix Prompt</div>
-            <p className={`text-xs font-mono ${isLight ? "text-gray-500" : "text-white/40"} leading-relaxed`} style={{ filter: "blur(3.5px)", userSelect: "none" }}>
+          <div className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-black/30 border-white/[0.07]"} border rounded-lg px-3 py-2.5 relative overflow-hidden`}>
+            <div className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/25"} mb-1`}>1-Click Fix Prompt</div>
+            <p className={`text-xs font-mono ${isLight ? "text-gray-700" : "text-white/40"} leading-relaxed`} style={{ filter: "blur(3.5px)", userSelect: "none" }}>
               {fixPreview}…
             </p>
             <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
               <Link href="/pricing"
           >
-                <button className={`flex items-center gap-1.5 text-xs bg-violet-500/80 hover:bg-violet-500 ${isLight ? "text-gray-900" : "text-white"} font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30`}>
+                <button className={`flex items-center gap-1.5 text-xs bg-violet-500/80 hover:bg-violet-500 ${isLight ? "text-white" : "text-white"} font-semibold px-3 py-1.5 rounded-lg transition-all border border-violet-400/30`}>
                   <Lock className="w-3 h-3" /> Unlock Fix Prompt <ArrowRight className="w-3 h-3" />
                 </button>
               </Link>
@@ -3022,27 +3022,24 @@ function ExploitTerminalCard({ issue }: { issue: ScanIssue }) {
           {issue.severity}
         </span>
       </div>
-      {/* Terminal body */}
       <div className="p-4 space-y-3 font-mono">
         <div className="text-green-400/80 text-xs">$ exploit_scanner --target app --mode {issue.severity}</div>
         <div className="text-red-300/90 text-xs font-semibold">[!] {issue.title}</div>
-        <div className={`${isLight ? "text-gray-500" : "text-white/40"} text-xs leading-relaxed whitespace-pre-wrap`}
-          >{issue.description}</div>
+        <div className="text-white/60 text-xs leading-relaxed whitespace-pre-wrap">{issue.description}</div>
         {issue.evidence && (
-          <div className={`bg-black/50 border ${isLight ? "border-gray-200" : "border-white/[0.06]"} rounded-lg p-3`}>
+          <div className="bg-black/50 border border-white/[0.06] rounded-lg p-3">
             <div className="text-[10px] text-amber-400/60 uppercase tracking-wide mb-1.5">Evidence</div>
-            <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"} font-mono leading-relaxed`}
-          >{issue.evidence}</p>
+            <p className="text-xs text-white/50 font-mono leading-relaxed">{issue.evidence}</p>
           </div>
         )}
-        <div className={`border-t ${isLight ? "border-gray-200" : "border-white/[0.06]"} pt-3 flex items-start gap-3`}>
+        <div className="border-t border-white/[0.06] pt-3 flex items-start gap-3">
           <div className="flex-1">
             <div className="text-[10px] text-green-400/50 uppercase tracking-wide mb-1.5">1-Click Fix Prompt</div>
-            <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/50"} leading-relaxed`}>{issue.fixPrompt}</p>
+            <p className="text-xs text-white/75 leading-relaxed">{issue.fixPrompt}</p>
           </div>
           <button
             onClick={copy}
-            className={`shrink-0 flex items-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white px-2 py-1.5 rounded-lg border ${isLight ? "border-gray-200" : "border-white/[0.07]"} hover:border-white/20 transition-all`}
+            className="shrink-0 flex items-center gap-1.5 text-xs text-white/40 hover:text-white px-2 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/20 transition-all"
           >
             {copied ? <><CheckCheck className="w-3.5 h-3.5 text-green-400" />Copied</> : <><Copy className="w-3.5 h-3.5" />Copy</>}
           </button>
@@ -6448,7 +6445,9 @@ function ReportTour({ onStartTour }: { onStartTour: (cb: () => void) => void }) 
   };
   const prev = () => { if (step > 0) setStep((s) => s - 1); };
 
-  // Reposition popup whenever step changes
+  const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+
+  // Reposition popup whenever step, visible, or window scroll/resize changes
   useLayoutEffect(() => {
     if (!visible) return;
     const current = TOUR_STEPS[step];
@@ -6457,9 +6456,15 @@ function ReportTour({ onStartTour }: { onStartTour: (cb: () => void) => void }) 
 
     el.scrollIntoView({ behavior: "smooth", block: "center" });
 
-    // Small delay to let scroll settle
-    const t = setTimeout(() => {
-      const rect = el.getBoundingClientRect();
+    const updatePosition = () => {
+      const targetEl = document.querySelector(`[data-tour="${current.target}"]`) as HTMLElement | null;
+      if (!targetEl) {
+        setTargetRect(null);
+        return;
+      }
+      const rect = targetEl.getBoundingClientRect();
+      setTargetRect(rect);
+
       const popupW = 288; // w-72
       const vw = window.innerWidth;
       const vh = window.innerHeight;
@@ -6468,11 +6473,22 @@ function ReportTour({ onStartTour }: { onStartTour: (cb: () => void) => void }) 
       const arrowLeft = Math.max(16, Math.min(rect.left + rect.width / 2 - rawLeft - 8, popupW - 24));
 
       const above = current.placement === "top" || rect.bottom + 220 > vh;
-      const top = above ? rect.top - 220 + window.scrollY : rect.bottom + 14 + window.scrollY;
+      const top = above ? rect.top - 220 : rect.bottom + 14;
 
-      setPopupPos({ top: Math.max(top, 8 + window.scrollY), left: rawLeft, arrowLeft, above });
-    }, 300);
-    return () => clearTimeout(t);
+      setPopupPos({ top: Math.max(top, 8), left: rawLeft, arrowLeft, above });
+    };
+
+    // Small delay to let initial scrollIntoView settle, then compute
+    const t = setTimeout(updatePosition, 300);
+
+    window.addEventListener("scroll", updatePosition, { passive: true });
+    window.addEventListener("resize", updatePosition, { passive: true });
+
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("scroll", updatePosition);
+      window.removeEventListener("resize", updatePosition);
+    };
   }, [step, visible]);
 
   if (!visible) return null;
@@ -6481,11 +6497,8 @@ function ReportTour({ onStartTour }: { onStartTour: (cb: () => void) => void }) 
 
   return createPortal(
     <div className="fixed inset-0 z-[200] pointer-events-none">
-      {/* Dim overlay */}
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" />
-
-      {/* Highlight ring around target */}
-      <TargetHighlight target={current.target} />
+      {/* Highlight ring + dim overlay cutout */}
+      <TargetHighlight rect={targetRect} />
 
       {/* Cloud popup */}
       <div
@@ -6590,22 +6603,13 @@ function ReportTour({ onStartTour }: { onStartTour: (cb: () => void) => void }) 
   );
 }
 
-function TargetHighlight({ target }: { target: string }) {
-  const [rect, setRect] = useState<DOMRect | null>(null);
-
-  useLayoutEffect(() => {
-    const el = document.querySelector(`[data-tour="${target}"]`) as HTMLElement | null;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    setRect(r);
-  }, [target]);
-
+function TargetHighlight({ rect }: { rect: DOMRect | null }) {
   if (!rect) return null;
   return (
     <div
       className="absolute pointer-events-none ring-2 ring-violet-500/70 ring-offset-2 ring-offset-transparent rounded-2xl transition-all duration-300"
       style={{
-        top: rect.top + window.scrollY - 4,
+        top: rect.top - 4,
         left: rect.left - 4,
         width: rect.width + 8,
         height: rect.height + 8,

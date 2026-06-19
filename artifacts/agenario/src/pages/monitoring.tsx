@@ -77,7 +77,7 @@ export default function MonitoringPage() {
 
   useEffect(() => {
     if (!user) return;
-    fetch("/api/monitoring/overview", { credentials: "include" })
+    fetch((import.meta.env.VITE_API_URL || "") + "/api/monitoring/overview", { credentials: "include" })
       .then((r) => r.json())
       .then((data: { apps: AppOverview[]; totalScans: number }) => {
         setApps(data.apps ?? []);
