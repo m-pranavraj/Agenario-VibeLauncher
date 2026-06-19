@@ -4809,7 +4809,9 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
         <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm flex-1`}>Digital Twin Simulation</h2>
         <div className="flex items-center gap-3 text-xs"
           >
-          <span className={`${isLight ? "text-gray-400" : "text-white/25"}`}>{data.simulatedUserCount?.toLocaleString() ?? "1,000"} virtual users</span>
+          {(data.simulatedUserCount ?? 0) > 0 && (
+            <span className={`${isLight ? "text-gray-400" : "text-white/25"}`}>{data.simulatedUserCount!.toLocaleString()} simulated paths</span>
+          )}
           <span className="px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 font-semibold">
             {data.twinConfidenceScore}/100 confidence
           </span>
@@ -5486,7 +5488,9 @@ function LockedInsightsPanel({ scan, plan }: { scan: ScanDetail; plan: string })
   });
   if (scan.digitalTwin) items.push({
     label: "Digital Twin Simulation",
-    detail: `${scan.digitalTwin.simulatedUserCount ?? "?"} user journeys simulated`,
+    detail: scan.digitalTwin.simulatedUserCount > 0
+      ? `${scan.digitalTwin.simulatedUserCount.toLocaleString()} simulated execution paths`
+      : `${scan.digitalTwin.journeys.length} journeys · ${scan.digitalTwin.attackSimulations.length} attack vectors`,
     IconCmp: Globe,
   });
   if (scan.predictiveIntel) items.push({

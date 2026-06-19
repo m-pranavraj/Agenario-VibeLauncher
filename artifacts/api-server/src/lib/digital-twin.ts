@@ -1,12 +1,16 @@
 /**
  * Digital Twin Engine
  * ─────────────────────────────────────────────────────────────
- * Creates a virtual production simulation of the app:
- * - 10 synthetic user journeys through detected routes
- * - Chaos probe (DB slow, third-party API down, auth service failure)
- * - Attack surface simulation (SQLi, XSS, CSRF, privilege escalation)
+ * Simulates app behaviour using static code analysis + AI reasoning:
+ * - User journeys through detected routes (AI-derived from real code)
+ * - Chaos probe scenarios (graceful degradation under service failures)
+ * - Attack vector simulations (SQLi, XSS, CSRF, IDOR, SSRF, privesc)
  *
- * All simulation is Groq-powered code analysis (not live execution).
+ * simulatedUserCount is derived honestly:
+ *   journeys × avgStepsPerJourney × attackVariants
+ * No hardcoded mockup defaults are ever returned.
+ * If the AI call fails or returns unusable data, partial/empty results
+ * are returned with twinConfidenceScore reflecting data quality.
  */
 
 import Groq from "groq-sdk";
@@ -20,6 +24,7 @@ const groq = process.env["GROQ_API_KEY"]
   ? new Groq({ apiKey: process.env["OPENROUTER_API_KEY"], baseURL: OPENROUTER_BASE })
   : null;
 const MODEL = process.env["GROQ_API_KEY"] ? "llama-3.3-70b-versatile" : "meta-llama/llama-3.3-70b-instruct:free";
+
 function getClient(): Groq {
   if (!groq) throw new Error("No AI provider configured. Set GROQ_API_KEY or OPENROUTER_API_KEY.");
   return groq;
@@ -61,29 +66,44 @@ export interface DigitalTwinResult {
   simulatedUserCount: number;
 }
 
-const DEFAULT_JOURNEYS: DigitalTwinJourney[] = [
-  { name: "New user signup", route: "/register", status: "pass", steps: ["Land on homepage", "Click Sign Up", "Fill form", "Submit", "Redirect to dashboard"], latencyMs: 320 },
-  { name: "Login flow", route: "/login", status: "pass", steps: ["Enter credentials", "Submit", "Session created", "Dashboard loaded"], latencyMs: 180 },
-  { name: "Core feature activation", route: "/app", status: "degraded", steps: ["Navigate to main feature", "Trigger action", "Wait for response"], finding: "No loading state shown — users may click multiple times", latencyMs: 2400 },
-  { name: "Payment checkout", route: "/checkout", status: "degraded", steps: ["Add to cart", "Enter payment", "Submit"], finding: "No idempotency key — double-charge risk on retry", latencyMs: 1100 },
-  { name: "Password reset", route: "/forgot-password", status: "pass", steps: ["Enter email", "Receive link", "Reset password"], latencyMs: 240 },
-];
+/**
+ * Derives an honest simulatedUserCount from real data.
+ * Formula: journeys × average steps × attack permutation factor
+ * This reflects the actual combinatorial coverage of the simulation.
+ */
+function deriveSimulatedUserCount(
+  journeys: DigitalTwinJourney[],
+  attackSimulations: AttackSimulation[],
+): number {
+  if (journeys.length === 0) return 0;
+  const totalSteps = journeys.reduce((sum, j) => sum + (j.steps?.length ?? 3), 0);
+  const avgSteps = Math.round(totalSteps / journeys.length);
+  // Each journey is exercised with: 1 happy path + (attackSimulations.length) attack permutations
+  const attackVariants = Math.max(1, attackSimulations.length);
+  return journeys.length * avgSteps * attackVariants;
+}
 
-const DEFAULT_CHAOS: ChaosResult[] = [
-  { service: "Database", scenario: "Connection timeout (>5s)", graceful: false, impact: "Unhandled exception exposes stack trace to user", severity: "high" },
-  { service: "Auth Service", scenario: "Session store unavailable", graceful: false, impact: "All logged-in users get logged out simultaneously", severity: "critical" },
-  { service: "Payment Gateway", scenario: "Stripe API 503", graceful: true, impact: "Checkout shows generic error, user can retry", severity: "medium" },
-  { service: "Email Service", scenario: "SMTP timeout", graceful: true, impact: "Registration succeeds but confirmation email silently drops", severity: "medium" },
-  { service: "CDN / Static Assets", scenario: "Asset delivery failure", graceful: false, impact: "Blank white screen — no fallback UI", severity: "high" },
-];
-
-const DEFAULT_ATTACKS: AttackSimulation[] = [
-  { type: "SQLi", blocked: false, detail: "UNION-based injection in search parameter not sanitized", severity: "critical", vector: "GET /api/search?q=' UNION SELECT 1,user(),3--" },
-  { type: "XSS", blocked: true, detail: "React JSX escaping prevents DOM-based XSS in most paths", severity: "medium", vector: "Input via user profile bio field" },
-  { type: "CSRF", blocked: false, detail: "No CSRF tokens on state-changing POST endpoints", severity: "high", vector: "POST /api/user/update — no origin check" },
-  { type: "IDOR", blocked: false, detail: "User can access other users' data by incrementing IDs", severity: "critical", vector: "GET /api/orders/1337 — no ownership check" },
-  { type: "privilege-escalation", blocked: true, detail: "Role checks present on admin routes — no escalation path found", severity: "medium", vector: "POST /api/admin/users" },
-];
+/**
+ * Derives confidence score from data quality signals:
+ * - Presence of real routes and code context boosts score
+ * - More journeys/attacks = higher confidence
+ * - Description-only input = lower confidence (no structural code)
+ */
+function deriveConfidenceScore(
+  journeys: DigitalTwinJourney[],
+  chaosResults: ChaosResult[],
+  attackSimulations: AttackSimulation[],
+  hasCodeContext: boolean,
+  hasRoutes: boolean,
+): number {
+  let score = 30; // base: AI call succeeded
+  if (hasCodeContext) score += 20;
+  if (hasRoutes) score += 15;
+  score += Math.min(journeys.length * 3, 18);    // up to +18 for 6+ journeys
+  score += Math.min(chaosResults.length * 2, 8); // up to +8 for 4+ chaos
+  score += Math.min(attackSimulations.length * 2, 9); // up to +9 for 4+ attacks
+  return Math.min(score, 94); // cap at 94 — never claim 100% confidence on static analysis
+}
 
 export async function runDigitalTwin(
   sourceType: string,
@@ -91,51 +111,57 @@ export async function runDigitalTwin(
   appDescription?: string | null,
   codeContext?: CodeContext | null,
 ): Promise<DigitalTwinResult> {
-  if (sourceType === "description" && !codeContext) {
-    return buildDefaultResult(appDescription);
-  }
+  const hasCodeContext = !!codeContext;
+  const routes = codeContext?.routes?.slice(0, 1200) ?? "";
+  const hasRoutes = routes.length > 0;
+  const framework = codeContext?.framework ?? "unknown";
+  const businessType = codeContext?.businessType ?? "saas";
+  const keyFile = codeContext?.keyFiles?.[0];
+  const sampleCode = keyFile
+    ? `\n\nSample code (${keyFile.path}):\n${keyFile.content.slice(0, 600)}`
+    : "";
+
+  // Build a rich prompt regardless of source type — description-only is valid input
+  const contextBlock = [
+    `Source: ${sourceInput} (${sourceType})`,
+    `Type: ${businessType} | Framework: ${framework}`,
+    appDescription ? `Description: ${appDescription}` : null,
+    hasRoutes ? `Routes: ${routes}` : null,
+    sampleCode || null,
+  ].filter(Boolean).join("\n");
 
   try {
-    const routes = codeContext?.routes?.slice(0, 1200) ?? "";
-    const framework = codeContext?.framework ?? "unknown";
-    const businessType = codeContext?.businessType ?? "saas";
-    const keyFile = codeContext?.keyFiles?.[0];
-    const sampleCode = keyFile ? `\n\nSample code (${keyFile.path}):\n${keyFile.content.slice(0, 600)}` : "";
-
     const response = await getClient().chat.completions.create({
       model: MODEL,
       messages: [
         {
           role: "system",
-          content: `You are a digital twin simulation engine. Given an app's routes and code context, you simulate realistic user journeys, chaos scenarios, and attack vectors. Return structured JSON only.`,
+          content: `You are a digital twin simulation engine performing static code analysis and behavioural reasoning. Given an app's routes, framework, and code context, produce realistic user journeys (derived from actual detected routes), chaos failure scenarios (based on detected architecture), and attack simulations (based on the stack and patterns). Every output MUST be grounded in the provided context — do not invent plausible-sounding generic scenarios. Return ONLY valid JSON, no markdown fences.`,
         },
         {
           role: "user",
-          content: `Simulate a digital twin of this app:
+          content: `Simulate a digital twin for this app. Base ALL findings on the provided context.
 
-App: ${sourceInput} (${sourceType})
-Type: ${businessType} | Framework: ${framework}
-${appDescription ? `Description: ${appDescription}` : ""}
-Routes: ${routes}${sampleCode}
+${contextBlock}
 
-Return ONLY valid JSON:
+Return ONLY valid JSON (no \`\`\`json wrapper):
 {
   "journeys": [
     {
-      "name": "journey name",
-      "route": "/route",
+      "name": "journey name derived from a real route",
+      "route": "/real/route/from/context",
       "status": "pass|degraded|fail",
       "steps": ["step 1", "step 2", "step 3"],
-      "finding": "optional issue found during journey",
+      "finding": "specific issue found during this journey if degraded/fail",
       "latencyMs": 350
     }
   ],
   "chaosResults": [
     {
-      "service": "Database|Auth Service|Payment Gateway|Email|CDN",
-      "scenario": "what breaks",
+      "service": "service name relevant to this stack",
+      "scenario": "realistic failure scenario for this architecture",
       "graceful": true,
-      "impact": "user-visible impact",
+      "impact": "specific user-visible impact",
       "severity": "critical|high|medium|low"
     }
   ],
@@ -143,63 +169,87 @@ Return ONLY valid JSON:
     {
       "type": "SQLi|XSS|CSRF|privilege-escalation|IDOR|SSRF",
       "blocked": false,
-      "detail": "what was found",
+      "detail": "specific finding based on the actual routes/code",
       "severity": "critical|high|medium",
-      "vector": "example attack vector"
+      "vector": "concrete attack vector using real paths from context"
     }
   ],
-  "twinConfidenceScore": 72,
-  "summary": "2-3 sentence summary of simulation"
+  "summary": "2-3 sentence summary specific to this app's actual findings"
 }
 
-Generate 5-8 journeys, 4-6 chaos scenarios, 4-6 attack simulations. Base everything on the real routes and code context provided.`,
+Generate 5-8 journeys, 4-6 chaos scenarios, 4-6 attack simulations. Every route in journeys must come from the routes list above. Every service in chaosResults must be relevant to this stack. Every attack vector must reference real paths or patterns found in the code.`,
         },
       ],
       max_tokens: 2000,
     });
 
-    const content = response.choices[0]?.message?.content ?? "{}";
-    const jsonStr = content.trim().startsWith("{") ? content : (content.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1] ?? content.match(/(\{[\s\S]*\})/)?.[1] ?? "{}");
+    const content = response.choices[0]?.message?.content ?? "";
+    const trimmed = content.trim();
+    // Handle model wrapping output in markdown fences despite instructions
+    const jsonStr = trimmed.startsWith("{")
+      ? trimmed
+      : (trimmed.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1] ?? trimmed.match(/(\{[\s\S]*\})/)?.[1] ?? "");
+
+    if (!jsonStr) throw new Error("AI returned no parseable JSON");
+
     const parsed = JSON.parse(jsonStr) as Partial<DigitalTwinResult> & { summary?: string };
 
-    const journeys: DigitalTwinJourney[] = (parsed.journeys ?? DEFAULT_JOURNEYS).slice(0, 10);
-    const chaosResults: ChaosResult[] = (parsed.chaosResults ?? DEFAULT_CHAOS).slice(0, 8);
-    const attackSimulations: AttackSimulation[] = (parsed.attackSimulations ?? DEFAULT_ATTACKS).slice(0, 8);
+    // Only use what the AI actually returned — no fallback mockups
+    const journeys: DigitalTwinJourney[] = Array.isArray(parsed.journeys)
+      ? parsed.journeys.filter((j): j is DigitalTwinJourney =>
+          typeof j.name === "string" && typeof j.route === "string" && typeof j.status === "string"
+        ).slice(0, 10)
+      : [];
+
+    const chaosResults: ChaosResult[] = Array.isArray(parsed.chaosResults)
+      ? parsed.chaosResults.filter((c): c is ChaosResult =>
+          typeof c.service === "string" && typeof c.scenario === "string"
+        ).slice(0, 8)
+      : [];
+
+    const attackSimulations: AttackSimulation[] = Array.isArray(parsed.attackSimulations)
+      ? parsed.attackSimulations.filter((a): a is AttackSimulation =>
+          typeof a.type === "string" && typeof a.detail === "string"
+        ).slice(0, 8)
+      : [];
 
     const passCount = journeys.filter((j) => j.status === "pass").length;
-    const journeyPassRate = journeys.length > 0 ? Math.round((passCount / journeys.length) * 100) : 80;
+    const journeyPassRate = journeys.length > 0
+      ? Math.round((passCount / journeys.length) * 100)
+      : 0;
+
     const blockedCount = attackSimulations.filter((a) => a.blocked).length;
-    const attackBlockRate = attackSimulations.length > 0 ? Math.round((blockedCount / attackSimulations.length) * 100) : 50;
+    const attackBlockRate = attackSimulations.length > 0
+      ? Math.round((blockedCount / attackSimulations.length) * 100)
+      : 0;
+
+    const simulatedUserCount = deriveSimulatedUserCount(journeys, attackSimulations);
+    const twinConfidenceScore = deriveConfidenceScore(journeys, chaosResults, attackSimulations, hasCodeContext, hasRoutes);
 
     return {
       journeys,
       chaosResults,
       attackSimulations,
-      twinConfidenceScore: typeof parsed.twinConfidenceScore === "number" ? parsed.twinConfidenceScore : 70,
+      twinConfidenceScore,
       journeyPassRate,
       attackBlockRate,
-      simulatedUserCount: 1000 + Math.floor(Math.random() * 500),
-      summary: parsed.summary ?? `Digital twin simulated ${journeys.length} user journeys and ${attackSimulations.length} attack vectors. ${attackBlockRate}% of attacks were blocked.`,
+      simulatedUserCount,
+      summary: typeof parsed.summary === "string" && parsed.summary.length > 10
+        ? parsed.summary
+        : `Simulated ${journeys.length} user journeys, ${chaosResults.length} chaos scenarios, and ${attackSimulations.length} attack vectors. Journey pass rate: ${journeyPassRate}%. Attack block rate: ${attackBlockRate}%.`,
     };
   } catch (err) {
     logger.error({ err }, "Digital twin simulation failed");
-    return buildDefaultResult(appDescription);
+    // Return honest empty result — never inject hardcoded mockup data on failure
+    return {
+      journeys: [],
+      chaosResults: [],
+      attackSimulations: [],
+      twinConfidenceScore: 0,
+      journeyPassRate: 0,
+      attackBlockRate: 0,
+      simulatedUserCount: 0,
+      summary: "Digital twin simulation could not be completed for this input.",
+    };
   }
-}
-
-function buildDefaultResult(appDescription?: string | null): DigitalTwinResult {
-  const passCount = DEFAULT_JOURNEYS.filter((j) => j.status === "pass").length;
-  const blockedCount = DEFAULT_ATTACKS.filter((a) => a.blocked).length;
-  return {
-    journeys: DEFAULT_JOURNEYS,
-    chaosResults: DEFAULT_CHAOS,
-    attackSimulations: DEFAULT_ATTACKS,
-    twinConfidenceScore: 68,
-    journeyPassRate: Math.round((passCount / DEFAULT_JOURNEYS.length) * 100),
-    attackBlockRate: Math.round((blockedCount / DEFAULT_ATTACKS.length) * 100),
-    simulatedUserCount: 1247,
-    summary: appDescription
-      ? `Digital twin simulation based on app description. 5 user journeys simulated, 2 degraded flows detected, 2 unblocked attack vectors found.`
-      : "Digital twin simulation complete. Review journey outcomes and attack simulation results above.",
-  };
 }
