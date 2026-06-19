@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useRoute, Link } from "wouter";
 import {
@@ -5963,6 +5963,291 @@ function ScanRunningScreen({
   );
 }
 
+// ── Architecture Diagram Panel ────────────────────────────────────────────
+// Renders a Mermaid.js architecture flowchart from scan metadata.
+// Nodes are coloured by worst-severity issue. Expandable per-node issue
+// cards below the diagram show explanations and upgrade suggestions.
+
+const NODE_KEYWORDS: Record<string, string[]> = {
+  frontend: ["ux", "performance", "ai code", "accessibility", "mobile", "ui ", "react", "next", "css", "rendering", "bundle", "lighthouse", "web vital", "vibe"],
+  auth: ["secret", "auth", "session", "token", "password", "credential", "login", "jwt", "oauth", "permission", "role", "business logic", "bypass", "privilege"],
+  api: ["security", "reliability", "api", "http", "cors", "rate limit", "endpoint", "graphql", "injection", "xss", "csrf", "header", "input valid", "firewall", "open redirect"],
+  db: ["data integrity", "sql", "database", "schema", "migration", "orm", "query", "index", "transaction", "backup", "data exposure", "pii", "encryption at rest"],
+  payments: ["revenue", "payment", "stripe", "razorpay", "checkout", "billing", "subscription", "pricing", "cart", "refund"],
+  compliance: ["compliance", "gdpr", "privacy", "consent", "cookie", "legal", "regulation", "pci", "hipaa", "audit log", "data retention"],
+  observability: ["observability", "monitoring", "logging", "error tracking", "telemetry", "alert", "metric", "trace", "apm", "uptime"],
+};
+
+function mapIssuesToNodes(issues: ScanIssue[]): Map<string, ScanIssue[]> {
+  const map = new Map<string, ScanIssue[]>();
+  for (const issue of issues) {
+    if (issue.locked) continue;
+    const hay = `${issue.agentName ?? ""} ${issue.title ?? ""} ${(issue as any).category ?? ""}`.toLowerCase();
+    let assigned = false;
+    for (const [nodeId, kws] of Object.entries(NODE_KEYWORDS)) {
+      if (kws.some((kw) => hay.includes(kw))) {
+        if (!map.has(nodeId)) map.set(nodeId, []);
+        map.get(nodeId)!.push(issue);
+        assigned = true;
+        break;
+      }
+    }
+    if (!assigned) {
+      if (!map.has("api")) map.set("api", []);
+      map.get("api")!.push(issue);
+    }
+  }
+  return map;
+}
+
+function archWorstSev(issues: ScanIssue[]): string {
+  for (const sev of ["critical", "high", "medium", "low"]) {
+    if (issues.some((i) => i.severity === sev)) return sev;
+  }
+  return "clean";
+}
+
+function buildMermaidCode(scan: ScanDetail, nodeMap: Map<string, ScanIssue[]>, isLight: boolean): string {
+  const sev2class: Record<string, string> = {
+    critical: "nCrit", high: "nHigh", medium: "nMed", low: "nLow", clean: "nClean",
+  };
+  const cls = (id: string) => sev2class[archWorstSev(nodeMap.get(id) ?? [])] ?? "nClean";
+  const hasPayments = nodeMap.has("payments") || ["ecommerce", "saas", "marketplace"].some((k) => (scan.businessType ?? "").toLowerCase().includes(k));
+  const hasCompliance = nodeMap.has("compliance");
+  const hasObs = nodeMap.has("observability");
+
+  const lines = [
+    `%%{init: {'theme': '${isLight ? "default" : "dark"}', 'flowchart': {'curve': 'basis', 'padding': 15}}}%%`,
+    "flowchart TD",
+    "  classDef nCrit fill:#7f1d1d,stroke:#ef4444,color:#fca5a5,stroke-width:2px",
+    "  classDef nHigh fill:#78350f,stroke:#f97316,color:#fed7aa,stroke-width:2px",
+    "  classDef nMed fill:#451a03,stroke:#eab308,color:#fef08a,stroke-width:1px",
+    "  classDef nLow fill:#052e16,stroke:#22c55e,color:#bbf7d0,stroke-width:1px",
+    "  classDef nClean fill:#0d1117,stroke:#30363d,color:#8b949e,stroke-width:1px",
+    `  User(["👤 User"]):::nClean`,
+    `  Frontend["⚛️ Frontend${scan.framework ? `\\n${scan.framework}` : ""}"]:::${cls("frontend")}`,
+    `  Auth[["🔐 Auth Layer"]]:::${cls("auth")}`,
+    `  API["⚡ API / Backend${scan.vibeTool ? `\\n${scan.vibeTool}` : ""}"]:::${cls("api")}`,
+    `  DB[("💾 Database")]:::${cls("db")}`,
+    ...(hasPayments ? [`  Payments[["💳 Payments"]]:::${cls("payments")}`] : []),
+    ...(hasCompliance ? [`  Compliance["📋 Compliance"]:::${cls("compliance")}`] : []),
+    ...(hasObs ? [`  Obs["📊 Observability"]:::${cls("observability")}`] : []),
+    "  User --> Frontend",
+    "  Frontend --> Auth",
+    "  Frontend --> API",
+    "  Auth --> API",
+    "  API --> DB",
+    ...(hasPayments ? ["  API --> Payments"] : []),
+    ...(hasCompliance ? ["  Frontend -.->|GDPR| Compliance", "  API -.->|Audit| Compliance"] : []),
+    ...(hasObs ? ["  API -.->|Logs| Obs"] : []),
+  ];
+  return lines.join("\n");
+}
+
+function generateNodeSuggestions(nodeId: string, issues: ScanIssue[], scan: ScanDetail): string[] {
+  const hay = issues.map((i) => (i.title ?? "").toLowerCase()).join(" ");
+  const worst = archWorstSev(issues);
+  const out: string[] = [];
+  if (nodeId === "auth") {
+    if (hay.includes("session") || hay.includes("token")) out.push("Replace custom sessions with Clerk or Auth.js — battle-tested RBAC out-of-the-box");
+    if (hay.includes("password") || hay.includes("hash")) out.push("Switch to Argon2id for password hashing — better GPU-attack resistance than bcrypt");
+    if (worst === "critical") out.push("Add MFA (TOTP or passkey) — critical auth issues require layered defence");
+  }
+  if (nodeId === "api") {
+    if (hay.includes("rate limit") || hay.includes("dos")) out.push("Add a WAF layer (Cloudflare, AWS API Gateway) — handles rate limiting at the edge");
+    if (hay.includes("cors") || hay.includes("header")) out.push("Use Helmet.js + strict CORS policy — one-line fix for most header vulnerabilities");
+    if (hay.includes("injection") || hay.includes("sql")) out.push("Parameterised queries via Drizzle ORM or Prisma eliminate injection class entirely");
+  }
+  if (nodeId === "frontend") {
+    if (hay.includes("bundle") || hay.includes("performance")) out.push("Add code splitting + lazy loading — most bundle issues resolved in < 1 day");
+    if (hay.includes("xss")) out.push("Deploy a strict CSP header — blocks XSS even if sanitisation gaps remain");
+    out.push("Run Lighthouse CI in your pipeline — catches regressions before they ship");
+  }
+  if (nodeId === "db") {
+    if (hay.includes("backup")) out.push("Enable point-in-time recovery (Supabase, Neon, PlanetScale)");
+    if (hay.includes("exposure") || hay.includes("leak")) out.push("Add Row-Level Security (RLS) — prevents cross-user data leakage at the DB layer");
+    out.push("Run EXPLAIN ANALYZE on slow queries and add composite indexes on filter columns");
+  }
+  if (nodeId === "payments") {
+    if (worst === "critical" || worst === "high") out.push("Move to Stripe hosted checkout (Payment Links) — removes PCI scope from your codebase entirely");
+    out.push("Add idempotency keys to every payment API call — prevents double-charges on network retries");
+  }
+  if (nodeId === "compliance") {
+    if (hay.includes("gdpr") || hay.includes("consent")) out.push("Integrate CookieYes — generates compliant consent banners for GDPR/CCPA automatically");
+    out.push("Use Plausible or PostHog (self-hosted) instead of GA — privacy-first and GDPR-compliant");
+  }
+  if (nodeId === "observability") {
+    out.push("Add Sentry for error tracking + PostHog for product analytics — covers most gaps immediately");
+    if (hay.includes("log")) out.push("Emit structured JSON logs — enables Datadog / Grafana Cloud ingestion without code changes");
+  }
+  return out.slice(0, 3);
+}
+
+function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
+  const isLight = useIsLight();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [rendered, setRendered] = useState(false);
+  const [expandedNode, setExpandedNode] = useState<string | null>(null);
+
+  const nodeMap = useMemo(() => mapIssuesToNodes(scan.issues), [scan.issues]);
+  const mermaidCode = useMemo(() => buildMermaidCode(scan, nodeMap, isLight), [scan, nodeMap, isLight]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { default: mermaid } = await import("mermaid");
+        mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: isLight ? "default" : "dark" });
+        const id = `arch-${Math.random().toString(36).slice(2)}`;
+        const { svg } = await mermaid.render(id, mermaidCode);
+        if (!cancelled && containerRef.current) {
+          containerRef.current.innerHTML = svg;
+          const svgEl = containerRef.current.querySelector("svg");
+          if (svgEl) { svgEl.style.width = "100%"; svgEl.style.height = "auto"; svgEl.style.maxWidth = "100%"; svgEl.style.display = "block"; }
+          setRendered(true);
+        }
+      } catch {
+        if (!cancelled) setRendered(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [mermaidCode, isLight]);
+
+  const ARCH_NODE_META: { id: string; label: string; icon: string }[] = [
+    { id: "frontend", label: "Frontend UI", icon: "⚛️" },
+    { id: "auth", label: "Auth Layer", icon: "🔐" },
+    { id: "api", label: "API / Backend", icon: "⚡" },
+    { id: "db", label: "Database", icon: "💾" },
+    { id: "payments", label: "Payments", icon: "💳" },
+    { id: "compliance", label: "Compliance", icon: "📋" },
+    { id: "observability", label: "Observability", icon: "📊" },
+  ];
+  const affectedNodes = ARCH_NODE_META.filter((n) => nodeMap.has(n.id));
+
+  return (
+    <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden aurora-card`}>
+      {/* Header */}
+      <div className={`flex items-center gap-2.5 px-6 py-4 border-b ${isLight ? "border-gray-100" : "border-white/[0.06]"}`}>
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isLight ? "bg-blue-50 border border-blue-200" : "bg-blue-500/15 border border-blue-500/25"}`}>
+          <Network className="w-3.5 h-3.5 text-blue-500" />
+        </div>
+        <h2 className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Architecture Audit</h2>
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${isLight ? "bg-blue-50 border-blue-200 text-blue-600" : "bg-blue-500/10 border-blue-500/20 text-blue-400"}`}>
+          AI-Generated · Mermaid
+        </span>
+        <div className="ml-auto hidden sm:flex items-center gap-3">
+          {[
+            { label: "Critical", cls: "bg-red-500" }, { label: "High", cls: "bg-orange-500" },
+            { label: "Medium", cls: "bg-yellow-500" }, { label: "Clean", cls: "bg-green-500" },
+          ].map((l) => (
+            <div key={l.label} className="flex items-center gap-1">
+              <div className={`w-2 h-2 rounded-full ${l.cls}`} />
+              <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"}`}>{l.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Mermaid diagram canvas */}
+      <div className={`px-4 pt-5 pb-3 ${isLight ? "bg-gray-50/60" : "bg-black/25"}`}>
+        {!rendered && (
+          <div className="min-h-[180px] flex flex-col items-center justify-center gap-2">
+            <Loader2 className={`w-5 h-5 animate-spin ${isLight ? "text-gray-300" : "text-white/20"}`} />
+            <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>Rendering architecture map…</p>
+          </div>
+        )}
+        <div ref={containerRef} className={`${rendered ? "" : "hidden"} overflow-x-auto`} />
+        <p className={`text-[10px] text-center mt-2 ${isLight ? "text-gray-300" : "text-white/15"}`}>
+          Generated from detected stack · node colour = worst issue severity · red = immediate fix required
+        </p>
+      </div>
+
+      {/* Per-node issue breakdown */}
+      {affectedNodes.length > 0 ? (
+        <div className={`border-t ${isLight ? "border-gray-100" : "border-white/[0.05]"}`}>
+          <div className={`px-6 py-2.5 ${isLight ? "bg-gray-50" : "bg-white/[0.01]"}`}>
+            <p className={`text-[10px] font-semibold uppercase tracking-widest ${isLight ? "text-gray-400" : "text-white/25"}`}>
+              Affected Components — click to expand issues &amp; suggestions
+            </p>
+          </div>
+          <div className={`divide-y ${isLight ? "divide-gray-50" : "divide-white/[0.03]"}`}>
+            {affectedNodes.map((n) => {
+              const issues = nodeMap.get(n.id)!;
+              const worst = archWorstSev(issues);
+              const sev = SEVERITY_CONFIG[worst as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
+              const isExpanded = expandedNode === n.id;
+              const suggestions = generateNodeSuggestions(n.id, issues, scan);
+              return (
+                <div key={n.id}>
+                  <button
+                    onClick={() => setExpandedNode(isExpanded ? null : n.id)}
+                    className={`w-full flex items-center gap-3 px-6 py-3.5 text-left transition-colors ${isLight ? "hover:bg-gray-50" : "hover:bg-white/[0.02]"}`}
+                  >
+                    <span className="text-base shrink-0">{n.icon}</span>
+                    <span className={`text-sm font-semibold flex-1 ${isLight ? "text-gray-800" : "text-white/85"}`}>{n.label}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${sev.bg}`}>
+                        <span className="text-[8px]">●</span>
+                        {issues.length} issue{issues.length !== 1 ? "s" : ""}
+                      </span>
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full capitalize border ${sev.bg}`}>{worst}</span>
+                      {isExpanded ? <ChevronUp className={`w-3.5 h-3.5 ${isLight ? "text-gray-300" : "text-white/20"}`} /> : <ChevronDown className={`w-3.5 h-3.5 ${isLight ? "text-gray-300" : "text-white/20"}`} />}
+                    </div>
+                  </button>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      transition={{ duration: 0.2 }}
+                      className={`overflow-hidden px-6 pb-5 space-y-3 ${isLight ? "bg-gray-50/70" : "bg-black/10"}`}
+                    >
+                      <div className="space-y-2 pt-1">
+                        {issues.slice(0, 4).map((issue, i) => {
+                          const isev = SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
+                          return (
+                            <div key={i} className={`flex items-start gap-2.5 p-3 rounded-xl border ${isev.bg}`}>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 mt-0.5 ${isev.bg} uppercase`}>{issue.severity}</span>
+                              <div className="min-w-0">
+                                <p className={`text-xs font-semibold leading-snug ${isLight ? "text-gray-800" : "text-white/80"}`}>{issue.title}</p>
+                                {(issue as any).impactStatement && (
+                                  <p className={`text-[11px] mt-0.5 leading-relaxed ${isLight ? "text-gray-500" : "text-white/40"}`}>{(issue as any).impactStatement}</p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {issues.length > 4 && (
+                          <p className={`text-xs px-1 ${isLight ? "text-gray-400" : "text-white/25"}`}>+{issues.length - 4} more · see Findings tab</p>
+                        )}
+                      </div>
+                      {suggestions.length > 0 && (
+                        <div className={`rounded-xl border p-4 space-y-2 ${isLight ? "bg-blue-50/80 border-blue-100" : "bg-blue-500/[0.07] border-blue-500/20"}`}>
+                          <div className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isLight ? "text-blue-600" : "text-blue-400"}`}>💡 Upgrade Suggestions</div>
+                          {suggestions.map((s, i) => (
+                            <div key={i} className={`flex items-start gap-2 text-xs leading-relaxed ${isLight ? "text-blue-700" : "text-blue-300/80"}`}>
+                              <ArrowRight className="w-3 h-3 shrink-0 mt-0.5 text-blue-400" />
+                              {s}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="px-6 pb-5 pt-2 text-center">
+          <p className={`text-sm font-semibold ${isLight ? "text-green-600" : "text-green-400"}`}>✅ No critical architecture issues detected</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Report Tour ───────────────────────────────────────────────────────────
 // Cloud-style tooltip tour. Auto-shows on first report view, re-triggerable
 // via the "?" button. Uses data-tour attributes to locate elements.
@@ -6661,6 +6946,17 @@ export default function ScanResultsPage() {
                 )}
               </div>
             </div>
+
+            {/* ── Architecture Audit ───────────────────────────── */}
+            <SectionLabel label="Architecture Audit" icon={Network} isLight={isLight} />
+            <motion.div
+              data-tour="architecture"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+            >
+              <ArchitectureDiagramPanel scan={scan} />
+            </motion.div>
 
             {/* ── Section divider ──────────────────────────────── */}
             {scan.vibeTool && scan.vibeTool !== "unknown" && (
