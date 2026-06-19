@@ -145,7 +145,7 @@ const PRICING = [
     launchBadge: "🚀 Launch Offer",
     period: "/mo",
     desc: "Full intelligence for indie founders",
-    features: ["Unlimited scans", "All 10 analysis dimensions", "Digital Twin simulation", "Predictive intelligence", "Compliance checks included", "Board-memo style reports", "Priority analysis queue"],
+    features: ["12 scans per month", "All 10 analysis dimensions", "Digital Twin simulation", "Predictive intelligence", "Compliance checks included", "Board-memo style reports", "Priority analysis queue"],
     cta: "Upgrade to Creator",
     href: "/pricing",
     highlight: true,

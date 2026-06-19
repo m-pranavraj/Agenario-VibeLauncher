@@ -49,3 +49,7 @@ Thumbs.db
 .local/
 .replit
 replit.nix
+
+# environment files
+.env
+.env.local

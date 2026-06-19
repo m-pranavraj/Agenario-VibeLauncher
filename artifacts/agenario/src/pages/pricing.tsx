@@ -55,7 +55,7 @@ const PLANS = [
     icon: Zap,
     iconColor: "text-white",
     features: [
-      "Unlimited scans",
+      "12 scans per month",
       "Full 50-dimension analysis",
       "GDPR, OWASP, PCI-DSS compliance",
       "Revenue intelligence layer",
@@ -248,7 +248,7 @@ export default function PricingPage() {
         {success && (
           <div className={`max-w-md mx-auto mb-10 ${isLight ? "bg-green-50 border-green-200 text-green-700" : "bg-green-500/[0.07] border border-green-500/20 text-green-400"} rounded-xl px-5 py-4 text-sm text-center flex items-center justify-center gap-2`}>
             <Zap className="w-4 h-4" />
-            Plan upgraded to <strong className="capitalize">{success}</strong>! Unlimited scans are now active.
+            Plan upgraded to <strong className="capitalize">{success}</strong>! Your updated scan limits are now active.
           </div>
         )}
 

@@ -35,6 +35,7 @@ export interface User {
   email: string;
   name: string;
   plan: string;
+  isAdmin?: boolean;
   createdAt: string;
 }
 

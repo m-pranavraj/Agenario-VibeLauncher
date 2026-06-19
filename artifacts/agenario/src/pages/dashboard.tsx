@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { useScans } from "@/hooks/use-scans";
-import { ChevronRight, Plus, LogOut, Zap, Brain, Activity, BarChart3, BookOpen, Loader2 } from "lucide-react";
+import { ChevronRight, Plus, LogOut, Zap, Brain, Activity, BarChart3, BookOpen, Loader2, ShieldCheck } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 function ScoreRing({ score, isLight }: { score: number; isLight: boolean }) {
@@ -125,6 +125,11 @@ export default function DashboardPage() {
             <Link href="/docs" className={`flex items-center gap-1.5 ${t.navLink}`}>
               <BookOpen className="w-3.5 h-3.5" />Docs
             </Link>
+            {user.isAdmin && (
+              <Link href="/admin" className={`flex items-center gap-1.5 ${t.navLink} text-violet-400 hover:text-violet-300 font-semibold`}>
+                <ShieldCheck className="w-3.5 h-3.5" />Admin
+              </Link>
+            )}
           </div>
 
           <div className="flex items-center gap-3 ml-auto">
@@ -154,7 +159,7 @@ export default function DashboardPage() {
               Welcome back, {user.name.split(" ")[0]}
             </h1>
             <p className={`text-sm mt-1 ${t.sub}`}>
-              {isFreePlan ? "Free plan · 2 scans/month" : `${planLabel} plan · Unlimited scans`}
+              {isFreePlan ? "Free plan · 2 scans/month" : plan === "creator" ? "Creator plan · 12 scans/month" : "Enterprise plan · Unlimited scans"}
             </p>
           </div>
           <Link
@@ -254,7 +259,7 @@ export default function DashboardPage() {
           >
             <div>
               <p className={t.upgradeText}>Upgrade to Creator — ₹299/mo</p>
-              <p className={`${t.sub} text-xs mt-1`}>Unlimited scans, compliance checks, and revenue intelligence.</p>
+              <p className={`${t.sub} text-xs mt-1`}>12 scans/month, compliance checks, and revenue intelligence.</p>
             </div>
             <Link href="/pricing" data-testid="link-upgrade-banner" className={t.upgradeBtn}>
               <Zap className="w-3.5 h-3.5" /> Upgrade
