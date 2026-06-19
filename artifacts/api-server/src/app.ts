@@ -114,6 +114,14 @@ app.use(
 
 const isProduction = process.env["NODE_ENV"] === "production";
 
+function normalizeOrigin(origin: string): string {
+  try {
+    return new URL(origin).origin;
+  } catch {
+    return origin.trim();
+  }
+}
+
 // ── CORS ──────────────────────────────────────────────────────────────────
 // Build a strict allowlist. In production the frontend and API share the same
 // Replit-proxied origin, so same-origin requests never hit the CORS handler.
@@ -125,6 +133,9 @@ const allowedOrigins = new Set<string>(
     process.env["REPLIT_DEV_DOMAIN"]
       ? `https://${process.env["REPLIT_DEV_DOMAIN"]}`
       : undefined,
+    // Production frontend domains
+    "https://www.agenario.tech",
+    "https://agenario.tech",
     // Local Vite dev server (port may vary, cover common ranges)
     "http://localhost:3000",
     "http://localhost:5173",
@@ -138,8 +149,9 @@ app.use(
     origin(requestOrigin, callback) {
       // Same-origin requests (no Origin header) are always allowed
       if (!requestOrigin) return callback(null, true);
-      if (allowedOrigins.has(requestOrigin)) return callback(null, true);
-      callback(new Error(`CORS: origin '${requestOrigin}' is not allowed`));
+      const normalizedOrigin = normalizeOrigin(requestOrigin);
+      if (allowedOrigins.has(normalizedOrigin)) return callback(null, true);
+      callback(new Error(`CORS: origin '${normalizedOrigin}' is not allowed`));
     },
     credentials: true,
   }),

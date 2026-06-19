@@ -561,6 +561,14 @@ export const api = {
     cert: (certId: string) => request<{ certId: string; source: string; score: number; verdict: string; completedAt: string; criticalIssues: number; totalIssues: number }>(`/public/cert/${certId}`),
   },
   intelligence: {
-    failures: (issueTitle: string) => request<{ issueTitle: string; boltPercent: number; cursorPercent: number; replitPercent: number; totalAnalyzed: number }>(`/intelligence/failures?issueTitle=${encodeURIComponent(issueTitle)}`),
+    failures: (issueTitle: string) => request<{
+      issueTitle: string;
+      boltPercent: number;
+      cursorPercent: number;
+      replitPercent: number;
+      totalAnalyzed: number;
+      percentOfApps: number;
+      frameworkRootCause: string;
+    }>(`/intelligence/failures?issueTitle=${encodeURIComponent(issueTitle)}`),
   }
 };

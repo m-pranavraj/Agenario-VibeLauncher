@@ -553,12 +553,11 @@ async function probeUXFailures(baseUrl: string): Promise<ProofEvidence | null> {
 
   if (missing.length < 2) return null;
 
-  const consoleErrors = [
-    { level: "error" as const, message: "Uncaught Error: Cannot read properties of undefined (reading 'map')", source: "Dashboard.tsx:47" },
-    { level: "error" as const, message: "TypeError: Failed to fetch — API server unreachable", source: "api-client.ts:23" },
-    { level: "warn"  as const, message: "React warning: Maximum update depth exceeded — potential infinite loop", source: "App.tsx:88" },
-    ...missing.map((m) => ({ level: "warn" as const, message: `Missing: ${m.feature} — ${m.risk}`, source: "UX Probe" })),
-  ];
+  const consoleErrors = missing.map((m) => ({
+    level: "warn" as const,
+    message: `Missing: ${m.feature} — ${m.risk}`,
+    source: "Static HTML analysis",
+  }));
 
   const screenshot = generateConsoleErrorScreenshot({
     url: baseUrl,
@@ -581,7 +580,7 @@ async function probeUXFailures(baseUrl: string): Promise<ProofEvidence | null> {
       `Observe: white screen crash instead of graceful error message`,
       `Check Console tab: unhandled errors with no recovery UI`,
     ],
-    observed: `Missing: ${missing.map((m) => m.feature).join(", ")}. Console shows ${consoleErrors.filter((e) => e.level === "error").length} uncaught errors under simulated API failure.`,
+    observed: `Static HTML analysis detected missing UX safeguards: ${missing.map((m) => m.feature).join(", ")}.`,
     impact: `When Stripe, Supabase, or your DB goes down, users see a white screen. Average: 3–5 support tickets per incident. Conversion drops 15–25% on slow connections without skeleton loaders. Trust permanently damaged.`,
     screenshot,
     codeRef: `1. Wrap app root: <ErrorBoundary fallback={<ErrorPage />}>  2. Add skeleton: import { Skeleton } from "@/components/ui/skeleton"  3. Add: navigator.serviceWorker.register('/sw.js')`,
@@ -839,109 +838,6 @@ function generateCodeBasedProofs(
       }
     }
     if (results.length >= 3) break;
-  }
-
-  if (results.length === 0) {
-    const filename = sourceInput.split("/").pop() || "repository";
-    
-    // 1. Build and Launch verification
-    const launchShot = generateProofScreenshot({
-      url: sourceInput,
-      status: 200,
-      title: "Sandbox Build & Live UI Launch Verification",
-      observed: `Sandbox built ${filename} successfully. Environment resolved dependencies and launched local server. Chrome browser loaded and rendered the main viewport with no exceptions.`,
-      severity: "low",
-      proofType: "live-render",
-      steps: [
-        "Create isolated sandbox run container",
-        "Resolve package dependencies (package.json)",
-        "Launch local web server on port 3000",
-        "Open Chrome DevTools automation browser",
-        "Verify viewport renders page layouts correctly"
-      ],
-      impact: "Application builds and executes cleanly in real time. Core UI layout is stable."
-    });
-
-    results.push({
-      type: "chaos",
-      title: "Sandbox Build & Live UI Launch Verified",
-      severity: "low",
-      confidence: 99,
-      url: sourceInput,
-      steps: [
-        "Verify package.json build configurations",
-        "Instantiate isolated Sandbox execution container",
-        "Run compilation build pipeline and start local server",
-        "Launch headless Chrome DevTools browser and navigate to home route",
-        "Verify 200 OK response and complete UI paint"
-      ],
-      observed: `Sandbox successfully compiled ${filename} and started the application server. The automated browser verified that the primary views load correctly and no critical runtime console errors are thrown.`,
-      impact: "Application boot and rendering pipeline are clean. Production deployment ready.",
-      screenshot: launchShot,
-      codeRef: "Build succeeded: npm run build & npm start"
-    });
-
-    // 2. Access Control verification
-    const accessShot = generateAccessControlScreenshot({
-      url: sourceInput,
-      attackUrl: `${sourceInput}/api/users/2`,
-      verdict: "protected",
-      resourceType: "API & Router",
-      statusCode: 401,
-    });
-
-    results.push({
-      type: "idor",
-      title: "Access Control & API Routing Verification",
-      severity: "low",
-      confidence: 95,
-      url: "API routes / Router",
-      steps: [
-        "Map registered routes and endpoints from route directory",
-        "Inspect route handlers for authentication middleware checks",
-        "Probe API path patterns for unauthorized write operations",
-        "Confirm that database updates require active user session context"
-      ],
-      observed: "Static route analysis checked all API definitions. Access control middleware patterns are properly implemented across sensitive routes. No exposed data-writing endpoints detected.",
-      impact: "Data integrity and authorization rules verified. Protected endpoints block unauthenticated requests.",
-      screenshot: accessShot,
-      codeRef: "Authorization verified: router.use(requireAuth)"
-    });
-
-    // 3. Secrets verification
-    const secretsShot = generateProofScreenshot({
-      url: `${filename}/.env`,
-      status: 200,
-      title: "Environment Configuration & Secret Scanner Probe",
-      observed: `Scanned all key files for exposed API keys, secret credentials, and private connection strings. Confirmed that no sensitive values are hardcoded in the codebase.`,
-      severity: "low",
-      proofType: "secret-check",
-      steps: [
-        "Scan files against high-entropy string database",
-        "Identify environment variable loads (process.env)",
-        "Check git ignore rules for .env exclusions",
-        "Verify config credentials load dynamically from vault"
-      ],
-      impact: "Credentials are safe. No hardcoded secrets detected in compiled packages."
-    });
-
-    results.push({
-      type: "pii",
-      title: "Secrets Scan & Environment Variable Probe",
-      severity: "low",
-      confidence: 99,
-      url: ".env / source files",
-      steps: [
-        "Scan key configuration files and repository scripts",
-        "Run entropy matching algorithms against database of common keys",
-        "Confirm that credential values are loaded via environment variables",
-        "Verify .env files are blacklisted in .gitignore configuration"
-      ],
-      observed: "Secret scanner checked all code files. No exposed passwords, keys, private tokens, or database URLs were discovered. Environment variables are loaded cleanly.",
-      impact: "No credentials exposed in git commit history. Secure configuration practices verified.",
-      screenshot: secretsShot,
-      codeRef: "Verified safe: all credentials mapped to process.env"
-    });
   }
 
   return results;

@@ -1048,20 +1048,20 @@ router.post("/scans/:scanId/issues/:issueId/retest", async (req, res): Promise<v
     return;
   }
 
-  // Set to pending initially
-  await db.update(scanIssuesTable).set({ retestStatus: "pending" }).where(eq(scanIssuesTable.id, issueId));
+  await db
+    .update(scanIssuesTable)
+    .set({
+      retestStatus: "failed",
+      retestResult:
+        "Automatic retest is not available yet. Apply the fix and run a new scan to verify.",
+    })
+    .where(eq(scanIssuesTable.id, issueId));
 
-  // Simulate applying patch and re-running Playwright for the demo/product
-  // In a real execution environment, we would actually run:
-  // 1. applyPatch()
-  // 2. runPlaywrightBrowserProofs()
-  
-  setTimeout(async () => {
-    // 3 seconds later, the retest passes
-    await db.update(scanIssuesTable).set({ retestStatus: "passed", retestResult: "passed" }).where(eq(scanIssuesTable.id, issueId));
-  }, 3000);
-
-  res.json({ status: "pending" });
+  res.status(501).json({
+    status: "unavailable",
+    message:
+      "Automatic patch retest is not available yet. Apply the suggested fix and start a new scan to verify.",
+  });
 });
 
 
@@ -1153,7 +1153,9 @@ router.get("/scans/:id/export", async (req, res): Promise<void> => {
   };
 
   payload = applyTierGate(payload, plan);
-  const gatedIssues = payload.issues as typeof issues;
+  const gatedIssues = payload.issues as Array<
+    typeof issues[number] & { locked?: boolean; promptUnlocked?: boolean }
+  >;
 
   if (format === "json") {
     res.setHeader("Content-Disposition", `attachment; filename="agenario-export-${id}.json"`);

@@ -16,17 +16,17 @@ router.get("/public/stats", async (req, res) => {
       .where(isNotNull(scanIssuesTable.reproductionSteps));
     const totalScansResult = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(scansTable);
 
-    // If the db is empty, return impressive baseline metrics to look good during initial launch
-    const baselineIssues = 6942;
-    const baselineFixes = 12118;
-    const baselineProofs = 18432;
-    
+    const scansDone = totalScansResult[0]?.count || 0;
+    const issuesReproduced = totalIssuesResult[0]?.count || 0;
+    const fixesGenerated = fixesGeneratedResult[0]?.count || 0;
+    const proofsGenerated = proofsGeneratedResult[0]?.count || 0;
+
     res.json({
-      scansDone: (totalScansResult[0]?.count || 0) + 1432, // baseline scans
-      issuesReproduced: (totalIssuesResult[0]?.count || 0) + baselineIssues,
-      fixesGenerated: (fixesGeneratedResult[0]?.count || 0) + baselineFixes,
-      proofsGenerated: (proofsGeneratedResult[0]?.count || 0) + baselineProofs,
-      screenshotsCaptured: ((proofsGeneratedResult[0]?.count || 0) * 1.5 + 31204).toFixed(0),
+      scansDone,
+      issuesReproduced,
+      fixesGenerated,
+      proofsGenerated,
+      screenshotsCaptured: Math.round(proofsGenerated * 1.5).toString(),
     });
   } catch (error) {
     console.error("Failed to fetch public stats:", error);
@@ -41,7 +41,7 @@ router.get("/intelligence/failures", async (req, res) => {
     // In a massive scale DB, we'd pre-aggregate this. Here we calculate it dynamically or mock if insufficient data.
     
     const allScans = await db.select({ id: scansTable.id, framework: scansTable.framework, vibeTool: scansTable.vibeTool }).from(scansTable);
-    const totalScans = allScans.length > 10 ? allScans.length : 2437; // fallback scale
+    const totalScans = allScans.length;
 
     // For a specific issue query (e.g. ?issueTitle=IDOR)
     const queryIssueTitle = req.query.issueTitle as string;
@@ -63,30 +63,70 @@ router.get("/intelligence/failures", async (req, res) => {
         }
       });
 
-      // Calculate percentages based on totals
-      // If DB is mostly empty, we seed the intelligence dataset with the requested baseline data.
-      let boltPercent = 31;
-      let cursorPercent = 12;
-      let replitPercent = 4;
+      const boltTotal = allScans.filter((s) => s.vibeTool === "bolt").length;
+      const cursorTotal = allScans.filter((s) => s.vibeTool === "cursor").length;
+      const replitTotal = allScans.filter((s) => s.vibeTool === "replit").length;
 
-      if (affectedScansCount > 5) {
-        // Calculate real
-        const boltTotal = allScans.filter(s => s.vibeTool === "bolt").length || 1;
-        const cursorTotal = allScans.filter(s => s.vibeTool === "cursor").length || 1;
-        const replitTotal = allScans.filter(s => s.vibeTool === "replit").length || 1;
-        
-        boltPercent = Math.round(((vibeToolCounts["bolt"] || 0) / boltTotal) * 100);
-        cursorPercent = Math.round(((vibeToolCounts["cursor"] || 0) / cursorTotal) * 100);
-        replitPercent = Math.round(((vibeToolCounts["replit"] || 0) / replitTotal) * 100);
+      const boltPercent =
+        boltTotal > 0
+          ? Math.round(((vibeToolCounts["bolt"] || 0) / boltTotal) * 100)
+          : 0;
+      const cursorPercent =
+        cursorTotal > 0
+          ? Math.round(((vibeToolCounts["cursor"] || 0) / cursorTotal) * 100)
+          : 0;
+      const replitPercent =
+        replitTotal > 0
+          ? Math.round(((vibeToolCounts["replit"] || 0) / replitTotal) * 100)
+          : 0;
+
+      // Map common issue titles to baseline stats and causes
+      const titleLower = queryIssueTitle.toLowerCase();
+      const percentOfApps =
+        allScans.length > 0
+          ? Math.round((affectedScansCount / allScans.length) * 1000) / 10
+          : 0;
+
+      let frameworkRootCause =
+        "Review authentication, authorization, and input validation around this issue class.";
+
+      if (titleLower.includes("cors") || titleLower.includes("origin")) {
+        frameworkRootCause =
+          "Overly permissive wildcard '*' or mirrored origin configured in Next.js response headers / Express middleware during local dev, pushed to prod.";
+      } else if (
+        titleLower.includes("idor") ||
+        titleLower.includes("direct object") ||
+        titleLower.includes("access control")
+      ) {
+        frameworkRootCause =
+          "Missing user ownership verification on database record queries inside dynamic route handlers (e.g. /api/documents/[id]).";
+      } else if (titleLower.includes("sql") || titleLower.includes("injection")) {
+        frameworkRootCause =
+          "Concatenating or interpolating user-supplied strings directly into raw SQL queries rather than using parameterized inputs or ORM methods.";
+      } else if (
+        titleLower.includes("session") ||
+        titleLower.includes("auth") ||
+        titleLower.includes("secret") ||
+        titleLower.includes("key") ||
+        titleLower.includes("expose")
+      ) {
+        frameworkRootCause =
+          "Exposing JWT/session secrets in client bundle variables, hardcoding keys in config files, or using weak/default session salts.";
+      } else if (titleLower.includes("rate limit") || titleLower.includes("brute force")) {
+        frameworkRootCause =
+          "Missing rate limiting or captcha guards on resource-intensive or security-sensitive routes like login/OTP endpoints.";
       }
 
-      return res.json({
+      res.json({
         issueTitle: queryIssueTitle,
         boltPercent,
         cursorPercent,
         replitPercent,
-        totalAnalyzed: totalScans
+        totalAnalyzed: totalScans,
+        percentOfApps,
+        frameworkRootCause
       });
+      return;
     }
 
     res.json({ error: "Provide issueTitle query param" });
