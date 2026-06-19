@@ -31,7 +31,7 @@ function StatusIcon({ status, isLight }: { status: string; isLight: boolean }) {
 }
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const isLight = useIsLight();
   const [, setLocation] = useLocation();
   const { scans, loading: scansLoading } = useScans();
@@ -88,6 +88,16 @@ export default function DashboardPage() {
     setLocation("/login");
   };
 
+  if (loading) return (
+    <div className={`min-h-screen flex items-center justify-center ${isLight ? "bg-[#fdf4f8]" : "bg-[#050505]"}`}>
+      <div className="text-center space-y-4">
+        <div className={`w-12 h-12 rounded-2xl ${isLight ? "bg-white border border-gray-200" : "glass"} flex items-center justify-center mx-auto`}>
+          <div className={`w-5 h-5 rounded-full border-2 ${isLight ? "border-gray-300 border-t-gray-700" : "border-white/10 border-t-white/60"} animate-spin`} />
+        </div>
+        <p className={`text-sm ${isLight ? "text-gray-400" : "text-white/30"}`}>Loading…</p>
+      </div>
+    </div>
+  );
   if (!user) { setLocation("/login"); return null; }
 
   return (

@@ -301,7 +301,16 @@ export default function NewScanPage() {
     }
   };
 
-  if (loading || !user) return null;
+  if (loading || !user) return (
+    <div className={`min-h-screen flex items-center justify-center ${isLight ? "bg-[#fdf4f8]" : "bg-[#050505]"}`}>
+      <div className="text-center space-y-4">
+        <div className={`w-12 h-12 rounded-2xl ${isLight ? "bg-white border border-gray-200" : "glass"} flex items-center justify-center mx-auto`}>
+          <Loader2 className={`w-5 h-5 ${isLight ? "text-gray-600" : "text-white/60"} animate-spin`} />
+        </div>
+        <p className={`text-sm ${isLight ? "text-gray-400" : "text-white/30"}`}>Loading…</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className={`min-h-screen ${isLight ? "bg-[#fdf4f8]" : "bg-[#050505]"}`}>

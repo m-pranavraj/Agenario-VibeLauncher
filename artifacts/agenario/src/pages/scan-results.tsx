@@ -6932,7 +6932,16 @@ export default function ScanResultsPage() {
     return () => { active = false; };
   }, [user, params?.id]);
 
-  if (loading || !user) return null;
+  if (loading || !user) return (
+    <div className={`min-h-screen ${t.page} flex items-center justify-center`}>
+      <div className="text-center space-y-4">
+        <div className={`w-12 h-12 rounded-2xl ${isLight ? "bg-white border border-gray-200" : "glass"} flex items-center justify-center mx-auto`}>
+          <Loader2 className={`w-5 h-5 ${isLight ? "text-gray-600" : "text-white/60"} animate-spin`} />
+        </div>
+        <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-sm`}>Loading…</p>
+      </div>
+    </div>
+  );
 
   if (scanLoading) return (
     <div className={`min-h-screen ${t.page} flex items-center justify-center`}>
