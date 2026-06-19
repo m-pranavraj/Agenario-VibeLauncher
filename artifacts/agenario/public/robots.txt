@@ -1,2 +1,19 @@
 User-agent: *
 Allow: /
+Allow: /pricing
+Allow: /about
+Allow: /docs
+Allow: /intelligence
+Allow: /portfolio
+Allow: /monitoring
+Allow: /careers
+Allow: /contact
+Allow: /register
+Allow: /login
+
+Disallow: /api/
+Disallow: /scans/
+Disallow: /dashboard
+Disallow: /thank-you
+
+Sitemap: https://agenario.tech/sitemap.xml
