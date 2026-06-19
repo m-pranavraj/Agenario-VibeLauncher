@@ -60,6 +60,28 @@ export interface AdminStats {
   totalMedium: number;
   totalLow: number;
   totalVulnerabilities: number;
+  recentScans: Array<{
+    id: number;
+    sourceType: string;
+    sourceInput: string;
+    status: string;
+    score: number | null;
+    launchVerdict: string | null;
+    framework: string | null;
+    vibeTool: string | null;
+    issueCounts: { critical: number; high: number; medium: number; low: number } | null;
+    createdAt: string;
+    completedAt: string | null;
+    userEmail: string | null;
+    userName: string | null;
+  }>;
+  recentUsers: Array<{
+    id: number;
+    email: string;
+    name: string;
+    plan: string;
+    createdAt: string;
+  }>;
 }
 
 export interface CouponResult {

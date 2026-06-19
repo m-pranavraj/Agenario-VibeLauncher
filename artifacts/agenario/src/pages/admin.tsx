@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { motion } from "framer-motion";
-import { Users, ScanLine, TrendingUp, Star, BarChart3, ShieldCheck, LogOut, DollarSign, Award, Cpu, AlertTriangle, Layers, Activity, Bot } from "lucide-react";
+import { Users, ScanLine, TrendingUp, Star, BarChart3, ShieldCheck, LogOut, DollarSign, Award, Cpu, AlertTriangle, Layers, Activity, Bot, History, ExternalLink, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { api, type AdminStats } from "@/lib/api";
 
@@ -113,6 +113,7 @@ export default function AdminPage() {
               { id: "financials", label: "Financials", icon: <DollarSign className="w-3.5 h-3.5" /> },
               { id: "health", label: "Audit Health", icon: <ShieldCheck className="w-3.5 h-3.5" /> },
               { id: "adoption", label: "Adoption", icon: <Cpu className="w-3.5 h-3.5" /> },
+              { id: "audit_logs", label: "Audit Logs", icon: <History className="w-3.5 h-3.5" /> },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -459,6 +460,146 @@ export default function AdminPage() {
                         );
                       })}
                     </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* AUDIT LOGS TAB */}
+            {activeTab === "audit_logs" && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                {/* Detailed Scan Audits Card */}
+                <div className={t.card}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className={`text-sm font-bold ${t.head}`}>Detailed Scan Audits</h2>
+                      <p className={`text-[10px] ${t.sub}`}>Granular execution log of all security audits run on the platform</p>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isLight ? "bg-gray-100 text-gray-700" : "bg-white/10 text-white/70"}`}>
+                      Last 50 scans
+                    </span>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className={`border-b ${isLight ? "border-gray-200" : "border-white/[0.07]"} text-[10px] font-bold uppercase tracking-wider ${t.sub}`}>
+                          <th className="py-3 px-2">Timestamp</th>
+                          <th className="py-3 px-2">User details</th>
+                          <th className="py-3 px-2">Scan source</th>
+                          <th className="py-3 px-2">Launch score</th>
+                          <th className="py-3 px-2">Stack / Tools</th>
+                          <th className="py-3 px-2">Vulnerabilities</th>
+                          <th className="py-3 px-2 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y ${isLight ? "divide-gray-100" : "divide-white/[0.04]"} ${t.val}`}>
+                        {stats.recentScans?.map((scan) => {
+                          const scoreColor = scan.score == null ? "text-gray-400" : scan.score >= 80 ? "text-emerald-400" : scan.score >= 55 ? "text-amber-400" : "text-red-400";
+                          const verdictColor = scan.launchVerdict === "ready" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : scan.launchVerdict === "caution" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-red-500/10 text-red-400 border border-red-500/20";
+                          return (
+                            <tr key={scan.id} className={`hover:${isLight ? "bg-gray-50/50" : "bg-white/[0.01]"} transition-colors`}>
+                              <td className="py-3 px-2 font-mono text-[10px]">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3 opacity-55" />
+                                  {new Date(scan.createdAt).toLocaleString("en-IN", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </div>
+                              </td>
+                              <td className="py-3 px-2">
+                                <div className="font-semibold">{scan.userName || "Anonymous"}</div>
+                                <div className="text-[10px] opacity-60 font-mono">{scan.userEmail}</div>
+                              </td>
+                              <td className="py-3 px-2 max-w-[180px]">
+                                <div className="truncate font-mono" title={scan.sourceInput}>
+                                  {scan.sourceInput}
+                                </div>
+                                <div className="text-[9px] opacity-50 uppercase tracking-wide">{scan.sourceType}</div>
+                              </td>
+                              <td className="py-3 px-2">
+                                {scan.score != null ? (
+                                  <div className="flex items-center gap-2">
+                                    <span className={`font-bold font-['Syne'] text-sm ${scoreColor}`}>{scan.score}/100</span>
+                                    <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${verdictColor}`}>{scan.launchVerdict}</span>
+                                  </div>
+                                ) : (
+                                  <span className="opacity-40">Running/Failed</span>
+                                )}
+                              </td>
+                              <td className="py-3 px-2">
+                                <div className="capitalize">{scan.framework || "unknown"}</div>
+                                <div className="text-[10px] opacity-55 capitalize">{scan.vibeTool || "unknown"}</div>
+                              </td>
+                              <td className="py-3 px-2">
+                                {scan.issueCounts ? (
+                                  <div className="flex items-center gap-1 flex-wrap">
+                                    {scan.issueCounts.critical > 0 && <span className="px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 text-[9px] font-bold">C: {scan.issueCounts.critical}</span>}
+                                    {scan.issueCounts.high > 0 && <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[9px] font-bold">H: {scan.issueCounts.high}</span>}
+                                    {scan.issueCounts.medium > 0 && <span className="px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-400 text-[9px] font-bold">M: {scan.issueCounts.medium}</span>}
+                                    {scan.issueCounts.low > 0 && <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[9px] font-bold">L: {scan.issueCounts.low}</span>}
+                                    {scan.issueCounts.critical === 0 && scan.issueCounts.high === 0 && scan.issueCounts.medium === 0 && scan.issueCounts.low === 0 && <span className="text-emerald-400 text-[10px] font-semibold">✓ Clean</span>}
+                                  </div>
+                                ) : (
+                                  <span className="opacity-40">-</span>
+                                )}
+                              </td>
+                              <td className="py-3 px-2 text-right">
+                                <Link href={`/scans/${scan.id}`} className="text-violet-400 hover:text-violet-300 font-bold inline-flex items-center gap-0.5 hover:underline">
+                                  View <ExternalLink className="w-3 h-3" />
+                                </Link>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* User Directory Card */}
+                <div className={t.card}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className={`text-sm font-bold ${t.head}`}>User Directory</h2>
+                      <p className={`text-[10px] ${t.sub}`}>Detailed list of registered users and adoption plans</p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className={`border-b ${isLight ? "border-gray-200" : "border-white/[0.07]"} text-[10px] font-bold uppercase tracking-wider ${t.sub}`}>
+                          <th className="py-3 px-2">Registration Date</th>
+                          <th className="py-3 px-2">Name</th>
+                          <th className="py-3 px-2">Email</th>
+                          <th className="py-3 px-2">Plan</th>
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y ${isLight ? "divide-gray-100" : "divide-white/[0.04]"} ${t.val}`}>
+                        {stats.recentUsers?.map((u) => (
+                          <tr key={u.id} className={`hover:${isLight ? "bg-gray-50/50" : "bg-white/[0.01]"} transition-colors`}>
+                            <td className="py-3 px-2 font-mono text-[10px]">
+                              {new Date(u.createdAt).toLocaleDateString("en-IN", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </td>
+                            <td className="py-3 px-2 font-semibold">{u.name}</td>
+                            <td className="py-3 px-2 font-mono">{u.email}</td>
+                            <td className="py-3 px-2">
+                              <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full text-white ${PLAN_COLORS[u.plan] || "bg-gray-400"}`}>
+                                {u.plan}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </motion.div>

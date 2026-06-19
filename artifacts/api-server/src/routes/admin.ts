@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db, usersTable, scansTable } from "@workspace/db";
 import { logger } from "../lib/logger.js";
 
@@ -121,6 +121,39 @@ router.get("/admin/stats", async (req: any, res: any) => {
     }
     const totalVulnerabilities = totalCritical + totalHigh + totalMedium + totalLow;
 
+    const recentScans = await db
+      .select({
+        id: scansTable.id,
+        sourceType: scansTable.sourceType,
+        sourceInput: scansTable.sourceInput,
+        status: scansTable.status,
+        score: scansTable.score,
+        launchVerdict: scansTable.launchVerdict,
+        framework: scansTable.framework,
+        vibeTool: scansTable.vibeTool,
+        issueCounts: scansTable.issueCounts,
+        createdAt: scansTable.createdAt,
+        completedAt: scansTable.completedAt,
+        userEmail: usersTable.email,
+        userName: usersTable.name,
+      })
+      .from(scansTable)
+      .leftJoin(usersTable, eq(scansTable.userId, usersTable.id))
+      .orderBy(desc(scansTable.createdAt))
+      .limit(50);
+
+    const recentUsers = await db
+      .select({
+        id: usersTable.id,
+        email: usersTable.email,
+        name: usersTable.name,
+        plan: usersTable.plan,
+        createdAt: usersTable.createdAt,
+      })
+      .from(usersTable)
+      .orderBy(desc(usersTable.createdAt))
+      .limit(50);
+
     return res.json({
       totalUsers: allUsers.length,
       totalScans: allScans.length,
@@ -142,6 +175,8 @@ router.get("/admin/stats", async (req: any, res: any) => {
       totalMedium,
       totalLow,
       totalVulnerabilities,
+      recentScans,
+      recentUsers,
     });
   } catch (err) {
     logger.error({ err }, "Admin stats error");
