@@ -6430,6 +6430,7 @@ function ReportTour({ onStartTour }: { onStartTour: (cb: () => void) => void }) 
   useEffect(() => {
     const done = localStorage.getItem(TOUR_KEY);
     if (done) return;
+    localStorage.setItem(TOUR_KEY, "1");
     const t = setTimeout(() => setVisible(true), 1200);
     return () => clearTimeout(t);
   }, []);
@@ -6642,7 +6643,21 @@ export default function ScanResultsPage() {
   const [scanLoading, setScanLoading] = useState(true);
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
-  const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("all");
+  const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("runtime");
+
+  useEffect(() => {
+    if (scan?.issues) {
+      const hasRuntime = scan.issues.some((i: any) => i.sourceEvidence === "runtime");
+      const hasStatic = scan.issues.some((i: any) => i.sourceEvidence === "static");
+      if (hasRuntime) {
+        setEvidenceFilter("runtime");
+      } else if (hasStatic) {
+        setEvidenceFilter("static");
+      } else {
+        setEvidenceFilter("ai_reasoning");
+      }
+    }
+  }, [scan]);
   const [rescanning, setRescanning] = useState(false);
   const tourStartRef = useRef<(() => void) | null>(null);
   const t = {
@@ -7540,126 +7555,55 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* ── Runtime Evidence Gallery ─────────────────────── */}
-            {!activeAgent &&
-              (runtimeCount > 0 || staticCount > 0 || aiCount > 0) && (
-                <div
-                  className={`${isLight ? "bg-white border border-gray-200" : "glass border border-white/[0.07]"} rounded-xl p-4`}
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <ShieldCheck
-                      className={`w-3.5 h-3.5 ${isLight ? "text-gray-400" : "text-white/30"}`}
-                    />
-                    <span
-                      className={`text-xs font-semibold uppercase tracking-widest ${isLight ? "text-gray-500" : "text-white/40"}`}
-                    >
-                      Evidence Classification
-                    </span>
-                    {evidenceFilter !== "all" && (
-                      <button
-                        onClick={() => setEvidenceFilter("all")}
-                        className={`ml-auto text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} hover:text-white/50 transition-colors flex items-center gap-1`}
-                      >
-                        <X className="w-3 h-3" />
-                        Clear filter
-                      </button>
-                    )}
+            {/* ── Verified Findings (Evidence Gallery) ─────────────────────── */}
+            {!activeAgent && (
+              <div className={`${isLight ? "bg-white border border-gray-200" : "glass border border-white/[0.07]"} rounded-2xl p-6 space-y-5 shadow-2xl`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck className="w-5 h-5 text-violet-400" />
+                    <div>
+                      <h2 className={`text-sm font-bold font-['Syne'] uppercase tracking-wider ${isLight ? "text-gray-900" : "text-white"}`}>
+                        Verified Findings Gallery
+                      </h2>
+                      <p className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>
+                        Evidence-backed launch checklist segregated by security proof confidence
+                      </p>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() =>
-                        setEvidenceFilter(
-                          evidenceFilter === "runtime" ? "all" : "runtime",
-                        )
-                      }
-                      className={`flex flex-col items-center gap-1.5 rounded-lg p-3 border transition-all ${
-                        evidenceFilter === "runtime"
-                          ? "bg-green-500/15 border-green-500/30"
-                          : "bg-green-500/[0.04] border-green-500/10 hover:bg-green-500/[0.08]"
-                      }`}
-                    >
-                      <span className="text-lg font-bold font-['Syne'] text-green-400">
-                        {runtimeCount}
-                      </span>
-                      <span className="text-[10px] font-semibold text-green-400/70">
-                        🟢 Runtime Verified
-                      </span>
-                      <span
-                        className={`text-[9px] ${isLight ? "text-gray-400" : "text-white/20"} text-center leading-tight`}
-                      >
-                        HTTP/browser proof
-                      </span>
-                    </button>
-                    <button
-                      onClick={() =>
-                        setEvidenceFilter(
-                          evidenceFilter === "static" ? "all" : "static",
-                        )
-                      }
-                      className={`flex flex-col items-center gap-1.5 rounded-lg p-3 border transition-all ${
-                        evidenceFilter === "static"
-                          ? "bg-sky-500/15 border-sky-500/30"
-                          : "bg-sky-500/[0.04] border-sky-500/10 hover:bg-sky-500/[0.08]"
-                      }`}
-                    >
-                      <span className="text-lg font-bold font-['Syne'] text-sky-400">
-                        {staticCount}
-                      </span>
-                      <span className="text-[10px] font-semibold text-sky-400/70">
-                        🔵 Static Code
-                      </span>
-                      <span
-                        className={`text-[9px] ${isLight ? "text-gray-400" : "text-white/20"} text-center leading-tight`}
-                      >
-                        Direct code evidence
-                      </span>
-                    </button>
-                    <button
-                      onClick={() =>
-                        setEvidenceFilter(
-                          evidenceFilter === "ai_reasoning"
-                            ? "all"
-                            : "ai_reasoning",
-                        )
-                      }
-                      className={`flex flex-col items-center gap-1.5 rounded-lg p-3 border transition-all ${
-                        evidenceFilter === "ai_reasoning"
-                          ? "bg-white/[0.08] border-white/15"
-                          : "bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.05]"
-                      }`}
-                    >
-                      <span
-                        className={`text-lg font-bold font-['Syne'] ${isLight ? "text-gray-500" : "text-white/40"}`}
-                      >
-                        {aiCount}
-                      </span>
-                      <span
-                        className={`text-[10px] font-semibold ${isLight ? "text-gray-400" : "text-white/30"}`}
-                      >
-                        ⚪ AI Observation
-                      </span>
-                      <span
-                        className={`text-[9px] ${isLight ? "text-gray-400" : "text-white/20"} text-center leading-tight`}
-                      >
-                        Pattern inference
-                      </span>
-                    </button>
-                  </div>
-                  {evidenceFilter !== "all" && (
-                    <p
-                      className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/20"} mt-2 text-center`}
-                    >
-                      Showing {filteredIssues.length}{" "}
-                      {evidenceFilter === "runtime"
-                        ? "🟢 runtime verified"
-                        : evidenceFilter === "static"
-                          ? "🔵 static code"
-                          : "⚪ AI observation"}{" "}
-                      findings
-                    </p>
-                  )}
                 </div>
-              )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { id: "runtime", label: "🟢 Runtime Verified", count: runtimeCount, bg: "bg-green-500", border: "border-green-500", text: "text-green-400", desc: "Sandbox HTTP/browser proof" },
+                    { id: "static", label: "🔵 Static Verified", count: staticCount, bg: "bg-sky-500", border: "border-sky-500", text: "text-sky-400", desc: "Direct code scan match" },
+                    { id: "ai_reasoning", label: "⚪ AI Observation", count: aiCount, bg: "bg-white", border: "border-white", text: "text-white/60", desc: "Logical/architecture smell" }
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setEvidenceFilter(item.id as any)}
+                      className={`flex flex-col items-center justify-center p-3.5 rounded-xl text-center transition-all border ${
+                        evidenceFilter === item.id
+                          ? `${item.text} ${item.border}/20 bg-current/[0.06] shadow-inner font-bold`
+                          : isLight
+                          ? "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-400"
+                          : "bg-white/[0.02] border-white/[0.04] text-white/35 hover:text-white/55 hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      <span className="text-xl font-bold font-['Syne']">{item.count}</span>
+                      <span className="text-[10px] font-bold tracking-wider mt-1">{item.label}</span>
+                      <span className={`text-[9px] opacity-60 mt-0.5 hidden sm:block`}>{item.desc}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Sub-label description for the active filter */}
+                <div className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/40"} italic bg-black/20 p-3 rounded-lg border border-white/[0.03]`}>
+                  {evidenceFilter === "runtime" && "💡 Runtime Verified: Active exploit proofs generated by executing playwright browser automation and HTTP probes in our sandbox. Zero false positives."}
+                  {evidenceFilter === "static" && "💡 Static Verified: Direct syntax, AST, or pattern matches flagged in source files. Backed by specific file line numbers."}
+                  {evidenceFilter === "ai_reasoning" && "💡 AI Observation: Architectural observations, structural gaps, or potential compliance failures inferred through security LLMs."}
+                </div>
+              </div>
+            )}
 
             {/* ── All remaining findings ───────────────────────── */}
             {remaining.length > 0 && (

@@ -49,6 +49,17 @@ export interface AdminStats {
   statusBreakdown: Record<string, number>;
   verdictBreakdown: Record<string, number>;
   monthlyScans: Array<{ label: string; year: number; month: number; count: number }>;
+  mrr: number;
+  arr: number;
+  arpu: number;
+  conversionRate: number;
+  frameworkBreakdown: Record<string, number>;
+  vibeToolBreakdown: Record<string, number>;
+  totalCritical: number;
+  totalHigh: number;
+  totalMedium: number;
+  totalLow: number;
+  totalVulnerabilities: number;
 }
 
 export interface CouponResult {

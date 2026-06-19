@@ -8,6 +8,9 @@ import pinoHttp from "pino-http";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import cron from "node-cron";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
 
@@ -170,13 +173,23 @@ cron.schedule("0 9 * * *", () => {
     .catch((err) => logger.error({ err }, "Daily pulse cron failed"));
 }, { timezone: "UTC" });
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicPath = path.resolve(__dirname, "../../agenario/dist/public");
+
+app.use(express.static(publicPath));
+
 // ── SPA fallback for non-API routes (production only) ─────────────────────
 // In development, Vite handles all non-/api requests; in production this
 // prevents 404s when the user refreshes a deep route.
 app.use((req, res, next) => {
   if (req.path.startsWith("/api")) return next();
-  // Redirect to the root for SPA to handle client-side routing
-  res.redirect("/");
+  const indexHtml = path.join(publicPath, "index.html");
+  if (fs.existsSync(indexHtml)) {
+    res.sendFile(indexHtml);
+  } else {
+    res.redirect("/");
+  }
 });
 
 // ── Global error handler ──────────────────────────────────────────────────

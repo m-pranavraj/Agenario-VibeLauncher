@@ -65,6 +65,8 @@ function staticFindingToIssueRow(
   scanId: number,
   f: StaticFinding,
 ): typeof scanIssuesTable.$inferInsert {
+  const parts = f.evidence.split(": ");
+  const snippet = parts.length > 1 ? parts.slice(1).join(": ") : f.evidence;
   return {
     scanId,
     agentName: categoryToAgent(f.category),
@@ -74,6 +76,12 @@ function staticFindingToIssueRow(
     fixPrompt: f.fixPrompt,
     confidence: f.confidence,
     evidence: f.evidence,
+    filePath: f.file,
+    lineNumber: f.line,
+    codeSnippet: snippet,
+    impactStatement: f.description,
+    retestResult: "needs_fix",
+    sourceEvidence: "static",
   };
 }
 
@@ -239,13 +247,49 @@ async function runAnalysisPipeline(opts: {
     description: pe.observed,
     fixPrompt: pe.codeRef ?? "See proof evidence for detailed reproduction steps and fix guidance.",
     confidence: pe.confidence,
-    evidence: `[Runtime Proof] Steps: ${pe.steps.slice(0, 2).join(" → ")}`,
+    evidence: pe.observed,
+    filePath: pe.url ?? "Runtime URL",
+    lineNumber: 0,
+    codeSnippet: pe.steps.join(" → "),
+    impactStatement: pe.impact,
+    retestResult: "needs_fix",
+    sourceEvidence: "runtime",
   }));
 
   const allIssueRows = [...staticIssueRows, ...aiIssueRows, ...proofIssueRows];
 
-  if (allIssueRows.length > 0) {
-    await db.insert(scanIssuesTable).values(allIssueRows);
+  // ── Sync checks: prevent contradictory comments about secrets ──────────────────
+  // We inspect all issues. If any issue has a title or description that says "no secrets", 
+  // "no credentials", "no passwords", "secrets are safe", etc., we must remove it so it doesn't
+  // contradict the deterministic Secret Scanner results.
+  const cleanIssueRows = allIssueRows.filter((row) => {
+    const titleLower = row.title.toLowerCase();
+    const descLower = (row.description ?? "").toLowerCase();
+    
+    const isNoSecretsClaim =
+      /\bno\s+(secrets?|credentials?|api[_\s-]?keys?|passwords?|tokens?)\b/.test(titleLower) ||
+      /\bno\s+(secrets?|credentials?|api[_\s-]?keys?|passwords?|tokens?)\b/.test(descLower) ||
+      titleLower.includes("secrets are safe") ||
+      descLower.includes("secrets are safe") ||
+      titleLower.includes("credentials are safe") ||
+      descLower.includes("credentials are safe") ||
+      titleLower.includes("environment variables correctly used") ||
+      titleLower.includes("no hardcoded secrets") ||
+      descLower.includes("no hardcoded secrets") ||
+      titleLower.includes("no exposure of secrets") ||
+      descLower.includes("no exposure of secrets") ||
+      titleLower.includes("no credentials exposed") ||
+      descLower.includes("no credentials exposed");
+
+    if (isNoSecretsClaim) {
+      logger.info({ title: row.title }, "Filtering out contradictory/redundant secrets claim issue");
+      return false;
+    }
+    return true;
+  });
+
+  if (cleanIssueRows.length > 0) {
+    await db.insert(scanIssuesTable).values(cleanIssueRows);
   }
 
   const allIssues = await db.select().from(scanIssuesTable).where(eq(scanIssuesTable.scanId, scanId));

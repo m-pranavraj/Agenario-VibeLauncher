@@ -28,6 +28,9 @@ router.get("/admin/stats", async (req: any, res: any) => {
       score: scansTable.score,
       createdAt: scansTable.createdAt,
       launchVerdict: scansTable.launchVerdict,
+      framework: scansTable.framework,
+      vibeTool: scansTable.vibeTool,
+      issueCounts: scansTable.issueCounts,
     }).from(scansTable);
 
     const now = new Date();
@@ -81,6 +84,43 @@ router.get("/admin/stats", async (req: any, res: any) => {
       return acc;
     }, {});
 
+    // SaaS financial metrics
+    const mrr = (planBreakdown["creator"] ?? 0) * 299 + (planBreakdown["enterprise"] ?? 0) * 9999;
+    const arr = mrr * 12;
+    const arpu = allUsers.length > 0 ? Math.round(mrr / allUsers.length) : 0;
+    const conversionRate = allUsers.length > 0
+      ? Math.round(((planBreakdown["creator"] ?? 0) + (planBreakdown["enterprise"] ?? 0)) / allUsers.length * 100)
+      : 0;
+
+    // Platform adoption breakdowns
+    const frameworkBreakdown = allScans.reduce<Record<string, number>>((acc, s) => {
+      const fw = s.framework || "unknown";
+      acc[fw] = (acc[fw] || 0) + 1;
+      return acc;
+    }, {});
+
+    const vibeToolBreakdown = allScans.reduce<Record<string, number>>((acc, s) => {
+      const vt = s.vibeTool || "unknown";
+      acc[vt] = (acc[vt] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Vulnerability metrics
+    let totalCritical = 0;
+    let totalHigh = 0;
+    let totalMedium = 0;
+    let totalLow = 0;
+
+    for (const s of allScans) {
+      if (s.issueCounts) {
+        totalCritical += s.issueCounts.critical ?? 0;
+        totalHigh += s.issueCounts.high ?? 0;
+        totalMedium += s.issueCounts.medium ?? 0;
+        totalLow += s.issueCounts.low ?? 0;
+      }
+    }
+    const totalVulnerabilities = totalCritical + totalHigh + totalMedium + totalLow;
+
     return res.json({
       totalUsers: allUsers.length,
       totalScans: allScans.length,
@@ -91,6 +131,17 @@ router.get("/admin/stats", async (req: any, res: any) => {
       statusBreakdown,
       verdictBreakdown,
       monthlyScans,
+      mrr,
+      arr,
+      arpu,
+      conversionRate,
+      frameworkBreakdown,
+      vibeToolBreakdown,
+      totalCritical,
+      totalHigh,
+      totalMedium,
+      totalLow,
+      totalVulnerabilities,
     });
   } catch (err) {
     logger.error({ err }, "Admin stats error");
