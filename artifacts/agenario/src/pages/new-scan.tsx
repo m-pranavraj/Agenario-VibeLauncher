@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "wouter";
 import {
   Github, Globe, FileText, ArrowLeft, CheckCircle,
-  ChevronDown, FileArchive, Upload,
+  ChevronDown, FileArchive, Upload, Loader2,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/use-auth";

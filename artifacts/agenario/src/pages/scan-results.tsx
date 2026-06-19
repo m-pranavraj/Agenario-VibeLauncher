@@ -6873,6 +6873,7 @@ export default function ScanResultsPage() {
     }
   }, [scan]);
   const [rescanning, setRescanning] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const tourStartRef = useRef<(() => void) | null>(null);
   const t = {
     page: isLight ? "bg-[#fdf4f8] text-gray-900 overflow-x-hidden" : "bg-[#050505] text-white overflow-x-hidden",
@@ -7052,8 +7053,6 @@ export default function ScanResultsPage() {
   const aiCount = agentFiltered.filter(
     (i: any) => !i.sourceEvidence || i.sourceEvidence === "ai_reasoning",
   ).length;
-
-  const [exportOpen, setExportOpen] = useState(false);
 
   return (
     <div className={`min-h-screen ${t.page}`}>
