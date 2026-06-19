@@ -3418,6 +3418,219 @@ function ConfidenceBadges({ evidence }: { evidence: ProofEvidence[] }) {
   );
 }
 
+// ── Sandbox Proofs Section ────────────────────────────────────────────────
+// Free users see the first proof (screenshot + steps) as a clear glimpse.
+// Remaining proofs are blurred behind a Creator gate.
+function SandboxProofsSection({
+  evidence,
+  plan,
+  sourceType,
+  isLight,
+}: {
+  evidence: ProofEvidence[] | null | undefined;
+  plan: string;
+  sourceType?: string | null;
+  isLight: boolean;
+}) {
+  const isCreator = plan === "creator" || plan === "enterprise";
+  const proofs = evidence ?? [];
+  const first = proofs[0] ?? null;
+  const rest = proofs.slice(1);
+  const pcfg0 = first ? (PROOF_TYPE_CONFIG[first.type] ?? PROOF_TYPE_CONFIG.chaos) : null;
+  const [stepsOpen, setStepsOpen] = useState(false);
+
+  return (
+    <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden aurora-card`}>
+      {/* ── Section header ── */}
+      <div className={`flex items-center gap-2.5 px-6 py-4 border-b ${isLight ? "border-gray-100" : "border-white/[0.06]"}`}>
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isLight ? "bg-violet-50 border border-violet-200" : "bg-violet-500/15 border border-violet-500/25"}`}>
+          <Camera className="w-3.5 h-3.5 text-violet-500" />
+        </div>
+        <h2 className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Live Sandbox Proofs</h2>
+        {proofs.length > 0 && (
+          <span className="ml-auto text-[10px] px-2.5 py-1 rounded-full bg-green-500/15 border border-green-500/25 text-green-400 font-semibold">
+            {proofs.length} Runtime Proof{proofs.length !== 1 ? "s" : ""}
+          </span>
+        )}
+        {proofs.length === 0 && (
+          <span className={`ml-auto text-[10px] px-2.5 py-1 rounded-full font-medium ${isLight ? "bg-gray-100 text-gray-400 border border-gray-200" : "bg-white/[0.05] text-white/30 border border-white/[0.08]"}`}>
+            Not available
+          </span>
+        )}
+      </div>
+
+      <div className="p-6 space-y-4">
+        {proofs.length === 0 ? (
+          /* ── No proofs: placeholder + explanation ── */
+          <div className="space-y-4">
+            {/* Demo screenshot placeholder */}
+            <div className="relative rounded-xl overflow-hidden border border-dashed border-violet-500/20 bg-gradient-to-br from-violet-500/[0.04] to-indigo-500/[0.04]">
+              <div className={`flex items-center gap-2 px-4 py-2.5 border-b ${isLight ? "border-gray-100 bg-gray-50" : "border-white/[0.05] bg-black/20"}`}>
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/50" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/50" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/50" />
+                </div>
+                <div className={`flex-1 h-4 rounded-md mx-4 ${isLight ? "bg-gray-200" : "bg-white/[0.07]"}`} />
+                <Camera className={`w-3 h-3 ${isLight ? "text-gray-300" : "text-white/20"}`} />
+              </div>
+              {/* Mock screenshot content (blurred placeholder) */}
+              <div className="relative h-40 flex items-center justify-center px-6 py-4 select-none">
+                <div className="absolute inset-0 grid grid-cols-3 gap-2 p-4 blur-sm opacity-40 pointer-events-none">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className={`rounded-lg h-8 ${i % 3 === 0 ? "bg-red-500/30" : i % 3 === 1 ? "bg-violet-500/20" : "bg-gray-400/20"}`} />
+                  ))}
+                  <div className={`col-span-3 rounded-lg h-12 ${isLight ? "bg-gray-200" : "bg-white/[0.06]"}`} />
+                  <div className="col-span-2 rounded-lg h-6 bg-amber-500/20" />
+                  <div className={`rounded-lg h-6 ${isLight ? "bg-gray-200" : "bg-white/[0.05]"}`} />
+                </div>
+                <div className="relative z-10 text-center">
+                  <div className={`w-10 h-10 rounded-2xl mx-auto mb-3 flex items-center justify-center ${isLight ? "bg-violet-50 border border-violet-200" : "bg-violet-500/15 border border-violet-500/25"}`}>
+                    <Camera className="w-5 h-5 text-violet-400" />
+                  </div>
+                  <p className={`text-sm font-semibold ${isLight ? "text-gray-700" : "text-white/70"}`}>Screenshots not available</p>
+                  <p className={`text-xs mt-1 ${isLight ? "text-gray-400" : "text-white/35"}`}>
+                    {sourceType === "description"
+                      ? "Text descriptions can't be executed in a sandbox"
+                      : "This code wasn't eligible for live sandbox execution"}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className={`text-xs leading-relaxed ${isLight ? "text-gray-400" : "text-white/35"} text-center`}>
+              Submit a <span className={`font-semibold ${isLight ? "text-gray-600" : "text-white/60"}`}>GitHub repo or ZIP file</span> to get screenshot-backed runtime evidence — real HTTP probes, browser automation screenshots, and exploit reproduction steps.
+            </div>
+          </div>
+        ) : (
+          /* ── Proofs exist ── */
+          <div className="space-y-4">
+            {/* ── FIRST PROOF: always visible ── */}
+            <div>
+              <div className={`text-[10px] font-semibold uppercase tracking-widest mb-2.5 ${isLight ? "text-gray-400" : "text-white/25"}`}>
+                Live Evidence · Proof 1 of {proofs.length}
+              </div>
+              <div className={`border rounded-xl overflow-hidden ${isLight ? "border-gray-200" : "border-white/[0.08]"}`}>
+                {/* Proof header bar */}
+                <div className={`flex items-center gap-3 px-4 py-3 ${isLight ? "bg-gray-50 border-b border-gray-100" : "bg-white/[0.03] border-b border-white/[0.05]"}`}>
+                  {pcfg0 && (
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border shrink-0 ${pcfg0.bg} ${pcfg0.color}`}>
+                      {pcfg0.label}
+                    </span>
+                  )}
+                  <span className={`text-sm font-semibold flex-1 ${isLight ? "text-gray-900" : "text-white/90"}`}>{first.title}</span>
+                  <span className={`text-xs font-bold shrink-0 ${first.confidence >= 95 ? "text-green-400" : first.confidence >= 85 ? "text-sky-400" : "text-amber-400"}`}>
+                    {first.confidence}% confidence
+                  </span>
+                </div>
+
+                {/* Screenshot — full width, always visible */}
+                {first.screenshot ? (
+                  <div className="relative">
+                    <div className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-medium uppercase tracking-wide ${isLight ? "text-gray-400 bg-gray-50 border-b border-gray-100" : "text-white/25 bg-black/30 border-b border-white/[0.05]"}`}>
+                      <div className="flex gap-1 mr-2">
+                        <div className="w-2 h-2 rounded-full bg-red-400/60" />
+                        <div className="w-2 h-2 rounded-full bg-yellow-400/60" />
+                        <div className="w-2 h-2 rounded-full bg-green-400/60" />
+                      </div>
+                      Runtime Screenshot
+                      <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(first.confidence).badge}`}>
+                        {getConfidenceStyle(first.confidence).icon} {first.confidence}%
+                      </span>
+                    </div>
+                    <img
+                      src={first.screenshot}
+                      alt="Runtime proof screenshot"
+                      className="w-full object-contain bg-[#08080f] max-h-72"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : (
+                  <div className={`flex items-center justify-center h-32 ${isLight ? "bg-gray-50" : "bg-black/20"}`}>
+                    <div className="text-center">
+                      <Globe className={`w-6 h-6 mx-auto mb-2 ${isLight ? "text-gray-300" : "text-white/20"}`} />
+                      <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>HTTP probe · No screenshot captured</p>
+                      {first.url && <code className="text-[10px] text-violet-400 mt-1 block">{first.url}</code>}
+                    </div>
+                  </div>
+                )}
+
+                {/* Observed + impact */}
+                <div className={`px-4 py-3 space-y-2 border-t ${isLight ? "border-gray-100" : "border-white/[0.05]"}`}>
+                  <div className={`text-xs ${isLight ? "text-gray-600" : "text-white/55"} leading-relaxed`}>
+                    <span className={`font-semibold ${isLight ? "text-gray-800" : "text-white/80"}`}>Observed: </span>
+                    {first.observed}
+                  </div>
+                  <div className="text-xs text-red-400/80 leading-relaxed">
+                    <span className="font-semibold text-red-400">Impact: </span>
+                    {first.impact}
+                  </div>
+                </div>
+
+                {/* Reproduction steps — collapsible */}
+                <div className={`border-t ${isLight ? "border-gray-100" : "border-white/[0.05]"}`}>
+                  <button
+                    onClick={() => setStepsOpen((v) => !v)}
+                    className={`w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium ${isLight ? "text-gray-500 hover:bg-gray-50" : "text-white/40 hover:bg-white/[0.02]"} transition-colors text-left`}
+                  >
+                    <Play className="w-3 h-3" />
+                    Reproduction Steps ({first.steps.length})
+                    {stepsOpen ? <ChevronUp className="w-3.5 h-3.5 ml-auto" /> : <ChevronDown className="w-3.5 h-3.5 ml-auto" />}
+                  </button>
+                  {stepsOpen && (
+                    <div className={`px-4 pb-4 space-y-1.5 ${isLight ? "bg-gray-50/50" : "bg-black/10"}`}>
+                      {first.steps.map((step, si) => (
+                        <div key={si} className={`flex gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/45"}`}>
+                          <span className={`shrink-0 font-mono ${isLight ? "text-gray-300" : "text-white/20"}`}>{si + 1}.</span>
+                          {step}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ── REMAINING PROOFS: locked for free users ── */}
+            {rest.length > 0 && (
+              <CreatorGate
+                plan={plan}
+                feature={`${rest.length} More Runtime Proof${rest.length !== 1 ? "s" : ""}`}
+                preview={`${rest.length} additional screenshot-backed exploit proof${rest.length !== 1 ? "s" : ""} with full reproduction steps`}
+                isLight={isLight}
+              >
+                <div className="space-y-3">
+                  {rest.map((e, i) => {
+                    const pcfg = PROOF_TYPE_CONFIG[e.type] ?? PROOF_TYPE_CONFIG.chaos;
+                    return (
+                      <div key={i} className={`border rounded-xl overflow-hidden ${isLight ? "border-gray-200" : "border-white/[0.08]"}`}>
+                        {e.screenshot ? (
+                          <img src={e.screenshot} alt="Proof screenshot" className="w-full object-contain bg-[#08080f] max-h-48" loading="lazy" />
+                        ) : (
+                          <div className={`h-24 flex items-center justify-center ${isLight ? "bg-gray-50" : "bg-black/20"}`}>
+                            <Globe className={`w-5 h-5 ${isLight ? "text-gray-300" : "text-white/20"}`} />
+                          </div>
+                        )}
+                        <div className={`flex items-center gap-2 px-3 py-2.5 ${isLight ? "bg-gray-50 border-t border-gray-100" : "bg-black/20 border-t border-white/[0.05]"}`}>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${pcfg.bg} ${pcfg.color}`}>{pcfg.label}</span>
+                          <span className={`text-xs font-medium flex-1 truncate ${isLight ? "text-gray-800" : "text-white/80"}`}>{e.title}</span>
+                          <span className={`text-[10px] font-bold ${e.confidence >= 95 ? "text-green-400" : e.confidence >= 85 ? "text-sky-400" : "text-amber-400"}`}>{e.confidence}%</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CreatorGate>
+            )}
+
+            {/* ── Confidence legend ── */}
+            <ConfidenceBadges evidence={proofs} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function RegressionPanel({ diff }: { diff: RegressionDiff }) {
   const isLight = useIsLight();
   const hasRegressions = diff.newRegressions.length > 0;
@@ -6208,41 +6421,19 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Visual Evidence Gallery (Runtime Proofs) ─────── */}
-            {scan.proofEvidence && scan.proofEvidence.length > 0 ? (
-              <>
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 }}
-                >
-                  <ProofEvidencePanel evidence={scan.proofEvidence} />
-                </motion.div>
-                <ConfidenceBadges evidence={scan.proofEvidence} />
-              </>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-                className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6 aurora-card`}
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <Camera className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
-                  <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>Live Sandbox Proofs</h2>
-                </div>
-                <div className={`rounded-xl border border-dashed p-6 text-center ${isLight ? "border-gray-200 bg-gray-50/50" : "border-white/[0.07] bg-white/[0.02]"}`}>
-                  <div className={`text-sm font-medium mb-1.5 ${isLight ? "text-gray-500" : "text-white/50"}`}>
-                    {scan.sourceType === "description"
-                      ? "This analysis used a text description — live sandbox proofs require actual code or a live URL."
-                      : "This code isn't eligible for live proofs — our sandbox couldn't execute it in a controlled environment."}
-                  </div>
-                  <div className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>
-                    Submit a GitHub repo or ZIP for screenshot-backed runtime evidence.
-                  </div>
-                </div>
-              </motion.div>
-            )}
+            {/* ── Live Sandbox Proofs ──────────────────────────── */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+            >
+              <SandboxProofsSection
+                evidence={scan.proofEvidence}
+                plan={user.plan}
+                sourceType={scan.sourceType}
+                isLight={isLight}
+              />
+            </motion.div>
 
             {/* ── Launch DNA ────────────────────────────────────── */}
             {scan.launchDNA && (
