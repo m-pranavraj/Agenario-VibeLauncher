@@ -394,12 +394,12 @@ export default function Home() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
                   </span>
-                  Production Review Board for AI-built Apps
+                  Vibe Code Audit & Production Review Board
                 </span>
               </motion.div>
 
               <motion.h1 variants={FADE_UP} className={`text-4xl sm:text-5xl lg:text-6xl font-heading font-extrabold leading-[1.05] tracking-tight ${t.h1}`}>
-                Ship your AI app<br />
+                Ship your vibe-coded app<br />
                 <span className={isLight
                   ? "text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-violet-500 to-indigo-500"
                   : "text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40"
@@ -409,7 +409,7 @@ export default function Home() {
               </motion.h1>
 
               <motion.p variants={FADE_UP} className={`text-lg leading-relaxed max-w-lg ${t.body}`}>
-                Your AI wrote the code. Agenario decides if it's production-ready. 10 parallel agent dimensions — compliance, revenue, security, performance, UX, and more — before launch day surprises hit.
+                Your AI wrote the code, but is it secure? Agenario is an AI-powered security audit and production review board for vibe-coded apps. 10 parallel agent dimensions analyze compliance, security leaks, performance, and UX.
               </motion.p>
 
               <motion.div variants={FADE_UP} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${isLight ? "bg-green-50 border border-green-200/60 text-green-700" : "bg-green-500/[0.08] border border-green-500/20 text-green-400"}`}>
