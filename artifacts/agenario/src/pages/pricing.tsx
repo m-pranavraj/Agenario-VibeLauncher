@@ -4,7 +4,7 @@ import { Check, Zap, ArrowLeft, Loader2, ShieldCheck, Building2, Mail, Tag, X, C
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
-import { api } from "@/lib/api";
+import { api, type CouponResult } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 
 declare global {
@@ -96,13 +96,7 @@ const FADE_UP = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
 };
 
-type CouponResult = {
-  valid: boolean;
-  code: string;
-  discountPercent: number;
-  finalAmount: number;
-  label: string;
-};
+
 
 export default function PricingPage() {
   const isLight = useIsLight();
@@ -124,14 +118,9 @@ export default function PricingPage() {
     setCouponError("");
     setCouponResult(null);
     try {
-      const res = await fetch((import.meta.env.VITE_API_URL || "") + "/api/billing/validate-coupon", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ coupon: code }),
-      });
-      const data = await res.json();
+      const data = await api.billing.validateCoupon(code);
       if (data.valid) {
-        setCouponResult(data as CouponResult);
+        setCouponResult(data);
       } else {
         setCouponError(data.message ?? "Invalid coupon code");
       }
@@ -160,16 +149,10 @@ export default function PricingPage() {
     try {
       await loadRazorpay();
 
-      const res = await fetch((import.meta.env.VITE_API_URL || "") + "/api/billing/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          plan: planId,
-          ...(couponResult?.valid ? { coupon: couponResult.code } : {}),
-        }),
-      });
-      const order = await res.json();
+      const order = await api.billing.createOrder(
+        planId,
+        couponResult?.valid ? couponResult.code : undefined
+      );
 
       await new Promise<void>((resolve, reject) => {
         const rzp = new window.Razorpay({

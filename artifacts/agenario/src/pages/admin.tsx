@@ -5,18 +5,7 @@ import { useIsLight } from "@/hooks/use-is-light";
 import { motion } from "framer-motion";
 import { Users, ScanLine, TrendingUp, Star, BarChart3, ShieldCheck, LogOut } from "lucide-react";
 import { Link } from "wouter";
-
-interface AdminStats {
-  totalUsers: number;
-  totalScans: number;
-  scansThisMonth: number;
-  usersThisMonth: number;
-  avgScore: number;
-  planBreakdown: Record<string, number>;
-  statusBreakdown: Record<string, number>;
-  verdictBreakdown: Record<string, number>;
-  monthlyScans: Array<{ label: string; year: number; month: number; count: number }>;
-}
+import { api, type AdminStats } from "@/lib/api";
 
 export default function AdminPage() {
   const { user, logout } = useAuth();
@@ -53,12 +42,13 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!user) { setLocation("/login"); return; }
-    fetch((import.meta.env.VITE_API_URL || "") + "/api/admin/stats", { credentials: "include" })
-      .then(async (r) => {
-        if (!r.ok) { setError((await r.json()).error ?? "Access denied"); return; }
-        setStats(await r.json());
+    api.admin.stats()
+      .then((data) => {
+        setStats(data);
       })
-      .catch(() => setError("Failed to load stats"))
+      .catch((err: any) => {
+        setError(err.message || "Failed to load stats");
+      })
       .finally(() => setLoading(false));
   }, [user]);
 

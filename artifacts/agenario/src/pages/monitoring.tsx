@@ -9,6 +9,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { api } from "@/lib/api";
 
 interface AppOverview {
   source: string;
@@ -77,9 +78,8 @@ export default function MonitoringPage() {
 
   useEffect(() => {
     if (!user) return;
-    fetch((import.meta.env.VITE_API_URL || "") + "/api/monitoring/overview", { credentials: "include" })
-      .then((r) => r.json())
-      .then((data: { apps: AppOverview[]; totalScans: number }) => {
+    api.monitoring.overview()
+      .then((data: any) => {
         setApps(data.apps ?? []);
         setTotalScans(data.totalScans ?? 0);
       })

@@ -39,6 +39,27 @@ export interface User {
   createdAt: string;
 }
 
+export interface AdminStats {
+  totalUsers: number;
+  totalScans: number;
+  scansThisMonth: number;
+  usersThisMonth: number;
+  avgScore: number;
+  planBreakdown: Record<string, number>;
+  statusBreakdown: Record<string, number>;
+  verdictBreakdown: Record<string, number>;
+  monthlyScans: Array<{ label: string; year: number; month: number; count: number }>;
+}
+
+export interface CouponResult {
+  valid: boolean;
+  code: string;
+  discountPercent: number;
+  finalAmount: number;
+  label: string;
+  message?: string;
+}
+
 export interface OwaspMapping {
   owaspId: string;
   owaspName: string;
@@ -457,10 +478,15 @@ export const api = {
       request<{ scanId: number; status: string }>(`/scans/${scanId}/rescan`, { method: "POST" }),
   },
   billing: {
-    createOrder: (plan: string) =>
+    createOrder: (plan: string, coupon?: string) =>
       request<RazorpayOrder>("/billing/create-order", {
         method: "POST",
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, coupon }),
+      }),
+    validateCoupon: (coupon: string) =>
+      request<CouponResult>("/billing/validate-coupon", {
+        method: "POST",
+        body: JSON.stringify({ coupon }),
       }),
     verify: (data: {
       razorpayOrderId: string;
@@ -478,5 +504,8 @@ export const api = {
   monitoring: {
     portfolio: () => request<{ portfolio: PortfolioApp[] }>("/monitoring/portfolio"),
     overview: () => request<{ apps: unknown[]; totalScans: number }>("/monitoring/overview"),
+  },
+  admin: {
+    stats: () => request<AdminStats>("/admin/stats"),
   },
 };
