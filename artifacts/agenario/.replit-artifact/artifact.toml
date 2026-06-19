@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Agenario"
+version = "1.0.0"
+id = "artifacts/agenario"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22752
+
+[services.development]
+run = "pnpm --filter @workspace/agenario run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/agenario", "run", "build" ]
+publicDir = "artifacts/agenario/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22752"
+BASE_PATH = "/"
