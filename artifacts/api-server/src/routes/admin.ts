@@ -18,7 +18,7 @@ router.get("/admin/stats", async (req: any, res: any) => {
   try {
     const users = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
     const me = users[0];
-    if (!me || me.email.toLowerCase() !== adminEmail.toLowerCase()) {
+    if (!me || me.email.trim().toLowerCase() !== adminEmail.trim().toLowerCase()) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
