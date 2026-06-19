@@ -1,0 +1,121 @@
+uploads = []
+
+[[generated]]
+id = "xYsZCsCGJ8T-Qx-ysucPz"
+uri = "file://ads/01-hero-ship-certainty.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "zZ2x3JJWwvlQlGhmYs3BO"
+uri = "file://ads/02-score-76-launch-readiness.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "RJ1Zw42i8Wsm8NoGvUPfF"
+uri = "file://ads/03-before-after-launch.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "SYkTpXbwpxLVi0fdVF8ft"
+uri = "file://ads/04-ai-finds-bugs.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "3C-WIDQB1mONbd1cm17O9"
+uri = "file://ads/05-founder-investor-confidence.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "woq-sieKJdk4cLe4kG1xl"
+uri = "file://ads/06-ten-ai-agents.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "jisj3p1yTWhEU5wDTbeXB"
+uri = "file://ads/07-certified-launch-ready.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "m9Ky93ukLQTedPqn4I977"
+uri = "file://ads/08-code-to-certified.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "ynYCyU9BCQ3ix1iQjOFTn"
+uri = "file://ads/09-radar-threat-detection.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "IUve0oty-Yl5Oaz3mnb1v"
+uri = "file://ads/10-pricing-tiers.png"
+type = "image"
+title = "generated_image"
+
+[[outputs]]
+id = "-HiABkqHh6cgGoT4QxdeF"
+uri = "file://ads/01-hero-ship-certainty.png"
+type = "image"
+title = "Hero — Ship With Certainty (16:9)"
+
+[[outputs]]
+id = "gkWRHZihtBht3HHe-AHSf"
+uri = "file://ads/02-score-76-launch-readiness.png"
+type = "image"
+title = "Launch Readiness Score Reveal (16:9)"
+
+[[outputs]]
+id = "f_3UgV-js3PvupXTQuKvR"
+uri = "file://ads/03-before-after-launch.png"
+type = "image"
+title = "Before vs After — Launch Audit (16:9)"
+
+[[outputs]]
+id = "-9EdsCmd6FxI0AzOU9aEI"
+uri = "file://ads/04-ai-finds-bugs.png"
+type = "image"
+title = "AI Finds What Yours Missed (16:9)"
+
+[[outputs]]
+id = "hiL_HZhax_XWE1s45g5T_"
+uri = "file://ads/05-founder-investor-confidence.png"
+type = "image"
+title = "Founder + Investor Confidence (16:9)"
+
+[[outputs]]
+id = "UAgQYPafLcoJPhVWgYv3k"
+uri = "file://ads/06-ten-ai-agents.png"
+type = "image"
+title = "Powered by 10 AI Agents (16:9)"
+
+[[outputs]]
+id = "xaM-CI9sPl2zOahLwiKAc"
+uri = "file://ads/07-certified-launch-ready.png"
+type = "image"
+title = "Agenario Certified — Launch Ready (16:9)"
+
+[[outputs]]
+id = "ZfKteAkR0-b7AhGSKPLvu"
+uri = "file://ads/08-code-to-certified.png"
+type = "image"
+title = "From Code to Certified in Minutes (16:9)"
+
+[[outputs]]
+id = "bZ2hDrFDRQoI65u0NPbdc"
+uri = "file://ads/09-radar-threat-detection.png"
+type = "image"
+title = "Radar Threat Detection (16:9)"
+
+[[outputs]]
+id = "PLGgTXs8qws-9eKsI9AaW"
+uri = "file://ads/10-pricing-tiers.png"
+type = "image"
+title = "Pricing Tiers — Choose Your Confidence (16:9)"

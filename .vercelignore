@@ -1,0 +1,12 @@
+.migration-backup
+artifacts/mockup-sandbox
+attached_assets
+ads
+.agents
+.local
+node_modules
+**/node_modules
+**/.turbo
+**/dist
+artifacts/agenario/dist
+artifacts/api-server/dist
