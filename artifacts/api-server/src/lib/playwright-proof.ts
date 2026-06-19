@@ -620,10 +620,14 @@ async function probeWithRealBrowser(browser: any, baseUrl: string): Promise<Proo
       const shot = await browserScreenshot(page);
       let videoUrl = undefined;
       const videoPath = await page.video()?.path().catch(() => null);
-      if (videoPath) {
-        videoUrl = "/api/videos/" + path.basename(videoPath);
-      }
       await page.context().close().catch(() => {});
+      if (videoPath && fs.existsSync(videoPath)) {
+        try {
+          const base64 = fs.readFileSync(videoPath).toString("base64");
+          videoUrl = "data:video/webm;base64," + base64;
+          fs.unlinkSync(videoPath);
+        } catch {}
+      }
 
       if (shot) {
         results.push({
@@ -683,11 +687,14 @@ async function probeWithRealBrowser(browser: any, baseUrl: string): Promise<Proo
 
       let videoUrl = undefined;
       const videoPath = await page.video()?.path().catch(() => null);
-      if (videoPath) {
-        videoUrl = "/api/videos/" + path.basename(videoPath);
-      }
-
       await page.context().close().catch(() => {});
+      if (videoPath && fs.existsSync(videoPath)) {
+        try {
+          const base64 = fs.readFileSync(videoPath).toString("base64");
+          videoUrl = "data:video/webm;base64," + base64;
+          fs.unlinkSync(videoPath);
+        } catch {}
+      }
 
       results.push({
         type: "idor",
