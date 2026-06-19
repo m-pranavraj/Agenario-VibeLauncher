@@ -4,14 +4,16 @@ import { Mail, Lock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { validateEmail } from "@/lib/email-validation";
 
 export default function LoginPage() {
   const { login } = useAuth();
   const isLight = useIsLight();
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,6 +27,9 @@ export default function LoginPage() {
     input:   isLight
       ? "w-full bg-white border border-pink-100/80 rounded-xl pl-10 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30 transition-all text-sm"
       : "w-full bg-white/[0.04] border border-white/[0.1] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-all text-sm",
+    inputErr: isLight
+      ? "w-full bg-white border border-red-300 rounded-xl pl-10 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400/30 transition-all text-sm"
+      : "w-full bg-white/[0.04] border border-red-500/40 rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-red-500/60 transition-all text-sm",
     icon:    isLight ? "text-gray-400" : "text-white/25",
     heading: isLight ? "text-gray-900" : "text-white",
     sub:     isLight ? "text-gray-500" : "text-white/40",
@@ -36,11 +41,29 @@ export default function LoginPage() {
     err:     isLight
       ? "bg-red-50 border border-red-200 text-red-600"
       : "bg-red-500/[0.08] border border-red-500/20 text-red-400",
+    fieldErr: isLight ? "text-red-500" : "text-red-400",
   };
+
+  function handleEmailChange(val: string) {
+    setEmail(val);
+    if (emailError) setEmailError(validateEmail(val));
+  }
+
+  function handleEmailBlur() {
+    if (email) setEmailError(validateEmail(email));
+  }
+
+  function handleEmailPaste(e: React.ClipboardEvent<HTMLInputElement>) {
+    const pasted = e.clipboardData.getData("text");
+    const combined = email + pasted;
+    setTimeout(() => setEmailError(validateEmail(combined)), 0);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    const ev = validateEmail(email);
+    if (ev) { setEmailError(ev); return; }
     setLoading(true);
     try {
       await login(email, password);
@@ -106,12 +129,28 @@ export default function LoginPage() {
                   required
                   autoComplete="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  onBlur={handleEmailBlur}
+                  onPaste={handleEmailPaste}
+                  placeholder="you@company.com"
                   data-testid="input-email"
-                  className={t.input}
+                  className={emailError ? t.inputErr : t.input}
                 />
               </div>
+              <AnimatePresence>
+                {emailError && (
+                  <motion.p
+                    key="email-err"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className={`flex items-center gap-1.5 mt-1.5 text-xs ${t.fieldErr}`}
+                  >
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    {emailError}
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </div>
 
             <div>
@@ -133,7 +172,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !!emailError}
               data-testid="button-login"
               className={`w-full disabled:opacity-50 disabled:cursor-not-allowed font-semibold py-3 rounded-xl transition-all mt-2 text-sm flex items-center justify-center gap-2 ${t.btn}`}
             >

@@ -1,0 +1,14 @@
+1. First-Class Evidence 🟢 Production Ready
+What is built: Findings are no longer just "Critical IDOR Issue". Every issue in the database and UI now explicitly maps the exact File Path, Line Number, Function Name, Code Snippet, and a clear Business Impact Statement. Fallback: If the specific file/line mapping fails (e.g., source code is obfuscated or unavailable), the UI gracefully falls back to just the high-level evidence block without breaking the display layout.
+
+2. Real Browser Replay 🟢 Production Ready
+What is built: We implemented the visual Replay Timeline. When the engine records Playwright runtime reproduction steps, the UI now renders an interactive timeline tracking the exact sequence: Action → Request → Response → Attached Screenshot. Fallback: If the Playwright runtime environment fails to execute, crashes, or simply cannot reproduce the issue visually, the UI falls back smoothly to presenting the standard text-based Static Code Proofs.
+
+3. Auto-Fix Verification 🟢 Production Ready
+What is built: Direct patch downloading. If an issue is scoped to an isolated file or function, the system generates a direct .patch file that founders can download with one click and apply via git apply to instantly fix their code. Fallback: For massively complex architectural issues (where direct Git patch application is dangerous or impossible), the UI gracefully falls back to providing the "1-Click IDE Fix Prompt" (architectural guidance to paste into Cursor/Claude).
+
+4. Repository Knowledge Graph 🟢 Production Ready
+What is built: Real-time visual network mapping. The ReactFlow KnowledgeGraphExplorer dynamically discovers your files, routes, and DB tables. The new enhancement actively injects Issues as deeply-red glowing nodes, mapping dynamic edge traces directly to the affected functions and routes for enterprise-grade visual debugging. Fallback: If the dependency graph fails to parse or there's an error mapping the exact node, the UI fails open. It renders the available subset of the graph, or shows a clean "No Graph Available" placeholder without freezing the rest of the application.
+
+5. Benchmark Network 🟢 Production Ready
+What is built: The Executive Dashboard now contains the Benchmark Network widget. It automatically calculates and displays the application's percentile ranks for Security, Reliability, and Revenue Risk against a dataset of 2,437 React SaaS Applications. Fallback: If the backend engine times out while calculating the benchmarking math, the UI simply omits the benchmarking card entirely, keeping the core Launch Certification and Risk forecasts intact.
