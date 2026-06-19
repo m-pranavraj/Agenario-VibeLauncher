@@ -5079,7 +5079,7 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
               <div className="flex-1 min-w-0">
                 <span className={`text-sm font-medium ${isLight ? "text-gray-800" : "text-white/80"} truncate block`}>{chain.issueTitle}</span>
                 <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"}`}>
-                Origin: {chain.originLayer} · {chain.hops.filter(h => h.status === "implicated").length} layers implicated</span>
+                Origin: {chain.originLayer} · {chain.hops.filter((h: any) => h.status === "implicated").length} layers implicated</span>
               </div>
               <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${chain.issueSeverity === "critical" ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400"}`}>
                 {chain.issueSeverity}
@@ -5093,7 +5093,7 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
                 <div className="overflow-x-auto">
                   <div className="flex items-center gap-0 min-w-max">
                     {LAYERS.map((layer, li) => {
-                      const hop = chain.hops.find(h => h.layer === layer);
+                      const hop = chain.hops.find((h: any) => h.layer === layer);
                       const status = hop?.status ?? "unknown";
                       const hc = getHopConfig(status);
                       return (
