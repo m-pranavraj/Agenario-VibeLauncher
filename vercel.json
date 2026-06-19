@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "pnpm install --frozen-lockfile && pnpm run build:vercel",
+  "buildCommand": "pnpm install --frozen-lockfile && pnpm -w run build:vercel",
   "outputDirectory": "artifacts/agenario/dist/public",
   "functions": {
     "api/handler.mjs": {
