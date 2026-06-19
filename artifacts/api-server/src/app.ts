@@ -201,7 +201,7 @@ cron.schedule("0 9 * * *", () => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const publicPath = path.resolve(__dirname, "../../agenario/dist/public");
+const publicPath = path.resolve(__dirname, "../../agenario/dist");
 
 app.use(express.static(publicPath));
 
