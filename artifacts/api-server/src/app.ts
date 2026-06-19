@@ -115,9 +115,32 @@ app.use(
 const isProduction = process.env["NODE_ENV"] === "production";
 
 // ── CORS ──────────────────────────────────────────────────────────────────
+// Build a strict allowlist. In production the frontend and API share the same
+// Replit-proxied origin, so same-origin requests never hit the CORS handler.
+// We only need CORS for local development (Vite on a different port) and for
+// any explicitly configured FRONTEND_URL.
+const allowedOrigins = new Set<string>(
+  [
+    process.env["FRONTEND_URL"],
+    process.env["REPLIT_DEV_DOMAIN"]
+      ? `https://${process.env["REPLIT_DEV_DOMAIN"]}`
+      : undefined,
+    // Local Vite dev server (port may vary, cover common ranges)
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:22752",
+    "http://localhost:4173",
+  ].filter(Boolean) as string[],
+);
+
 app.use(
   cors({
-    origin: true,
+    origin(requestOrigin, callback) {
+      // Same-origin requests (no Origin header) are always allowed
+      if (!requestOrigin) return callback(null, true);
+      if (allowedOrigins.has(requestOrigin)) return callback(null, true);
+      callback(new Error(`CORS: origin '${requestOrigin}' is not allowed`));
+    },
     credentials: true,
   }),
 );
@@ -147,7 +170,10 @@ app.use(
       secure: isProduction,
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: isProduction ? "none" : "lax",
+      // In production the frontend and API share the same Replit-proxied origin
+      // so "lax" is both safe and sufficient. "none" would require Secure and
+      // allows cross-site cookie sending — avoid unless cross-origin is needed.
+      sameSite: "lax",
     },
   }),
 );
