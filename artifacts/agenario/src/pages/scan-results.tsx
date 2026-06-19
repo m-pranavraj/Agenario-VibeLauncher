@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLocation, useRoute, Link } from "wouter";
 import {
   ArrowLeft,
@@ -63,6 +64,9 @@ import {
   MessageSquare,
   Send,
   X,
+  LayoutDashboard,
+  HelpCircle,
+  ChevronLeft,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
@@ -5959,6 +5963,266 @@ function ScanRunningScreen({
   );
 }
 
+// ── Report Tour ───────────────────────────────────────────────────────────
+// Cloud-style tooltip tour. Auto-shows on first report view, re-triggerable
+// via the "?" button. Uses data-tour attributes to locate elements.
+
+const TOUR_STEPS = [
+  {
+    target: "score",
+    title: "🎯 Launch Readiness Score",
+    body: "Your 0–100 score across 10 dimensions. Below 70 = needs work before shipping.",
+    placement: "bottom" as const,
+  },
+  {
+    target: "summary",
+    title: "📋 Executive Summary",
+    body: "Board-memo style overview written for founders — tells you the big picture fast.",
+    placement: "bottom" as const,
+  },
+  {
+    target: "action-plan",
+    title: "⚡ Top 3 Action Plan",
+    body: "Your three most urgent fixes ranked by business impact. Start here, ship faster.",
+    placement: "top" as const,
+  },
+  {
+    target: "tab-issues",
+    title: "🔍 Findings Tab",
+    body: "All issues by severity. Filter by evidence type — runtime proof, static analysis, or AI reasoning.",
+    placement: "bottom" as const,
+  },
+  {
+    target: "tab-intelligence",
+    title: "🧠 Intelligence Tab",
+    body: "Revenue forecasts, Launch DNA, and predictive risk signals beyond standard security.",
+    placement: "bottom" as const,
+  },
+  {
+    target: "sandbox-proofs",
+    title: "📸 Live Sandbox Proofs",
+    body: "Screenshot-backed exploit evidence from real sandbox execution. Actual proof, not guesses.",
+    placement: "top" as const,
+  },
+];
+
+const TOUR_KEY = "agenario_report_tour_v1";
+
+function ReportTour({ onStartTour }: { onStartTour: (cb: () => void) => void }) {
+  const isLight = useIsLight();
+  const [visible, setVisible] = useState(false);
+  const [step, setStep] = useState(0);
+  const [popupPos, setPopupPos] = useState({ top: 0, left: 0, arrowLeft: 0, above: false });
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  // Expose a way for parent to start the tour (used by the "?" button)
+  useEffect(() => {
+    onStartTour(() => {
+      setStep(0);
+      setVisible(true);
+    });
+  }, [onStartTour]);
+
+  // Auto-show once per user
+  useEffect(() => {
+    const done = localStorage.getItem(TOUR_KEY);
+    if (done) return;
+    const t = setTimeout(() => setVisible(true), 1200);
+    return () => clearTimeout(t);
+  }, []);
+
+  const close = () => {
+    setVisible(false);
+    localStorage.setItem(TOUR_KEY, "1");
+  };
+
+  const next = () => {
+    if (step < TOUR_STEPS.length - 1) setStep((s) => s + 1);
+    else close();
+  };
+  const prev = () => { if (step > 0) setStep((s) => s - 1); };
+
+  // Reposition popup whenever step changes
+  useLayoutEffect(() => {
+    if (!visible) return;
+    const current = TOUR_STEPS[step];
+    const el = document.querySelector(`[data-tour="${current.target}"]`) as HTMLElement | null;
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    // Small delay to let scroll settle
+    const t = setTimeout(() => {
+      const rect = el.getBoundingClientRect();
+      const popupW = 288; // w-72
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      const rawLeft = Math.max(16, Math.min(rect.left, vw - popupW - 16));
+      const arrowLeft = Math.max(16, Math.min(rect.left + rect.width / 2 - rawLeft - 8, popupW - 24));
+
+      const above = current.placement === "top" || rect.bottom + 220 > vh;
+      const top = above ? rect.top - 220 + window.scrollY : rect.bottom + 14 + window.scrollY;
+
+      setPopupPos({ top: Math.max(top, 8 + window.scrollY), left: rawLeft, arrowLeft, above });
+    }, 300);
+    return () => clearTimeout(t);
+  }, [step, visible]);
+
+  if (!visible) return null;
+
+  const current = TOUR_STEPS[step];
+
+  return createPortal(
+    <div className="fixed inset-0 z-[200] pointer-events-none">
+      {/* Dim overlay */}
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" />
+
+      {/* Highlight ring around target */}
+      <TargetHighlight target={current.target} />
+
+      {/* Cloud popup */}
+      <div
+        ref={popupRef}
+        className="pointer-events-auto absolute"
+        style={{ top: popupPos.top, left: popupPos.left }}
+      >
+        {/* Arrow */}
+        {!popupPos.above && (
+          <div
+            className="absolute -top-2 w-4 h-2 overflow-hidden"
+            style={{ left: popupPos.arrowLeft }}
+          >
+            <div className={`w-4 h-4 rotate-45 -translate-y-2 ${isLight ? "bg-white border border-gray-200 shadow-sm" : "bg-[#1a1a2e] border border-white/15"}`} />
+          </div>
+        )}
+
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, scale: 0.94, y: popupPos.above ? 6 : -6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 400, damping: 28 }}
+          className={`w-72 rounded-2xl shadow-2xl border p-4 space-y-3 ${
+            isLight
+              ? "bg-white border-gray-200 shadow-gray-300/40"
+              : "bg-[#1a1a2e] border-white/15 shadow-black/60"
+          }`}
+        >
+          {/* Header */}
+          <div className="flex items-start gap-2">
+            <div className="flex-1">
+              <div className={`font-bold text-sm font-['Syne'] ${isLight ? "text-gray-900" : "text-white"}`}>
+                {current.title}
+              </div>
+              <div className={`text-[10px] mt-0.5 font-medium ${isLight ? "text-gray-400" : "text-white/30"}`}>
+                Step {step + 1} of {TOUR_STEPS.length}
+              </div>
+            </div>
+            <button
+              onClick={close}
+              className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors shrink-0 ${isLight ? "text-gray-400 hover:text-gray-700 hover:bg-gray-100" : "text-white/30 hover:text-white/70 hover:bg-white/10"}`}
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Progress dots */}
+          <div className="flex gap-1.5">
+            {TOUR_STEPS.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setStep(i)}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === step
+                    ? "w-5 bg-violet-500"
+                    : isLight ? "w-1.5 bg-gray-200 hover:bg-gray-300" : "w-1.5 bg-white/15 hover:bg-white/30"
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Body */}
+          <p className={`text-xs leading-relaxed ${isLight ? "text-gray-500" : "text-white/55"}`}>
+            {current.body}
+          </p>
+
+          {/* Buttons */}
+          <div className="flex items-center gap-2">
+            {step > 0 && (
+              <button
+                onClick={prev}
+                className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                  isLight ? "text-gray-500 hover:text-gray-900 border border-gray-200 hover:bg-gray-50" : "text-white/40 hover:text-white/80 border border-white/10 hover:bg-white/5"
+                }`}
+              >
+                <ChevronLeft className="w-3 h-3" />
+                Back
+              </button>
+            )}
+            <button
+              onClick={next}
+              className="ml-auto flex items-center gap-1.5 text-xs bg-violet-600 hover:bg-violet-500 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors"
+            >
+              {step === TOUR_STEPS.length - 1 ? "Done 🎉" : "Next"}
+              {step < TOUR_STEPS.length - 1 && <ChevronRight className="w-3 h-3" />}
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Arrow below (above placement) */}
+        {popupPos.above && (
+          <div
+            className="absolute -bottom-2 w-4 h-2 overflow-hidden"
+            style={{ left: popupPos.arrowLeft }}
+          >
+            <div className={`w-4 h-4 rotate-45 translate-y-2 ${isLight ? "bg-white border border-gray-200" : "bg-[#1a1a2e] border border-white/15"}`} />
+          </div>
+        )}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function TargetHighlight({ target }: { target: string }) {
+  const [rect, setRect] = useState<DOMRect | null>(null);
+
+  useLayoutEffect(() => {
+    const el = document.querySelector(`[data-tour="${target}"]`) as HTMLElement | null;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setRect(r);
+  }, [target]);
+
+  if (!rect) return null;
+  return (
+    <div
+      className="absolute pointer-events-none ring-2 ring-violet-500/70 ring-offset-2 ring-offset-transparent rounded-2xl transition-all duration-300"
+      style={{
+        top: rect.top + window.scrollY - 4,
+        left: rect.left - 4,
+        width: rect.width + 8,
+        height: rect.height + 8,
+        boxShadow: "0 0 0 9999px rgba(0,0,0,0.35)",
+      }}
+    />
+  );
+}
+
+// ── Section Divider ───────────────────────────────────────────────────────
+function SectionLabel({ label, icon: Icon, isLight }: { label: string; icon?: React.ElementType; isLight: boolean }) {
+  return (
+    <div className="flex items-center gap-3 mt-1">
+      <div className={`h-px flex-1 ${isLight ? "bg-gray-100" : "bg-white/[0.05]"}`} />
+      <div className={`flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-bold ${isLight ? "text-gray-400" : "text-white/25"}`}>
+        {Icon && <Icon className="w-3 h-3" />}
+        {label}
+      </div>
+      <div className={`h-px flex-1 ${isLight ? "bg-gray-100" : "bg-white/[0.05]"}`} />
+    </div>
+  );
+}
+
 export default function ScanResultsPage() {
   const { user, loading } = useAuth();
   const isLight = useIsLight();
@@ -5970,6 +6234,7 @@ export default function ScanResultsPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("all");
   const [rescanning, setRescanning] = useState(false);
+  const tourStartRef = useRef<(() => void) | null>(null);
   const t = {
     page: isLight ? "bg-[#fdf4f8] text-gray-900 overflow-x-hidden" : "bg-[#050505] text-white overflow-x-hidden",
     nav: isLight ? "bg-white/90 border-pink-100/80 backdrop-blur-2xl" : "bg-[#050505]/80 border-white/[0.07] backdrop-blur-2xl",
@@ -6170,6 +6435,13 @@ export default function ScanResultsPage() {
                 Portfolio
               </button>
             </Link>
+            <button
+              onClick={() => tourStartRef.current?.()}
+              title="Take a guided tour"
+              className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${isLight ? "border-pink-100 text-gray-400 hover:text-violet-600 hover:border-violet-200 hover:bg-violet-50" : "border-white/[0.07] text-white/30 hover:text-violet-400 hover:border-violet-500/40 hover:bg-violet-500/10"}`}
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+            </button>
             <ThemeToggle />
           </div>
         </div>
@@ -6238,44 +6510,49 @@ export default function ScanResultsPage() {
           className={`sticky top-[57px] z-[9] -mx-6 px-6 py-2.5 ${t.tabBar}`}
         >
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-4xl">
-            {[
-              { id: "overview", label: "Overview" },
+            {([
+              { id: "overview", label: "Overview", icon: LayoutDashboard, tourId: undefined },
               {
                 id: "issues",
                 label: "Issues",
+                icon: ShieldAlert,
+                tourId: "tab-issues",
                 count: scan.issues.filter((i) => !i.locked).length || undefined,
               },
-              { id: "intelligence", label: "Intelligence" },
-              { id: "compliance", label: "Compliance" },
+              { id: "intelligence", label: "Intelligence", icon: Sparkles, tourId: "tab-intelligence" },
+              { id: "compliance", label: "Compliance", icon: Scale, tourId: undefined },
               {
                 id: "advanced",
                 label: "Advanced",
-                badge:
-                  user.plan === "creator" || user.plan === "enterprise"
-                    ? undefined
-                    : "🔒",
+                icon: Zap,
+                tourId: undefined,
+                badge: user.plan === "creator" || user.plan === "enterprise" ? undefined : "🔒",
               },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 whitespace-nowrap text-xs px-3 py-1.5 rounded-lg transition-all font-medium shrink-0 ${
-                  activeTab === tab.id ? t.tabActive : t.tabInactive
-                }`}
-              >
-                {tab.label}
-                {tab.count !== undefined && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === tab.id ? t.tabCountActive : t.tabCountInactive}`}
-                  >
-                    {tab.count}
-                  </span>
-                )}
-                {tab.badge && (
-                  <span className="text-[10px] opacity-50">{tab.badge}</span>
-                )}
-              </button>
-            ))}
+            ] as { id: string; label: string; icon: React.ElementType; tourId?: string; count?: number; badge?: string }[]).map((tab) => {
+              const TabIcon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  data-tour={tab.tourId}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-1.5 whitespace-nowrap text-xs px-3 py-2 rounded-xl transition-all font-medium shrink-0 ${
+                    isActive ? t.tabActive : t.tabInactive
+                  }`}
+                >
+                  <TabIcon className="w-3 h-3 shrink-0" />
+                  {tab.label}
+                  {tab.count !== undefined && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${isActive ? t.tabCountActive : t.tabCountInactive}`}>
+                      {tab.count}
+                    </span>
+                  )}
+                  {tab.badge && (
+                    <span className="text-[10px] opacity-50">{tab.badge}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -6285,6 +6562,7 @@ export default function ScanResultsPage() {
             {/* ── Executive summary row ────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div
+                data-tour="score"
                 className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-5 flex flex-col items-center justify-center gap-4`}
               >
                 {scan.score != null ? (
@@ -6320,6 +6598,7 @@ export default function ScanResultsPage() {
               </div>
 
               <div
+                data-tour="summary"
                 className={`lg:col-span-2 ${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6`}
               >
                 <div className="flex items-center gap-2 mb-3">
@@ -6383,6 +6662,11 @@ export default function ScanResultsPage() {
               </div>
             </div>
 
+            {/* ── Section divider ──────────────────────────────── */}
+            {scan.vibeTool && scan.vibeTool !== "unknown" && (
+              <SectionLabel label="Detected Stack" icon={Cpu} isLight={isLight} />
+            )}
+
             {/* ── VibeCode Intelligence Network ─────────────────── */}
             {scan.vibeTool && scan.vibeTool !== "unknown" && (
               <motion.div
@@ -6423,6 +6707,7 @@ export default function ScanResultsPage() {
 
             {/* ── Live Sandbox Proofs ──────────────────────────── */}
             <motion.div
+              data-tour="sandbox-proofs"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
@@ -6707,6 +6992,7 @@ export default function ScanResultsPage() {
             {/* ── Top 3 Action Plan ────────────────────────────── */}
             {topThree.length > 0 && (
               <div
+                data-tour="action-plan"
                 className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6`}
               >
                 <div className="flex items-center gap-2 mb-5">
@@ -7067,13 +7353,15 @@ export default function ScanResultsPage() {
         {/* ── Privacy footer ───────────────────────────────── */}
         <div className="flex items-center gap-2 justify-center py-4">
           <ShieldCheck className="w-3.5 h-3.5 text-green-400/60" />
-          <p
-            className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}
+          <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}
           >
             Your code was not stored. Analyzed in-session only.
           </p>
         </div>
       </main>
+
+      {/* ── Guided Report Tour ──────────────────────────── */}
+      <ReportTour onStartTour={(cb) => { tourStartRef.current = cb; }} />
     </div>
   );
 }
