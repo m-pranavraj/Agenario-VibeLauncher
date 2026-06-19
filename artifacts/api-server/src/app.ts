@@ -123,20 +123,23 @@ function normalizeOrigin(origin: string): string {
 }
 
 // ── CORS ──────────────────────────────────────────────────────────────────
-// Build a strict allowlist. In production the frontend and API share the same
-// Replit-proxied origin, so same-origin requests never hit the CORS handler.
-// We only need CORS for local development (Vite on a different port) and for
-// any explicitly configured FRONTEND_URL.
+// Production setup: frontend on Vercel, API on Render — CROSS-ORIGIN.
+// FRONTEND_URL env var must be set on Render to your Vercel domain.
+// SameSite=None;Secure cookies are used in production (see session config).
 const allowedOrigins = new Set<string>(
   [
+    // Primary: set FRONTEND_URL on your Render API service to your Vercel URL
     process.env["FRONTEND_URL"],
+    // Replit dev domain (injected automatically in Replit workspace)
     process.env["REPLIT_DEV_DOMAIN"]
       ? `https://${process.env["REPLIT_DEV_DOMAIN"]}`
       : undefined,
-    // Production frontend domains
+    // Production frontend domains (Vercel / custom domain)
     "https://www.agenario.tech",
     "https://agenario.tech",
-    // Local Vite dev server (port may vary, cover common ranges)
+    // Vercel preview/deployment URLs — add yours if different
+    "https://agenario.vercel.app",
+    // Local Vite dev server
     "http://localhost:3000",
     "http://localhost:5173",
     "http://localhost:22752",
@@ -179,13 +182,14 @@ app.use(
     saveUninitialized: false,
     name: "agn_sid", // Don't use default 'connect.sid'
     cookie: {
+      // In production the frontend (Vercel) and API (Render) are cross-origin,
+      // so we need SameSite=None + Secure to allow the session cookie to be
+      // sent across origins. In dev the Vite proxy makes them same-origin so
+      // Lax is fine and Secure is not required.
       secure: isProduction,
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      // In production the frontend and API share the same Replit-proxied origin
-      // so "lax" is both safe and sufficient. "none" would require Secure and
-      // allows cross-site cookie sending — avoid unless cross-origin is needed.
-      sameSite: "lax",
+      sameSite: isProduction ? "none" : "lax",
     },
   }),
 );
