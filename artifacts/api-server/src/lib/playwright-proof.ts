@@ -60,6 +60,13 @@ function clean(url: string): string {
   return url.startsWith("http") ? url.replace(/\/$/, "") : `https://${url.replace(/\/$/, "")}`;
 }
 
+/** Preserve http:// for localhost sandbox URLs — never upgrade to https. */
+function normalizeLiveUrl(url: string): string {
+  const trimmed = url.trim().replace(/\/$/, "");
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `http://${trimmed}`;
+}
+
 // ─── Try to launch a real Chromium browser ────────────────────────────────────
 async function launchBrowser(): Promise<{ browser: any; available: boolean }> {
   const executablePaths = [
@@ -717,8 +724,8 @@ async function probeWithRealBrowser(browser: any, baseUrl: string): Promise<Proo
   return results;
 }
 
-// ─── Code-based proofs for non-URL scans ────────────────────────────────────
-function generateCodeBasedProofs(
+// ─── Code-based proofs for non-URL scans (static analysis supplement) ───────
+export function generateCodeBasedProofs(
   sourceType: string,
   sourceInput: string,
   codeContext?: {
@@ -843,6 +850,92 @@ function generateCodeBasedProofs(
   return results;
 }
 
+/** Real HTTP + browser probes against any live URL (including GitHubbox localhost). */
+export async function runLiveUrlProofs(baseUrl: string): Promise<ProofEvidence[]> {
+  const url = normalizeLiveUrl(baseUrl);
+  logger.info({ url }, "Live URL proof engine starting");
+
+  const results: ProofEvidence[] = [];
+
+  const [idor, access, cors, headers, redirect, ux] = await Promise.allSettled([
+    probeIDOR(url),
+    probeAccessControl(url),
+    probeCORSMisconfiguration(url),
+    probeSecurityHeaders(url),
+    probeOpenRedirect(url),
+    probeUXFailures(url),
+  ]);
+
+  for (const r of [idor, access, cors, headers, redirect, ux]) {
+    if (r.status === "fulfilled" && r.value) results.push(r.value);
+  }
+
+  const { browser, available } = await launchBrowser();
+  if (available) {
+    try {
+      const browserProofs = await probeWithRealBrowser(browser, url);
+      const existingTypes = new Set(browserProofs.map((p) => p.type));
+      const deduped = results.filter((r) => !existingTypes.has(r.type));
+      results.splice(0, results.length, ...browserProofs, ...deduped);
+      logger.info({ url, browserProofs: browserProofs.length }, "Real browser proofs completed");
+    } catch (err) {
+      logger.warn({ err }, "Real browser probes failed");
+    } finally {
+      await browser.close().catch(() => {});
+    }
+  }
+
+  logger.info({ url, found: results.length }, "Live URL proof engine complete");
+  return results;
+}
+
+/** Real Chromium screenshot proving GitHubbox built and launched the app. */
+export async function captureSandboxLaunchProof(
+  localUrl: string,
+  ctx: {
+    framework: string;
+    startCommand: string;
+    port: number;
+    httpStatus: number;
+  },
+): Promise<ProofEvidence | null> {
+  const url = normalizeLiveUrl(localUrl);
+  const { browser, available } = await launchBrowser();
+  if (!available) return null;
+
+  try {
+    const { page } = await safePage(browser, url);
+    if (!page) return null;
+
+    await new Promise((r) => setTimeout(r, 1500));
+    const shot = await browserScreenshot(page);
+    await page.context().close().catch(() => {});
+
+    if (!shot) return null;
+
+    return {
+      type: "regression",
+      title: "GitHubbox Sandbox — Build & Live UI Launch Verified",
+      severity: "low",
+      confidence: 99,
+      url,
+      steps: [
+        "Create isolated GitHubbox sandbox workspace",
+        "Install dependencies from lockfile",
+        `Launch dev server: ${ctx.startCommand}`,
+        `Wait for HTTP ${ctx.httpStatus} on 127.0.0.1:${ctx.port}`,
+        "Capture real Chromium screenshot of rendered viewport",
+      ],
+      observed: `GitHubbox successfully installed dependencies, started the ${ctx.framework} application on port ${ctx.port}, and verified the UI renders in a real Chromium browser (HTTP ${ctx.httpStatus}).`,
+      impact: "Application builds and executes in an isolated sandbox. Runtime security probes ran against the live local instance.",
+      screenshot: shot,
+      codeRef: `${ctx.startCommand} → http://127.0.0.1:${ctx.port}`,
+    };
+  } finally {
+    await browser.close().catch(() => {});
+  }
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 export async function runPlaywrightBrowserProofs(
   sourceType: string,
@@ -854,13 +947,11 @@ export async function runPlaywrightBrowserProofs(
     vibeTool?: string;
   },
 ): Promise<ProofEvidence[]> {
-  const results: ProofEvidence[] = [];
-
-  // ── Non-URL scans: code-based proofs ─────────────────────────────────────
+  // ── Non-URL scans: static code analysis (GitHubbox live proofs merged in pipeline) ──
   if (sourceType !== "url") {
     try {
       const codeProofs = generateCodeBasedProofs(sourceType, sourceInput, codeContext);
-      logger.info({ sourceType, found: codeProofs.length }, "Code-based browser proofs generated");
+      logger.info({ sourceType, found: codeProofs.length }, "Static code-based proofs generated");
       return codeProofs;
     } catch (err) {
       logger.warn({ err }, "Code-based proofs failed");
@@ -868,41 +959,5 @@ export async function runPlaywrightBrowserProofs(
     }
   }
 
-  // ── URL scans: HTTP probes + optional real browser ───────────────────────
-  const baseUrl = clean(sourceInput);
-  logger.info({ baseUrl }, "Browser proof engine starting");
-
-  // Run HTTP probes in parallel (always available)
-  const [idor, access, cors, headers, redirect, ux] = await Promise.allSettled([
-    probeIDOR(baseUrl),
-    probeAccessControl(baseUrl),
-    probeCORSMisconfiguration(baseUrl),
-    probeSecurityHeaders(baseUrl),
-    probeOpenRedirect(baseUrl),
-    probeUXFailures(baseUrl),
-  ]);
-
-  for (const r of [idor, access, cors, headers, redirect, ux]) {
-    if (r.status === "fulfilled" && r.value) results.push(r.value);
-  }
-
-  // Try real browser for higher-confidence screenshots (bonus)
-  const { browser, available } = await launchBrowser();
-  if (available) {
-    try {
-      const browserProofs = await probeWithRealBrowser(browser, baseUrl);
-      // Browser proofs override HTTP proofs of the same type
-      const existingTypes = new Set(browserProofs.map((p) => p.type));
-      const deduped = results.filter((r) => !existingTypes.has(r.type));
-      results.splice(0, results.length, ...browserProofs, ...deduped);
-      logger.info({ baseUrl, browserProofs: browserProofs.length }, "Real browser proofs completed");
-    } catch (err) {
-      logger.warn({ err }, "Real browser probes failed");
-    } finally {
-      await browser.close().catch(() => {});
-    }
-  }
-
-  logger.info({ baseUrl, found: results.length }, "Browser proof engine complete");
-  return results;
+  return runLiveUrlProofs(clean(sourceInput));
 }

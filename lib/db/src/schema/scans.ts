@@ -73,6 +73,21 @@ export interface LaunchReplayStep {
   detail?: string;
 }
 
+export interface SandboxMeta {
+  status: "eligible" | "ineligible" | "running" | "completed" | "failed" | "skipped";
+  reason: string;
+  blockers?: string[];
+  localUrl?: string;
+  port?: number;
+  startCommand?: string;
+  installCommand?: string;
+  packageManager?: string;
+  elapsedMs?: number;
+  installLog?: string;
+  serverLog?: string;
+  httpStatus?: number;
+}
+
 export const scansTable = pgTable("scans", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -119,6 +134,7 @@ export const scansTable = pgTable("scans", {
     riskLevel: string;
   }>>(),
   proofEvidence: jsonb("proof_evidence").$type<ProofEvidence[]>(),
+  sandboxMeta: jsonb("sandbox_meta").$type<SandboxMeta>(),
   regressionDiff: jsonb("regression_diff").$type<RegressionDiff>(),
   benchmarkPercentile: jsonb("benchmark_percentile").$type<BenchmarkData>(),
   launchDNA: jsonb("launch_dna").$type<LaunchDNA>(),

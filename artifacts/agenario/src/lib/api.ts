@@ -199,7 +199,23 @@ export interface ProofEvidence {
   observed: string;
   impact: string;
   screenshot?: string;
+  videoUrl?: string;
   codeRef?: string;
+}
+
+export interface SandboxMeta {
+  status: "eligible" | "ineligible" | "running" | "completed" | "failed" | "skipped";
+  reason: string;
+  blockers?: string[];
+  localUrl?: string;
+  port?: number;
+  startCommand?: string;
+  installCommand?: string;
+  packageManager?: string;
+  elapsedMs?: number;
+  installLog?: string;
+  serverLog?: string;
+  httpStatus?: number;
 }
 
 export interface RegressionDiff {
@@ -271,6 +287,7 @@ export interface Scan {
   revenueIntelligence: RevenueIntelligence | null;
   complianceResults: ComplianceResult[] | null;
   proofEvidence: ProofEvidence[] | null;
+  sandboxMeta: SandboxMeta | null;
   regressionDiff: RegressionDiff | null;
   benchmarkPercentile: BenchmarkData | null;
   launchDNA: LaunchDNA | null;

@@ -5,8 +5,13 @@
 
 import fs from "fs";
 import path from "path";
+import os from "os";
 import { execSync } from "child_process";
 import { logger } from "./logger";
+
+export function scanTempDir(prefix: string, scanId: number): string {
+  return path.join(os.tmpdir(), `${prefix}-${scanId}`);
+}
 
 const MAX_FILE_BYTES = 60_000;
 const MAX_TOTAL_CHARS = 180_000;
@@ -63,9 +68,10 @@ export interface IngestionResult {
 }
 
 export async function ingestGitHubRepo(repoUrl: string, scanId: number): Promise<IngestionResult | null> {
-  const dir = `/tmp/agenario-gh-${scanId}`;
+  const dir = scanTempDir("agenario-gh", scanId);
   try {
-    execSync(`rm -rf "${dir}" && mkdir -p "${dir}"`, { timeout: 10_000 });
+    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+    fs.mkdirSync(dir, { recursive: true });
 
     // Normalize GitHub URL
     let cloneUrl = repoUrl.trim();
@@ -181,5 +187,9 @@ function collectRouteFiles(dir: string, out: string[], root: string, depth = 0):
 }
 
 export function cleanupScan(scanId: number): void {
-  try { execSync(`rm -rf "/tmp/agenario-gh-${scanId}"`, { timeout: 10_000 }); } catch { /* ignore */ }
+  try {
+    fs.rmSync(scanTempDir("agenario-gh", scanId), { recursive: true, force: true });
+  } catch {
+    /* ignore */
+  }
 }

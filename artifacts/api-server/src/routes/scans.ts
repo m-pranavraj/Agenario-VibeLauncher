@@ -1,5 +1,7 @@
 import express, { Router, type IRouter } from "express";
 import fs from "fs";
+import os from "os";
+import path from "path";
 import { logger } from "../lib/logger.js";
 import { eq, desc } from "drizzle-orm";
 import { db, usersTable, scansTable, scanIssuesTable } from "@workspace/db";
@@ -12,6 +14,7 @@ import { detectFramework, detectVibeTool, detectBusinessType } from "../lib/dete
 import { scanDirectory, type StaticFinding } from "../lib/scanner.js";
 import { runProofEngine } from "../lib/proof-engine.js";
 import { runPlaywrightBrowserProofs } from "../lib/playwright-proof.js";
+import { runGithubboxSandbox, type SandboxRunResult } from "../lib/sandbox-runner.js";
 import { runShadowApiRadar } from "../lib/shadow-api-radar.js";
 import { computeRegressionDiff } from "../lib/regression.js";
 import { computeBenchmark } from "../lib/benchmark.js";
@@ -190,6 +193,35 @@ async function runAnalysisPipeline(opts: {
     staticIssueRows = staticResult.findings.map((f) => staticFindingToIssueRow(scanId, f));
   }
 
+  // ── GitHubbox sandbox: install, build, serve, live probes ───────────────
+  let sandboxResult: SandboxRunResult | null = null;
+  if (dir && (sourceType === "github" || sourceType === "zip")) {
+    sandboxResult = await runGithubboxSandbox({
+      scanId,
+      dir,
+      packageJson: packageJson ?? {},
+      framework,
+      sourceType,
+    }).catch((err) => {
+      logger.warn({ err, scanId }, "GitHubbox sandbox crashed — continuing with static analysis");
+      return {
+        meta: {
+          status: "failed" as const,
+          reason: `Sandbox crashed: ${err instanceof Error ? err.message : String(err)}`,
+        },
+        proofs: [],
+        steps: [{ step: "Sandbox execution", status: "fail" as const, detail: String(err) }],
+      };
+    });
+    logger.info(
+      { scanId, status: sandboxResult.meta.status, proofs: sandboxResult.proofs.length },
+      "GitHubbox sandbox finished",
+    );
+  }
+
+  const sandboxLiveUrl =
+    sandboxResult?.meta.status === "completed" ? sandboxResult.meta.localUrl : undefined;
+
   // ── Run core agents + proof engine in parallel ────────────────
   // Each leg is individually guarded — no single failure can kill the scan.
   const [result, httpProofEvidence, browserProofEvidence] = await Promise.all([
@@ -204,26 +236,39 @@ async function runAnalysisPipeline(opts: {
         complianceResults: null,
       };
     }),
-    runProofEngine(sourceType, sourceInput).catch((err) => {
+    runProofEngine(sandboxLiveUrl ? "url" : sourceType, sandboxLiveUrl ?? sourceInput).catch((err) => {
       logger.warn({ err, scanId }, "Proof engine failed — no HTTP proof evidence (scan continues)");
       return [] as Awaited<ReturnType<typeof runProofEngine>>;
     }),
-    // Playwright: if URL is unreachable or browser not available, return empty (not a failure)
-    runPlaywrightBrowserProofs(sourceType, sourceInput, codeContext ? {
-      framework: codeContext.framework,
-      keyFiles: codeContext.keyFiles,
-      routes: codeContext.routes,
-      vibeTool: codeContext.vibeTool,
-    } : undefined).catch((err) => {
-      logger.warn({ err, scanId }, "Browser proofs not eligible for this source — skipping");
-      return [] as Awaited<ReturnType<typeof runPlaywrightBrowserProofs>>;
-    }),
+    // Skip duplicate live probes when GitHubbox already captured runtime evidence
+    sandboxLiveUrl
+      ? Promise.resolve([] as Awaited<ReturnType<typeof runPlaywrightBrowserProofs>>)
+      : runPlaywrightBrowserProofs(sourceType, sourceInput, codeContext ? {
+          framework: codeContext.framework,
+          keyFiles: codeContext.keyFiles,
+          routes: codeContext.routes,
+          vibeTool: codeContext.vibeTool,
+        } : undefined).catch((err) => {
+          logger.warn({ err, scanId }, "Browser proofs not eligible for this source — skipping");
+          return [] as Awaited<ReturnType<typeof runPlaywrightBrowserProofs>>;
+        }),
   ]);
 
-  // Merge: browser proofs (99% confidence) take precedence, deduplicate by type
+  // Merge proofs: GitHubbox live proofs > browser > HTTP; add static code proofs when sandbox did not run live
   const browserTypes = new Set(browserProofEvidence.map((p) => p.type));
-  const dedupedHttpProofs = httpProofEvidence.filter((p) => !browserTypes.has(p.type));
-  const proofEvidence = [...browserProofEvidence, ...dedupedHttpProofs];
+  const sandboxTypes = new Set((sandboxResult?.proofs ?? []).map((p) => p.type));
+  const dedupedHttpProofs = httpProofEvidence.filter(
+    (p) => !browserTypes.has(p.type) && !sandboxTypes.has(p.type),
+  );
+
+  const staticCodeProofs =
+    sandboxLiveUrl ? [] : browserProofEvidence;
+
+  const proofEvidence = [
+    ...(sandboxResult?.proofs ?? []),
+    ...staticCodeProofs.filter((p) => !sandboxTypes.has(p.type)),
+    ...dedupedHttpProofs,
+  ];
 
   const aiIssueRows = result.agentResults.flatMap((ar) =>
     ar.issues.map((issue) => ({
@@ -482,6 +527,11 @@ async function runAnalysisPipeline(opts: {
 
   const certId = "AGN-" + Math.random().toString(36).substring(2, 10).toUpperCase();
 
+  const mergedReplaySteps = [
+    ...(sandboxResult?.steps ?? []),
+    ...(launchReplaySteps ?? []),
+  ];
+
   const [updated] = await db
     .update(scansTable)
     .set({
@@ -495,12 +545,13 @@ async function runAnalysisPipeline(opts: {
       revenueIntelligence: result.revenueIntelligence ?? null,
       complianceResults: result.complianceResults ?? null,
       proofEvidence: proofEvidence.length > 0 ? proofEvidence : null,
+      sandboxMeta: sandboxResult?.meta ?? null,
       regressionDiff: regressionDiff ?? null,
       benchmarkPercentile,
       launchDNA,
       cofounderNarrative: cofounderNarrative || null,
       shadowApiFindings: shadowApiFindings ?? null,
-      launchReplaySteps: launchReplaySteps.length > 0 ? launchReplaySteps : null,
+      launchReplaySteps: mergedReplaySteps.length > 0 ? mergedReplaySteps : null,
       secretScanResults: secretScanResults ?? null,
       packageVulns: packageVulns ?? null,
       cleanupReport: cleanupReport ?? null,
@@ -668,7 +719,7 @@ router.post(
       })
       .returning();
 
-    const tmpZipPath = `/tmp/upload-${scan.id}.zip`;
+    const tmpZipPath = path.join(os.tmpdir(), `agenario-upload-${scan.id}.zip`);
     try {
       fs.writeFileSync(tmpZipPath, req.body);
       const ingested = await ingestZipFile(tmpZipPath, scan.id);

@@ -5,8 +5,13 @@
 
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
+import os from "os";
+import AdmZip from "adm-zip";
 import { logger } from "./logger";
+
+function zipTempDir(scanId: number): string {
+  return path.join(os.tmpdir(), `agenario-${scanId}`);
+}
 
 const MAX_FILE_BYTES = 60_000;
 const MAX_TOTAL_CHARS = 180_000;
@@ -63,12 +68,13 @@ export interface ZipIngestionResult {
 }
 
 export async function ingestZipFile(zipPath: string, scanId: number): Promise<ZipIngestionResult | null> {
-  const dir = `/tmp/agenario-${scanId}`;
+  const dir = zipTempDir(scanId);
   try {
-    execSync(`rm -rf "${dir}" && mkdir -p "${dir}"`, { timeout: 10_000 });
+    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+    fs.mkdirSync(dir, { recursive: true });
 
-    // Use system unzip
-    execSync(`unzip -q "${zipPath}" -d "${dir}"`, { timeout: 30_000, stdio: "pipe" });
+    const zip = new AdmZip(zipPath);
+    zip.extractAllTo(dir, true);
 
     // If the zip had a single top-level folder, use it as root
     const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -144,5 +150,9 @@ export async function ingestZipFile(zipPath: string, scanId: number): Promise<Zi
 }
 
 export function cleanupZip(scanId: number): void {
-  try { execSync(`rm -rf "/tmp/agenario-${scanId}"`, { timeout: 10_000 }); } catch { /* ignore */ }
+  try {
+    fs.rmSync(zipTempDir(scanId), { recursive: true, force: true });
+  } catch {
+    /* ignore */
+  }
 }

@@ -3549,11 +3549,13 @@ function ConfidenceBadges({ evidence }: { evidence: ProofEvidence[] }) {
 // Remaining proofs are blurred behind a Creator gate.
 function SandboxProofsSection({
   evidence,
+  sandboxMeta,
   plan,
   sourceType,
   isLight,
 }: {
   evidence: ProofEvidence[] | null | undefined;
+  sandboxMeta?: import("@/lib/api").SandboxMeta | null;
   plan: string;
   sourceType?: string | null;
   isLight: boolean;
@@ -3564,6 +3566,25 @@ function SandboxProofsSection({
   const rest = proofs.slice(1);
   const pcfg0 = first ? (PROOF_TYPE_CONFIG[first.type] ?? PROOF_TYPE_CONFIG.chaos) : null;
   const [stepsOpen, setStepsOpen] = useState(false);
+
+  const ineligibleMessage = (() => {
+    if (sourceType === "description") {
+      return "Text descriptions can't be executed in a sandbox — upload a GitHub repo or ZIP file.";
+    }
+    if (sandboxMeta?.reason) return sandboxMeta.reason;
+    if (sourceType === "url") {
+      return "Live URL scans probe your deployed site directly. GitHubbox sandbox runs uploaded source code locally.";
+    }
+    return "This repository or filebase wasn't eligible for GitHubbox sandbox execution.";
+  })();
+
+  const sandboxStatusLabel = sandboxMeta?.status === "completed"
+    ? "GitHubbox verified"
+    : sandboxMeta?.status === "failed"
+      ? "Sandbox failed"
+      : sandboxMeta?.status === "ineligible"
+        ? "Not eligible"
+        : null;
 
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden aurora-card`}>
@@ -3578,7 +3599,12 @@ function SandboxProofsSection({
             {proofs.length} Runtime Proof{proofs.length !== 1 ? "s" : ""}
           </span>
         )}
-        {proofs.length === 0 && (
+        {proofs.length === 0 && sandboxStatusLabel && (
+          <span className={`ml-auto text-[10px] px-2.5 py-1 rounded-full font-medium ${isLight ? "bg-amber-50 text-amber-700 border border-amber-200" : "bg-amber-500/10 text-amber-400 border border-amber-500/25"}`}>
+            {sandboxStatusLabel}
+          </span>
+        )}
+        {proofs.length === 0 && !sandboxStatusLabel && (
           <span className={`ml-auto text-[10px] px-2.5 py-1 rounded-full font-medium ${isLight ? "bg-gray-100 text-gray-400 border border-gray-200" : "bg-white/[0.05] text-white/30 border border-white/[0.08]"}`}>
             Not available
           </span>
@@ -3615,16 +3641,23 @@ function SandboxProofsSection({
                     <Camera className="w-5 h-5 text-violet-400" />
                   </div>
                   <p className={`text-sm font-semibold ${isLight ? "text-gray-700" : "text-white/70"}`}>Screenshots not available</p>
-                  <p className={`text-xs mt-1 ${isLight ? "text-gray-400" : "text-white/35"}`}>
-                    {sourceType === "description"
-                      ? "Text descriptions can't be executed in a sandbox"
-                      : "This code wasn't eligible for live sandbox execution"}
+                  <p className={`text-xs mt-1 max-w-sm mx-auto leading-relaxed ${isLight ? "text-gray-400" : "text-white/35"}`}>
+                    {ineligibleMessage}
                   </p>
+                  {sandboxMeta?.blockers && sandboxMeta.blockers.length > 0 && (
+                    <p className={`text-[10px] mt-2 font-mono ${isLight ? "text-gray-400" : "text-white/25"}`}>
+                      {sandboxMeta.blockers.join(" · ")}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
             <div className={`text-xs leading-relaxed ${isLight ? "text-gray-400" : "text-white/35"} text-center`}>
-              Submit a <span className={`font-semibold ${isLight ? "text-gray-600" : "text-white/60"}`}>GitHub repo or ZIP file</span> to get screenshot-backed runtime evidence — real HTTP probes, browser automation screenshots, and exploit reproduction steps.
+              {sandboxMeta?.status === "completed" ? (
+                <>GitHubbox ran <span className={`font-semibold ${isLight ? "text-gray-600" : "text-white/60"}`}>install → dev server → live probes</span> against your code in an isolated workspace.</>
+              ) : (
+                <>Submit a <span className={`font-semibold ${isLight ? "text-gray-600" : "text-white/60"}`}>Node.js web app</span> (GitHub or ZIP with a dev/start script) for real Chromium screenshots and runtime security probes.</>
+              )}
             </div>
           </div>
         ) : (
@@ -7439,6 +7472,7 @@ export default function ScanResultsPage() {
             >
               <SandboxProofsSection
                 evidence={scan.proofEvidence}
+                sandboxMeta={scan.sandboxMeta}
                 plan={user.plan}
                 sourceType={scan.sourceType}
                 isLight={isLight}
