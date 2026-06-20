@@ -11,6 +11,7 @@ import RegisterPage from "@/pages/register";
 import DashboardPage from "@/pages/dashboard";
 import NewScanPage from "@/pages/new-scan";
 import ScanResultsPage from "@/pages/scan-results";
+import ScanProgressPage from "@/pages/scan-progress";
 import PricingPage from "@/pages/pricing";
 import DocsPage from "@/pages/docs";
 import PortfolioPage from "@/pages/portfolio";
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/register" component={RegisterPage} />
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/scans/new" component={NewScanPage} />
+      <Route path="/scans/:id/progress" component={ScanProgressPage} />
       <Route path="/scans/:id" component={ScanResultsPage} />
       <Route path="/pricing" component={PricingPage} />
       <Route path="/docs" component={DocsPage} />

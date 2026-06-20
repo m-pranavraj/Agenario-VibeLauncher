@@ -587,5 +587,18 @@ export const api = {
       percentOfApps: number;
       frameworkRootCause: string;
     }>(`/intelligence/failures?issueTitle=${encodeURIComponent(issueTitle)}`),
-  }
+  },
+  subscribeProgress: (scanId: number, onEvent: (event: any) => void): (() => void) => {
+    const url = `${BASE}/scans/${scanId}/progress`;
+    const eventSource = new EventSource(url, { withCredentials: true });
+    eventSource.onmessage = (e) => {
+      try { onEvent(JSON.parse(e.data)); } catch {}
+    };
+    eventSource.onerror = () => {
+      eventSource.close();
+    };
+    return () => {
+      eventSource.close();
+    };
+  },
 };

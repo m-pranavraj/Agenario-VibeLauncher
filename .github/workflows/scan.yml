@@ -1,0 +1,54 @@
+name: Agenario Auto-Scan
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Agenario Scan
+        id: agenario
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: "${{ secrets.AGENARIO_API_URL }}/api/scans"
+          method: POST
+          customHeaders: '{"Content-Type": "application/json", "Authorization": "Bearer ${{ secrets.AGENARIO_API_KEY }}"}'
+          data: >-
+            {"sourceType":"github","sourceInput":"https://github.com/${{ github.repository }}","appDescription":"Auto-scanned from GitHub Actions push: ${{ github.event.head_commit.message }}"}
+
+      - name: Wait for Results
+        run: |
+          SCAN_ID=$(echo '${{ steps.agenario.outputs.response }}' | grep -o '"id":[0-9]*' | grep -o '[0-9]*')
+          echo "Scan ID: $SCAN_ID"
+          for i in {1..60}; do
+            STATUS=$(curl -s "${{ secrets.AGENARIO_API_URL }}/api/scans/$SCAN_ID" \
+              -H "Authorization: Bearer ${{ secrets.AGENARIO_API_KEY }}" \
+              | grep -o '"status":"[^"]*"' | head -1 | grep -o '"[^"]*"$' | tr -d '"')
+            echo "Status: $STATUS"
+            if [ "$STATUS" = "completed" ] || [ "$STATUS" = "failed" ]; then
+              break
+            fi
+            sleep 5
+          done
+
+      - name: Comment PR with Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const SCAN_ID = '${{ steps.agenario.outputs.response }}'.match(/"id":(\d+)/)?.[1];
+            const RESULT = await fetch(`${{ secrets.AGENARIO_API_URL }}/api/public/cert/${SCAN_ID}`).then(r => r.json()).catch(() => ({score: 'N/A'}));
+            const score = RESULT.score ?? 'N/A';
+            const verdict = RESULT.verdict ?? 'N/A';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🤖 Agenario Scan Complete\n**Score:** ${score}/100\n**Verdict:** ${verdict}\n[View Full Report](${{ secrets.AGENARIO_APP_URL }}/scans/${SCAN_ID})`
+            });

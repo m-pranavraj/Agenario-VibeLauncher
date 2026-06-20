@@ -237,10 +237,137 @@ function ScanAnimation({ isDeep }: { isDeep: boolean }) {
   );
 }
 
+const ONBOARDING_STEPS = [
+  {
+    id: "welcome",
+    title: "See what Agenario finds",
+    description: "Watch a real scan example before analyzing your own app.",
+  },
+  {
+    id: "sample",
+    title: "Sample Results",
+    description: "Here's what a typical vibe-coded app looks like after a full scan.",
+  },
+  {
+    id: "analyze",
+    title: "Analyze your app",
+    description: "Ready to scan your own project.",
+  },
+];
+
+const SAMPLE_ISSUES = [
+  { severity: "critical", title: "Hardcoded Stripe Secret Key", agent: "Secret Scanner", description: "A live Stripe secret key (sk_live_*) was found hardcoded in src/lib/payments.ts. This exposes payment processing to anyone with repo access." },
+  { severity: "critical", title: "No Rate Limiting on Auth Routes", agent: "Security & Access Control", description: "Login/signup endpoints have no rate limiting. An attacker can brute-force passwords at 1000+ requests/second." },
+  { severity: "high", title: "CORS Wildcard Origin", agent: "Security & Access Control", description: "CORS configured with `origin: '*'` allows any website to make credentialed requests to your API." },
+  { severity: "high", title: "Missing CSRF Protection", agent: "Reliability & Error Handling", description: "No CSRF token validation on state-changing requests. Users can be tricked into performing actions via external links." },
+  { severity: "medium", title: "Empty Catch Blocks", agent: "AI Code Quality", description: "5 empty catch blocks found. Errors are silently swallowed, making debugging production incidents extremely difficult." },
+];
+
+function OnboardingWizard({ onComplete }: { onComplete: () => void }) {
+  const isLight = useIsLight();
+  const [step, setStep] = useState(0);
+  const bg = isLight ? "bg-white text-gray-900" : "bg-[#050505] text-white";
+  const cardBg = isLight ? "bg-gray-50 border-gray-200" : "bg-[#0a0a0a] border-[#1a1a1a]";
+
+  if (step === 0) {
+    return (
+      <div className={`min-h-screen ${bg} flex items-center justify-center p-4`}>
+        <div className="max-w-lg w-full text-center">
+          <div className={`w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center ${isLight ? "bg-gray-100 border border-gray-200" : "bg-white/[0.06] border border-white/[0.1]"}`}>
+            <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover" />
+          </div>
+          <h2 className={`text-2xl font-['Syne'] font-bold mb-3 ${isLight ? "text-gray-900" : "text-white"}`}>
+            Before you scan your app...
+          </h2>
+          <p className={`text-sm mb-8 ${isLight ? "text-gray-500" : "text-white/40"}`}>
+            See what Agenario found in a typical vibe-coded SaaS app. Most apps have 15-40 issues you'd miss until launch day.
+          </p>
+          <button
+            onClick={() => setStep(1)}
+            className={`font-semibold py-3 px-8 rounded-xl transition-all text-sm ${isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white hover:bg-white/90 text-black"}`}
+          >
+            Show me sample results
+          </button>
+          <button
+            onClick={onComplete}
+            className={`block mx-auto mt-4 text-xs ${isLight ? "text-gray-400 hover:text-gray-600" : "text-white/30 hover:text-white/50"} transition-colors`}
+          >
+            Skip, scan my app directly
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 1) {
+    return (
+      <div className={`min-h-screen ${bg} p-4`}>
+        <div className="max-w-2xl mx-auto py-8">
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full ${isLight ? "bg-green-100 text-green-700" : "bg-green-500/10 text-green-400"}`}>
+              Sample Report
+            </div>
+            <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>Vibe-coded SaaS app (Cursor + Next.js + Stripe)</span>
+          </div>
+
+          <h2 className={`text-xl font-['Syne'] font-bold mb-1 ${isLight ? "text-gray-900" : "text-white"}`}>Launch Readiness: 52/100</h2>
+          <p className={`text-sm mb-6 ${isLight ? "text-gray-500" : "text-white/40"}`}>
+            Launch verdict: <span className="text-amber-400 font-medium">Launch with Caution</span> — 4 critical, 8 high issues
+          </p>
+
+          <div className="space-y-2 mb-8">
+            {SAMPLE_ISSUES.map((issue, i) => (
+              <div key={i} className={`rounded-xl border p-4 ${cardBg}`}>
+                <div className="flex items-start gap-3">
+                  <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                    issue.severity === "critical" ? "bg-red-500" :
+                    issue.severity === "high" ? "bg-amber-500" : "bg-yellow-500"
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className={`text-[10px] font-semibold uppercase tracking-wider ${
+                        issue.severity === "critical" ? "text-red-400" :
+                        issue.severity === "high" ? "text-amber-400" : "text-yellow-600"
+                      }`}>{issue.severity}</span>
+                      <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"}`}>{issue.agent}</span>
+                    </div>
+                    <h4 className={`text-sm font-medium ${isLight ? "text-gray-900" : "text-white"}`}>{issue.title}</h4>
+                    <p className={`text-xs mt-0.5 ${isLight ? "text-gray-500" : "text-white/40"} line-clamp-2`}>{issue.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className={`rounded-xl border p-5 ${cardBg} mb-6`}>
+            <h3 className={`font-['Syne'] font-bold text-sm mb-2 ${isLight ? "text-gray-900" : "text-white"}`}>What you'd miss without Agenario</h3>
+            <ul className={`space-y-1.5 text-sm ${isLight ? "text-gray-600" : "text-white/50"}`}>
+              <li>• Live Stripe key in source code = ₹∞ liability</li>
+              <li>• No rate limiting = account takeover in hours</li>
+              <li>• CORS wildcard = data theft from any website</li>
+              <li>• Empty catch blocks = silent production crashes</li>
+            </ul>
+          </div>
+
+          <button
+            onClick={() => setStep(2)}
+            className={`w-full font-semibold py-3 px-8 rounded-xl transition-all text-sm ${isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white hover:bg-white/90 text-black"}`}
+          >
+            Got it — scan my app now
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 export default function NewScanPage() {
   const isLight = useIsLight();
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
+  const [onboarded, setOnboarded] = useState(() => localStorage.getItem("agenario_onboarded") === "true");
   const [sourceType, setSourceType] = useState("github");
   const [sourceInput, setSourceInput] = useState("");
   const [zipFile, setZipFile] = useState<File | null>(null);
@@ -252,11 +379,19 @@ export default function NewScanPage() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const handleOnboarded = () => {
+    setOnboarded(true);
+    localStorage.setItem("agenario_onboarded", "true");
+  };
+
+  if (!onboarded) {
+    return <OnboardingWizard onComplete={handleOnboarded} />;
+  }
+
   useEffect(() => {
     if (!loading && !user) setLocation("/login");
   }, [user, loading, setLocation]);
 
-  const isDeep = sourceType === "github" || sourceType === "zip";
   const selectedType = SOURCE_TYPES.find((t) => t.id === sourceType)!;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -283,7 +418,7 @@ export default function NewScanPage() {
           throw new Error((data as { error?: string }).error ?? "Upload failed");
         }
         const scan = await response.json() as { id: number };
-        setLocation(`/scans/${scan.id}`);
+        setLocation(`/scans/${scan.id}/progress`);
       } else {
         if (!sourceInput.trim()) throw new Error("Please provide a URL or description");
         const scan = await api.scans.create({
@@ -293,7 +428,7 @@ export default function NewScanPage() {
           vibeTool: vibeTool || undefined,
           businessType: businessType || undefined,
         });
-        setLocation(`/scans/${scan.id}`);
+        setLocation(`/scans/${scan.id}/progress`);
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Analysis failed. Please try again.");
@@ -340,7 +475,12 @@ export default function NewScanPage() {
 
       <main className="max-w-2xl mx-auto px-6 py-10">
         {analyzing ? (
-          <ScanAnimation isDeep={isDeep} />
+          <div className={`min-h-[60vh] flex items-center justify-center ${isLight ? "text-gray-400" : "text-white/30"}`}>
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-purple-400" />
+              <p className="text-sm">Starting scan...</p>
+            </div>
+          </div>
         ) : (
           <>
             <div className="mb-8">

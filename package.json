@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "preinstall": "node -e \"var ua=process.env.npm_config_user_agent||'';if(!ua.includes('pnpm')){console.error('Use pnpm instead');process.exit(1)}\"",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "build:vercel": "pnpm --filter @workspace/api-server run build:vercel && pnpm --filter @workspace/agenario run build && node -e \"const fs = require('fs'); fs.rmSync('dist', { recursive: true, force: true }); fs.cpSync('artifacts/agenario/dist', 'dist', { recursive: true });\"",
     "typecheck:libs": "tsc --build",

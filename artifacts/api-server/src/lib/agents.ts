@@ -7,12 +7,18 @@ import { KeyRotator } from "./key-rotator.js";
 const groqRotator = new KeyRotator("Groq", process.env["GROQ_API_KEY"] ?? process.env["GROQ_KEYS"]);
 const openRouterRotator = new KeyRotator("OpenRouter", process.env["OPENROUTER_API_KEY"] ?? process.env["OPENROUTER_KEYS"]);
 const cerebrasRotator = new KeyRotator("Cerebras", process.env["CEREBRAS_API_KEY"] ?? process.env["CEREBRAS_KEYS"]);
+const anthropicRotator = new KeyRotator("Anthropic", process.env["ANTHROPIC_API_KEY"] ?? process.env["ANTHROPIC_KEYS"]);
+const openaiRotator = new KeyRotator("OpenAI", process.env["OPENAI_API_KEY"] ?? process.env["OPENAI_KEYS"]);
 
 const OPENROUTER_BASE = "https://openrouter.ai/api/v1";
 
 const FAST_MODEL = "llama-3.1-8b-instant";
 const SMART_MODEL = "llama-3.3-70b-versatile";
 const CEREBRAS_MODEL = "llama-3.3-70b";
+const ANTHROPIC_FAST = "claude-3-haiku-20240307";
+const ANTHROPIC_SMART = "claude-3-5-sonnet-20241022";
+const OPENAI_FAST = "gpt-4o-mini";
+const OPENAI_SMART = "gpt-4o";
 
 const OPENROUTER_MODELS = [
   "meta-llama/llama-3.3-70b-instruct:free",
@@ -36,17 +42,25 @@ function getAnyClient(): Groq {
   if (groqKey) return new Groq({ apiKey: groqKey });
   const cerebrasKey = cerebrasRotator.getNextKey();
   if (cerebrasKey) return new Groq({ apiKey: cerebrasKey, baseURL: "https://api.cerebras.ai/v1" });
+  const anthropicKey = anthropicRotator.getNextKey();
+  if (anthropicKey) return new Groq({ apiKey: anthropicKey, baseURL: "https://api.anthropic.com/v1" });
+  const openaiKey = openaiRotator.getNextKey();
+  if (openaiKey) return new Groq({ apiKey: openaiKey });
   throw new Error("No AI provider keys available.");
 }
 
 function smartModel(): string {
   if (openRouterRotator.hasKeys()) return "meta-llama/llama-3.3-70b-instruct:free";
   if (groqRotator.hasKeys()) return SMART_MODEL;
+  if (anthropicRotator.hasKeys()) return ANTHROPIC_SMART;
+  if (openaiRotator.hasKeys()) return OPENAI_SMART;
   return CEREBRAS_MODEL;
 }
 function fastModel(): string {
   if (openRouterRotator.hasKeys()) return "meta-llama/llama-3.1-8b-instruct:free";
   if (groqRotator.hasKeys()) return FAST_MODEL;
+  if (anthropicRotator.hasKeys()) return ANTHROPIC_FAST;
+  if (openaiRotator.hasKeys()) return OPENAI_FAST;
   return CEREBRAS_MODEL;
 }
 
@@ -585,24 +599,26 @@ function withCallTimeout<T>(fn: () => Promise<T>, label: string): Promise<T> {
 }
 
 /**
- * callWithFallback — THREE-TIER AI PROVIDER CHAIN
+ * callWithFallback — FIVE-TIER AI PROVIDER CHAIN with cost-aware routing
  *
  * Tier 1: OpenRouter — cycles ALL 6 free models with 16s per-call timeout.
- *         Never breaks early; always tries every model on any failure.
  * Tier 2: Groq      — native JSON mode, 16s timeout.
- * Tier 3: Cerebras  — 16s timeout.
+ * Tier 3: Cerebras  — high-throughput Llama, 16s timeout.
+ * Tier 4: Anthropic — Claude Haiku/Sonnet, 16s timeout.
+ * Tier 5: OpenAI    — GPT-4o-mini/4o, 16s timeout.
  *
  * NEVER THROWS. Returns "{}" when all providers fail so callers always get
  * a parseable result and can return 0 issues rather than crashing the scan.
  */
 async function callWithFallback(
   messages: { role: "system" | "user"; content: string }[],
-  opts: { model: string; cerebrasModel?: string; maxTokens?: number },
+  opts: { model: string; cerebrasModel?: string; maxTokens?: number; useSmart?: boolean },
 ): Promise<string> {
   const messages_typed = messages as { role: "system" | "user" | "assistant"; content: string }[];
   const maxTok = opts.maxTokens ?? 700;
+  const useSmart = opts.useSmart ?? false;
 
-  // ── Tier 1: OpenRouter ───────────────────────────────────────────────
+  // ── Tier 1: OpenRouter (free tier — try all models) ──────────────────
   if (openRouterRotator.hasKeys()) {
     for (let attempt = 0; attempt < OPENROUTER_MODELS.length; attempt++) {
       const orModel = nextOpenRouterModel();
@@ -630,7 +646,7 @@ async function callWithFallback(
     }
   }
 
-  // ── Tier 2: Groq ───────────────────────────────────────────────────────
+  // ── Tier 2: Groq (fast — native JSON mode) ──────────────────────────
   if (groqRotator.hasKeys()) {
     const groqKey = groqRotator.getNextKey();
     if (groqKey) {
@@ -638,7 +654,7 @@ async function callWithFallback(
       try {
         const response = await withCallTimeout(
           () => groqClient.chat.completions.create({
-            model: opts.model,
+            model: useSmart ? SMART_MODEL : FAST_MODEL,
             messages: messages_typed,
             response_format: { type: "json_object" },
             max_tokens: maxTok,
@@ -654,7 +670,7 @@ async function callWithFallback(
     }
   }
 
-  // ── Tier 3: Cerebras ───────────────────────────────────────────────────
+  // ── Tier 3: Cerebras (high-throughput Llama) ─────────────────────────
   if (cerebrasRotator.hasKeys()) {
     const cerebrasKey = cerebrasRotator.getNextKey();
     if (cerebrasKey) {
@@ -671,6 +687,71 @@ async function callWithFallback(
         const content = extractJson(response.choices[0]?.message?.content ?? "{}");
         if (content && content !== "{}") return content;
       } catch (err: any) {
+        if (err?.status === 429) cerebrasRotator.markRateLimited(cerebrasKey);
+        logger.warn({ err: err?.message?.slice(0, 120) }, "Cerebras failed");
+      }
+    }
+  }
+
+  // ── Tier 4: Anthropic (Claude — best for complex reasoning) ──────────
+  if (anthropicRotator.hasKeys()) {
+    const anthropicKey = anthropicRotator.getNextKey();
+    if (anthropicKey) {
+      const model = useSmart ? ANTHROPIC_SMART : ANTHROPIC_FAST;
+      try {
+        const { default: Anthropic } = await import("@anthropic-ai/sdk") as any;
+        const anthropic = new Anthropic({ apiKey: anthropicKey });
+        const response = await withCallTimeout(
+          () => anthropic.messages.create({
+            model,
+            max_tokens: maxTok,
+            system: messages_typed.find(m => m.role === "system")?.content ?? "",
+            messages: messages_typed.filter(m => m.role !== "system").map((m: any) => ({
+              role: m.role as "user" | "assistant",
+              content: m.content,
+            })),
+          }),
+          `Anthropic[${model}]`,
+        );
+        const raw = response.content.map((b: any) => b.type === "text" ? b.text : "").join("");
+        const content = extractJson(raw);
+        if (content && content !== "{}") return content;
+      } catch (err: any) {
+        if (err?.status === 429) anthropicRotator.markRateLimited(anthropicKey);
+        logger.warn({ err: err?.message?.slice(0, 120) }, "Anthropic failed");
+      }
+    }
+  }
+
+  // ── Tier 5: OpenAI (GPT-4o — best for structured output) ────────────
+  if (openaiRotator.hasKeys()) {
+    const openaiKey = openaiRotator.getNextKey();
+    if (openaiKey) {
+      const model = useSmart ? OPENAI_SMART : OPENAI_FAST;
+      try {
+        const { default: OpenAI } = await import("openai") as any;
+        const openai = new OpenAI({ apiKey: openaiKey });
+        const response = await withCallTimeout(
+          () => openai.chat.completions.create({
+            model,
+            messages: messages_typed,
+            response_format: { type: "json_object" },
+            max_tokens: maxTok,
+          }),
+          `OpenAI[${model}]`,
+        );
+        const content = response.choices[0]?.message?.content ?? "{}";
+        if (content && content !== "{}") return content;
+      } catch (err: any) {
+        if (err?.status === 429) openaiRotator.markRateLimited(openaiKey);
+        logger.warn({ err: err?.message?.slice(0, 120) }, "OpenAI failed");
+      }
+    }
+  }
+
+  logger.error("All AI providers exhausted — returning empty JSON");
+  return "{}";
+}
         if (err?.status === 429) cerebrasRotator.markRateLimited(cerebrasKey);
         logger.warn({ err: err?.message?.slice(0, 120) }, "Cerebras failed");
       }

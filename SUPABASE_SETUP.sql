@@ -107,7 +107,33 @@ CREATE TABLE IF NOT EXISTS public.scan_issues (
 );
 
 
--- ── 5. SESSION TABLE (required by connect-pg-simple) ─────────────────────
+-- ── 5. CONVERSATIONS TABLE (chat / cofounder Q&A history) ─────────────────
+
+CREATE SEQUENCE IF NOT EXISTS conversations_id_seq START WITH 1 INCREMENT BY 1;
+
+CREATE TABLE IF NOT EXISTS public.conversations (
+  id         integer   NOT NULL DEFAULT nextval('conversations_id_seq'::regclass),
+  title      text      NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT conversations_pkey PRIMARY KEY (id)
+);
+
+
+-- ── 6. MESSAGES TABLE (individual messages within conversations) ──────────
+
+CREATE SEQUENCE IF NOT EXISTS messages_id_seq START WITH 1 INCREMENT BY 1;
+
+CREATE TABLE IF NOT EXISTS public.messages (
+  id              integer   NOT NULL DEFAULT nextval('messages_id_seq'::regclass),
+  conversation_id integer   NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
+  role            text      NOT NULL,
+  content         text      NOT NULL,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT messages_pkey PRIMARY KEY (id)
+);
+
+
+-- ── 7. SESSION TABLE (required by connect-pg-simple) ─────────────────────
 -- IMPORTANT: Do NOT use createTableIfMissing:true in the app — it fails
 -- after esbuild bundling. This manual creation is the correct approach.
 
@@ -120,9 +146,10 @@ CREATE TABLE IF NOT EXISTS public.session (
 
 -- Required index for connect-pg-simple session cleanup (prune expired sessions)
 CREATE INDEX IF NOT EXISTS idx_session_expire ON public.session (expire);
+CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON public.messages (conversation_id);
 
 
--- ── 6. PERFORMANCE INDEXES ───────────────────────────────────────────────
+-- ── 8. PERFORMANCE INDEXES ───────────────────────────────────────────────
 
 -- Scans: look up by user (dashboard list)
 CREATE INDEX IF NOT EXISTS idx_scans_user_id ON public.scans (user_id);
@@ -143,19 +170,21 @@ CREATE INDEX IF NOT EXISTS idx_scan_issues_severity ON public.scan_issues (sever
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users (email);
 
 
--- ── 7. ROW LEVEL SECURITY (RLS) ──────────────────────────────────────────
+-- ── 8. ROW LEVEL SECURITY (RLS) ──────────────────────────────────────────
 -- Supabase enables RLS by default. Since Agenario uses its own session-based
 -- auth (not Supabase Auth), we connect via DATABASE_URL with the service-role
 -- connection string (bypasses RLS). No RLS policies needed.
 -- If you want extra safety, keep RLS disabled on these tables:
 
-ALTER TABLE public.users      DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.scans      DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.scan_issues DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.session    DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users         DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.scans         DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.scan_issues   DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.conversations DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages      DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.session       DISABLE ROW LEVEL SECURITY;
 
 
--- ── 8. VERIFY EVERYTHING IS CORRECT ──────────────────────────────────────
+-- ── 9. VERIFY EVERYTHING IS CORRECT ──────────────────────────────────────
 -- After running the script, run this to confirm all tables exist:
 
 SELECT
@@ -168,7 +197,9 @@ WHERE table_schema = 'public'
 ORDER BY table_name;
 
 -- Expected output:
--- scan_issues  |  23
--- scans        |  37
--- session      |   3
--- users        |  10
+-- conversations |   3
+-- messages      |   4
+-- scan_issues   |  23
+-- scans         |  37
+-- session       |   3
+-- users         |  10

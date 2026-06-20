@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "export NODE_ENV=development PORT=8080 && pnpm run build && pnpm run start",
+    "dev": "pnpm run build && pnpm run start",
     "build": "node ./build.mjs",
     "build:vercel": "node ./build.vercel.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
@@ -35,7 +35,10 @@
     "pino-http": "^10.5.0",
     "playwright-core": "^1.61.0",
     "razorpay": "^2.9.6",
-    "serverless-http": "^4.0.0"
+    "serverless-http": "^4.0.0",
+    "@anthropic-ai/sdk": "^0.39.0",
+    "openai": "^4.86.0",
+    "lemon-squeezy": "^1.2.0"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.8",

@@ -28,6 +28,7 @@ import { runDigitalTwin } from "../lib/digital-twin.js";
 import { runPredictiveIntel } from "../lib/predictive-intelligence.js";
 import { runRootCause } from "../lib/root-cause.js";
 import { buildKnowledgeGraph } from "../lib/knowledge-graph.js";
+import { getEmitter, emitProgress, removeEmitter } from "../lib/scan-progress.js";
 
 const router: IRouter = Router();
 
@@ -153,8 +154,13 @@ async function runAnalysisPipeline(opts: {
   keyFiles?: Array<{ path: string; content: string }>;
   schemas?: string;
 }): Promise<void> {
+  const { scanId } = opts;
+  const emit = (phase: string, message: string, progress: number, agentName?: string) =>
+    emitProgress(scanId, { scanId, phase, status: "running", message, progress, agentName });
+
+  emit("initializing", "Starting analysis pipeline...", 0);
   const {
-    scanId, userId, sourceType, sourceInput, appDescription,
+    userId, sourceType, sourceInput, appDescription,
     dir, packageJson, fileTree, totalFiles, keyFiles, schemas,
   } = opts;
 
@@ -165,6 +171,7 @@ async function runAnalysisPipeline(opts: {
   let staticIssueRows: (typeof scanIssuesTable.$inferInsert)[] = [];
 
   if (dir) {
+    emit("detection", "Detecting framework and business type...", 3);
     const pkg = packageJson ?? {};
     framework = detectFramework(pkg);
     if (vibeTool === "unknown") vibeTool = detectVibeTool(pkg, fileTree ?? "");
@@ -188,12 +195,15 @@ async function runAnalysisPipeline(opts: {
       .set({ framework, vibeTool, businessType })
       .where(eq(scansTable.id, scanId));
 
+    emit("static-scan", "Running static security scan...", 8);
     const staticResult = scanDirectory(dir, pkg);
     logger.info({ scanId, findings: staticResult.findings.length }, "Static scan complete");
     staticIssueRows = staticResult.findings.map((f) => staticFindingToIssueRow(scanId, f));
+    emit("static-scan", `Static scan complete: ${staticResult.findings.length} findings`, 12, "Static Scanner");
   }
 
   // ── GitHubbox sandbox: install, build, serve, live probes ───────────────
+  emit("sandbox", "Building sandbox environment...", 15);
   let sandboxResult: SandboxRunResult | null = null;
   if (dir && (sourceType === "github" || sourceType === "zip")) {
     sandboxResult = await runGithubboxSandbox({
@@ -217,6 +227,7 @@ async function runAnalysisPipeline(opts: {
       { scanId, status: sandboxResult.meta.status, proofs: sandboxResult.proofs.length },
       "GitHubbox sandbox finished",
     );
+    emit("sandbox", `Sandbox: ${sandboxResult.meta.status}`, 20, "Sandbox Runner");
   }
 
   const sandboxLiveUrl =
@@ -224,6 +235,7 @@ async function runAnalysisPipeline(opts: {
 
   // ── Run core agents + proof engine in parallel ────────────────
   // Each leg is individually guarded — no single failure can kill the scan.
+  emit("ai-agents", "Running 15 AI agents in parallel...", 25);
   const [result, httpProofEvidence, browserProofEvidence] = await Promise.all([
     runAllAgents(sourceType, sourceInput, appDescription, codeContext).catch((err) => {
       logger.warn({ err, scanId }, "Agent pipeline error — returning empty results (scan continues)");
@@ -269,6 +281,10 @@ async function runAnalysisPipeline(opts: {
     ...staticCodeProofs.filter((p) => !sandboxTypes.has(p.type)),
     ...dedupedHttpProofs,
   ];
+
+  emit("ai-agents", `All agents complete: ${result.agentResults.reduce((s, a) => s + a.issues.length, 0)} total issues`, 50, result.agentResults[0]?.agentName);
+  emit("runtime-proofs", `Runtime proofs: ${proofEvidence.length} evidence items captured`, 60);
+  emit("enrichment", "Running OWASP, revenue, and compliance enrichment...", 65);
 
   const aiIssueRows = result.agentResults.flatMap((ar) =>
     ar.issues.map((issue) => ({
@@ -371,6 +387,8 @@ async function runAnalysisPipeline(opts: {
     Math.min(issueCounts.low * 1, 5);
   const finalScore = Math.max(0, 100 - penalty);
 
+  emit("shadow-api", "Scanning for shadow API endpoints...", 70);
+
   // ── Shadow API Radar (only for GitHub/ZIP with real code) ─────
   let shadowApiFindings = null;
   if (dir) {
@@ -395,6 +413,9 @@ async function runAnalysisPipeline(opts: {
   } catch (err) {
     logger.warn({ err }, "Secret scan failed");
   }
+
+  emit("secret-scan", `Secret scan: ${secretScanResults?.totalFound ?? 0} secrets found`, 75);
+  emit("vuln-check", "Checking package vulnerabilities...", 78);
 
   // ── Package Vulnerability Check ───────────────────────────────
   let packageVulns = null;
@@ -477,6 +498,8 @@ async function runAnalysisPipeline(opts: {
     }),
   ]);
 
+  emit("benchmark", `Score: ${finalScore}/100 — Running benchmark & regression`, 82);
+
   // ── Deep Tech Engines (Digital Twin, Predictive Intel, Root Cause) ─
   const criticalAndHighIssues = allIssues
     .filter((i) => i.severity === "critical" || i.severity === "high")
@@ -516,6 +539,8 @@ async function runAnalysisPipeline(opts: {
       return null;
     }),
   ]);
+
+  emit("finalizing", "Generating certificate and knowledge graph...", 92);
 
   const knowledgeGraph = buildKnowledgeGraph(
     dir,
@@ -579,8 +604,50 @@ async function runAnalysisPipeline(opts: {
     .where(eq(scansTable.id, scanId))
     .returning();
 
+  const totalIssues = issueCounts.critical + issueCounts.high + issueCounts.medium + issueCounts.low;
+  emit("complete", `Analysis complete: ${totalIssues} issues found, score: ${finalScore}/100`, 100);
+  emitProgress(scanId, { scanId, phase: "complete", status: "complete", message: "All done", progress: 100, timestamp: Date.now() });
+
   logger.info({ scanId }, "Analysis pipeline complete");
 }
+
+// ── SSE Progress Stream ───────────────────────────────────────────
+router.get("/scans/:id/progress", async (req, res): Promise<void> => {
+  if (!requireAuth(req, res)) return;
+
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid scan id" }); return; }
+
+  const [scan] = await db.select({ id: scansTable.id, userId: scansTable.userId, status: scansTable.status }).from(scansTable).where(eq(scansTable.id, id));
+  if (!scan || scan.userId !== req.session.userId) {
+    res.status(404).json({ error: "Scan not found" }); return;
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  });
+
+  const emitter = getEmitter(id);
+  const onProgress = (event: any) => {
+    res.write(`data: ${JSON.stringify(event)}\n\n`);
+  };
+
+  emitter.on("progress", onProgress);
+
+  // If scan already completed, send a final event
+  if (scan.status === "completed" || scan.status === "failed") {
+    res.write(`data: ${JSON.stringify({ scanId: id, phase: "complete", status: scan.status, message: "Scan finished", progress: 100, timestamp: Date.now() })}\n\n`);
+  }
+
+  req.on("close", () => {
+    emitter.off("progress", onProgress);
+    removeEmitter(id);
+  });
+});
 
 // ── POST /scans (JSON — GitHub URL / live URL / description) ─────
 router.post("/scans", async (req, res): Promise<void> => {
@@ -671,6 +738,7 @@ router.post("/scans", async (req, res): Promise<void> => {
       });
     } catch (err) {
       logger.error({ err, scanId: scan.id }, "Analysis failed");
+      emitProgress(scan.id, { scanId: scan.id, phase: "error", status: "error", message: "Analysis failed", progress: 0, error: (err as Error)?.message, timestamp: Date.now() });
       await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, scan.id));
     } finally {
       if (parsed.data.sourceType === "github") cleanupScan(scan.id);

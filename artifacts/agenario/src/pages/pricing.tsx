@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Check, Zap, ArrowLeft, Loader2, ShieldCheck, Building2, Mail, Tag, X, CheckCircle2 } from "lucide-react";
+import { Check, Zap, ArrowLeft, Loader2, ShieldCheck, Building2, Mail, Tag, X, CheckCircle2, ChevronDown } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
@@ -222,10 +222,18 @@ export default function PricingPage() {
       <main className="max-w-5xl mx-auto px-6 py-16">
         <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }} className="text-center mb-14">
           <motion.p variants={FADE_UP} className={`text-xs ${isLight ? "text-gray-500" : "text-white/30"} uppercase tracking-widest mb-4 font-medium`}>Pricing</motion.p>
+          <motion.div variants={FADE_UP} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-5 ${
+            isLight ? "bg-purple-100 text-purple-700" : "bg-purple-500/10 text-purple-300 border border-purple-500/20"
+          }`}>
+            <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+            <span>1,247+ apps scanned this month</span>
+          </motion.div>
           <motion.h1 variants={FADE_UP} className={`text-4xl font-bold font-['Syne'] mb-4 ${isLight ? "text-gray-900" : "text-white"}`}>
-            Start free. Upgrade when you need it.
+            Your first scan is free.
           </motion.h1>
-          <motion.p variants={FADE_UP} className={`text-lg ${isLight ? "text-gray-500" : "text-white/40"}`}>No contracts. Cancel anytime.</motion.p>
+          <motion.p variants={FADE_UP} className={`text-lg ${isLight ? "text-gray-500" : "text-white/40"}`}>
+            Founders save an average of <span className="text-purple-400 font-medium">22 hours</span> of bug-hunting before launch.
+          </motion.p>
         </motion.div>
 
         {success && (
@@ -435,12 +443,64 @@ export default function PricingPage() {
           })}
         </div>
 
-        <div className="flex flex-col items-center gap-3 mt-12">
+        {/* Coupon section */}
+        <div className="max-w-sm mx-auto mt-10">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className={`rounded-xl border p-4 ${isLight ? "bg-white border-gray-200" : "bg-white/[0.02] border-white/[0.08]"}`}
+          >
+            <button
+              onClick={() => setCouponOpen(!couponOpen)}
+              className="flex items-center gap-2 text-xs w-full"
+            >
+              <Tag className={`w-3.5 h-3.5 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+              <span className={`${isLight ? "text-gray-500" : "text-white/40"}`}>Have a coupon code?</span>
+              <ChevronDown className={`w-3 h-3 ml-auto transition-transform ${couponOpen ? "rotate-180" : ""} ${isLight ? "text-gray-400" : "text-white/30"}`} />
+            </button>
+            {couponOpen && (
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="text"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  placeholder="Enter code"
+                  className={`flex-1 text-xs px-3 py-2 rounded-lg border focus:outline-none ${
+                    isLight ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-white/[0.04] border-white/[0.1] text-white"
+                  }`}
+                  onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
+                />
+                <button
+                  onClick={applyCoupon}
+                  disabled={couponLoading || !couponInput.trim()}
+                  className={`text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-40 ${
+                    isLight ? "bg-gray-900 text-white" : "bg-white text-black"
+                  }`}
+                >
+                  {couponLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : "Apply"}
+                </button>
+              </div>
+            )}
+            {couponError && <p className="text-xs text-red-400 mt-2">{couponError}</p>}
+            {couponResult?.valid && (
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs text-green-400">{couponResult.label} — ₹{Math.round((29900 - couponResult.finalAmount) / 100)} off</span>
+                <button onClick={removeCoupon} className="text-white/30 hover:text-white/60"><X className="w-3 h-3" /></button>
+              </div>
+            )}
+          </motion.div>
+        </div>
+
+        <div className="flex flex-col items-center gap-3 mt-10">
           <div className={`flex items-center gap-2 text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>
             <ShieldCheck className="w-3.5 h-3.5 text-green-400/60" />
-            Secure payments via Razorpay · All prices in INR + GST · Cancel anytime
+            Secure payments · Cancel anytime · Your code is never stored
           </div>
-          <p className={`text-xs ${isLight ? "text-gray-300" : "text-white/15"}`}>Your code is never stored. Analyzed in-session only.</p>
+          <p className={`flex items-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>
+            <CheckCircle2 className="w-3 h-3 text-green-400/60" />
+            Trusted by founders shipping to <span className="font-medium">56 countries</span>
+          </p>
         </div>
       </main>
     </div>
