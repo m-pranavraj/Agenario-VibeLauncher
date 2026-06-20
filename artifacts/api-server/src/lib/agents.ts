@@ -752,15 +752,6 @@ async function callWithFallback(
   logger.error("All AI providers exhausted — returning empty JSON");
   return "{}";
 }
-        if (err?.status === 429) cerebrasRotator.markRateLimited(cerebrasKey);
-        logger.warn({ err: err?.message?.slice(0, 120) }, "Cerebras failed");
-      }
-    }
-  }
-
-  logger.error("All AI providers exhausted — returning empty JSON");
-  return "{}";
-}
 
 // Hard per-agent timeout — no agent can block the pipeline beyond this
 const AGENT_TIMEOUT_MS = 22_000;
