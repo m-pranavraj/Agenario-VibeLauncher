@@ -6061,6 +6061,9 @@ function ScanRunningScreen({
             <p className={`text-sm ${isLight ? "text-gray-400" : "text-white/35"}`}>
               {elapsed}s elapsed · auto-refreshing every 3s
             </p>
+            <p className={`text-xs ${isLight ? "text-gray-400/80" : "text-white/20"} italic mt-0.5`}>
+              Deep scan runs real browser agents & takes about 4–5 minutes
+            </p>
           </div>
         </div>
 

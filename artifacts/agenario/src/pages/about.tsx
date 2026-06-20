@@ -131,91 +131,93 @@ export default function AboutPage() {
         </motion.div>
 
         {/* Founder Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }} transition={{ duration: 0.55 }}
-        >
-          <div className="text-center mb-10">
-            <h2 className={`text-xl sm:text-2xl font-bold font-['Syne'] ${isLight ? "text-gray-900" : "text-white"}`}>The Builder</h2>
-            <p className={`text-sm mt-2 ${isLight ? "text-gray-400" : "text-white/35"}`}>One founder. Full conviction.</p>
-          </div>
+        {false && (
+          <motion.div
+            initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }} transition={{ duration: 0.55 }}
+          >
+            <div className="text-center mb-10">
+              <h2 className={`text-xl sm:text-2xl font-bold font-['Syne'] ${isLight ? "text-gray-900" : "text-white"}`}>The Builder</h2>
+              <p className={`text-sm mt-2 ${isLight ? "text-gray-400" : "text-white/35"}`}>One founder. Full conviction.</p>
+            </div>
 
-          <div className="max-w-xl mx-auto relative">
-            <div className="absolute inset-0 bg-violet-600/[0.08] blur-3xl rounded-3xl scale-110 pointer-events-none" />
+            <div className="max-w-xl mx-auto relative">
+              <div className="absolute inset-0 bg-violet-600/[0.08] blur-3xl rounded-3xl scale-110 pointer-events-none" />
 
-            <div className={`relative rounded-3xl p-6 sm:p-8 backdrop-blur-xl overflow-hidden border ${isLight ? "bg-white border-pink-100/80 shadow-sm" : "border-white/[0.1] bg-gradient-to-b from-white/[0.05] to-white/[0.01]"}`}>
-              <div className="absolute top-4 right-4 sm:top-5 sm:right-5">
-                <span className={`text-[10px] px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider border ${isLight ? "bg-violet-50 border-violet-200 text-violet-600" : "bg-violet-500/15 border-violet-500/25 text-violet-400"}`}>
-                  Founder & CEO
-                </span>
-              </div>
+              <div className={`relative rounded-3xl p-6 sm:p-8 backdrop-blur-xl overflow-hidden border ${isLight ? "bg-white border-pink-100/80 shadow-sm" : "border-white/[0.1] bg-gradient-to-b from-white/[0.05] to-white/[0.01]"}`}>
+                <div className="absolute top-4 right-4 sm:top-5 sm:right-5">
+                  <span className={`text-[10px] px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider border ${isLight ? "bg-violet-50 border-violet-200 text-violet-600" : "bg-violet-500/15 border-violet-500/25 text-violet-400"}`}>
+                    Founder & CEO
+                  </span>
+                </div>
 
-              <div className="flex items-center gap-5 sm:gap-6 mb-7">
-                <div className="relative shrink-0">
-                  <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden relative border-2 ${isLight ? "border-gray-200" : "border-white/20"}`}>
-                    <img
-                      src="/founder-photo.jpeg"
-                      alt="MOGANTI PRANAV RAJ"
-                      className="w-full h-full object-cover"
-                      style={{ filter: "grayscale(100%) contrast(1.1)" }}
-                    />
-                    <div
-                      className="absolute inset-0 opacity-20"
-                      style={{
-                        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
-                        backgroundSize: "6px 6px",
-                      }}
-                    />
+                <div className="flex items-center gap-5 sm:gap-6 mb-7">
+                  <div className="relative shrink-0">
+                    <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden relative border-2 ${isLight ? "border-gray-200" : "border-white/20"}`}>
+                      <img
+                        src="/founder-photo.jpeg"
+                        alt="MOGANTI PRANAV RAJ"
+                        className="w-full h-full object-cover"
+                        style={{ filter: "grayscale(100%) contrast(1.1)" }}
+                      />
+                      <div
+                        className="absolute inset-0 opacity-20"
+                        style={{
+                          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
+                          backgroundSize: "6px 6px",
+                        }}
+                      />
+                    </div>
+                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 ${isLight ? "border-white" : "border-[#050505]"}`}>
+                      <div className="w-full h-full rounded-full bg-green-400 animate-ping opacity-60" />
+                    </div>
                   </div>
-                  <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 ${isLight ? "border-white" : "border-[#050505]"}`}>
-                    <div className="w-full h-full rounded-full bg-green-400 animate-ping opacity-60" />
+
+                  <div>
+                    <h3 className={`text-lg sm:text-xl font-black font-['Syne'] leading-tight tracking-wide ${isLight ? "text-gray-900" : "text-white"}`}>
+                      MOGANTI<br />PRANAV RAJ
+                    </h3>
+                    <p className={`text-sm mt-1.5 ${isLight ? "text-gray-400" : "text-white/35"}`}>Building in public · India 🇮🇳</p>
+                    <p className={`text-[11px] mt-0.5 font-mono ${isLight ? "text-gray-400" : "text-white/20"}`}>@moganti_pranav</p>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className={`text-lg sm:text-xl font-black font-['Syne'] leading-tight tracking-wide ${isLight ? "text-gray-900" : "text-white"}`}>
-                    MOGANTI<br />PRANAV RAJ
-                  </h3>
-                  <p className={`text-sm mt-1.5 ${isLight ? "text-gray-400" : "text-white/35"}`}>Building in public · India 🇮🇳</p>
-                  <p className={`text-[11px] mt-0.5 font-mono ${isLight ? "text-gray-400" : "text-white/20"}`}>@moganti_pranav</p>
-                </div>
-              </div>
-
-              <p className={`text-sm leading-relaxed mb-6 ${isLight ? "text-gray-600" : "text-white/55"}`}>
-                Vibe-coded my first SaaS, got scared by what I built, and decided to build the
-                tool I wished existed. Agenario is the production review board every solo founder
-                deserves — the senior engineer on call who actually reviews your AI-generated code
-                before real users find the holes.
-              </p>
-
-              <div className={`border-t mb-6 ${isLight ? "border-gray-100" : "border-white/[0.06]"}`} />
-
-              <blockquote className={`border-l-2 border-violet-500/40 pl-4 mb-6`}>
-                <p className={`text-sm italic leading-relaxed ${isLight ? "text-gray-500" : "text-white/35"}`}>
-                  "The biggest risk in the vibe-coded era isn't that you can't build fast —
-                  it's that you build so fast you don't see what you shipped."
+                <p className={`text-sm leading-relaxed mb-6 ${isLight ? "text-gray-600" : "text-white/55"}`}>
+                  Vibe-coded my first SaaS, got scared by what I built, and decided to build the
+                  tool I wished existed. Agenario is the production review board every solo founder
+                  deserves — the senior engineer on call who actually reviews your AI-generated code
+                  before real users find the holes.
                 </p>
-              </blockquote>
 
-              <div className="flex items-center gap-2 flex-wrap">
-                {[
-                  { icon: Github, label: "GitHub", href: "#" },
-                  { icon: Twitter, label: "Twitter / X", href: "#" },
-                  { icon: Linkedin, label: "LinkedIn", href: "#" },
-                  { icon: Globe, label: "Website", href: "#" },
-                  { icon: Mail, label: "Email", href: "mailto:support@agenario.tech" },
-                ].map(({ icon: Icon, label, href }) => (
-                  <a
-                    key={label} href={href} aria-label={label}
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border ${isLight ? "bg-pink-50/50 border-pink-100/80 text-gray-400 hover:text-gray-700 hover:bg-gray-100" : "bg-white/[0.04] border-white/[0.08] text-white/25 hover:text-white hover:bg-white/[0.07]"}`}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </a>
-                ))}
+                <div className={`border-t mb-6 ${isLight ? "border-gray-100" : "border-white/[0.06]"}`} />
+
+                <blockquote className={`border-l-2 border-violet-500/40 pl-4 mb-6`}>
+                  <p className={`text-sm italic leading-relaxed ${isLight ? "text-gray-500" : "text-white/35"}`}>
+                    "The biggest risk in the vibe-coded era isn't that you can't build fast —
+                    it's that you build so fast you don't see what you shipped."
+                  </p>
+                </blockquote>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {[
+                    { icon: Github, label: "GitHub", href: "#" },
+                    { icon: Twitter, label: "Twitter / X", href: "#" },
+                    { icon: Linkedin, label: "LinkedIn", href: "#" },
+                    { icon: Globe, label: "Website", href: "#" },
+                    { icon: Mail, label: "Email", href: "mailto:support@agenario.tech" },
+                  ].map(({ icon: Icon, label, href }) => (
+                    <a
+                      key={label} href={href} aria-label={label}
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border ${isLight ? "bg-pink-50/50 border-pink-100/80 text-gray-400 hover:text-gray-700 hover:bg-gray-100" : "bg-white/[0.04] border-white/[0.08] text-white/25 hover:text-white hover:bg-white/[0.07]"}`}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        )}
 
         {/* Beliefs */}
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
