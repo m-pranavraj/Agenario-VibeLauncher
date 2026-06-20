@@ -1,6 +1,7 @@
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { Shield, ExternalLink, Loader2, Target, CheckCircle2, AlertTriangle, ShieldCheck, Clock, Github, Eye, Sparkles } from "lucide-react";
+import { Shield, ExternalLink, Loader2, Target, CheckCircle2, AlertTriangle, ShieldCheck, Clock, Github, Eye, Sparkles, Twitter, Linkedin, Link2, CheckCheck } from "lucide-react";
 import { api } from "@/lib/api";
 import { useIsLight } from "@/hooks/use-is-light";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -8,6 +9,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 export default function CertPage() {
   const [, params] = useRoute("/cert/:id");
   const isLight = useIsLight();
+  const [copied, setCopied] = useState(false);
 
   const { data: cert, isLoading, isError } = useQuery({
     queryKey: ["/public/cert", params?.id],
@@ -22,6 +24,24 @@ export default function CertPage() {
     if (vLower === "launch with caution") return { color: "text-amber-500", bg: "bg-amber-500/10 border-amber-500/20" };
     return { color: "text-rose-500", bg: "bg-rose-500/10 border-rose-500/20" };
   };
+
+  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
+  const badgeUrl = currentUrl.replace("/cert/", "/api/public/cert/") + "/badge";
+
+  const copyLink = useCallback(async () => {
+    await navigator.clipboard.writeText(currentUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [currentUrl]);
+
+  const shareTwitter = useCallback(() => {
+    const text = `I just scanned my app with @AgenarioAI — score: ${cert?.score}/100, verdict: ${cert?.verdict}`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(currentUrl)}`, "_blank");
+  }, [cert, currentUrl]);
+
+  const shareLinkedin = useCallback(() => {
+    window.open(`https://linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`, "_blank");
+  }, [currentUrl]);
 
   if (isLoading) {
     return (
@@ -95,6 +115,11 @@ export default function CertPage() {
             </p>
           </div>
 
+          {/* Badge Preview */}
+          <div className={`flex justify-center mb-8`}>
+            <img src={badgeUrl} alt="Agenario Score Badge" className="h-6" />
+          </div>
+
           {/* Details Grid */}
           <div className={`rounded-2xl border p-6 mb-8 ${isLight ? "bg-gray-50/50 border-gray-200" : "bg-white/5 border-white/5"}`}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -150,6 +175,33 @@ export default function CertPage() {
               </div>
 
             </div>
+          </div>
+
+          {/* Share Actions */}
+          <div className="mb-8">
+            <div className={`text-xs uppercase tracking-wider mb-3 font-semibold text-center ${isLight ? "text-gray-400" : "text-white/30"}`}>Share This Certificate</div>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button onClick={shareTwitter} className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all ${isLight ? "bg-white border-gray-200 text-gray-700 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200" : "bg-[#161616] border-white/10 text-white/70 hover:text-sky-400 hover:border-sky-400/30"}`}>
+                <Twitter className="w-4 h-4" />
+                Twitter
+              </button>
+              <button onClick={shareLinkedin} className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all ${isLight ? "bg-white border-gray-200 text-gray-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200" : "bg-[#161616] border-white/10 text-white/70 hover:text-blue-400 hover:border-blue-400/30"}`}>
+                <Linkedin className="w-4 h-4" />
+                LinkedIn
+              </button>
+              <button onClick={copyLink} className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all ${isLight ? "bg-white border-gray-200 text-gray-700 hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200" : "bg-[#161616] border-white/10 text-white/70 hover:text-violet-400 hover:border-violet-400/30"}`}>
+                {copied ? <CheckCheck className="w-4 h-4 text-green-400" /> : <Link2 className="w-4 h-4" />}
+                {copied ? "Copied!" : "Copy Link"}
+              </button>
+            </div>
+          </div>
+
+          {/* Badge Embed Code */}
+          <div className={`rounded-2xl border p-4 mb-8 ${isLight ? "bg-gray-50/50 border-gray-200" : "bg-white/5 border-white/5"}`}>
+            <div className={`text-xs uppercase tracking-wider mb-2 font-semibold ${isLight ? "text-gray-400" : "text-white/30"}`}>Embed Badge</div>
+            <code className={`text-xs font-mono block p-3 rounded-xl border ${isLight ? "bg-white border-gray-200 text-gray-600" : "bg-black/40 border-white/5 text-white/50"}`}>
+              {`[![Agenario](${badgeUrl})](${currentUrl})`}
+            </code>
           </div>
 
           <div className="text-center">

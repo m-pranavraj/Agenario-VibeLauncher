@@ -531,22 +531,22 @@ jobs:
           <section id="vscode" className="scroll-mt-20 space-y-6">
             <SectionHeader number="04" title="VS Code & Cursor Integration" desc="Use Agenario fix prompts directly in your AI-powered editor." />
 
-            <div className="glass rounded-2xl p-6 border border-violet-500/15">
+            <div className={`rounded-2xl p-6 border border-violet-500/15 ${isLight ? "bg-pink-50/70 border-violet-200" : "glass"}`}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center">
                   <Sparkles className="w-4 h-4 text-violet-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-white">1-Click Fix Prompts</p>
-                  <p className="text-xs text-white/35">Each finding ships with a paste-ready fix prompt for Cursor, Bolt, or Lovable</p>
+                  <p className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white"}`}>1-Click Fix Prompts</p>
+                  <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/35"}`}>Each finding ships with a paste-ready fix prompt for Cursor, Bolt, or Lovable</p>
                 </div>
               </div>
-              <div className="bg-black/40 rounded-xl p-4 border border-white/[0.06] font-mono text-xs leading-relaxed">
-                <p className="text-amber-400/80 mb-1.5">// Agenario Fix Prompt — CRITICAL: SQL Injection in /api/search</p>
-                <p className="text-white/55">Fix the SQL injection vulnerability in the search endpoint.</p>
-                <p className="text-white/55 mt-1">Replace raw string interpolation with parameterized queries.</p>
-                <p className="text-white/55 mt-1">Add input validation using zod before reaching the DB layer.</p>
-                <p className="text-white/55 mt-1">Return 400 for malformed inputs instead of passing them through.</p>
+              <div className={`rounded-xl p-4 border font-mono text-xs leading-relaxed ${isLight ? "bg-gray-50 border-gray-200" : "bg-black/40 border-white/[0.06]"}`}>
+                <p className="text-amber-600/90 dark:text-amber-400/80 mb-1.5">// Agenario Fix Prompt — CRITICAL: SQL Injection in /api/search</p>
+                <p className={`${isLight ? "text-gray-700" : "text-white/55"}`}>Fix the SQL injection vulnerability in the search endpoint.</p>
+                <p className={`mt-1 ${isLight ? "text-gray-700" : "text-white/55"}`}>Replace raw string interpolation with parameterized queries.</p>
+                <p className={`mt-1 ${isLight ? "text-gray-700" : "text-white/55"}`}>Add input validation using zod before reaching the DB layer.</p>
+                <p className={`mt-1 ${isLight ? "text-gray-700" : "text-white/55"}`}>Return 400 for malformed inputs instead of passing them through.</p>
               </div>
             </div>
 
@@ -601,9 +601,9 @@ checkLaunchReadiness();`}
                 { label: "Vercel", cmd: "vercel.json → buildCommand → node agenario-check.js" },
                 { label: "Netlify", cmd: "netlify.toml → [build] → command = 'node agenario-check.js && ...'" },
               ].map((p) => (
-                <div key={p.label} className="glass rounded-xl p-4 border border-white/[0.07]">
-                  <p className="text-sm font-bold text-white mb-2">{p.label}</p>
-                  <code className="text-[11px] text-white/40 font-mono leading-relaxed block">{p.cmd}</code>
+                <div key={p.label} className={`rounded-xl p-4 border ${isLight ? "bg-pink-50/50 border-pink-100/80" : "glass border-white/[0.07]"}`}>
+                  <p className={`text-sm font-bold mb-2 ${isLight ? "text-gray-900" : "text-white"}`}>{p.label}</p>
+                  <code className={`text-[11px] font-mono leading-relaxed block ${isLight ? "text-gray-500" : "text-white/40"}`}>{p.cmd}</code>
                 </div>
               ))}
             </div>
@@ -613,26 +613,26 @@ checkLaunchReadiness();`}
           <section id="webhook" className="scroll-mt-20 space-y-6">
             <SectionHeader number="06" title="GitHub Webhook (Auto PR Scanning)" desc="Auto-scan every PR without GitHub Actions. Direct webhook integration." />
 
-            <div className="glass rounded-2xl p-5 space-y-4">
+            <div className={`rounded-2xl p-5 space-y-4 border ${isLight ? "bg-pink-50/50 border-pink-100/80" : "glass border-white/[0.07]"}`}>
               <Step n={1} title="Add webhook in GitHub">
-                <p className="text-sm text-white/45">Go to <code className="bg-white/[0.07] px-1.5 rounded text-xs font-mono">Settings → Webhooks → Add webhook</code></p>
+                <p className={`text-sm ${isLight ? "text-gray-600" : "text-white/45"}`}>Go to <code className={`px-1.5 rounded text-xs font-mono ${isLight ? "bg-violet-100 text-gray-600" : "bg-white/[0.07] text-white/70"}`}>Settings → Webhooks → Add webhook</code></p>
                 <div className="space-y-2 text-sm">
                   <div className="flex gap-3">
-                    <span className="text-white/25 w-24 flex-shrink-0">Payload URL</span>
-                    <code className="text-violet-400/80 font-mono text-xs">https://api.agenario.tech/api/github/webhook</code>
+                    <span className={`w-24 flex-shrink-0 ${isLight ? "text-gray-400" : "text-white/25"}`}>Payload URL</span>
+                    <code className="text-violet-500 dark:text-violet-400/80 font-mono text-xs">https://api.agenario.tech/api/github/webhook</code>
                   </div>
                   <div className="flex gap-3">
-                    <span className="text-white/25 w-24 flex-shrink-0">Content type</span>
-                    <code className="text-white/50 font-mono text-xs">application/json</code>
+                    <span className={`w-24 flex-shrink-0 ${isLight ? "text-gray-400" : "text-white/25"}`}>Content type</span>
+                    <code className={`font-mono text-xs ${isLight ? "text-gray-600" : "text-white/50"}`}>application/json</code>
                   </div>
                   <div className="flex gap-3">
-                    <span className="text-white/25 w-24 flex-shrink-0">Events</span>
-                    <code className="text-white/50 font-mono text-xs">Pull requests, Push</code>
+                    <span className={`w-24 flex-shrink-0 ${isLight ? "text-gray-400" : "text-white/25"}`}>Events</span>
+                    <code className={`font-mono text-xs ${isLight ? "text-gray-600" : "text-white/50"}`}>Pull requests, Push</code>
                   </div>
                 </div>
               </Step>
               <Step n={2} title="Set webhook secret">
-                <p className="text-sm text-white/45">Copy your secret from <strong className="text-white/70">Dashboard → Settings</strong> and paste it as the webhook secret in GitHub.</p>
+                <p className={`text-sm ${isLight ? "text-gray-600" : "text-white/45"}`}>Copy your secret from <strong className={isLight ? "text-gray-900" : "text-white/70"}>Dashboard → Settings</strong> and paste it as the webhook secret in GitHub.</p>
                 <Callout type="info">All webhook payloads are verified via HMAC-SHA256 signature. Invalid signatures are rejected with 401.</Callout>
               </Step>
             </div>
@@ -694,44 +694,52 @@ const portfolio = await client.portfolio.ranking();`}
                   icon: Shield,
                   title: "Code Never Stored",
                   desc: "Your source code is analyzed in-session and immediately discarded. Nothing is persisted to our database.",
-                  color: "text-green-400",
-                  bg: "border-green-500/15 bg-green-500/[0.04]",
+                  color: "text-green-500 dark:text-green-400",
+                  bg: isLight ? "border-green-200 bg-green-50/50" : "border-green-500/15 bg-green-500/[0.04]",
+                  titleColor: isLight ? "text-gray-900" : "text-white",
+                  descColor: isLight ? "text-gray-500" : "text-white/40",
                 },
                 {
                   icon: Lock,
                   title: "HMAC-Verified Webhooks",
                   desc: "All webhook payloads are verified with SHA-256 HMAC. Invalid signatures return 401 immediately.",
-                  color: "text-blue-400",
-                  bg: "border-blue-500/15 bg-blue-500/[0.04]",
+                  color: "text-blue-500 dark:text-blue-400",
+                  bg: isLight ? "border-blue-200 bg-blue-50/50" : "border-blue-500/15 bg-blue-500/[0.04]",
+                  titleColor: isLight ? "text-gray-900" : "text-white",
+                  descColor: isLight ? "text-gray-500" : "text-white/40",
                 },
                 {
                   icon: Key,
                   title: "Encrypted Sessions",
                   desc: "Sessions use httpOnly cookies with SameSite=None in production. Session secrets are env-level secrets.",
-                  color: "text-violet-400",
-                  bg: "border-violet-500/15 bg-violet-500/[0.04]",
+                  color: "text-violet-500 dark:text-violet-400",
+                  bg: isLight ? "border-violet-200 bg-violet-50/50" : "border-violet-500/15 bg-violet-500/[0.04]",
+                  titleColor: isLight ? "text-gray-900" : "text-white",
+                  descColor: isLight ? "text-gray-500" : "text-white/40",
                 },
                 {
                   icon: Activity,
                   title: "Rate Limiting",
                   desc: "Auth: 20 req/15min. Scans: 30 req/hr. Global: 200 req/15min. Backed by Helmet.js security headers.",
-                  color: "text-amber-400",
-                  bg: "border-amber-500/15 bg-amber-500/[0.04]",
+                  color: "text-amber-500 dark:text-amber-400",
+                  bg: isLight ? "border-amber-200 bg-amber-50/50" : "border-amber-500/15 bg-amber-500/[0.04]",
+                  titleColor: isLight ? "text-gray-900" : "text-white",
+                  descColor: isLight ? "text-gray-500" : "text-white/40",
                 },
               ].map((f) => {
                 const Icon = f.icon;
                 return (
                   <div key={f.title} className={`rounded-2xl border p-5 ${f.bg}`}>
                     <Icon className={`w-5 h-5 mb-3 ${f.color}`} />
-                    <p className="text-sm font-bold text-white mb-1.5">{f.title}</p>
-                    <p className="text-xs text-white/40 leading-relaxed">{f.desc}</p>
+                    <p className={`text-sm font-bold mb-1.5 ${f.titleColor}`}>{f.title}</p>
+                    <p className={`text-xs leading-relaxed ${f.descColor}`}>{f.desc}</p>
                   </div>
                 );
               })}
             </div>
 
-            <div className="glass rounded-2xl p-6 space-y-3 border border-white/[0.07]">
-              <p className="text-sm font-bold text-white">Security Headers (Helmet.js)</p>
+            <div className={`rounded-2xl p-6 space-y-3 border ${isLight ? "bg-pink-50/50 border-pink-100/80" : "glass border-white/[0.07]"}`}>
+              <p className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white"}`}>Security Headers (Helmet.js)</p>
               <div className="space-y-2">
                 {[
                   ["Content-Security-Policy", "Enforced on all responses"],
@@ -741,8 +749,8 @@ const portfolio = await client.portfolio.ranking();`}
                   ["Referrer-Policy", "no-referrer"],
                 ].map(([header, value]) => (
                   <div key={header} className="flex items-center gap-3 text-xs font-mono">
-                    <code className="text-violet-400/80 w-52 flex-shrink-0">{header}</code>
-                    <span className="text-white/30">{value}</span>
+                    <code className={`w-52 flex-shrink-0 ${isLight ? "text-violet-600" : "text-violet-400/80"}`}>{header}</code>
+                    <span className={isLight ? "text-gray-400" : "text-white/30"}>{value}</span>
                   </div>
                 ))}
               </div>
@@ -750,20 +758,20 @@ const portfolio = await client.portfolio.ranking();`}
           </section>
 
           {/* Footer CTA */}
-          <div className="glass rounded-2xl p-8 text-center space-y-4 border border-violet-500/15">
+          <div className={`rounded-2xl p-8 text-center space-y-4 border border-violet-500/15 ${isLight ? "bg-pink-50/70" : "glass"}`}>
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/25 flex items-center justify-center mx-auto">
               <img src="/logo.png" alt="Agenario" className="w-6 h-6 rounded-xl object-cover object-left" />
             </div>
-            <h3 className="text-xl font-bold text-white font-['Syne']">Ready to ship with confidence?</h3>
-            <p className="text-sm text-white/40 max-w-md mx-auto">Start with 2 free scans per month. No credit card required. Full board-memo report in under a minute.</p>
+            <h3 className={`text-xl font-bold font-['Syne'] ${isLight ? "text-gray-900" : "text-white"}`}>Ready to ship with confidence?</h3>
+            <p className={`text-sm max-w-md mx-auto ${isLight ? "text-gray-500" : "text-white/40"}`}>Start with 2 free scans per month. No credit card required. Full board-memo report in under a minute.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
               <Link href="/register">
-                <button className="flex items-center gap-2 bg-white text-black font-bold text-sm px-6 py-3 rounded-xl hover:bg-white/90 transition-all">
+                <button className="flex items-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-black font-bold text-sm px-6 py-3 rounded-xl hover:bg-gray-800 dark:hover:bg-white/90 transition-all">
                   Get Started Free <ArrowRight className="w-4 h-4" />
                 </button>
               </Link>
               <Link href="/pricing">
-                <button className="flex items-center gap-2 border border-white/[0.12] text-white/60 hover:text-white font-semibold text-sm px-6 py-3 rounded-xl hover:border-white/25 transition-all">
+                <button className={`flex items-center gap-2 border font-semibold text-sm px-6 py-3 rounded-xl transition-all ${isLight ? "border-gray-200 text-gray-500 hover:text-gray-900 hover:border-gray-300" : "border-white/[0.12] text-white/60 hover:text-white hover:border-white/25"}`}>
                   View Pricing
                 </button>
               </Link>
@@ -773,14 +781,16 @@ const portfolio = await client.portfolio.ranking();`}
 
         {/* Right TOC — large screens */}
         <div className="hidden xl:block w-52 flex-shrink-0 py-10 px-4">
-          <p className="text-[10px] text-white/20 uppercase tracking-widest font-semibold mb-4 px-2">On this page</p>
+          <p className={`text-[10px] uppercase tracking-widest font-semibold mb-4 px-2 ${isLight ? "text-gray-400" : "text-white/20"}`}>On this page</p>
           <nav className="space-y-1">
             {SECTIONS.map((s) => (
               <a
                 key={s.id}
                 href={`#${s.id}`}
                 className={`block text-xs px-2 py-1.5 rounded-lg transition-colors ${
-                  activeSection === s.id ? "text-white font-semibold" : "text-white/25 hover:text-white/50"
+                  activeSection === s.id
+                    ? (isLight ? "text-violet-700 font-semibold" : "text-white font-semibold")
+                    : (isLight ? "text-gray-400 hover:text-gray-700" : "text-white/25 hover:text-white/50")
                 }`}
               >
                 {s.label}

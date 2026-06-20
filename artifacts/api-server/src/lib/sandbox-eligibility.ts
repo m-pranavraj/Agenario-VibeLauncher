@@ -139,12 +139,12 @@ export function assessSandboxEligibility(
 ): SandboxEligibility {
   const blockers: string[] = [];
 
-  if (process.env["VERCEL"] === "1" || process.env["SANDBOX_ENABLED"] === "false") {
+  if (process.env["SANDBOX_ENABLED"] === "false") {
     return {
       eligible: false,
       reason:
-        "Sandbox execution is disabled in this deployment environment. Run scans on a worker with SANDBOX_ENABLED=true.",
-      blockers: ["serverless_environment"],
+        "Sandbox execution is disabled. Set SANDBOX_ENABLED=true or remove the env var to enable.",
+      blockers: ["sandbox_disabled"],
     };
   }
 

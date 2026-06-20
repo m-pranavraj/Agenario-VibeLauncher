@@ -178,4 +178,55 @@ router.get("/public/cert/:certId", async (req, res) => {
   }
 });
 
+// SVG Badge Generation
+router.get("/public/cert/:certId/badge", async (req, res) => {
+  try {
+    const certId = req.params.certId;
+    if (!certId) {
+      res.status(400).json({ error: "Missing certId" });
+      return;
+    }
+
+    const [scan] = await db
+      .select({
+        sourceInput: scansTable.sourceInput,
+        score: scansTable.score,
+        launchVerdict: scansTable.launchVerdict,
+        issueCounts: scansTable.issueCounts,
+      })
+      .from(scansTable)
+      .where(eq(scansTable.certId, certId));
+
+    if (!scan) {
+      res.status(404).json({ error: "Certificate not found" });
+      return;
+    }
+
+    const score = scan.score ?? 0;
+    const valid = score >= 70 && ((scan.issueCounts as any)?.critical ?? 0) === 0;
+    const label = valid ? "Agenario Certified" : "Launch Caution";
+    const color = valid ? "#22c55e" : "#f59e0b";
+    const scoreColor = score >= 70 ? "#22c55e" : score >= 40 ? "#f59e0b" : "#ef4444";
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="212" height="20">
+  <linearGradient id="bg" x2="0%" y2="100%">
+    <stop offset="0%" stop-color="#333"/>
+    <stop offset="100%" stop-color="#222"/>
+  </linearGradient>
+  <rect rx="3" fill="url(#bg)" width="${label.length * 7.5 + 14}" height="20"/>
+  <rect rx="3" fill="${color}" x="${label.length * 7.5 + 14}" width="60" height="20"/>
+  <rect fill="${color}" x="${label.length * 7.5 + 14}" width="6" height="20"/>
+  <text x="${label.length * 3.75 + 7}" y="14" fill="#fff" font-family="sans-serif" font-size="11" font-weight="bold" text-anchor="middle">${label}</text>
+  <text x="${label.length * 7.5 + 14 + 30}" y="14" fill="#fff" font-family="sans-serif" font-size="11" font-weight="bold" text-anchor="middle">${score}%</text>
+</svg>`;
+
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "no-cache");
+    res.send(svg);
+  } catch (error) {
+    console.error("Failed to generate badge:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 export default router;

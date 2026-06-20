@@ -541,6 +541,8 @@ export const api = {
       request<{ answer: string }>(`/scans/${scanId}/ask`, { method: "POST", body: JSON.stringify({ question }) }),
     rescan: (scanId: number) =>
       request<{ scanId: number; status: string }>(`/scans/${scanId}/rescan`, { method: "POST" }),
+    export: (scanId: number, format: "json" | "html" | "certification" | "investor" | "agency" | "zip" = "json") =>
+      `${BASE}/scans/${scanId}/export?format=${format}`,
   },
   billing: {
     createOrder: (plan: string, coupon?: string) =>

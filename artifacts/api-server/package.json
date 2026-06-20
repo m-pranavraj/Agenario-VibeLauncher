@@ -37,8 +37,7 @@
     "razorpay": "^2.9.6",
     "serverless-http": "^4.0.0",
     "@anthropic-ai/sdk": "^0.39.0",
-    "openai": "^4.86.0",
-    "lemon-squeezy": "^1.2.0"
+    "openai": "^4.86.0"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.8",
