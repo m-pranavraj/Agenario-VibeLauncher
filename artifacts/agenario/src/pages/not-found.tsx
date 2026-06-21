@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
+import { useIsLight } from "@/hooks/use-is-light";
 
 export default function NotFound() {
+  const isLight = useIsLight();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -10,16 +12,16 @@ export default function NotFound() {
   }, [setLocation]);
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#050505]">
+    <div className={`min-h-screen w-full flex items-center justify-center ${isLight ? "bg-white" : "bg-[#050505]"}`}>
       <div className="text-center space-y-4 px-6">
-        <div className="w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center mx-auto">
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto border ${isLight ? "bg-gray-100 border-gray-200" : "bg-white/[0.06] border-white/[0.1]"}`}>
           <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover" />
         </div>
-        <h1 className="text-xl font-bold text-white">Redirecting you back…</h1>
-        <p className="text-sm text-white/40">This page doesn't exist. Taking you home in a moment.</p>
+        <h1 className={`text-xl font-bold ${isLight ? "text-gray-900" : "text-white"}`}>Redirecting you back…</h1>
+        <p className={`text-sm ${isLight ? "text-gray-500" : "text-white/40"}`}>This page doesn't exist. Taking you home in a moment.</p>
         <button
           onClick={() => setLocation("/")}
-          className="text-xs text-white/50 hover:text-white transition-colors underline underline-offset-2"
+          className={`text-xs underline underline-offset-2 transition-colors ${isLight ? "text-gray-400 hover:text-gray-700" : "text-white/50 hover:text-white"}`}
         >
           Go now
         </button>

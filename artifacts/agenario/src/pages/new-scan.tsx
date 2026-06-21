@@ -256,11 +256,19 @@ const ONBOARDING_STEPS = [
 ];
 
 const SAMPLE_ISSUES = [
-  { severity: "critical", title: "Hardcoded Stripe Secret Key", agent: "Secret Scanner", description: "A live Stripe secret key (sk_live_*) was found hardcoded in src/lib/payments.ts. This exposes payment processing to anyone with repo access." },
+  { severity: "critical", title: "Hardcoded Stripe Secret Key", agent: "Secret Scanner V2", description: "A live Stripe secret key (sk_live_*) was found hardcoded in src/lib/payments.ts. This exposes payment processing to anyone with repo access." },
   { severity: "critical", title: "No Rate Limiting on Auth Routes", agent: "Security & Access Control", description: "Login/signup endpoints have no rate limiting. An attacker can brute-force passwords at 1000+ requests/second." },
   { severity: "high", title: "CORS Wildcard Origin", agent: "Security & Access Control", description: "CORS configured with `origin: '*'` allows any website to make credentialed requests to your API." },
+  { severity: "high", title: "No GDPR Cookie Consent", agent: "Compliance & Regulatory", description: "No cookie consent banner or privacy notice found. Non-compliant with GDPR Art. 5–7 — potential €20M fine." },
+  { severity: "high", title: "Sensitive Data in URL Params", agent: "Data Integrity & Privacy", description: "Session tokens and user IDs passed in query strings. Browsers, proxies, and server logs all capture these." },
   { severity: "high", title: "Missing CSRF Protection", agent: "Reliability & Error Handling", description: "No CSRF token validation on state-changing requests. Users can be tricked into performing actions via external links." },
   { severity: "medium", title: "Empty Catch Blocks", agent: "AI Code Quality", description: "5 empty catch blocks found. Errors are silently swallowed, making debugging production incidents extremely difficult." },
+  { severity: "medium", title: "No Cache Headers on API", agent: "Observability & Ops Readiness", description: "API responses lack Cache-Control headers. CDN won't cache, increasing origin load and latency." },
+  { severity: "medium", title: "Unbounded Stripe Webhook", agent: "Revenue & Business Logic", description: "Stripe webhook handler processes all event types without filtering. A billing explosion event could charge users incorrectly." },
+  { severity: "medium", title: "Large JS Bundle (>500KB)", agent: "Performance & Scalability", description: "Main vendor chunk is 580KB uncompressed. First meaningful paint is delayed by ~2.3s on 3G." },
+  { severity: "low", title: "Missing 404 Custom Page", agent: "User Experience & Conversion", description: "Visitors hitting broken links see a bare white page instead of a branded 404, eroding trust." },
+  { severity: "low", title: "No Graceful Degradation", agent: "Launch Risk Forecast", description: "App shows blank white screen when API is down. No loading states or fallback UI for any route." },
+  { severity: "info", title: "No Product Hunt Integration", agent: "Product Hunt Score", description: "No Product Hunt launch page detected. Estimated launch score: 340 upvotes based on tech stack + market fit." },
 ];
 
 function OnboardingWizard({ onComplete }: { onComplete: () => void }) {
@@ -300,9 +308,26 @@ function OnboardingWizard({ onComplete }: { onComplete: () => void }) {
   }
 
   if (step === 1) {
+    const DIMENSION_SCORES = [
+      { name: "Security & Access Control", score: 38, color: "text-red-400" },
+      { name: "Compliance & Regulatory", score: 42, color: "text-amber-400" },
+      { name: "Revenue & Business Logic", score: 55, color: "text-amber-400" },
+      { name: "Performance & Scalability", score: 48, color: "text-amber-400" },
+      { name: "User Experience & Conversion", score: 62, color: "text-yellow-400" },
+      { name: "Reliability & Error Handling", score: 35, color: "text-red-400" },
+      { name: "Data Integrity & Privacy", score: 40, color: "text-amber-400" },
+      { name: "Observability & Ops Readiness", score: 45, color: "text-amber-400" },
+      { name: "AI Code Quality", score: 58, color: "text-yellow-400" },
+      { name: "Founder Blind Spots", score: 50, color: "text-amber-400" },
+    ];
+    const DIM_COLS = ["text-red-400", "text-amber-400", "text-yellow-400", "text-green-400", "text-emerald-400"];
+    const dimColor = (s: number) => s >= 80 ? "text-emerald-400" : s >= 60 ? "text-green-400" : s >= 45 ? "text-yellow-400" : s >= 30 ? "text-amber-400" : "text-red-400";
+
     return (
-      <div className={`min-h-screen ${bg} p-4`}>
-        <div className="max-w-2xl mx-auto py-8">
+      <div className={`min-h-screen ${bg} p-4 overflow-y-auto`}>
+        <div className="max-w-2xl mx-auto py-8 space-y-6">
+
+          {/* Header */}
           <div className="flex items-center gap-2 mb-2">
             <div className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full ${isLight ? "bg-green-100 text-green-700" : "bg-green-500/10 text-green-400"}`}>
               Sample Report
@@ -310,24 +335,41 @@ function OnboardingWizard({ onComplete }: { onComplete: () => void }) {
             <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>Vibe-coded SaaS app (Cursor + Next.js + Stripe)</span>
           </div>
 
-          <h2 className={`text-xl font-['Syne'] font-bold mb-1 ${isLight ? "text-gray-900" : "text-white"}`}>Launch Readiness: 52/100</h2>
-          <p className={`text-sm mb-6 ${isLight ? "text-gray-500" : "text-white/40"}`}>
-            Launch verdict: <span className="text-amber-400 font-medium">Launch with Caution</span> — 4 critical, 8 high issues
+          <h2 className={`text-xl font-['Syne'] font-bold ${isLight ? "text-gray-900" : "text-white"}`}>Launch Readiness: 52/100</h2>
+          <p className={`text-sm ${isLight ? "text-gray-500" : "text-white/40"}`}>
+            Launch verdict: <span className="text-amber-400 font-medium">Launch with Caution</span> — 4 critical, 8 high, 6 medium issues
           </p>
 
-          <div className="space-y-2 mb-8">
+          {/* Score breakdown per dimension */}
+          <div className={`rounded-xl border p-5 ${cardBg}`}>
+            <h3 className={`font-['Syne'] font-bold text-sm mb-3 ${isLight ? "text-gray-900" : "text-white"}`}>Dimension Score Breakdown</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {DIMENSION_SCORES.map((d) => (
+                <div key={d.name} className="flex items-center justify-between text-xs">
+                  <span className={isLight ? "text-gray-600" : "text-white/50"}>{d.name}</span>
+                  <span className={`font-bold ${dimColor(d.score)}`}>{d.score}/100</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Issues list */}
+          <div className="space-y-2">
+            <h3 className={`font-['Syne'] font-bold text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Top Findings ({SAMPLE_ISSUES.length})</h3>
             {SAMPLE_ISSUES.map((issue, i) => (
               <div key={i} className={`rounded-xl border p-4 ${cardBg}`}>
                 <div className="flex items-start gap-3">
                   <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
                     issue.severity === "critical" ? "bg-red-500" :
-                    issue.severity === "high" ? "bg-amber-500" : "bg-yellow-500"
+                    issue.severity === "high" ? "bg-amber-500" :
+                    issue.severity === "medium" ? "bg-yellow-500" : "bg-blue-400"
                   }`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className={`text-[10px] font-semibold uppercase tracking-wider ${
                         issue.severity === "critical" ? "text-red-400" :
-                        issue.severity === "high" ? "text-amber-400" : "text-yellow-600"
+                        issue.severity === "high" ? "text-amber-400" :
+                        issue.severity === "medium" ? "text-yellow-500" : "text-blue-400"
                       }`}>{issue.severity}</span>
                       <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"}`}>{issue.agent}</span>
                     </div>
@@ -339,14 +381,62 @@ function OnboardingWizard({ onComplete }: { onComplete: () => void }) {
             ))}
           </div>
 
-          <div className={`rounded-xl border p-5 ${cardBg} mb-6`}>
+          {/* Risk Forecast */}
+          <div className={`rounded-xl border p-4 ${cardBg}`}>
+            <h3 className={`font-['Syne'] font-bold text-sm mb-2 ${isLight ? "text-gray-900" : "text-white"}`}>Launch Risk Forecast</h3>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="text-lg font-bold text-red-400">72%</p>
+                <p className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/40"}`}>Breach in 90d</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-amber-400">₹2.4L</p>
+                <p className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/40"}`}>Revenue at risk</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-amber-400">13d</p>
+                <p className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/40"}`}>Est. fix time</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Digital Twin */}
+          <div className={`rounded-xl border p-4 ${cardBg}`}>
+            <h3 className={`font-['Syne'] font-bold text-sm mb-2 ${isLight ? "text-gray-900" : "text-white"}`}>Digital Twin Simulation</h3>
+            <p className={`text-xs ${isLight ? "text-gray-600" : "text-white/50"}`}>
+              500 simulated user sessions across 15 launch scenarios. 3 critical failure paths identified: auth cascade, payment double-charge on timeout, and missing SPA error boundary.
+            </p>
+          </div>
+
+          {/* What you'd miss */}
+          <div className={`rounded-xl border p-5 ${cardBg}`}>
             <h3 className={`font-['Syne'] font-bold text-sm mb-2 ${isLight ? "text-gray-900" : "text-white"}`}>What you'd miss without Agenario</h3>
             <ul className={`space-y-1.5 text-sm ${isLight ? "text-gray-600" : "text-white/50"}`}>
               <li>• Live Stripe key in source code = ₹∞ liability</li>
               <li>• No rate limiting = account takeover in hours</li>
-              <li>• CORS wildcard = data theft from any website</li>
-              <li>• Empty catch blocks = silent production crashes</li>
+              <li>• GDPR non-compliance = €20M potential fines</li>
+              <li>• Unbounded webhooks = billing explosion</li>
+              <li>• No fallback UI = blank screen on API failure</li>
             </ul>
+          </div>
+
+          {/* More features */}
+          <div className={`rounded-xl border p-4 ${cardBg}`}>
+            <h3 className={`font-['Syne'] font-bold text-sm mb-2 ${isLight ? "text-gray-900" : "text-white"}`}>Also included in full reports</h3>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <span className={isLight ? "text-gray-600" : "text-white/50"}>• 1-click fix prompts</span>
+              <span className={isLight ? "text-gray-600" : "text-white/50"}>• Auto-fix PR generation</span>
+              <span className={isLight ? "text-gray-600" : "text-white/50"}>• Compliance mapping (GDPR/OWASP/PCI-DSS)</span>
+              <span className={isLight ? "text-gray-600" : "text-white/50"}>• Shadow API detection</span>
+              <span className={isLight ? "text-gray-600" : "text-white/50"}>• Package vulnerability scan</span>
+              <span className={isLight ? "text-gray-600" : "text-white/50"}>• Secret scanner (API keys, tokens)</span>
+              <span className={isLight ? "text-gray-600" : "text-white/50"}>• Product Hunt score prediction</span>
+              <span className={isLight ? "text-gray-600" : "text-white/50"}>• Launch certificate + badge</span>
+              <span className={isLight ? "text-gray-600" : "text-white/50"}>• Continuous Guardian monitoring</span>
+              <span className={isLight ? "text-gray-600" : "text-white/50"}>• Portfolio comparison across apps</span>
+              <span className={isLight ? "text-gray-600" : "text-white/50"}>• Regression diff between scans</span>
+              <span className={isLight ? "text-gray-600" : "text-white/50"}>• Revenue intelligence audit</span>
+            </div>
           </div>
 
           <button

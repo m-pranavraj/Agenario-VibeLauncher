@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { useScans } from "@/hooks/use-scans";
-import { ChevronRight, Plus, LogOut, Zap, Brain, Activity, BarChart3, BookOpen, Loader2, ShieldCheck } from "lucide-react";
+import { ChevronRight, Plus, LogOut, Zap, Brain, Activity, BarChart3, BookOpen, Loader2, ShieldCheck, Key } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 function ScoreRing({ score, isLight }: { score: number; isLight: boolean }) {
@@ -134,6 +134,9 @@ export default function DashboardPage() {
             </Link>
             <Link href="/docs" className={`flex items-center gap-1.5 ${t.navLink}`}>
               <BookOpen className="w-3.5 h-3.5" />Docs
+            </Link>
+            <Link href="/settings" className={`flex items-center gap-1.5 ${t.navLink}`}>
+              <Key className="w-3.5 h-3.5" />Settings
             </Link>
             {user.isAdmin && (
               <Link href="/admin" className={`flex items-center gap-1.5 ${t.navLink} text-violet-400 hover:text-violet-300 font-semibold`}>
