@@ -23,6 +23,7 @@ import ThankYouPage from "@/pages/thank-you";
 import CareersPage from "@/pages/careers";
 import AdminPage from "@/pages/admin";
 import CertPage from "@/pages/cert";
+import SettingsPage from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/careers" component={CareersPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/cert/:id" component={CertPage} />
+      <Route path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
     </Switch>
   );

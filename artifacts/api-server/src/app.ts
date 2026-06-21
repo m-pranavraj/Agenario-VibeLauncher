@@ -13,6 +13,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
+import { enrichSession } from "./middlewares/auth.js";
 
 const { Pool } = pkg;
 
@@ -193,6 +194,9 @@ app.use(
     },
   }),
 );
+
+// ── Auth enrichment (API key + webhook secret → session) ─────────────────
+app.use("/api", enrichSession);
 
 // ── Routes ────────────────────────────────────────────────────────────────
 app.use("/api", router);

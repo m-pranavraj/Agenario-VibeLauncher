@@ -7,6 +7,7 @@ import githubRouter from "./github.js";
 import monitoringRouter from "./monitoring.js";
 import adminRouter from "./admin.js";
 import publicRouter from "./public.js";
+import apiKeysRouter from "./api-keys.js";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(githubRouter);
 router.use(monitoringRouter);
 router.use(adminRouter);
 router.use(publicRouter);
+router.use(apiKeysRouter);
 
 export default router;

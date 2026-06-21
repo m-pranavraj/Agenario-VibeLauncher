@@ -575,6 +575,16 @@ export const api = {
   admin: {
     stats: () => request<AdminStats>("/admin/stats"),
   },
+  apiKeys: {
+    list: () => request<{ keys: Array<{ id: number; prefix: string; name: string; lastUsedAt: string | null; createdAt: string; revokedAt: string | null }> }>("/api-keys"),
+    create: (name: string) => request<{ key: string; prefix: string; name: string; message: string }>("/api-keys", { method: "POST", body: JSON.stringify({ name }) }),
+    revoke: (id: number) => request<{ revoked: boolean }>(`/api-keys/${id}`, { method: "DELETE" }),
+  },
+  webhookSecrets: {
+    list: () => request<{ secrets: Array<{ id: number; name: string; createdAt: string; lastUsedAt: string | null }> }>("/webhook-secrets"),
+    create: (name: string) => request<{ secret: string; name: string; message: string }>("/webhook-secrets", { method: "POST", body: JSON.stringify({ name }) }),
+    delete: (id: number) => request<{ deleted: boolean }>(`/webhook-secrets/${id}`, { method: "DELETE" }),
+  },
   public: {
     stats: () => request<{ scansDone: number; issuesReproduced: number; fixesGenerated: number; proofsGenerated: number; screenshotsCaptured: string }>("/public/stats"),
     cert: (certId: string) => request<{ certId: string; source: string; score: number; verdict: string; completedAt: string; criticalIssues: number; totalIssues: number }>(`/public/cert/${certId}`),
