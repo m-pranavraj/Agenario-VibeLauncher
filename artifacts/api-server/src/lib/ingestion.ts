@@ -7,7 +7,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { execSync } from "child_process";
-import { logger } from "./logger";
+import { logger } from "./logger.js";
 
 export function scanTempDir(prefix: string, scanId: number): string {
   return path.join(os.tmpdir(), `${prefix}-${scanId}`);

@@ -7,7 +7,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import AdmZip from "adm-zip";
-import { logger } from "./logger";
+import { logger } from "./logger.js";
 
 function zipTempDir(scanId: number): string {
   return path.join(os.tmpdir(), `agenario-${scanId}`);
