@@ -37,6 +37,9 @@ yarn-error.log
 testem.log
 /typings
 
+# Vercel build artifacts
+api/*.mjs
+
 # System Files
 .DS_Store
 Thumbs.db
