@@ -408,6 +408,48 @@ function OnboardingWizard({ onComplete }: { onComplete: () => void }) {
             </p>
           </div>
 
+          {/* Sandbox Screenshot */}
+          <div className={`rounded-xl border overflow-hidden ${cardBg}`}>
+            <div className={`px-4 py-3 border-b ${isLight ? "border-gray-200" : "border-white/[0.06]"}`}>
+              <h3 className={`font-['Syne'] font-bold text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Sandbox Preview</h3>
+            </div>
+            <div className="p-4">
+              <div className={`rounded-lg border overflow-hidden ${isLight ? "border-gray-200" : "border-white/[0.06]"}`}>
+                <div className={`flex items-center gap-1.5 px-3 py-2 border-b ${isLight ? "bg-gray-50 border-gray-100" : "bg-white/5 border-white/[0.04]"}`}>
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  <div className="w-2 h-2 rounded-full bg-yellow-400" />
+                  <div className="w-2 h-2 rounded-full bg-green-400" />
+                  <span className={`text-[10px] ml-2 font-mono ${isLight ? "text-gray-400" : "text-white/30"}`}>sandbox://localhost:5173</span>
+                </div>
+                <div className={`aspect-video flex items-center justify-center ${isLight ? "bg-gray-100" : "bg-black/40"}`}>
+                  <div className="text-center">
+                    <svg className={`w-16 h-16 mx-auto mb-2 ${isLight ? "text-gray-300" : "text-white/10"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                    </svg>
+                    <p className={`text-xs font-mono ${isLight ? "text-gray-400" : "text-white/30"}`}>sandbox-screenshot-2026-06-21.png</p>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mt-3 text-center text-xs">
+                <div>
+                  <p className="text-red-400 font-bold">3</p>
+                  <p className={isLight ? "text-gray-500" : "text-white/40"}>Console errors</p>
+                </div>
+                <div>
+                  <p className="text-amber-400 font-bold">12</p>
+                  <p className={isLight ? "text-gray-500" : "text-white/40"}>Network failures</p>
+                </div>
+                <div>
+                  <p className="text-amber-400 font-bold">6.2s</p>
+                  <p className={isLight ? "text-gray-500" : "text-white/40"}>First paint</p>
+                </div>
+              </div>
+              <div className={`mt-3 p-3 rounded-lg border text-xs ${isLight ? "bg-red-50 border-red-200 text-red-700" : "bg-red-500/5 border-red-500/20 text-red-300"}`}>
+                ⚠ App failed to load on 2 of 3 sandbox runs — CORS errors blocked API calls, and the root layout had an unhandled runtime exception in the nav bar.
+              </div>
+            </div>
+          </div>
+
           {/* What you'd miss */}
           <div className={`rounded-xl border p-5 ${cardBg}`}>
             <h3 className={`font-['Syne'] font-bold text-sm mb-2 ${isLight ? "text-gray-900" : "text-white"}`}>What you'd miss without Agenario</h3>
