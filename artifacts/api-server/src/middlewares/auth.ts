@@ -8,8 +8,12 @@ export interface AuthenticatedRequest extends Request {
   userPlan?: string;
 }
 
+function extractKeyPrefix(token: string): string {
+  return token.startsWith("agn_") ? token.slice(4, 12) : token.slice(0, 8);
+}
+
 async function resolveApiKey(token: string): Promise<{ userId: number; plan: string } | null> {
-  const prefix = token.slice(0, 8);
+  const prefix = extractKeyPrefix(token);
   const [apiKey] = await db
     .select({ id: apiKeysTable.id, userId: apiKeysTable.userId, keyHash: apiKeysTable.keyHash, revokedAt: apiKeysTable.revokedAt })
     .from(apiKeysTable)
