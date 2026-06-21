@@ -37,8 +37,11 @@ yarn-error.log
 testem.log
 /typings
 
-# Vercel build artifacts
-api/*.mjs
+# Vercel build artifacts (pino workers are not tracked, handler is tracked for detection)
+api/pino-file.mjs
+api/pino-pretty.mjs
+api/pino-worker.mjs
+api/thread-stream-worker.mjs
 
 # System Files
 .DS_Store
