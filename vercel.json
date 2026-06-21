@@ -1,26 +1,11 @@
 {
   "version": 2,
-  "framework": null,
+  "framework": "vite",
   "installCommand": "pnpm install --no-frozen-lockfile",
-  "buildCommand": "pnpm -w run build:vercel",
+  "buildCommand": "pnpm --filter @workspace/agenario run build && node -e \"const fs = require('fs'); fs.rmSync('dist', { recursive: true, force: true }); fs.cpSync('artifacts/agenario/dist', 'dist', { recursive: true });\"",
   "outputDirectory": "dist",
-  "functions": {
-    "api/handler.mjs": {
-      "memory": 1024,
-      "maxDuration": 60
-    }
-  },
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/handler" },
-    { "source": "/api/(.*)", "destination": "/api/handler" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store" }
-      ]
-    }
+    { "source": "/api/(.*)", "destination": "https://agenario-vibelauncher.onrender.com/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
