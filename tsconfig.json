@@ -2,6 +2,14 @@
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
   "files": [],
+  "include": [],
+  "exclude": [
+    "artifacts/agenario",
+    "artifacts/mockup-sandbox",
+    "scripts",
+    "**/node_modules",
+    "**/dist"
+  ],
   "references": [
     {
       "path": "./lib/db"
