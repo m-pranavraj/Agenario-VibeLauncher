@@ -393,7 +393,7 @@ export default function DocsPage() {
             <SectionHeader number="02" title="GitHub Actions CI/CD" desc="Block risky deployments automatically. Add Agenario as a required check." />
 
             <Callout type="info">
-              Requires a Creator or Enterprise plan API key. Get yours from <strong>Dashboard → Settings → API Keys</strong>.
+              Requires a Creator or Enterprise plan API key. <Link href="/settings" className="text-violet-400 hover:underline font-bold">Get yours from Settings → API Keys</Link>.
             </Callout>
 
             <CodeBlock
@@ -413,7 +413,7 @@ jobs:
           AGENARIO_API_KEY: \${{ secrets.AGENARIO_API_KEY }}
           GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Submit scan
+          # Submit scan (get API key from Settings → API Keys)
           SCAN=$(curl -s -X POST https://api.agenario.tech/api/scans \\
             -H "Authorization: Bearer $AGENARIO_API_KEY" \\
             -H "Content-Type: application/json" \\
@@ -491,7 +491,7 @@ jobs:
 
             <CodeBlock
               lang="bash"
-              filename="Create a scan"
+              filename="Create a scan (session)"
               code={`curl -X POST https://api.agenario.tech/api/scans \\
   -H "Content-Type: application/json" \\
   -H "Cookie: agn_sid=<your-session-cookie>" \\
@@ -503,6 +503,10 @@ jobs:
     "businessType": "saas"
   }'`}
             />
+
+            <Callout type="tip">
+              For CI/CD, use an <Link href="/settings" className="text-violet-400 hover:underline font-bold">API key</Link> instead: <code className={`px-1.5 py-0.5 rounded text-xs font-mono ${isLight ? "bg-violet-100 text-violet-700" : "bg-white/[0.07] text-violet-300"}`}>Authorization: Bearer YOUR_API_KEY</code>
+            </Callout>
 
             <CodeBlock
               lang="json"
@@ -580,7 +584,7 @@ jobs:
 
 async function checkLaunchReadiness() {
   const res = await fetch(process.env.AGENARIO_SCAN_URL, {
-    headers: { Cookie: \`agn_sid=\${process.env.AGENARIO_SESSION}\` }
+    headers: { Authorization: \`Bearer \${process.env.AGENARIO_API_KEY}\` }
   });
   const scan = await res.json();
 
@@ -593,7 +597,9 @@ async function checkLaunchReadiness() {
   }
 }
 
-checkLaunchReadiness();`}
+checkLaunchReadiness();
+
+// Get API key: Settings → API Keys`}
             />
 
             <div className="grid sm:grid-cols-2 gap-4">
