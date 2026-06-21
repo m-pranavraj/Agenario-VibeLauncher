@@ -5,7 +5,7 @@
   "scripts": {
     "preinstall": "node -e \"var ua=process.env.npm_config_user_agent||'';if(!ua.includes('pnpm')){console.error('Use pnpm instead');process.exit(1)}\"",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
-    "build:vercel": "pnpm --filter @workspace/api-server run build:vercel && pnpm --filter @workspace/agenario run build && node -e \"const fs = require('fs'); fs.rmSync('dist', { recursive: true, force: true }); fs.cpSync('artifacts/agenario/dist', 'dist', { recursive: true });\" && node -e \"const{rmSync,readdirSync,existsSync}=require('fs');const{join}=require('path');(function rmd(d){if(!existsSync(d))return;const e=readdirSync(d,{withFileTypes:true});for(const f of e){const p=join(d,f.name);f.isDirectory()?(!['node_modules','dist','api','.git','.vercel','.migration-backup'].includes(f.name)&&rmd(p)):(f.name.endsWith('.ts')||f.name.endsWith('.tsx'))&&(rmSync(p),console.log('del',p))}})(process.cwd())\"",
+    "build:vercel": "pnpm --filter @workspace/agenario run build && node -e \"const fs = require('fs'); fs.rmSync('dist', { recursive: true, force: true }); fs.cpSync('artifacts/agenario/dist', 'dist', { recursive: true });\"",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },
