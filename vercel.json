@@ -6,10 +6,6 @@
   "outputDirectory": "dist",
   "builds": [
     {
-      "src": "api/ping.mjs",
-      "use": "@vercel/node"
-    },
-    {
       "src": "api/handler.mjs",
       "use": "@vercel/node",
       "config": {
