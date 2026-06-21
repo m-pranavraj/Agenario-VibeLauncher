@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "pnpm install --frozen-lockfile && pnpm -w run build:vercel",
+  "framework": null,
+  "buildCommand": "pnpm install --no-frozen-lockfile && pnpm -w run build:vercel",
   "outputDirectory": "dist",
   "functions": {
     "api/handler.mjs": {
@@ -11,6 +12,7 @@
   },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/handler" },
+    { "source": "/api/(.*)", "destination": "/api/handler" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
