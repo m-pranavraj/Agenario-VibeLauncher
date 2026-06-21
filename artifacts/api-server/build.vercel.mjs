@@ -41,7 +41,7 @@ await esbuild({
   outExtension: { ".js": ".mjs" },
   logLevel: "info",
   external,
-  sourcemap: "linked",
+  sourcemap: false,
   plugins: [esbuildPluginPino({ transports: ["pino-pretty"] })],
   banner: {
     js: `import { createRequire as __bannerCrReq } from 'node:module';
