@@ -51,8 +51,9 @@ async function resolveWebhookSecret(secret: string): Promise<{ userId: number; p
   return { userId: record.userId, plan: user.plan };
 }
 
-export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   if (req.session?.userId) {
+    req.userId = req.session.userId;
     next();
     return;
   }
@@ -72,6 +73,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     }
 
     req.session.userId = resolved.userId;
+    req.userId = resolved.userId;
     req.session.save(() => next());
     return;
   }
@@ -85,6 +87,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     }
 
     req.session.userId = resolved.userId;
+    req.userId = resolved.userId;
     req.session.save(() => next());
     return;
   }
@@ -92,8 +95,9 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   res.status(401).json({ error: "Not authenticated" });
 }
 
-export async function enrichSession(req: Request, _res: Response, next: NextFunction): Promise<void> {
+export async function enrichSession(req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> {
   if (req.session?.userId) {
+    req.userId = req.session.userId;
     next();
     return;
   }
@@ -105,6 +109,7 @@ export async function enrichSession(req: Request, _res: Response, next: NextFunc
       const resolved = await resolveApiKey(token);
       if (resolved) {
         req.session.userId = resolved.userId;
+        req.userId = resolved.userId;
         await new Promise<void>((resolve) => req.session.save(() => resolve()));
       }
     }
@@ -116,9 +121,14 @@ export async function enrichSession(req: Request, _res: Response, next: NextFunc
       const resolved = await resolveWebhookSecret(webhookSecret);
       if (resolved) {
         req.session.userId = resolved.userId;
+        req.userId = resolved.userId;
         await new Promise<void>((resolve) => req.session.save(() => resolve()));
       }
     }
+  }
+
+  if (req.session?.userId) {
+    req.userId = req.session.userId;
   }
 
   next();

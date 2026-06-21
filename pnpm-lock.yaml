@@ -349,7 +349,7 @@ importers:
         specifier: ^9.0.1
         version: 9.0.1
       openai:
-        specifier: ^4.86.0
+        specifier: ^4.104.0
         version: 4.104.0(zod@3.25.76)
       pg:
         specifier: ^8.13.3

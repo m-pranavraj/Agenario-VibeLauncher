@@ -72,12 +72,15 @@ export default function ScanProgress() {
   }, [events]);
 
   useEffect(() => {
+    let timer: NodeJS.Timeout | undefined;
     if (completed) {
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setLocation(`/scans/${scanId}`);
       }, 1500);
-      return () => clearTimeout(timer);
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [completed, scanId, setLocation]);
 
   const latestProgress = events.length > 0 ? events[events.length - 1].progress : 0;

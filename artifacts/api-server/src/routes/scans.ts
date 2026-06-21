@@ -606,7 +606,7 @@ async function runAnalysisPipeline(opts: {
 
   const totalIssues = issueCounts.critical + issueCounts.high + issueCounts.medium + issueCounts.low;
   emit("complete", `Analysis complete: ${totalIssues} issues found, score: ${finalScore}/100`, 100);
-  emitProgress(scanId, { scanId, phase: "complete", status: "complete", message: "All done", progress: 100, timestamp: Date.now() });
+  emitProgress(scanId, { scanId, phase: "complete", status: "complete", message: "All done", progress: 100 });
 
   logger.info({ scanId }, "Analysis pipeline complete");
 }
@@ -738,7 +738,7 @@ router.post("/scans", async (req, res): Promise<void> => {
       });
     } catch (err) {
       logger.error({ err, scanId: scan.id }, "Analysis failed");
-      emitProgress(scan.id, { scanId: scan.id, phase: "error", status: "error", message: "Analysis failed", progress: 0, error: (err as Error)?.message, timestamp: Date.now() });
+      emitProgress(scan.id, { scanId: scan.id, phase: "error", status: "error", message: "Analysis failed", progress: 0, error: (err as Error)?.message });
       await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, scan.id));
     } finally {
       if (parsed.data.sourceType === "github") cleanupScan(scan.id);

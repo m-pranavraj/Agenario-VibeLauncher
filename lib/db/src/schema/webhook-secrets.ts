@@ -1,8 +1,9 @@
 import { pgTable, text, serial, integer, timestamp } from "drizzle-orm/pg-core";
+import { usersTable } from "./users";
 
 export const webhookSecretsTable = pgTable("webhook_secrets", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references("users.id", { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   secretHash: text("secret_hash").notNull(),
   name: text("name").notNull().default("default"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

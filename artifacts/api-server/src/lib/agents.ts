@@ -712,7 +712,7 @@ async function callWithFallback(
             })),
           }),
           `Anthropic[${model}]`,
-        );
+        ) as any;
         const raw = response.content.map((b: any) => b.type === "text" ? b.text : "").join("");
         const content = extractJson(raw);
         if (content && content !== "{}") return content;
@@ -739,7 +739,7 @@ async function callWithFallback(
             max_tokens: maxTok,
           }),
           `OpenAI[${model}]`,
-        );
+        ) as any;
         const content = response.choices[0]?.message?.content ?? "{}";
         if (content && content !== "{}") return content;
       } catch (err: any) {

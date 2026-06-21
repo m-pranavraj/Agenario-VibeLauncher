@@ -62,7 +62,7 @@ router.post("/api-keys", requireAuth, async (req: AuthenticatedRequest, res) => 
 });
 
 router.delete("/api-keys/:id", requireAuth, async (req: AuthenticatedRequest, res) => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(req.params.id as string, 10);
   if (isNaN(id)) {
     res.status(400).json({ error: "Invalid key id" });
     return;
@@ -120,7 +120,7 @@ router.post("/webhook-secrets", requireAuth, async (req: AuthenticatedRequest, r
 });
 
 router.delete("/webhook-secrets/:id", requireAuth, async (req: AuthenticatedRequest, res) => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(req.params.id as string, 10);
   if (isNaN(id)) {
     res.status(400).json({ error: "Invalid secret id" });
     return;

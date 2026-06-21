@@ -1,10 +1,11 @@
 import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { usersTable } from "./users";
 
 export const apiKeysTable = pgTable("api_keys", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references("users.id", { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   prefix: text("prefix").notNull(),
   keyHash: text("key_hash").notNull(),
   name: text("name").notNull().default("default"),
