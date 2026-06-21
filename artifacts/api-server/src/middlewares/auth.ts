@@ -22,8 +22,8 @@ async function resolveApiKey(token: string): Promise<{ userId: number; plan: str
 
   if (!apiKey || apiKey.revokedAt) return null;
 
-  const fullHash = crypto.createHash("sha256").update(token).digest("hex");
-  if (fullHash !== apiKey.keyHash) return null;
+  const fullHash = crypto.createHash("sha256").update(token).digest();
+  if (!crypto.timingSafeEqual(fullHash, Buffer.from(apiKey.keyHash, "hex"))) return null;
 
   await db.update(apiKeysTable).set({ lastUsedAt: new Date() }).where(eq(apiKeysTable.id, apiKey.id));
 
@@ -36,14 +36,14 @@ async function resolveApiKey(token: string): Promise<{ userId: number; plan: str
 async function resolveWebhookSecret(secret: string): Promise<{ userId: number; plan: string } | null> {
   const hash = crypto.createHash("sha256").update(secret).digest("hex");
   const [record] = await db
-    .select({ userId: webhookSecretsTable.userId })
+    .select({ id: webhookSecretsTable.id, userId: webhookSecretsTable.userId })
     .from(webhookSecretsTable)
     .where(eq(webhookSecretsTable.secretHash, hash))
     .limit(1);
 
   if (!record) return null;
 
-  await db.update(webhookSecretsTable).set({ lastUsedAt: new Date() }).where(eq(webhookSecretsTable.secretHash, hash));
+  await db.update(webhookSecretsTable).set({ lastUsedAt: new Date() }).where(eq(webhookSecretsTable.id, record.id));
 
   const [user] = await db.select({ plan: usersTable.plan }).from(usersTable).where(eq(usersTable.id, record.userId)).limit(1);
   if (!user) return null;
