@@ -40,8 +40,8 @@ function requireAuth(req: any, res: any): boolean {
   return true;
 }
 
-async function checkScanLimit(user: { id: number; plan: string }, res: any): Promise<boolean> {
-  const limit = PLAN_LIMITS[user.plan] ?? 2;
+async function checkScanLimit(user: { id: number; plan: string; scanLimit?: number | null }, res: any): Promise<boolean> {
+  const limit = user.scanLimit ?? (PLAN_LIMITS[user.plan] ?? 2);
   if (!isFinite(limit)) return true;
   const now = new Date();
   const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));

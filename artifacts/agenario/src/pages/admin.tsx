@@ -15,6 +15,27 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [editPlan, setEditPlan] = useState("");
+  const [editLimit, setEditLimit] = useState<string>("");
+  const [savingUser, setSavingUser] = useState(false);
+
+  const handleSaveUser = async (userId: number) => {
+    setSavingUser(true);
+    try {
+      await api.admin.updateUserPlan(userId, {
+        plan: editPlan,
+        scanLimit: editLimit === "" ? null : parseInt(editLimit, 10),
+      });
+      const updatedStats = await api.admin.stats();
+      setStats(updatedStats);
+      setEditingUserId(null);
+    } catch (err: any) {
+      alert(err.message || "Failed to update user");
+    } finally {
+      setSavingUser(false);
+    }
+  };
 
   const t = {
     page:    isLight ? "bg-gray-50 text-gray-900 min-h-screen" : "bg-[#050505] text-white min-h-screen",
@@ -577,27 +598,90 @@ export default function AdminPage() {
                           <th className="py-3 px-2">Name</th>
                           <th className="py-3 px-2">Email</th>
                           <th className="py-3 px-2">Plan</th>
+                          <th className="py-3 px-2">Scan Limit Override</th>
+                          <th className="py-3 px-2 text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody className={`divide-y ${isLight ? "divide-gray-100" : "divide-white/[0.04]"} ${t.val}`}>
-                        {stats.recentUsers?.map((u) => (
-                          <tr key={u.id} className={`hover:${isLight ? "bg-gray-50/50" : "bg-white/[0.01]"} transition-colors`}>
-                            <td className="py-3 px-2 font-mono text-[10px]">
-                              {new Date(u.createdAt).toLocaleDateString("en-IN", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                              })}
-                            </td>
-                            <td className="py-3 px-2 font-semibold">{u.name}</td>
-                            <td className="py-3 px-2 font-mono">{u.email}</td>
-                            <td className="py-3 px-2">
-                              <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full text-white ${PLAN_COLORS[u.plan] || "bg-gray-400"}`}>
-                                {u.plan}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
+                        {stats.recentUsers?.map((u) => {
+                          const isEditing = editingUserId === u.id;
+                          return (
+                            <tr key={u.id} className={`hover:${isLight ? "bg-gray-50/50" : "bg-white/[0.01]"} transition-colors`}>
+                              <td className="py-3 px-2 font-mono text-[10px]">
+                                {new Date(u.createdAt).toLocaleDateString("en-IN", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </td>
+                              <td className="py-3 px-2 font-semibold">{u.name}</td>
+                              <td className="py-3 px-2 font-mono">{u.email}</td>
+                              <td className="py-3 px-2">
+                                {isEditing ? (
+                                  <select
+                                    value={editPlan}
+                                    onChange={(e) => setEditPlan(e.target.value)}
+                                    className={`text-xs px-2 py-1 rounded border ${isLight ? "bg-white border-gray-300 text-gray-900" : "bg-black/40 border-white/20 text-white"}`}
+                                  >
+                                    <option value="free">Free</option>
+                                    <option value="creator">Creator</option>
+                                    <option value="enterprise">Enterprise</option>
+                                  </select>
+                                ) : (
+                                  <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full text-white ${PLAN_COLORS[u.plan] || "bg-gray-400"}`}>
+                                    {u.plan}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-3 px-2">
+                                {isEditing ? (
+                                  <input
+                                    type="number"
+                                    placeholder="Default"
+                                    value={editLimit}
+                                    onChange={(e) => setEditLimit(e.target.value)}
+                                    className={`w-20 text-xs px-2 py-1 rounded border ${isLight ? "bg-white border-gray-300 text-gray-900" : "bg-black/40 border-white/20 text-white"}`}
+                                  />
+                                ) : (
+                                  <span className="font-mono text-xs">
+                                    {u.scanLimit != null ? u.scanLimit : "Default (Plan)"}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-3 px-2 text-right">
+                                {isEditing ? (
+                                  <div className="flex justify-end gap-1.5">
+                                    <button
+                                      disabled={savingUser}
+                                      onClick={() => handleSaveUser(u.id)}
+                                      className="px-2.5 py-1 text-[10px] bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg transition-colors"
+                                    >
+                                      {savingUser ? "Saving..." : "Save"}
+                                    </button>
+                                    <button
+                                      disabled={savingUser}
+                                      onClick={() => setEditingUserId(null)}
+                                      className={`px-2.5 py-1 text-[10px] rounded-lg border font-bold transition-colors ${isLight ? "border-gray-200 text-gray-500 hover:bg-gray-50" : "border-white/10 text-white/60 hover:bg-white/5"}`}
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setEditingUserId(u.id);
+                                      setEditPlan(u.plan);
+                                      setEditLimit(u.scanLimit != null ? String(u.scanLimit) : "");
+                                    }}
+                                    className="px-2.5 py-1 text-[10px] bg-violet-500 hover:bg-violet-600 text-white font-bold rounded-lg transition-colors"
+                                  >
+                                    Edit Tier
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

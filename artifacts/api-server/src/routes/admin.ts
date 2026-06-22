@@ -148,6 +148,7 @@ router.get("/admin/stats", async (req: any, res: any) => {
         email: usersTable.email,
         name: usersTable.name,
         plan: usersTable.plan,
+        scanLimit: usersTable.scanLimit,
         createdAt: usersTable.createdAt,
       })
       .from(usersTable)
@@ -180,6 +181,47 @@ router.get("/admin/stats", async (req: any, res: any) => {
     });
   } catch (err) {
     logger.error({ err }, "Admin stats error");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/admin/users/:id/update-plan", async (req: any, res: any) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  const adminEmail = process.env["ADMIN_EMAIL"];
+  if (!adminEmail) {
+    return res.status(403).json({ error: "Admin access not configured on server. Set ADMIN_EMAIL env var." });
+  }
+
+  try {
+    const users = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
+    const me = users[0];
+    if (!me || me.email.trim().toLowerCase() !== adminEmail.trim().toLowerCase()) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const userId = parseInt(req.params.id, 10);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
+
+    const { plan, scanLimit } = req.body;
+
+    const updateData: Record<string, any> = {};
+    if (plan !== undefined) {
+      updateData.plan = plan;
+    }
+    if (scanLimit !== undefined) {
+      updateData.scanLimit = scanLimit === "" || scanLimit === null ? null : parseInt(scanLimit, 10);
+    }
+
+    await db.update(usersTable).set(updateData).where(eq(usersTable.id, userId));
+
+    return res.json({ success: true, message: "User plan updated successfully" });
+  } catch (err) {
+    logger.error({ err }, "Admin update user plan error");
     return res.status(500).json({ error: "Internal server error" });
   }
 });

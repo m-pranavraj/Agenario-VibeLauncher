@@ -80,6 +80,7 @@ export interface AdminStats {
     email: string;
     name: string;
     plan: string;
+    scanLimit: number | null;
     createdAt: string;
   }>;
 }
@@ -574,6 +575,11 @@ export const api = {
   },
   admin: {
     stats: () => request<AdminStats>("/admin/stats"),
+    updateUserPlan: (id: number, data: { plan?: string; scanLimit?: number | null }) =>
+      request<{ success: boolean; message: string }>(`/admin/users/${id}/update-plan`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
   },
   apiKeys: {
     list: () => request<{ keys: Array<{ id: number; prefix: string; name: string; lastUsedAt: string | null; createdAt: string; revokedAt: string | null }> }>("/api-keys"),
