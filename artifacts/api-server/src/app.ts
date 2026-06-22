@@ -187,7 +187,7 @@ app.use(
       // so we need SameSite=None + Secure to allow the session cookie to be
       // sent across origins. In dev the Vite proxy makes them same-origin so
       // Lax is fine and Secure is not required.
-      secure: isProduction,
+      secure: isProduction ? "auto" : false,
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       sameSite: isProduction ? "none" : "lax",

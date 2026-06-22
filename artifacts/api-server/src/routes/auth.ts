@@ -46,9 +46,15 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
     console.log(`[DEV OTP] Phone: ${phone} → OTP: ${otp}`);
   }
 
-  res.json({
-    sent: true,
-    ...(isDev ? { devOtp: otp } : {}), // Only expose in development
+  req.session.save((err) => {
+    if (err) {
+      res.status(500).json({ error: "Failed to save session" });
+      return;
+    }
+    res.json({
+      sent: true,
+      ...(isDev ? { devOtp: otp } : {}), // Only expose in development
+    });
   });
 });
 
@@ -154,13 +160,19 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   req.session.pendingOtp = undefined;
   req.session.userId = user.id;
 
-  res.status(201).json({
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    plan: user.plan,
-    isAdmin: process.env.ADMIN_EMAIL ? user.email.trim().toLowerCase() === process.env.ADMIN_EMAIL.trim().toLowerCase() : false,
-    createdAt: user.createdAt.toISOString(),
+  req.session.save((err) => {
+    if (err) {
+      res.status(500).json({ error: "Failed to save session" });
+      return;
+    }
+    res.status(201).json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      plan: user.plan,
+      isAdmin: process.env.ADMIN_EMAIL ? user.email.trim().toLowerCase() === process.env.ADMIN_EMAIL.trim().toLowerCase() : false,
+      createdAt: user.createdAt.toISOString(),
+    });
   });
 });
 
@@ -192,13 +204,19 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 
   req.session.userId = user.id;
 
-  res.json({
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    plan: user.plan,
-    isAdmin: process.env.ADMIN_EMAIL ? user.email.trim().toLowerCase() === process.env.ADMIN_EMAIL.trim().toLowerCase() : false,
-    createdAt: user.createdAt.toISOString(),
+  req.session.save((err) => {
+    if (err) {
+      res.status(500).json({ error: "Failed to save session" });
+      return;
+    }
+    res.json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      plan: user.plan,
+      isAdmin: process.env.ADMIN_EMAIL ? user.email.trim().toLowerCase() === process.env.ADMIN_EMAIL.trim().toLowerCase() : false,
+      createdAt: user.createdAt.toISOString(),
+    });
   });
 });
 
