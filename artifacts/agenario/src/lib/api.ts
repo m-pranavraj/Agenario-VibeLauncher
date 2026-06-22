@@ -157,6 +157,8 @@ export interface ScanIssue {
   evidenceLabel?: string;
   videoUrl?: string | null;
   retestStatus?: string | null;
+  aiContext?: string;
+  category?: string;
 }
 
 export interface IssueCounts {
@@ -243,6 +245,8 @@ export interface SandboxMeta {
   installLog?: string;
   serverLog?: string;
   httpStatus?: number;
+  auditLog?: any;
+  auditVulnCount?: number;
 }
 
 export interface RegressionDiff {

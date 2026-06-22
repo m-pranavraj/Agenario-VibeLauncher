@@ -35,7 +35,7 @@ function nextOpenRouterModel(): string {
   return m;
 }
 
-function getAnyClient(): Groq {
+export function getAnyClient(): Groq {
   const orKey = openRouterRotator.getNextKey();
   if (orKey) return new Groq({ apiKey: orKey, baseURL: OPENROUTER_BASE });
   const groqKey = groqRotator.getNextKey();
@@ -49,14 +49,14 @@ function getAnyClient(): Groq {
   throw new Error("No AI provider keys available.");
 }
 
-function smartModel(): string {
+export function smartModel(): string {
   if (openRouterRotator.hasKeys()) return "meta-llama/llama-3.3-70b-instruct:free";
   if (groqRotator.hasKeys()) return SMART_MODEL;
   if (anthropicRotator.hasKeys()) return ANTHROPIC_SMART;
   if (openaiRotator.hasKeys()) return OPENAI_SMART;
   return CEREBRAS_MODEL;
 }
-function fastModel(): string {
+export function fastModel(): string {
   if (openRouterRotator.hasKeys()) return "meta-llama/llama-3.1-8b-instruct:free";
   if (groqRotator.hasKeys()) return FAST_MODEL;
   if (anthropicRotator.hasKeys()) return ANTHROPIC_FAST;
@@ -65,7 +65,7 @@ function fastModel(): string {
 }
 
 /** Extract JSON from model output — handles markdown code fences and stray text */
-function extractJson(raw: string): string {
+export function extractJson(raw: string): string {
   if (!raw) return "{}";
   // Already valid JSON
   const trimmed = raw.trim();

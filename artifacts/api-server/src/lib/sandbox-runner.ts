@@ -110,6 +110,27 @@ export async function runGithubboxSandbox(opts: {
 
     steps.push(step("Install dependencies", "ok", "Dependencies resolved successfully"));
 
+    let auditLog: any = null;
+    let auditVulnCount = 0;
+    try {
+      const pm = eligibility.packageManager!;
+      const auditCmd = pm === "npm" ? "npm audit --json" : pm === "pnpm" ? "pnpm audit --json" : "yarn audit --json";
+      const auditResult = await runShellCommand(auditCmd, dir, 30_000, { NODE_ENV: "development" });
+      try {
+        const parsed = JSON.parse(auditResult.output);
+        auditLog = parsed;
+        if (pm === "npm") {
+          auditVulnCount = Object.keys(parsed.vulnerabilities || {}).length;
+        } else if (pm === "pnpm") {
+          auditVulnCount = (parsed.vulnerabilities ? Object.values(parsed.vulnerabilities).reduce((a: any, b: any) => Number(a) + Number(b), 0) : 0) as number;
+        } else {
+          auditVulnCount = (parsed.metadata?.vulnerabilities ? Object.values(parsed.metadata.vulnerabilities).reduce((a: any, b: any) => Number(a) + Number(b), 0) : 0) as number;
+        }
+      } catch (e) {}
+    } catch (e) {
+      logger.warn({ err: e, scanId }, "Sandbox audit failed");
+    }
+
     const port = await findAvailablePort(eligibility.portHint ?? 3000);
     const pm = eligibility.packageManager!;
     const scriptName = eligibility.startScript!;

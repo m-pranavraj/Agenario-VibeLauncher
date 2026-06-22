@@ -40,7 +40,7 @@ describe("Secret detection", () => {
     expect(f).toBeDefined();
     expect(f!.severity).toBe("critical");
     expect(f!.confidence).toBeGreaterThanOrEqual(90);
-    expect(f!.evidence).toContain("src/config.ts:2");
+    expect(f!.evidence.replace(/\\/g, "/")).toContain("src/config.ts:2");
   });
 
   it("detects Stripe live secret key", () => {

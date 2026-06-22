@@ -86,6 +86,8 @@ export interface SandboxMeta {
   installLog?: string;
   serverLog?: string;
   httpStatus?: number;
+  auditLog?: any;
+  auditVulnCount?: number;
 }
 
 export const scansTable = pgTable("scans", {
