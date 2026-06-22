@@ -5560,7 +5560,7 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
   );
 }
 
-function StickyLaunchAlertBanner({ scan, plan }: { scan: ScanDetail; plan: string }) {
+function StickyLaunchAlertBanner({ scan, plan, onViewIssues }: { scan: ScanDetail; plan: string; onViewIssues?: () => void }) {
   const isLight = useIsLight();
   const [dismissed, setDismissed] = useState(false);
   const critCount = scan.issueCounts?.critical ?? 0;
@@ -5574,7 +5574,8 @@ function StickyLaunchAlertBanner({ scan, plan }: { scan: ScanDetail; plan: strin
 
   const handleFixClick = () => {
     if (isCreator) {
-      document.getElementById("issues-panel")?.scrollIntoView({ behavior: "smooth" });
+      onViewIssues?.();
+      setTimeout(() => document.getElementById("issues-panel")?.scrollIntoView({ behavior: "smooth" }), 100);
     } else {
       window.location.href = "/pricing";
     }
@@ -7149,7 +7150,7 @@ export default function ScanResultsPage() {
 
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-5">
         {/* ── Sticky Launch Alert Banner ───────────────────── */}
-        <StickyLaunchAlertBanner scan={scan} plan={user?.plan ?? "free"} />
+        <StickyLaunchAlertBanner scan={scan} plan={user?.plan ?? "free"} onViewIssues={() => setActiveTab("issues")} />
 
         {/* ── Verdict banner ───────────────────────────────── */}
         {verdict && (
