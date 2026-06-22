@@ -3,8 +3,9 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { useScans } from "@/hooks/use-scans";
-import { ChevronRight, Plus, LogOut, Zap, Brain, Activity, BarChart3, BookOpen, Loader2, ShieldCheck, Key } from "lucide-react";
+import { ChevronRight, Plus, LogOut, Zap, Brain, Activity, BarChart3, BookOpen, Loader2, ShieldCheck, Key, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useState } from "react";
 
 function ScoreRing({ score, isLight }: { score: number; isLight: boolean }) {
   const r = 22;
@@ -83,7 +84,10 @@ export default function DashboardPage() {
   const planBadge = t.badge(plan);
   const planLabel = plan === "creator" ? "Creator" : plan === "enterprise" ? "Enterprise" : "Free";
 
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const handleLogout = async () => {
+    setMenuOpen(false);
     await logout();
     setLocation("/login");
   };
@@ -155,6 +159,12 @@ export default function DashboardPage() {
             )}
             <ThemeToggle />
             <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className={`md:hidden p-1.5 rounded-lg transition-colors ${isLight ? "text-gray-400 hover:text-gray-700 hover:bg-gray-100" : "text-white/25 hover:text-white hover:bg-white/[0.06]"}`}
+            >
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+            <button
               onClick={handleLogout}
               data-testid="button-logout"
               className={t.logoutBtn}
@@ -163,6 +173,30 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+        {menuOpen && (
+          <div className={`md:hidden border-t px-6 py-4 space-y-3 ${isLight ? "bg-white/95 border-pink-100/50" : "bg-[#050505]/95 border-white/[0.06]"}`}>
+            <Link href="/intelligence" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2 text-sm ${t.navLink}`}>
+              <Brain className="w-4 h-4" />Intelligence
+            </Link>
+            <Link href="/monitoring" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2 text-sm ${t.navLink}`}>
+              <Activity className="w-4 h-4" />Monitoring
+            </Link>
+            <Link href="/portfolio" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2 text-sm ${t.navLink}`}>
+              <BarChart3 className="w-4 h-4" />Portfolio
+            </Link>
+            <Link href="/docs" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2 text-sm ${t.navLink}`}>
+              <BookOpen className="w-4 h-4" />Docs
+            </Link>
+            <Link href="/settings" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2 text-sm ${t.navLink}`}>
+              <Key className="w-4 h-4" />Settings
+            </Link>
+            {user.isAdmin && (
+              <Link href="/admin" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2 text-sm ${t.navLink} text-violet-400`}>
+                <ShieldCheck className="w-4 h-4" />Admin
+              </Link>
+            )}
+          </div>
+        )}
       </nav>
 
       <main className="relative z-10 max-w-5xl mx-auto px-6 py-10">

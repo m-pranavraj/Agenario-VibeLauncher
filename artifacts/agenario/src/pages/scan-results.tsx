@@ -256,7 +256,7 @@ const COMPLIANCE_COLORS: Record<string, string> = {
 
 function ScoreRing({ score }: { score: number }) {
   const isLight = useIsLight();
-  const color = score >= 80 ? "#4ade80" : score >= 55 ? "#f59e0b" : "#f87171";
+  const color = score >= 70 ? "#4ade80" : score >= 40 ? "#f59e0b" : "#f87171";
   const r = 48;
   const circ = 2 * Math.PI * r;
   const dash = (score / 100) * circ;
@@ -7020,9 +7020,9 @@ export default function ScanResultsPage() {
   const rawVerdict =
     scan.launchVerdict ??
     (scan.score != null
-      ? scan.score >= 80
+      ? scan.score >= 70
         ? "ready"
-        : scan.score >= 55
+        : scan.score >= 40
           ? "caution"
           : "do-not-launch"
       : null);

@@ -41,7 +41,7 @@ function SparkLine({ history }: { history: Array<{ score: number | null }> }) {
     return `${x},${y}`;
   }).join(" ");
   const lastScore = scores[scores.length - 1] ?? 50;
-  const color = lastScore >= 80 ? "#4ade80" : lastScore >= 55 ? "#f59e0b" : "#f87171";
+  const color = lastScore >= 70 ? "#4ade80" : lastScore >= 40 ? "#f59e0b" : "#f87171";
   return (
     <svg width={w} height={h} className="overflow-visible">
       <polyline fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" points={pts} opacity="0.7" />
