@@ -580,6 +580,10 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       }),
+    deleteUser: (id: number) =>
+      request<{ success: boolean; message: string }>(`/admin/users/${id}`, { method: "DELETE" }),
+    deleteScan: (id: number) =>
+      request<{ success: boolean; message: string }>(`/admin/scans/${id}`, { method: "DELETE" }),
   },
   apiKeys: {
     list: () => request<{ keys: Array<{ id: number; prefix: string; name: string; lastUsedAt: string | null; createdAt: string; revokedAt: string | null }> }>("/api-keys"),

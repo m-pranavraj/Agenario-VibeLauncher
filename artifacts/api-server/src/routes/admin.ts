@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq, desc } from "drizzle-orm";
-import { db, usersTable, scansTable } from "@workspace/db";
+import { db, usersTable, scansTable, scanIssuesTable, apiKeysTable, webhookSecretsTable } from "@workspace/db";
 import { logger } from "../lib/logger.js";
 
 const router = Router();
@@ -222,6 +222,85 @@ router.post("/admin/users/:id/update-plan", async (req: any, res: any) => {
     return res.json({ success: true, message: "User plan updated successfully" });
   } catch (err) {
     logger.error({ err }, "Admin update user plan error");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/admin/users/:id", async (req: any, res: any) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  const adminEmail = process.env["ADMIN_EMAIL"];
+  if (!adminEmail) {
+    return res.status(403).json({ error: "Admin access not configured on server. Set ADMIN_EMAIL env var." });
+  }
+
+  try {
+    const users = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
+    const me = users[0];
+    if (!me || me.email.trim().toLowerCase() !== adminEmail.trim().toLowerCase()) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const userId = parseInt(req.params.id, 10);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
+
+    if (userId === me.id) {
+      return res.status(400).json({ error: "Cannot delete your own admin account" });
+    }
+
+    const userScans = await db.select({ id: scansTable.id }).from(scansTable).where(eq(scansTable.userId, userId));
+    const scanIds = userScans.map((s) => s.id);
+
+    if (scanIds.length > 0) {
+      for (const scanId of scanIds) {
+        await db.delete(scanIssuesTable).where(eq(scanIssuesTable.scanId, scanId));
+      }
+      await db.delete(scansTable).where(eq(scansTable.userId, userId));
+    }
+
+    await db.delete(apiKeysTable).where(eq(apiKeysTable.userId, userId));
+    await db.delete(webhookSecretsTable).where(eq(webhookSecretsTable.userId, userId));
+    await db.delete(usersTable).where(eq(usersTable.id, userId));
+
+    return res.json({ success: true, message: "User and all associated data deleted successfully" });
+  } catch (err) {
+    logger.error({ err }, "Admin delete user error");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/admin/scans/:id", async (req: any, res: any) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  const adminEmail = process.env["ADMIN_EMAIL"];
+  if (!adminEmail) {
+    return res.status(403).json({ error: "Admin access not configured on server. Set ADMIN_EMAIL env var." });
+  }
+
+  try {
+    const users = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
+    const me = users[0];
+    if (!me || me.email.trim().toLowerCase() !== adminEmail.trim().toLowerCase()) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const scanId = parseInt(req.params.id, 10);
+    if (isNaN(scanId)) {
+      return res.status(400).json({ error: "Invalid scan ID" });
+    }
+
+    await db.delete(scanIssuesTable).where(eq(scanIssuesTable.scanId, scanId));
+    await db.delete(scansTable).where(eq(scansTable.id, scanId));
+
+    return res.json({ success: true, message: "Scan deleted successfully" });
+  } catch (err) {
+    logger.error({ err }, "Admin delete scan error");
     return res.status(500).json({ error: "Internal server error" });
   }
 });

@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { motion } from "framer-motion";
-import { Users, ScanLine, TrendingUp, Star, BarChart3, ShieldCheck, LogOut, DollarSign, Award, Cpu, AlertTriangle, Layers, Activity, Bot, History, ExternalLink, Clock } from "lucide-react";
+import { Users, ScanLine, TrendingUp, Star, BarChart3, ShieldCheck, LogOut, DollarSign, Award, Cpu, AlertTriangle, Layers, Activity, Bot, History, ExternalLink, Clock, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import { api, type AdminStats } from "@/lib/api";
 
@@ -34,6 +34,32 @@ export default function AdminPage() {
       alert(err.message || "Failed to update user");
     } finally {
       setSavingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: number, email: string) => {
+    if (!confirm(`Are you sure you want to delete user ${email} and all their associated scans/keys? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      await api.admin.deleteUser(userId);
+      const updatedStats = await api.admin.stats();
+      setStats(updatedStats);
+    } catch (err: any) {
+      alert(err.message || "Failed to delete user");
+    }
+  };
+
+  const handleDeleteScan = async (scanId: number) => {
+    if (!confirm("Are you sure you want to delete this scan and all its issues? This action cannot be undone.")) {
+      return;
+    }
+    try {
+      await api.admin.deleteScan(scanId);
+      const updatedStats = await api.admin.stats();
+      setStats(updatedStats);
+    } catch (err: any) {
+      alert(err.message || "Failed to delete scan");
     }
   };
 
@@ -570,9 +596,18 @@ export default function AdminPage() {
                                 )}
                               </td>
                               <td className="py-3 px-2 text-right">
-                                <Link href={`/scans/${scan.id}`} className="text-violet-400 hover:text-violet-300 font-bold inline-flex items-center gap-0.5 hover:underline">
-                                  View <ExternalLink className="w-3 h-3" />
-                                </Link>
+                                <div className="flex justify-end items-center gap-3">
+                                  <Link href={`/scans/${scan.id}`} className="text-violet-400 hover:text-violet-300 font-bold inline-flex items-center gap-0.5 hover:underline">
+                                    View <ExternalLink className="w-3 h-3" />
+                                  </Link>
+                                  <button
+                                    onClick={() => handleDeleteScan(scan.id)}
+                                    className="p-1 rounded text-red-500 hover:text-red-400 transition-colors"
+                                    title="Delete Scan"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -673,16 +708,27 @@ export default function AdminPage() {
                                     </button>
                                   </div>
                                 ) : (
-                                  <button
-                                    onClick={() => {
-                                      setEditingUserId(u.id);
-                                      setEditPlan(u.plan);
-                                      setEditLimit(u.scanLimit != null ? String(u.scanLimit) : "");
-                                    }}
-                                    className="px-2.5 py-1 text-[10px] bg-violet-500 hover:bg-violet-600 text-white font-bold rounded-lg transition-colors"
-                                  >
-                                    Edit Tier
-                                  </button>
+                                  <div className="flex justify-end items-center gap-2">
+                                    <button
+                                      onClick={() => {
+                                        setEditingUserId(u.id);
+                                        setEditPlan(u.plan);
+                                        setEditLimit(u.scanLimit != null ? String(u.scanLimit) : "");
+                                      }}
+                                      className="px-2.5 py-1 text-[10px] bg-violet-500 hover:bg-violet-600 text-white font-bold rounded-lg transition-colors"
+                                    >
+                                      Edit Tier
+                                    </button>
+                                    {u.id !== user?.id && (
+                                      <button
+                                        onClick={() => handleDeleteUser(u.id, u.email)}
+                                        className="p-1.5 rounded-lg border border-red-500/20 text-red-500 hover:bg-red-500/10 transition-colors"
+                                        title="Delete User"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </td>
                             </tr>
