@@ -5560,16 +5560,25 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
   );
 }
 
-function StickyLaunchAlertBanner({ scan }: { scan: ScanDetail }) {
+function StickyLaunchAlertBanner({ scan, plan }: { scan: ScanDetail; plan: string }) {
   const isLight = useIsLight();
   const [dismissed, setDismissed] = useState(false);
   const critCount = scan.issueCounts?.critical ?? 0;
   const hasRevenueLeak =
     scan.revenueIntelligence &&
     scan.revenueIntelligence.overallRevenueRisk !== "low";
+  const isCreator = plan === "creator" || plan === "enterprise";
 
   if (dismissed || (critCount === 0 && !hasRevenueLeak)) return null;
   const isRevAlert = critCount === 0 && hasRevenueLeak;
+
+  const handleFixClick = () => {
+    if (isCreator) {
+      document.getElementById("issues-panel")?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.location.href = "/pricing";
+    }
+  };
 
   return (
     <motion.div
@@ -5593,15 +5602,13 @@ function StickyLaunchAlertBanner({ scan }: { scan: ScanDetail }) {
               : `${critCount} critical blocker${critCount !== 1 ? "s" : ""} - fix before going live`}
           </p>
         </div>
-        <Link href="/pricing" className="shrink-0">
-          <button className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-all ${
-            isRevAlert
-              ? `bg-amber-500/80 hover:bg-amber-500 ${isLight ? "text-gray-900" : "text-white"} border border-amber-400/30`
-              : `bg-red-500/80 hover:bg-red-500 ${isLight ? "text-gray-900" : "text-white"} border border-red-400/30`
-          }`}>
-            Fix Before Launch
-          </button>
-        </Link>
+        <button onClick={handleFixClick} className={`shrink-0 flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-all ${
+          isRevAlert
+            ? `bg-amber-500/80 hover:bg-amber-500 ${isLight ? "text-gray-900" : "text-white"} border border-amber-400/30`
+            : `bg-red-500/80 hover:bg-red-500 ${isLight ? "text-gray-900" : "text-white"} border border-red-400/30`
+        }`}>
+          {isCreator ? "View Issues" : "Fix Before Launch"}
+        </button>
         <button
           onClick={() => setDismissed(true)}
           className={`shrink-0 w-7 h-7 rounded-lg ${isLight ? "bg-gray-100" : "bg-white/[0.07]"} hover:bg-white/[0.12] flex items-center justify-center transition-colors ${isLight ? "text-gray-500" : "text-white/40"} hover:text-white`}
@@ -7142,7 +7149,7 @@ export default function ScanResultsPage() {
 
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-5">
         {/* ── Sticky Launch Alert Banner ───────────────────── */}
-        <StickyLaunchAlertBanner scan={scan} />
+        <StickyLaunchAlertBanner scan={scan} plan={user?.plan ?? "free"} />
 
         {/* ── Verdict banner ───────────────────────────────── */}
         {verdict && (
@@ -7759,7 +7766,7 @@ export default function ScanResultsPage() {
 
         {/* ── Issues Tab ───────────────────────────────────── */}
         {activeTab === "issues" && (
-          <>
+          <div id="issues-panel">
             {/* ── Top 3 Action Plan ────────────────────────────── */}
             {topThree.length > 0 && (
               <div
@@ -8047,7 +8054,7 @@ export default function ScanResultsPage() {
                 <CofounderQAPanel scanId={scan.id} />
               </motion.div>
             )}
-          </>
+          </div>
         )}
 
         {/* ── Knowledge Graph Tab ──────────────────────────── */}

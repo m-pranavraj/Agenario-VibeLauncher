@@ -563,7 +563,12 @@ export default function NewScanPage() {
         setLocation(`/scans/${scan.id}/progress`);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Analysis failed. Please try again.");
+      const message = err instanceof Error ? err.message : "Analysis failed. Please try again.";
+      if (message === "Not authenticated") {
+        setLocation("/login");
+        return;
+      }
+      setError(message);
       setAnalyzing(false);
     }
   };

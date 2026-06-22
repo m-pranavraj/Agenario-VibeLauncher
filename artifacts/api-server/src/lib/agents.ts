@@ -1213,14 +1213,14 @@ export async function runAllAgents(
       : "";
 
   const summary =
-    score >= 80
+    score >= 70
       ? `Strong launch readiness. ${allIssues.length} issues identified${criticalText} — address these before going live to protect your users and revenue.`
-      : score >= 55
+      : score >= 40
         ? `Moderate launch risk. ${allIssues.length} issues detected${criticalText}. Resolve critical and high-priority items before exposing to real users.`
         : `High pre-launch risk — do not deploy yet. ${issueCounts.critical} critical issues pose serious threats to security, data integrity, or user experience. Significant remediation required.`;
 
   const launchVerdict =
-    score >= 80 ? "ready" : score >= 55 ? "caution" : "do-not-launch";
+    score >= 70 ? "ready" : score >= 40 ? "caution" : "do-not-launch";
 
   return {
     score,
