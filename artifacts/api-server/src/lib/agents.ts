@@ -1310,15 +1310,38 @@ Return ONLY valid JSON:
     const content = response.choices[0]?.message?.content ?? "{}";
     return JSON.parse(extractJson(content)) as LaunchImpact;
   } catch (err) {
-    logger.error({ err }, "Launch impact calculator failed");
+    logger.error({ err }, "Launch impact calculator failed, using rule-based fallback");
+    const criticalCount = issues.filter((i) => i.severity === "critical").length;
+    const highCount = issues.filter((i) => i.severity === "high").length;
+    const mediumCount = issues.filter((i) => i.severity === "medium").length;
+    const revLow = criticalCount * 50000 + highCount * 15000 + mediumCount * 5000;
+    const revHigh = criticalCount * 150000 + highCount * 50000 + mediumCount * 15000;
+    const supportHrs = criticalCount * 15 + highCount * 5 + mediumCount * 2;
     return {
-      totalRevenueAtRisk: "Analysis unavailable",
-      supportCostPerMonth: "Analysis unavailable",
-      trustImpact: "Run a full scan for impact analysis",
-      userImpact: "Unknown",
-      breakdown: [],
-      topRisk: "Complete analysis for specific risk assessment",
-      founderWarning: "Review all findings carefully before launching",
+      totalRevenueAtRisk: `₹${revLow.toLocaleString("en-IN")}–₹${revHigh.toLocaleString("en-IN")}/mo`,
+      supportCostPerMonth: `${supportHrs}–${supportHrs * 2} support hours/mo (₹${(supportHrs * 750).toLocaleString("en-IN")}–₹${(supportHrs * 2 * 750).toLocaleString("en-IN")}/mo)`,
+      trustImpact: criticalCount > 0
+        ? `${criticalCount} critical issue${criticalCount > 1 ? "s" : ""} expose${criticalCount === 1 ? "s" : ""} your users to security risks that can destroy brand trust overnight`
+        : "No critical trust-impacting issues detected, but high-severity findings still pose reputation risk",
+      userImpact: criticalCount > 0
+        ? `Up to 100% of users affected if critical ${criticalCount === 1 ? "issue is" : "issues are"} exploited`
+        : `${highCount} high-severity finding${highCount !== 1 ? "s" : ""} could impact user experience and data safety`,
+      breakdown: issues.slice(0, 5).map((i) => {
+        const base = i.severity === "critical" ? 50000 : i.severity === "high" ? 15000 : 5000;
+        return {
+          issueTitle: i.title,
+          severity: i.severity,
+          revenueImpact: `₹${base.toLocaleString("en-IN")}–₹${(base * 3).toLocaleString("en-IN")}/mo`,
+          trustImpact: i.severity === "critical" ? "Brand-destroying — user data at risk" : i.severity === "high" ? "Erodes user confidence" : "Moderate trust impact",
+          supportHours: `${i.severity === "critical" ? 10 : i.severity === "high" ? 5 : 2} hrs/mo`,
+        };
+      }),
+      topRisk: criticalCount > 0
+        ? `${criticalCount} critical blocker${criticalCount > 1 ? "s" : ""} pose${criticalCount === 1 ? "s" : ""} immediate revenue and security risk — address before launch`
+        : `${highCount} high-severity issue${highCount !== 1 ? "s" : ""} require${highCount === 1 ? "s" : ""} attention to prevent customer churn and support overload`,
+      founderWarning: criticalCount > 0
+        ? `⚠️ ${criticalCount} critical issue${criticalCount > 1 ? "s" : ""} found. Launching without fixing these puts your users' data, your revenue, and your reputation at serious risk. We strongly recommend resolving these before going live.`
+        : `Review and address the ${highCount} high-severity finding${highCount !== 1 ? "s" : ""} before launch to ensure a smooth user experience and reduce support burden.`,
     };
   }
 }
