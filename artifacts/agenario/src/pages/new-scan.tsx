@@ -482,7 +482,7 @@ function OnboardingWizard({ onComplete }: { onComplete: () => void }) {
           </div>
 
           <button
-            onClick={() => setStep(2)}
+            onClick={onComplete}
             className={`w-full font-semibold py-3 px-8 rounded-xl transition-all text-sm ${isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white hover:bg-white/90 text-black"}`}
           >
             Got it — scan my app now
