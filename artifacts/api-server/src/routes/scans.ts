@@ -33,7 +33,14 @@ import { getEmitter, emitProgress, removeEmitter } from "../lib/scan-progress.js
 const router: IRouter = Router();
 
 function requireAuth(req: any, res: any): boolean {
-  if (!req.session.userId) {
+  if (!req.session?.userId) {
+    logger.warn({
+      hasSession: !!req.session,
+      hasCookie: !!req.headers["cookie"],
+      sessionId: req.session?.id,
+      method: req.method,
+      path: req.path,
+    }, "Auth check failed — no userId in session");
     res.status(401).json({ error: "Not authenticated" });
     return false;
   }

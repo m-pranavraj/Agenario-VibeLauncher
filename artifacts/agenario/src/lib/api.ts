@@ -8,6 +8,9 @@ const getApiUrl = () => {
 
 const BASE = getApiUrl();
 
+// Track ongoing auth refresh to avoid duplicate /auth/me calls
+let refreshingAuth: Promise<any> | null = null;
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -16,14 +19,37 @@ async function request<T>(
     ...options,
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
       ...(options.headers ?? {}),
+      ...(options.body instanceof FormData || options.body instanceof URLSearchParams ? {} : { "Content-Type": "application/json" }),
     },
   });
 
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
+    // On 401, try refreshing auth state once before giving up
+    if (res.status === 401 && path !== "/auth/me") {
+      if (!refreshingAuth) {
+        refreshingAuth = fetch(`${BASE}/auth/me`, { credentials: "include" })
+          .then((r) => r.json())
+          .catch(() => null)
+          .finally(() => { refreshingAuth = null; });
+      }
+      const me = await refreshingAuth;
+      if (me && me.id) {
+        const retry = await fetch(`${BASE}${path}`, {
+          ...options,
+          credentials: "include",
+          headers: {
+            ...(options.headers ?? {}),
+            ...(options.body instanceof FormData || options.body instanceof URLSearchParams ? {} : { "Content-Type": "application/json" }),
+          },
+        });
+        const retryData = await retry.json().catch(() => ({}));
+        if (retry.ok) return retryData as T;
+        throw new Error((retryData as { error?: string }).error ?? `HTTP ${retry.status}`);
+      }
+    }
     throw new Error((data as { error?: string }).error ?? `HTTP ${res.status}`);
   }
 

@@ -175,9 +175,19 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 const PgStore = connectPgSimple(session);
 const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
 
+// Verify session table on startup
+pool.query(`
+  SELECT 1 FROM "session" LIMIT 1
+`).catch(() => {
+  logger.error("Session table 'session' does not exist in database — run DEPLOYMENT.md SQL to create it");
+});
+
 app.use(
   session({
-    store: new PgStore({ pool }),
+    store: new PgStore({
+      pool,
+      errorLog: (err: Error) => logger.error({ err }, "Session store error"),
+    }),
     secret: process.env["SESSION_SECRET"] ?? "dev-secret-change-me",
     resave: false,
     saveUninitialized: false,
