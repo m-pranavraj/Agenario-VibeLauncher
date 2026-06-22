@@ -12,7 +12,7 @@ function ScoreRing({ score, isLight }: { score: number; isLight: boolean }) {
   const circ = 2 * Math.PI * r;
   const pct = score / 100;
   const color =
-    score >= 80 ? "#22c55e" : score >= 60 ? "#f59e0b" : score >= 40 ? "#f97316" : "#ef4444";
+    score >= 70 ? "#22c55e" : score >= 40 ? "#f59e0b" : "#ef4444";
   return (
     <svg width="52" height="52" viewBox="0 0 52 52">
       <circle cx="26" cy="26" r={r} fill="none" stroke="currentColor" strokeWidth="3" className={isLight ? "text-gray-200" : "text-white/[0.07]"} />

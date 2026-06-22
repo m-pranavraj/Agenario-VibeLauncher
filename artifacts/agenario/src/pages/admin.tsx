@@ -543,7 +543,7 @@ export default function AdminPage() {
                       </thead>
                       <tbody className={`divide-y ${isLight ? "divide-gray-100" : "divide-white/[0.04]"} ${t.val}`}>
                         {stats.recentScans?.map((scan) => {
-                          const scoreColor = scan.score == null ? "text-gray-400" : scan.score >= 80 ? "text-emerald-400" : scan.score >= 55 ? "text-amber-400" : "text-red-400";
+                          const scoreColor = scan.score == null ? "text-gray-400" : scan.score >= 70 ? "text-emerald-400" : scan.score >= 40 ? "text-amber-400" : "text-red-400";
                           const verdictColor = scan.launchVerdict === "ready" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : scan.launchVerdict === "caution" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-red-500/10 text-red-400 border border-red-500/20";
                           return (
                             <tr key={scan.id} className={`hover:${isLight ? "bg-gray-50/50" : "bg-white/[0.01]"} transition-colors`}>
