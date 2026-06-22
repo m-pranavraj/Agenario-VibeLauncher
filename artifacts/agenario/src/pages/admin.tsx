@@ -131,6 +131,7 @@ export default function AdminPage() {
           <div className={`flex items-center gap-1 p-1 rounded-xl ${isLight ? "bg-gray-100/80 border border-gray-200" : "bg-white/[0.03] border border-white/[0.05]"} self-start md:self-auto`}>
             {[
               { id: "overview", label: "Overview", icon: <Activity className="w-3.5 h-3.5" /> },
+              { id: "users", label: "Users", icon: <Users className="w-3.5 h-3.5" /> },
               { id: "financials", label: "Financials", icon: <DollarSign className="w-3.5 h-3.5" /> },
               { id: "health", label: "Audit Health", icon: <ShieldCheck className="w-3.5 h-3.5" /> },
               { id: "adoption", label: "Adoption", icon: <Cpu className="w-3.5 h-3.5" /> },
@@ -580,7 +581,12 @@ export default function AdminPage() {
                     </table>
                   </div>
                 </div>
+              </motion.div>
+            )}
 
+            {/* USERS TAB */}
+            {activeTab === "users" && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 {/* User Directory Card */}
                 <div className={t.card}>
                   <div className="flex items-center justify-between mb-4">
