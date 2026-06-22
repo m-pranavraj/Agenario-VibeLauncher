@@ -19,8 +19,8 @@ const { Pool } = pkg;
 
 const app: Express = express();
 
-// Trust Replit's reverse proxy so express-rate-limit and secure cookies work correctly
-app.set("trust proxy", 1);
+// Trust Vercel + Render/Cloudflare reverse proxies so express-rate-limit and secure cookies work correctly
+app.set("trust proxy", 2);
 
 // ── Security headers (Helmet) ─────────────────────────────────────────────
 app.use(
@@ -183,14 +183,13 @@ app.use(
     saveUninitialized: false,
     name: "agn_sid", // Don't use default 'connect.sid'
     cookie: {
-      // In production the frontend (Vercel) and API (Render) are cross-origin,
-      // so we need SameSite=None + Secure to allow the session cookie to be
-      // sent across origins. In dev the Vite proxy makes them same-origin so
-      // Lax is fine and Secure is not required.
-      secure: isProduction ? "auto" : false,
+      // In production, Vercel → Render proxy chain requires SameSite=None + Secure.
+      // Domain is set to .agenario.tech so the cookie works on both www and bare domain.
+      secure: isProduction ? true : false,
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       sameSite: isProduction ? "none" : "lax",
+      domain: isProduction ? ".agenario.tech" : undefined,
     },
   }),
 );
