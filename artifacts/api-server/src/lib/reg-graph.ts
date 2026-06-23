@@ -288,7 +288,7 @@ export function runRegGraph(
           severity: constraint.severity,
           description: `${constraint.description}`,
           evidence: `Required pattern not found in codebase: ${constraint.requiredPatternDesc}`,
-          filePath: "codebase",
+          filePath: "Project Configuration",
           lineNumber: 0,
           codeSnippet: "",
           fixPrompt: constraint.fixPrompt,

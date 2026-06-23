@@ -32,11 +32,11 @@ export function runMultiAgentDebate(
 
     // Simulate Agent Debate Logic
 
-    if (finding.category.includes("Injection") || finding.category.includes("Auth")) {
+    if (finding.category && (finding.category.includes("Injection") || finding.category.includes("Auth"))) {
       transcript.push(`[Security Agent]: Flagged ${finding.title}. This allows unauthorized data access.`);
       
       // Revenue Agent
-      if (finding.description.toLowerCase().includes("user") || finding.description.toLowerCase().includes("payment")) {
+      if (finding.description && (finding.description.toLowerCase().includes("user") || finding.description.toLowerCase().includes("payment"))) {
         transcript.push(`[Revenue Agent]: The affected route handles core user workflows. A breach here impacts MRR directly. Elevating risk.`);
         consensusScore += 0.2;
         escalatedSeverity = "critical";

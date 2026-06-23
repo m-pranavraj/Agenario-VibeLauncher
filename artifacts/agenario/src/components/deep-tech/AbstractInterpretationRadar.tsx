@@ -20,7 +20,7 @@ export const AbstractInterpretationRadar: React.FC<RadarProps> = ({ findingId })
   ], [hash]);
 
   return (
-    <div className="mt-4 bg-slate-900/50 rounded-lg p-5 border border-purple-500/30 flex gap-6">
+    <div className="mt-4 bg-slate-900/50 rounded-lg p-5 border border-purple-500/30 flex flex-col md:flex-row gap-6">
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-4">
           <Target className="w-5 h-5 text-purple-400" />
@@ -34,7 +34,7 @@ export const AbstractInterpretationRadar: React.FC<RadarProps> = ({ findingId })
         </p>
       </div>
       
-      <div className="w-64 h-48 bg-slate-950/50 rounded border border-slate-800">
+      <div className="w-full md:w-72 h-48 shrink-0 bg-slate-950/50 rounded border border-slate-800">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
             <PolarGrid stroke="#334155" />
