@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Home from "@/pages/home";
 import LoginPage from "@/pages/login";
+import ResetPasswordPage from "@/pages/reset-password";
+import UpdatePasswordPage from "@/pages/update-password";
 import RegisterPage from "@/pages/register";
 import DashboardPage from "@/pages/dashboard";
 import NewScanPage from "@/pages/new-scan";
@@ -33,6 +35,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
+      <Route path="/update-password" component={UpdatePasswordPage} />
       <Route path="/register" component={RegisterPage} />
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/scans/new" component={NewScanPage} />

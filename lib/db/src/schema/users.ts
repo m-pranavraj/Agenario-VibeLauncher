@@ -12,6 +12,8 @@ export const usersTable = pgTable("users", {
   phoneVerified: boolean("phone_verified").default(false),
   razorpayCustomerId: text("razorpay_customer_id"),
   scanLimit: integer("scan_limit"),
+  resetToken: text("reset_token"),
+  resetTokenExpiry: timestamp("reset_token_expiry", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

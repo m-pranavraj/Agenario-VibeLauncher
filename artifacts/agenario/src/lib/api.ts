@@ -455,6 +455,17 @@ export interface Scan {
   kardashevLatency?: any | null;
   agiAlignment?: any | null;
   thermodynamicEntropy?: any | null;
+  vibeTaint?: any | null;
+  symCost?: any | null;
+  regGraph?: any | null;
+  failSafe?: any | null;
+  obsCover?: any | null;
+  archScan?: any | null;
+  deploySafe?: any | null;
+  promptTrace?: any | null;
+  flowValue?: any | null;
+  dempsterShafer?: any | null;
+  constraintSolver?: any | null;
   launchImpact: {
     totalRevenueAtRisk: string;
     supportCostPerMonth: string;
@@ -603,6 +614,10 @@ export const api = {
     logout: () =>
       request<{ message: string }>("/auth/logout", { method: "POST" }),
     me: () => request<User>("/auth/me"),
+    resetPassword: (email: string) =>
+      request<{ success: boolean; message: string }>("/auth/reset-password", { method: "POST", body: JSON.stringify({ email }) }),
+    updatePassword: (data: { token: string; newPassword: string }) =>
+      request<{ success: boolean; message: string }>("/auth/update-password", { method: "POST", body: JSON.stringify(data) }),
   },
   scans: {
     list: () => request<Scan[]>("/scans"),

@@ -784,6 +784,17 @@ async function runAnalysisPipeline(opts: {
   let kardashevLatency = null;
   let agiAlignment = null;
   let thermodynamicEntropy = null;
+  let vibeTaint = null;
+  let symCost = null;
+  let regGraph = null;
+  let failSafe = null;
+  let obsCover = null;
+  let archScan = null;
+  let deploySafe = null;
+  let promptTrace = null;
+  let flowValue = null;
+  let dempsterShafer = null;
+  let constraintSolver = null;
 
   try {
     const { compileAstToTensorPayload } = await import("../lib/enclave-tensor-bridge.js");
@@ -793,7 +804,7 @@ async function runAnalysisPipeline(opts: {
     const { computeGeneticDrift } = await import("../lib/genetic-drift.js");
     const { runMultiAgentDebate } = await import("../lib/multi-agent-debate.js");
     const { buildDeveloperTwin } = await import("../lib/developer-twin.js");
-    const { simulateTopologicalAnalysis, simulateQuantumVerification, simulatePredictiveSmt, simulateZeroTrustEnclave, simulateMarketReadinessTracker, simulateUxCognitiveFlow, simulateGreenLightVerdict, simulateBabelEngine, simulateMultiVerseDse, simulateZkSnarkProof, simulateBigOProfiler, simulateFheAnalyzer, simulateNeuromorphicDrift, simulatePostQuantumReadiness, simulateDnaStorageCompiler, simulateBftConsensusGraph, simulateKardashevLatency, simulateAgiAlignment, simulateThermodynamicEntropy } = await import("../lib/deep-tech-simulators.js");
+    const { simulateTopologicalAnalysis, simulateQuantumVerification, simulatePredictiveSmt, simulateZeroTrustEnclave, simulateMarketReadinessTracker, simulateUxCognitiveFlow, simulateGreenLightVerdict, simulateBabelEngine, simulateMultiVerseDse, simulateZkSnarkProof, simulateBigOProfiler, simulateFheAnalyzer, simulateNeuromorphicDrift, simulatePostQuantumReadiness, simulateDnaStorageCompiler, simulateBftConsensusGraph, simulateKardashevLatency, simulateAgiAlignment, simulateThermodynamicEntropy, simulateVibeTaint, simulateSymCost, simulateRegGraph, simulateFailSafe, simulateObsCover, simulateArchScan, simulateDeploySafe, simulatePromptTrace, simulateFlowValue, simulateDempsterShafer, simulateConstraintSolver } = await import("../lib/deep-tech-simulators.js");
 
     if (codeContext && codeContext.keyFiles.length > 0) {
       const globalCsgNodes: any[] = [];
@@ -846,6 +857,17 @@ async function runAnalysisPipeline(opts: {
       kardashevLatency = simulateKardashevLatency(codeContext, allIssues);
       agiAlignment = simulateAgiAlignment(codeContext, allIssues);
       thermodynamicEntropy = simulateThermodynamicEntropy(codeContext, allIssues);
+      vibeTaint = simulateVibeTaint(codeContext, allIssues);
+      symCost = simulateSymCost(codeContext, allIssues);
+      regGraph = simulateRegGraph(codeContext, allIssues);
+      failSafe = simulateFailSafe(codeContext, allIssues);
+      obsCover = simulateObsCover(codeContext, allIssues);
+      archScan = simulateArchScan(codeContext, allIssues);
+      deploySafe = simulateDeploySafe(codeContext, allIssues);
+      promptTrace = simulatePromptTrace(codeContext, allIssues);
+      flowValue = simulateFlowValue(codeContext, allIssues);
+      dempsterShafer = simulateDempsterShafer(codeContext, allIssues);
+      constraintSolver = simulateConstraintSolver(codeContext, allIssues);
       
       logger.info({ scanId }, "Deep Tech Engines execution complete");
     }
@@ -1054,6 +1076,17 @@ async function runAnalysisPipeline(opts: {
       kardashevLatency: kardashevLatency ?? null,
       agiAlignment: agiAlignment ?? null,
       thermodynamicEntropy: thermodynamicEntropy ?? null,
+      vibeTaint: vibeTaint ?? null,
+      symCost: symCost ?? null,
+      regGraph: regGraph ?? null,
+      failSafe: failSafe ?? null,
+      obsCover: obsCover ?? null,
+      archScan: archScan ?? null,
+      deploySafe: deploySafe ?? null,
+      promptTrace: promptTrace ?? null,
+      flowValue: flowValue ?? null,
+      dempsterShafer: dempsterShafer ?? null,
+      constraintSolver: constraintSolver ?? null,
       cleanupReport: cleanupReport ?? null,
       digitalTwin: digitalTwin ?? null,
       predictiveIntel: predictiveIntel ?? null,

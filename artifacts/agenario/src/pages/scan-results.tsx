@@ -90,6 +90,7 @@ import {
   BrainCircuit,
   Orbit,
   Satellite,
+  Clock, HardDrive
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
@@ -8584,10 +8585,23 @@ export default function ScanResultsPage() {
                   <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
                     {scan.uxCognitiveFlow.insight}
                   </div>
+                  <div className={`mb-3 p-3 rounded border font-serif text-[12px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-pink-400"}`}>
+                    <div className="italic">H(X) = &minus;&Sigma; P(x<sub>i</sub>) log<sub>2</sub> P(x<sub>i</sub>)</div>
+                    <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-pink-500/20 pt-1 w-full">Shannon Visual Information Entropy</div>
+                  </div>
                   <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                    Shannon Entropy: {scan.uxCognitiveFlow.shannonEntropy}<br/>
-                    Hick's Law Time: {scan.uxCognitiveFlow.hicksLawDecisionTime}<br/>
-                    DOM Density: {scan.uxCognitiveFlow.domDensity}
+                    <div className="flex justify-between mb-1">
+                      <span>Shannon Entropy:</span>
+                      <span className="text-pink-500 font-bold">{scan.uxCognitiveFlow.shannonEntropy}</span>
+                    </div>
+                    <div className="flex justify-between mb-1">
+                      <span>Hick's Law Time:</span>
+                      <span>{scan.uxCognitiveFlow.hicksLawDecisionTime}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>DOM Density:</span>
+                      <span>{scan.uxCognitiveFlow.domDensity}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -8622,11 +8636,19 @@ export default function ScanResultsPage() {
                       <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
                         {scan.babelEngine.insight}
                       </div>
-                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                        Stitched Taints: {scan.babelEngine.crossBoundaryTaints.join(", ")}<br/>
-                        IR Topology Hash: <span className="text-cyan-500">{scan.babelEngine.irTopologyHash}</span><br/>
-                        Polyglot Score: {scan.babelEngine.polyglotScore}%
-                      </div>
+                        <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-white/90"}`}>
+                          <span className="italic">Taint(S<sub>sink</sub>) &subseteq; Paths(S<sub>source</sub>) &implies; <span className="text-cyan-500 font-mono text-[10px] ml-1">{scan.babelEngine.irTopologyHash}</span></span>
+                        </div>
+                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                          <div className="flex justify-between mb-1">
+                            <span>Stitched Taints:</span>
+                            <span className="text-cyan-500">{scan.babelEngine.crossBoundaryTaints.join(", ")}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Polyglot Score:</span>
+                            <span className="text-cyan-500">{scan.babelEngine.polyglotScore}%</span>
+                          </div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -8647,10 +8669,16 @@ export default function ScanResultsPage() {
                       <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
                         {scan.multiVerseDse.insight}
                       </div>
-                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                        Parallel Universes: {scan.multiVerseDse.parallelUniversesSimulated.toLocaleString()}<br/>
-                        Quantum State Collapses: {scan.multiVerseDse.quantumStateCollapses}
-                      </div>
+                        <div className={`mb-3 p-3 rounded border font-serif text-[12px] flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-white/90"}`}>
+                          <span className="mb-1">StateSpace = <span className="italic">O(2<sup>&Sigma; BranchNodes</sup>)</span></span>
+                          <span className="text-[10px] text-indigo-500 font-mono">Simulating {scan.multiVerseDse.parallelUniversesSimulated.toLocaleString()} universes</span>
+                        </div>
+                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                          <div className="flex justify-between">
+                            <span>Quantum State Collapses:</span>
+                            <span className="text-indigo-500">{scan.multiVerseDse.quantumStateCollapses}</span>
+                          </div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -8671,11 +8699,22 @@ export default function ScanResultsPage() {
                       <div className={`text-xs font-bold ${scan.zkSnarkProof.status.includes("VALID") ? "text-emerald-500" : "text-red-500"} leading-relaxed`}>
                         {scan.zkSnarkProof.status}
                       </div>
-                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"} truncate`}>
-                        Circuit Size: {scan.zkSnarkProof.circuitSize.toLocaleString()} gates<br/>
-                        Prove: {scan.zkSnarkProof.provingKeyHash}<br/>
-                        Verify: {scan.zkSnarkProof.verificationHash}
-                      </div>
+                        <div className={`mb-3 p-3 rounded border font-serif text-[10px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-emerald-400/90"}`}>
+                          <div className="mb-1 text-center border-b border-emerald-500/30 pb-1 w-full">R1CS Polynomial Constraint System</div>
+                          <div className="grid grid-cols-3 gap-2 w-full text-center mt-1">
+                            <div><span className="opacity-50">[A]</span><span className="italic">x</span></div>
+                            <div>* <span className="opacity-50">[B]</span><span className="italic">x</span></div>
+                            <div>= <span className="opacity-50">[C]</span><span className="italic">x</span></div>
+                          </div>
+                        </div>
+                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"} truncate`}>
+                          <div className="flex justify-between mb-1">
+                            <span>Circuit Size:</span>
+                            <span className="text-emerald-500">{scan.zkSnarkProof.circuitSize.toLocaleString()} gates</span>
+                          </div>
+                          <div>Prove Hash: <span className="text-[9px] opacity-70">{scan.zkSnarkProof.provingKeyHash}</span></div>
+                          <div>Verify Hash: <span className="text-[9px] opacity-70">{scan.zkSnarkProof.verificationHash}</span></div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -8696,12 +8735,15 @@ export default function ScanResultsPage() {
                       <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
                         AST mathematically compiled to tensor payload and signed for AWS Nitro Enclave execution.
                       </div>
-                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"} truncate`}>
-                        Hardware Attestation: <span className="text-emerald-500 font-bold">VERIFIED</span><br/>
-                        Enclave Job ID: {scan.tensorPayloadSignature.enclaveJobId}<br/>
-                        Tensor Hash: <span className="text-blue-500">{scan.tensorPayloadSignature.tensorHash.substring(0, 16)}...</span><br/>
-                        Cluster Routing: {scan.tensorPayloadSignature.gpuClusterRouted}
-                      </div>
+                        <div className={`mb-3 p-3 rounded border font-mono text-[9px] flex flex-col gap-1 items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-blue-400"}`}>
+                          <div>&#91; T<sub>AST</sub> &otimes; W<sub> Nitro</sub> &#93; &rarr; 	&#8477;<sup>N</sup></div>
+                          <div className="text-emerald-500 font-bold border-t border-blue-500/20 pt-1 w-full text-center mt-1">ATTESTATION VERIFIED</div>
+                        </div>
+                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed flex flex-col gap-1 ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"} truncate`}>
+                          <div className="flex justify-between"><span>Enclave Job ID:</span> <span>{scan.tensorPayloadSignature.enclaveJobId}</span></div>
+                          <div className="flex justify-between"><span>Cluster Routing:</span> <span>{scan.tensorPayloadSignature.gpuClusterRouted}</span></div>
+                          <div className="mt-1 pt-1 border-t border-white/5 text-[9px]">Tensor Hash: <span className="text-blue-500">{scan.tensorPayloadSignature.tensorHash.substring(0, 24)}...</span></div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -8722,11 +8764,21 @@ export default function ScanResultsPage() {
                       <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
                         {scan.bigOProfiler.insight}
                       </div>
-                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                        Time: <span className="font-bold text-orange-500">{scan.bigOProfiler.worstCaseTimeComplexity}</span><br/>
-                        Space: <span className="font-bold text-orange-500">{scan.bigOProfiler.worstCaseSpaceComplexity}</span><br/>
-                        Collapse Threshold: {scan.bigOProfiler.serverCollapseThreshold}
-                      </div>
+                        <div className={`mb-3 flex justify-center items-center py-4 rounded border ${isLight ? "bg-slate-50 border-slate-200" : "bg-black/50 border-white/10"}`}>
+                          <span className="font-serif italic text-3xl text-orange-500 opacity-90 drop-shadow-md">
+                            {scan.bigOProfiler.worstCaseTimeComplexity.replace('O', '𝒪')}
+                          </span>
+                        </div>
+                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                          <div className="flex justify-between mb-1">
+                            <span>Space Bound:</span>
+                            <span className="font-bold text-orange-500">{scan.bigOProfiler.worstCaseSpaceComplexity}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Collapse Threshold:</span>
+                            <span>{scan.bigOProfiler.serverCollapseThreshold} reqs</span>
+                          </div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -8747,10 +8799,20 @@ export default function ScanResultsPage() {
                       <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
                         {scan.fheAnalyzer.insight}
                       </div>
-                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                        FHE Compatible: {scan.fheAnalyzer.fullyHomomorphicCompatible ? "Yes" : "No"}<br/>
-                        Encryption Bottlenecks: {scan.fheAnalyzer.encryptionBottlenecks} detected
-                      </div>
+                        <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-yellow-500/90"}`}>
+                          <div className="italic">c = E(m<sub>1</sub>) &oplus; E(m<sub>2</sub>) = E(m<sub>1</sub> + m<sub>2</sub>)</div>
+                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-yellow-500/20 pt-1 w-full">Abstract Algebraic Ring Evaluation</div>
+                        </div>
+                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                          <div className="flex justify-between mb-1">
+                            <span>FHE Compatible:</span>
+                            <span className={scan.fheAnalyzer.fullyHomomorphicCompatible ? "text-emerald-500" : "text-red-500"}>{scan.fheAnalyzer.fullyHomomorphicCompatible ? "Yes" : "No"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Encryption Bottlenecks:</span>
+                            <span className="text-yellow-500">{scan.fheAnalyzer.encryptionBottlenecks} detected</span>
+                          </div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -8771,11 +8833,19 @@ export default function ScanResultsPage() {
                       <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
                         {scan.neuromorphicDrift.insight}
                       </div>
-                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                        SNN Spike Rate: {scan.neuromorphicDrift.snnSpikeRate}<br/>
-                        Fatigue Index: {scan.neuromorphicDrift.cognitiveFatigueIndex}<br/>
-                        Pred. Vuln Date: <span className="text-pink-500 font-bold">{scan.neuromorphicDrift.predictedVulnerabilityDate}</span>
-                      </div>
+                        <div className={`mb-3 p-3 rounded border font-mono text-[10px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-pink-400"}`}>
+                          <div className="flex items-center gap-2">
+                            <span>&part;&rho; / &part;t</span>
+                            <span>=</span>
+                            <span>D &nabla;<sup>2</sup>&rho;</span>
+                          </div>
+                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-pink-500/20 pt-1 w-full">Synaptic Decay Bounding Formula</div>
+                        </div>
+                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                          <div className="flex justify-between mb-1"><span>SNN Spike Rate:</span> <span>{scan.neuromorphicDrift.snnSpikeRate}</span></div>
+                          <div className="flex justify-between mb-1"><span>Fatigue Index:</span> <span>{scan.neuromorphicDrift.cognitiveFatigueIndex}</span></div>
+                          <div className="flex justify-between"><span>Pred. Vuln Date:</span> <span className="text-pink-500 font-bold">{scan.neuromorphicDrift.predictedVulnerabilityDate}</span></div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -8796,10 +8866,20 @@ export default function ScanResultsPage() {
                       <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
                         {scan.postQuantumReadiness.insight}
                       </div>
-                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                        Q-Day Survival Prob: <span className="text-purple-500 font-bold">{scan.postQuantumReadiness.qDaySurvivalProbability}</span><br/>
-                        Pre-Quantum Primitives: {scan.postQuantumReadiness.vulnerablePrimitivesDetected}
-                      </div>
+                        <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-purple-400"}`}>
+                          <div className="italic">P(x) &approx; | &Sigma; e<sup>2&pi;i(k/r)</sup> |<sup>2</sup></div>
+                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-purple-500/20 pt-1 w-full">Shor's Algorithm Period Finding Decay</div>
+                        </div>
+                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                          <div className="flex justify-between mb-1">
+                            <span>Q-Day Survival Prob:</span>
+                            <span className="text-purple-500 font-bold">{scan.postQuantumReadiness.qDaySurvivalProbability}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Legacy Primitives:</span>
+                            <span className="text-purple-400">{scan.postQuantumReadiness.vulnerablePrimitivesDetected}</span>
+                          </div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -8820,10 +8900,22 @@ export default function ScanResultsPage() {
                       <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
                         {scan.dnaStorageCompiler.insight}
                       </div>
-                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                        Required ATCG Nucleotides: <span className="text-emerald-500 font-bold">{scan.dnaStorageCompiler.atcgNucleotidesRequired}</span><br/>
-                        Status: {scan.dnaStorageCompiler.archivalReadiness}
-                      </div>
+                        <div className={`mb-3 p-3 rounded border font-mono text-[9px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-emerald-400"}`}>
+                          <div className="flex gap-1 mb-1 tracking-[0.2em] opacity-80">
+                            <span>A</span><span className="text-white/40">-</span><span>T</span><span className="text-white/40">-</span><span>C</span><span className="text-white/40">-</span><span>G</span><span className="text-white/40">-</span><span>T</span><span className="text-white/40">-</span><span>A</span>
+                          </div>
+                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-emerald-500/20 pt-1 w-full">Synthetic Base Pair Encoding (10,000 Yr Archival)</div>
+                        </div>
+                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                          <div className="flex justify-between mb-1">
+                            <span>ATCG Nucleotides:</span>
+                            <span className="text-emerald-500 font-bold">{scan.dnaStorageCompiler.atcgNucleotidesRequired}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Archival Status:</span>
+                            <span>{scan.dnaStorageCompiler.archivalReadiness}</span>
+                          </div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -8844,10 +8936,20 @@ export default function ScanResultsPage() {
                       <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
                         {scan.bftConsensusGraph.insight}
                       </div>
-                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                        Graph Edges: {scan.bftConsensusGraph.graphEdgesCalculated}<br/>
-                        Survivability Limit: <span className="text-red-500 font-bold">{scan.bftConsensusGraph.bftSurvivabilityLimit}</span>
-                      </div>
+                        <div className={`mb-3 p-3 rounded border font-serif text-[12px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-red-400"}`}>
+                          <div className="italic font-bold">n &ge; 3f + 1</div>
+                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-red-500/20 pt-1 w-full">Fault Tolerance Bound Derivation</div>
+                        </div>
+                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                          <div className="flex justify-between mb-1">
+                            <span>Graph Edges:</span>
+                            <span>{scan.bftConsensusGraph.graphEdgesCalculated}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Survivability Limit:</span>
+                            <span className="text-red-500 font-bold">{scan.bftConsensusGraph.bftSurvivabilityLimit}</span>
+                          </div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -8868,10 +8970,20 @@ export default function ScanResultsPage() {
                       <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
                         {scan.kardashevLatency.insight}
                       </div>
-                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                        Dyson Swarm Threshold: <span className="text-cyan-500 font-bold">{scan.kardashevLatency.dysonSwarmLatencyThreshold}</span><br/>
-                        Interplanetary Packet Resilience: {scan.kardashevLatency.interplanetaryPacketLossResilience}
-                      </div>
+                        <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-cyan-400"}`}>
+                          <div className="italic">&Delta;t = d / c</div>
+                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-cyan-500/20 pt-1 w-full">c = 299,792,458 m/s (Light Speed Latency Limit)</div>
+                        </div>
+                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                          <div className="flex justify-between mb-1">
+                            <span>Dyson Swarm Threshold:</span>
+                            <span className="text-cyan-500 font-bold">{scan.kardashevLatency.dysonSwarmLatencyThreshold}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Packet Resilience:</span>
+                            <span className="truncate ml-2">{scan.kardashevLatency.interplanetaryPacketLossResilience}</span>
+                          </div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -8892,10 +9004,20 @@ export default function ScanResultsPage() {
                       <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
                         {scan.agiAlignment.insight}
                       </div>
-                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                        Alignment Stability Score: <span className="text-fuchsia-500 font-bold">{scan.agiAlignment.alignmentStabilityScore}</span><br/>
-                        Containment Breach Prob: {scan.agiAlignment.agiContainmentBreachProbability}
-                      </div>
+                        <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-fuchsia-400"}`}>
+                          <div className="italic">&nabla;R(&theta;) = &Sigma; &nabla;log P(a|s;&theta;) R(s,a)</div>
+                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-fuchsia-500/20 pt-1 w-full">Policy Gradient Reward Hacking Bound</div>
+                        </div>
+                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                          <div className="flex justify-between mb-1">
+                            <span>Alignment Stability:</span>
+                            <span className="text-fuchsia-500 font-bold">{scan.agiAlignment.alignmentStabilityScore}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Containment Breach Prob:</span>
+                            <span>{scan.agiAlignment.agiContainmentBreachProbability}</span>
+                          </div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -8916,15 +9038,388 @@ export default function ScanResultsPage() {
                       <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
                         {scan.thermodynamicEntropy.insight}
                       </div>
-                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                        Algorithmic Entropy: <span className="text-amber-500 font-bold">{scan.thermodynamicEntropy.algorithmicEntropy}</span><br/>
-                        Landauer's Limit Heat: {scan.thermodynamicEntropy.heatDissipationJoules}
-                      </div>
+                        <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-amber-400"}`}>
+                          <div className="italic">E &ge; k<sub>B</sub>T ln 2</div>
+                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-amber-500/20 pt-1 w-full">Landauer's Bit Erasure Limit</div>
+                        </div>
+                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                          <div className="flex justify-between mb-1">
+                            <span>Algorithmic Entropy:</span>
+                            <span className="text-amber-500 font-bold">{scan.thermodynamicEntropy.algorithmicEntropy}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Landauer Heat Dissipation:</span>
+                            <span>{scan.thermodynamicEntropy.heatDissipationJoules}</span>
+                          </div>
+                        </div>
                     </div>
                   </div>
                 )}
+                  {/* VibeTaint v1.2 */}
+                  {scan.vibeTaint && (
+                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-violet-500/30 transition-all`}>
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Activity className={`w-24 h-24 ${isLight ? "text-violet-600" : "text-violet-400"}`} />
+                      </div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-violet-100 text-violet-600" : "bg-violet-500/20 text-violet-400"}`}>
+                          <Activity className="w-4 h-4" />
+                        </div>
+                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>VibeTaint v1.2</h3>
+                      </div>
+                      <div className="space-y-4 relative z-10">
+                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                          {scan.vibeTaint.insight}
+                        </div>
+                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-violet-400"}`}>
+                            <span className="italic">Taint(S<sub>sink</sub>) &subseteq; Paths(S<sub>source</sub>)</span>
+                          </div>
+                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                            <div className="flex justify-between mb-1">
+                              <span>DFG Nodes:</span>
+                              <span className="text-violet-500 font-bold">{scan.vibeTaint.dfgNodesConstructed}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Taint Paths:</span>
+                              <span>{scan.vibeTaint.taintPathsDetected}</span>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SymCost Analytics */}
+                  {scan.symCost && (
+                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all`}>
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Clock className={`w-24 h-24 ${isLight ? "text-emerald-600" : "text-emerald-400"}`} />
+                      </div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-400"}`}>
+                          <Clock className="w-4 h-4" />
+                        </div>
+                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>SymCost Analytics</h3>
+                      </div>
+                      <div className="space-y-4 relative z-10">
+                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                          {scan.symCost.insight}
+                        </div>
+                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-emerald-400"}`}>
+                            <span className="italic">lim<sub>n&rarr;&infin;</sub> Cost(N+1) = O(N<sup>2</sup>)</span>
+                          </div>
+                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                            <div className="flex justify-between mb-1">
+                              <span>AST Nodes:</span>
+                              <span className="text-emerald-500 font-bold">{scan.symCost.astNodesAnalyzed}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>ReDoS Risk:</span>
+                              <span>{scan.symCost.catastrophicBacktrackingRisk}</span>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* RegGraph Compliance */}
+                  {scan.regGraph && (
+                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all`}>
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Shield className={`w-24 h-24 ${isLight ? "text-blue-600" : "text-blue-400"}`} />
+                      </div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-blue-100 text-blue-600" : "bg-blue-500/20 text-blue-400"}`}>
+                          <Shield className="w-4 h-4" />
+                        </div>
+                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>RegGraph Compliance</h3>
+                      </div>
+                      <div className="space-y-4 relative z-10">
+                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                          {scan.regGraph.insight}
+                        </div>
+                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-blue-400"}`}>
+                            <span className="italic">&forall; x &isin; PHI &implies; Encrypt(x, AES-256)</span>
+                          </div>
+                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                            <div className="flex justify-between mb-1">
+                              <span>PCI-DSS Coverage:</span>
+                              <span className="text-blue-500 font-bold">{scan.regGraph.pciDssCoverage}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>GDPR Art. 17:</span>
+                              <span>{scan.regGraph.gdprArticle17}</span>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* FailSafe Topology */}
+                  {scan.failSafe && (
+                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-red-500/30 transition-all`}>
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <AlertTriangle className={`w-24 h-24 ${isLight ? "text-red-600" : "text-red-400"}`} />
+                      </div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-red-100 text-red-600" : "bg-red-500/20 text-red-400"}`}>
+                          <AlertTriangle className="w-4 h-4" />
+                        </div>
+                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>FailSafe Topology</h3>
+                      </div>
+                      <div className="space-y-4 relative z-10">
+                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                          {scan.failSafe.insight}
+                        </div>
+                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-red-400"}`}>
+                            <span className="italic">&Sigma;<sub>err</sub> P(Retry | Exception) &gt; 0.99</span>
+                          </div>
+                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                            <div className="flex justify-between mb-1">
+                              <span>Try/Catch Blocks:</span>
+                              <span className="text-red-500 font-bold">{scan.failSafe.tryCatchBlocks}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Swallowed Errs:</span>
+                              <span>{scan.failSafe.swallowedExceptions}</span>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ObsCover Matrix */}
+                  {scan.obsCover && (
+                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-fuchsia-500/30 transition-all`}>
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Eye className={`w-24 h-24 ${isLight ? "text-fuchsia-600" : "text-fuchsia-400"}`} />
+                      </div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-fuchsia-100 text-fuchsia-600" : "bg-fuchsia-500/20 text-fuchsia-400"}`}>
+                          <Eye className="w-4 h-4" />
+                        </div>
+                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>ObsCover Matrix</h3>
+                      </div>
+                      <div className="space-y-4 relative z-10">
+                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                          {scan.obsCover.insight}
+                        </div>
+                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-fuchsia-400"}`}>
+                            <span className="italic">OCM = TracedNodes / TotalNodes &approx; 0.85</span>
+                          </div>
+                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                            <div className="flex justify-between mb-1">
+                              <span>Telemetry Cov:</span>
+                              <span className="text-fuchsia-500 font-bold">{scan.obsCover.telemetryCoverage}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Orphaned Spans:</span>
+                              <span>{scan.obsCover.orphanedSpans}</span>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ArchScan Tarjan */}
+                  {scan.archScan && (
+                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-yellow-500/30 transition-all`}>
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Layers className={`w-24 h-24 ${isLight ? "text-yellow-600" : "text-yellow-400"}`} />
+                      </div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-yellow-100 text-yellow-600" : "bg-yellow-500/20 text-yellow-400"}`}>
+                          <Layers className="w-4 h-4" />
+                        </div>
+                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>ArchScan Metrics</h3>
+                      </div>
+                      <div className="space-y-4 relative z-10">
+                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                          {scan.archScan.insight}
+                        </div>
+                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-yellow-400"}`}>
+                            <span className="italic">I = C<sub>e</sub> / (C<sub>a</sub> + C<sub>e</sub>) = {scan.archScan.instabilityMetric}</span>
+                          </div>
+                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                            <div className="flex justify-between mb-1">
+                              <span>Instability:</span>
+                              <span className="text-yellow-500 font-bold">{scan.archScan.instabilityMetric}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Circular Imports:</span>
+                              <span>{scan.archScan.circularImports}</span>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* DeploySafe */}
+                  {scan.deploySafe && (
+                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-teal-500/30 transition-all`}>
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <HardDrive className={`w-24 h-24 ${isLight ? "text-teal-600" : "text-teal-400"}`} />
+                      </div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-teal-100 text-teal-600" : "bg-teal-500/20 text-teal-400"}`}>
+                          <HardDrive className="w-4 h-4" />
+                        </div>
+                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>DeploySafe Verifier</h3>
+                      </div>
+                      <div className="space-y-4 relative z-10">
+                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                          {scan.deploySafe.insight}
+                        </div>
+                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-teal-400"}`}>
+                            <span className="italic">Hash(Dev) &equiv; Hash(Prod)</span>
+                          </div>
+                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                            <div className="flex justify-between mb-1">
+                              <span>Manifests:</span>
+                              <span className="text-teal-500 font-bold">{scan.deploySafe.manifestsScanned}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Drift Prob:</span>
+                              <span>{scan.deploySafe.driftProbability}</span>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PromptTrace */}
+                  {scan.promptTrace && (
+                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-purple-500/30 transition-all`}>
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <MessageSquare className={`w-24 h-24 ${isLight ? "text-purple-600" : "text-purple-400"}`} />
+                      </div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-purple-100 text-purple-600" : "bg-purple-500/20 text-purple-400"}`}>
+                          <MessageSquare className="w-4 h-4" />
+                        </div>
+                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>PromptTrace Guard</h3>
+                      </div>
+                      <div className="space-y-4 relative z-10">
+                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                          {scan.promptTrace.insight}
+                        </div>
+                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-purple-400"}`}>
+                            <span className="italic">Sanitize(Prompt<sub>sys</sub>) &oplus; UserInput</span>
+                          </div>
+                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                            <div className="flex justify-between mb-1">
+                              <span>Boundaries:</span>
+                              <span className="text-purple-500 font-bold">{scan.promptTrace.llmBoundaries}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Jailbreak:</span>
+                              <span>{scan.promptTrace.jailbreakProbability}</span>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* FlowValue */}
+                  {scan.flowValue && (
+                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-green-500/30 transition-all`}>
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <DollarSign className={`w-24 h-24 ${isLight ? "text-green-600" : "text-green-400"}`} />
+                      </div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-green-100 text-green-600" : "bg-green-500/20 text-green-400"}`}>
+                          <DollarSign className="w-4 h-4" />
+                        </div>
+                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>FlowValue Risk</h3>
+                      </div>
+                      <div className="space-y-4 relative z-10">
+                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                          {scan.flowValue.insight}
+                        </div>
+                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-green-400"}`}>
+                            <span className="italic">VaR = &Sigma; P(Breach) &times; Revenue(Route)</span>
+                          </div>
+                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                            <div className="flex justify-between mb-1">
+                              <span>Critical Paths:</span>
+                              <span className="text-green-500 font-bold">{scan.flowValue.criticalPaths}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>VaR:</span>
+                              <span>{scan.flowValue.revenueValueAtRisk}</span>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dempster-Shafer */}
+                  {scan.dempsterShafer && (
+                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-indigo-500/30 transition-all`}>
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <GitMerge className={`w-24 h-24 ${isLight ? "text-indigo-600" : "text-indigo-400"}`} />
+                      </div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-indigo-100 text-indigo-600" : "bg-indigo-500/20 text-indigo-400"}`}>
+                          <GitMerge className="w-4 h-4" />
+                        </div>
+                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Dempster-Shafer Fusion</h3>
+                      </div>
+                      <div className="space-y-4 relative z-10">
+                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                          {scan.dempsterShafer.insight}
+                        </div>
+                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-indigo-400"}`}>
+                            <span className="italic">m<sub>1,2</sub>(A) = (&Sigma; m<sub>1</sub>(B)m<sub>2</sub>(C)) / (1 - K)</span>
+                          </div>
+                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                            <div className="flex justify-between mb-1">
+                              <span>Belief Mass:</span>
+                              <span className="text-indigo-500 font-bold">{scan.dempsterShafer.beliefMass}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Plausibility:</span>
+                              <span>{scan.dempsterShafer.plausibility}</span>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Constraint Solver */}
+                  {scan.constraintSolver && (
+                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-pink-500/30 transition-all`}>
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Terminal className={`w-24 h-24 ${isLight ? "text-pink-600" : "text-pink-400"}`} />
+                      </div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-pink-100 text-pink-600" : "bg-pink-500/20 text-pink-400"}`}>
+                          <Terminal className="w-4 h-4" />
+                        </div>
+                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>SAT Exploit Solver</h3>
+                      </div>
+                      <div className="space-y-4 relative z-10">
+                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                          {scan.constraintSolver.insight}
+                        </div>
+                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-pink-400"}`}>
+                            <span className="italic">(A &or; B) &and; (&not; A &or; C)</span>
+                          </div>
+                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                            <div className="flex justify-between mb-1">
+                              <span>Boolean Clauses:</span>
+                              <span className="text-pink-500 font-bold">{scan.constraintSolver.booleanClauses}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Satisfiable:</span>
+                              <span>{scan.constraintSolver.satisfiablePaths}</span>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
               </div>
-            </div>
 
             {/* Developer Twin Profile */}
             <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6`}>

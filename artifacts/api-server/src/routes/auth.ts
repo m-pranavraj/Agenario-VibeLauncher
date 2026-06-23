@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { eq, or } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
@@ -264,6 +265,88 @@ router.get("/auth/me", async (req, res): Promise<void> => {
     isAdmin: process.env.ADMIN_EMAIL ? user.email.trim().toLowerCase() === process.env.ADMIN_EMAIL.trim().toLowerCase() : false,
     createdAt: user.createdAt.toISOString(),
   });
+});
+
+// ── Reset Password Request ────────────────────────────────────────────────
+router.post("/auth/reset-password", async (req, res): Promise<void> => {
+  const { email } = req.body;
+  if (!email || typeof email !== "string") {
+    res.status(400).json({ error: "Valid email is required" });
+    return;
+  }
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.email, email.toLowerCase()));
+
+  if (!user) {
+    // For security, don't reveal if user exists, just return success
+    res.json({ success: true, message: "If an account with that email exists, we sent a password reset link." });
+    return;
+  }
+
+  // Generate a random token
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+  // Save to DB
+  await db
+    .update(usersTable)
+    .set({ resetToken, resetTokenExpiry })
+    .where(eq(usersTable.id, user.id));
+
+  // In a real app, send an email here.
+  // For development, we log it so you can test locally.
+  console.log(`[DEV ONLY] Password Reset Link for ${email}: http://localhost:5173/update-password?token=${resetToken}`);
+
+  res.json({ success: true, message: "If an account with that email exists, we sent a password reset link." });
+});
+
+// ── Update Password ───────────────────────────────────────────────────────
+router.post("/auth/update-password", async (req, res): Promise<void> => {
+  const { token, newPassword } = req.body;
+  if (!token || typeof token !== "string" || !newPassword || typeof newPassword !== "string") {
+    res.status(400).json({ error: "Token and new password are required" });
+    return;
+  }
+
+  if (newPassword.length < 8) {
+    res.status(400).json({ error: "Password must be at least 8 characters long" });
+    return;
+  }
+
+  // Find user by token
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.resetToken, token));
+
+  if (!user) {
+    res.status(400).json({ error: "Invalid or expired reset token." });
+    return;
+  }
+
+  // Check expiry
+  if (!user.resetTokenExpiry || new Date() > new Date(user.resetTokenExpiry)) {
+    res.status(400).json({ error: "Reset token has expired. Please request a new one." });
+    return;
+  }
+
+  // Hash new password
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+
+  // Update password and clear token
+  await db
+    .update(usersTable)
+    .set({
+      passwordHash,
+      resetToken: null,
+      resetTokenExpiry: null,
+    })
+    .where(eq(usersTable.id, user.id));
+
+  res.json({ success: true, message: "Password updated successfully. You can now log in." });
 });
 
 export default router;

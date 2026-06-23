@@ -154,7 +154,12 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className={`block text-xs font-medium mb-2 uppercase tracking-wide ${t.label}`}>Password</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className={`block text-xs font-medium uppercase tracking-wide ${t.label}`}>Password</label>
+                <Link href="/reset-password" className={`text-xs ${isLight ? "text-violet-600 hover:text-violet-700" : "text-violet-400 hover:text-violet-300"} font-medium transition-colors`}>
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative">
                 <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 ${t.icon}`} />
                 <input

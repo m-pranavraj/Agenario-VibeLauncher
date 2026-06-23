@@ -150,6 +150,19 @@ export const scansTable = pgTable("scans", {
   kardashevLatency: jsonb("kardashev_latency").$type<any>(),
   agiAlignment: jsonb("agi_alignment").$type<any>(),
   thermodynamicEntropy: jsonb("thermodynamic_entropy").$type<any>(),
+  
+  // ── Missing 10+ Pillars ──────────────────────────────────────────
+  vibeTaint: jsonb("vibe_taint").$type<any>(),
+  symCost: jsonb("sym_cost").$type<any>(),
+  regGraph: jsonb("reg_graph").$type<any>(),
+  failSafe: jsonb("fail_safe").$type<any>(),
+  obsCover: jsonb("obs_cover").$type<any>(),
+  archScan: jsonb("arch_scan").$type<any>(),
+  deploySafe: jsonb("deploy_safe").$type<any>(),
+  promptTrace: jsonb("prompt_trace").$type<any>(),
+  flowValue: jsonb("flow_value").$type<any>(),
+  dempsterShafer: jsonb("dempster_shafer").$type<any>(),
+  constraintSolver: jsonb("constraint_solver").$type<any>(),
 });
 
 export const insertScanSchema = createInsertSchema(scansTable).omit({ id: true, createdAt: true });
