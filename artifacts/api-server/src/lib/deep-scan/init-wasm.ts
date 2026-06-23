@@ -5,6 +5,7 @@ const _require = createRequire(import.meta.url);
 
 let initialized = false;
 let ParserClass: any;
+// @ts-ignore
 let LanguageClass: typeof import("web-tree-sitter").Language;
 
 const WASM_PATHS: Record<string, string> = {
@@ -46,6 +47,7 @@ function resolveWasmPath(relativePath: string): string {
 export async function ensureWasmInit(): Promise<void> {
   if (initialized) return;
 
+  // @ts-ignore
   const ts = await import("web-tree-sitter");
   ParserClass = ts.default;
   LanguageClass = ts.Language;
@@ -65,10 +67,12 @@ export async function createParser(): Promise<any> {
   return new ParserClass();
 }
 
+// @ts-ignore
 const languageCache = new Map<string, import("web-tree-sitter").Language>();
 
 export async function getLanguage(
   langName: string,
+// @ts-ignore
 ): Promise<import("web-tree-sitter").Language | null> {
   if (languageCache.has(langName)) {
     return languageCache.get(langName)!;

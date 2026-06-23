@@ -229,7 +229,8 @@ export class PecGraph {
     const apiPatterns = ["fetch(", "axios.", "got(", "http.", "https.", "request("];
     for (const p of apiPatterns) {
       if (codeLower.includes(p)) {
-        cost.apiCallCount += (code.match(new RegExp(p.replace("(", "\\("), "gi")) || []).length);
+        const escapedP = p.replace("(", "\\(");
+        cost.apiCallCount += (code.match(new RegExp(escapedP, "gi")) || []).length;
       }
     }
     cost.ioCostMs += cost.apiCallCount * ASYNC_OPS_COST_MS.apiCall;
@@ -493,17 +494,17 @@ export class PecGraph {
     if (!node) return;
     const codeLower = node.code.toLowerCase();
 
-    const opPatterns: Record<string, string> = {
-      "database query": "find(" || "findone(" || "findmany(" || "select " || "update(" || "create(",
-      "api call": "fetch(" || "axios." || "got(",
-      "email": "send" || "mail",
-      "file write": "writefile",
-      "file read": "readfile",
-      "image process": "sharp(" || "jimp." || "resizeimage",
+    const opPatterns: Record<string, string[]> = {
+      "database query": ["find(", "findone(", "findmany(", "select ", "update(", "create("],
+      "api call": ["fetch(", "axios.", "got("],
+      "email": ["send", "mail"],
+      "file write": ["writefile"],
+      "file read": ["readfile"],
+      "image process": ["sharp(", "jimp.", "resizeimage"],
     };
 
-    for (const [op, _pattern] of Object.entries(opPatterns)) {
-      if (codeLower.includes(op.replace(/ /g, "")) || codeLower.includes(op.split(" ")[0]!)) {
+    for (const [op, patterns] of Object.entries(opPatterns)) {
+      if (patterns.some(p => codeLower.includes(p))) {
         if (!operations.includes(op)) {
           operations.push(op);
         }

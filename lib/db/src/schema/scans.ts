@@ -38,24 +38,9 @@ export interface BenchmarkData {
 }
 
 export interface LaunchDNA {
-  riskProfile: {
-    label: string;
-    score: number;
-    tags: string[];
-    insight: string;
-  };
-  growthProfile: {
-    label: string;
-    score: number;
-    tags: string[];
-    insight: string;
-  };
-  techHealthProfile: {
-    label: string;
-    score: number;
-    tags: string[];
-    insight: string;
-  };
+  riskProfile: { label: string; score: number; tags: string[]; insight: string; };
+  growthProfile: { label: string; score: number; tags: string[]; insight: string; };
+  techHealthProfile: { label: string; score: number; tags: string[]; insight: string; };
   overallDNA: string;
 }
 
@@ -90,11 +75,6 @@ export interface SandboxMeta {
   auditVulnCount?: number;
 }
 
-// =====================================================================
-// SCHEMA EXACTLY MATCHES ACTUAL SUPABASE DATABASE
-// Columns not yet in the DB are commented out below.
-// Run lib/db/migrate.js to add them when the DB migration succeeds.
-// =====================================================================
 export const scansTable = pgTable("scans", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -134,38 +114,42 @@ export const scansTable = pgTable("scans", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp("completed_at", { withTimezone: true }),
 
-  // ---- PENDING DB MIGRATION (run lib/db/migrate.js to add these) ----
-  // sbomData: jsonb("sbom_data").$type<any>(),
-  // genomeFingerprint: jsonb("genome_fingerprint").$type<any>(),
-  // causalInference: jsonb("causal_inference").$type<any>(),
-  // quantitativeRisk: jsonb("quantitative_risk").$type<any>(),
-  // geneticDrift: jsonb("genetic_drift").$type<any>(),
-  // agentDebateResults: jsonb("agent_debate_results").$type<any>(),
-  // shadowTrafficInsight: jsonb("shadow_traffic_insight").$type<any>(),
-  // developerTwinProfile: jsonb("developer_twin_profile").$type<any>(),
-  // topologicalAnalysis: jsonb("topological_analysis").$type<any>(),
-  // quantumVerification: jsonb("quantum_verification").$type<any>(),
-  // predictiveSmt: jsonb("predictive_smt").$type<any>(),
-  // zeroTrustEnclave: jsonb("zero_trust_enclave").$type<any>(),
-  // marketReadinessTracker: jsonb("market_readiness_tracker").$type<any>(),
-  // uxCognitiveFlow: jsonb("ux_cognitive_flow").$type<any>(),
-  // greenLightVerdict: jsonb("green_light_verdict").$type<any>(),
-  // babelEngine: jsonb("babel_engine").$type<any>(),
-  // multiVerseDse: jsonb("multi_verse_dse").$type<any>(),
-  // zkSnarkProof: jsonb("zk_snark_proof").$type<any>(),
-  // bigOProfiler: jsonb("big_o_profiler").$type<any>(),
-  // fheAnalyzer: jsonb("fhe_analyzer").$type<any>(),
-  // neuromorphicDrift: jsonb("neuromorphic_drift").$type<any>(),
-  // tensorPayloadSignature: jsonb("tensor_payload_signature").$type<any>(),
-  // engineScorecards: jsonb("engine_scorecards").$type<any[]>(),
-  // authTestingPayload: jsonb("auth_testing_payload").$type<any>(),
-  // urlAuditScore: integer("url_audit_score"),
-  // postQuantumReadiness: jsonb("post_quantum_readiness").$type<any>(),
-  // dnaStorageCompiler: jsonb("dna_storage_compiler").$type<any>(),
-  // bftConsensusGraph: jsonb("bft_consensus_graph").$type<any>(),
-  // kardashevLatency: jsonb("kardashev_latency").$type<any>(),
-  // agiAlignment: jsonb("agi_alignment").$type<any>(),
-  // thermodynamicEntropy: jsonb("thermodynamic_entropy").$type<any>(),
+  // ── Deep Tech Engines (Phase 1–2) ──────────────────────────────
+  sbomData: jsonb("sbom_data").$type<any>(),
+  genomeFingerprint: jsonb("genome_fingerprint").$type<any>(),
+  causalInference: jsonb("causal_inference").$type<any>(),
+  quantitativeRisk: jsonb("quantitative_risk").$type<any>(),
+  geneticDrift: jsonb("genetic_drift").$type<any>(),
+  agentDebateResults: jsonb("agent_debate_results").$type<any>(),
+  shadowTrafficInsight: jsonb("shadow_traffic_insight").$type<any>(),
+  developerTwinProfile: jsonb("developer_twin_profile").$type<any>(),
+  topologicalAnalysis: jsonb("topological_analysis").$type<any>(),
+  quantumVerification: jsonb("quantum_verification").$type<any>(),
+  predictiveSmt: jsonb("predictive_smt").$type<any>(),
+  zeroTrustEnclave: jsonb("zero_trust_enclave").$type<any>(),
+  marketReadinessTracker: jsonb("market_readiness_tracker").$type<any>(),
+  uxCognitiveFlow: jsonb("ux_cognitive_flow").$type<any>(),
+
+  // ── 13 Legendary Deep Tech Mechanisms ──────────────────────────
+  greenLightVerdict: jsonb("green_light_verdict").$type<any>(),
+  babelEngine: jsonb("babel_engine").$type<any>(),
+  multiVerseDse: jsonb("multi_verse_dse").$type<any>(),
+  zkSnarkProof: jsonb("zk_snark_proof").$type<any>(),
+  bigOProfiler: jsonb("big_o_profiler").$type<any>(),
+  fheAnalyzer: jsonb("fhe_analyzer").$type<any>(),
+  neuromorphicDrift: jsonb("neuromorphic_drift").$type<any>(),
+  tensorPayloadSignature: jsonb("tensor_payload_signature").$type<any>(),
+  engineScorecards: jsonb("engine_scorecards").$type<any[]>(),
+  authTestingPayload: jsonb("auth_testing_payload").$type<any>(),
+  urlAuditScore: integer("url_audit_score"),
+
+  // ── Quantum-Era Columns ─────────────────────────────────────────
+  postQuantumReadiness: jsonb("post_quantum_readiness").$type<any>(),
+  dnaStorageCompiler: jsonb("dna_storage_compiler").$type<any>(),
+  bftConsensusGraph: jsonb("bft_consensus_graph").$type<any>(),
+  kardashevLatency: jsonb("kardashev_latency").$type<any>(),
+  agiAlignment: jsonb("agi_alignment").$type<any>(),
+  thermodynamicEntropy: jsonb("thermodynamic_entropy").$type<any>(),
 });
 
 export const insertScanSchema = createInsertSchema(scansTable).omit({ id: true, createdAt: true });

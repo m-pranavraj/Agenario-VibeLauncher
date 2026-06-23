@@ -379,7 +379,7 @@ export class CsfgEngine {
         missingFeatures,
       };
 
-      this.formUxInfos.set(nodeId, info);
+      this.formUxInfos.push(info);
 
       if (!hasValidation || !hasErrorDisplay) {
         this.findings.push({
@@ -592,7 +592,7 @@ export class CsfgEngine {
             if (!this.hasPattern(childCode, ["aria-", "role="])) {
               this.findings.push({
                 ruleId: "UX-ACC-004",
-                name: "ARIA state not propagated to child",
+                ruleName: "ARIA state not propagated to child",
                 category: "aria-gap",
                 severity: "medium",
                 description: `Parent component "${node.name}" manages ARIA state but child "${childNode.name}" does not receive ARIA attributes.`,

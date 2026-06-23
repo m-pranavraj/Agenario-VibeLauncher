@@ -46,7 +46,24 @@ export async function runPerformanceScan(
   const startTime = Date.now();
   const findings: PerformanceFinding[] = [];
 
-  const files = collectSourceFiles(config.projectRoot, config.maxFiles ?? 300);
+  const files: string[] = [];
+  const maxFiles = config.maxFiles ?? 300;
+  function walkForFiles(dir: string, depth: number): void {
+    if (depth > 6 || files.length >= maxFiles) return;
+    try {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (files.length >= maxFiles) break;
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (!SKIP_DIRS.has(entry.name)) walkForFiles(full, depth + 1);
+        } else {
+          const ext = path.extname(entry.name).toLowerCase();
+          if (ALLOWED_EXTS.has(ext)) files.push(full);
+        }
+      }
+    } catch { /* skip unreadable dirs */ }
+  }
+  walkForFiles(config.projectRoot, 0);
 
   const pecGraph = new PecGraph(config.graph);
   const analysis = pecGraph.computeAllCosts();

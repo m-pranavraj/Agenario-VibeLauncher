@@ -1006,7 +1006,7 @@ async function runAnalysisPipeline(opts: {
       riskForecast: result.riskForecast ?? null,
       revenueIntelligence: result.revenueIntelligence ?? null,
       complianceResults: result.complianceResults ?? null,
-      // engineScorecards,  -- not in DB yet
+      engineScorecards,
       proofEvidence: proofEvidence.length > 0 ? proofEvidence : null,
       sandboxMeta: sandboxResult?.meta ?? null,
       regressionDiff: regressionDiff ?? null,
@@ -1017,34 +1017,34 @@ async function runAnalysisPipeline(opts: {
       launchReplaySteps: mergedReplaySteps.length > 0 ? mergedReplaySteps : null,
       secretScanResults: secretScanResults ?? null,
       packageVulns: packageVulns ?? null,
-      // sbomData: sbomData ?? null,  -- not in DB yet
-      // genomeFingerprint: genomeFingerprint ?? null,  -- not in DB yet
-      // causalInference: causalInference ?? null,  -- not in DB yet
-      // quantitativeRisk: quantitativeRisk ?? null,  -- not in DB yet
-      // geneticDrift: geneticDrift ?? null,  -- not in DB yet
-      // agentDebateResults: agentDebateResults ?? null,  -- not in DB yet
-      // shadowTrafficInsight: shadowTrafficInsight ?? null,  -- not in DB yet
-      // developerTwinProfile: developerTwinProfile ?? null,  -- not in DB yet
-      // topologicalAnalysis: topologicalAnalysis ?? null,  -- not in DB yet
-      // quantumVerification: quantumVerification ?? null,  -- not in DB yet
-      // predictiveSmt: predictiveSmt ?? null,  -- not in DB yet
-      // zeroTrustEnclave: zeroTrustEnclave ?? null,  -- not in DB yet
-      // marketReadinessTracker: marketReadinessTracker ?? null,  -- not in DB yet
-      // uxCognitiveFlow: uxCognitiveFlow ?? null,  -- not in DB yet
-      // greenLightVerdict: greenLightVerdict ?? null,  -- not in DB yet
-      // babelEngine: babelEngine ?? null,  -- not in DB yet
-      // multiVerseDse: multiVerseDse ?? null,  -- not in DB yet
-      // zkSnarkProof: zkSnarkProof ?? null,  -- not in DB yet
-      // bigOProfiler: bigOProfiler ?? null,  -- not in DB yet
-      // fheAnalyzer: fheAnalyzer ?? null,  -- not in DB yet
-      // neuromorphicDrift: neuromorphicDrift ?? null,  -- not in DB yet
-      // tensorPayloadSignature: tensorPayloadSignature ?? null,  -- not in DB yet
-      // postQuantumReadiness: postQuantumReadiness ?? null,  -- not in DB yet
-      // dnaStorageCompiler: dnaStorageCompiler ?? null,  -- not in DB yet
-      // bftConsensusGraph: bftConsensusGraph ?? null,  -- not in DB yet
-      // kardashevLatency: kardashevLatency ?? null,  -- not in DB yet
-      // agiAlignment: agiAlignment ?? null,  -- not in DB yet
-      // thermodynamicEntropy: thermodynamicEntropy ?? null,  -- not in DB yet
+      sbomData: sbomData ?? null,
+      genomeFingerprint: genomeFingerprint ?? null,
+      causalInference: causalInference ?? null,
+      quantitativeRisk: quantitativeRisk ?? null,
+      geneticDrift: geneticDrift ?? null,
+      agentDebateResults: agentDebateResults ?? null,
+      shadowTrafficInsight: shadowTrafficInsight ?? null,
+      developerTwinProfile: developerTwinProfile ?? null,
+      topologicalAnalysis: topologicalAnalysis ?? null,
+      quantumVerification: quantumVerification ?? null,
+      predictiveSmt: predictiveSmt ?? null,
+      zeroTrustEnclave: zeroTrustEnclave ?? null,
+      marketReadinessTracker: marketReadinessTracker ?? null,
+      uxCognitiveFlow: uxCognitiveFlow ?? null,
+      greenLightVerdict: greenLightVerdict ?? null,
+      babelEngine: babelEngine ?? null,
+      multiVerseDse: multiVerseDse ?? null,
+      zkSnarkProof: zkSnarkProof ?? null,
+      bigOProfiler: bigOProfiler ?? null,
+      fheAnalyzer: fheAnalyzer ?? null,
+      neuromorphicDrift: neuromorphicDrift ?? null,
+      tensorPayloadSignature: tensorPayloadSignature ?? null,
+      postQuantumReadiness: postQuantumReadiness ?? null,
+      dnaStorageCompiler: dnaStorageCompiler ?? null,
+      bftConsensusGraph: bftConsensusGraph ?? null,
+      kardashevLatency: kardashevLatency ?? null,
+      agiAlignment: agiAlignment ?? null,
+      thermodynamicEntropy: thermodynamicEntropy ?? null,
       cleanupReport: cleanupReport ?? null,
       digitalTwin: digitalTwin ?? null,
       predictiveIntel: predictiveIntel ?? null,
@@ -1069,6 +1069,7 @@ async function runAnalysisPipeline(opts: {
     })
     .where(eq(scansTable.id, scanId))
     .returning();
+
 
 
   const totalIssues = issueCounts.critical + issueCounts.high + issueCounts.medium + issueCounts.low;
