@@ -842,7 +842,7 @@ async function runAnalysisPipeline(opts: {
       predictiveSmt = simulatePredictiveSmt(allIssues);
       zeroTrustEnclave = simulateZeroTrustEnclave(codeContext, allIssues);
       marketReadinessTracker = simulateMarketReadinessTracker(allIssues, finalScore);
-      uxCognitiveFlow = simulateUxCognitiveFlow();
+      uxCognitiveFlow = simulateUxCognitiveFlow(codeContext, allIssues);
       greenLightVerdict = simulateGreenLightVerdict(allIssues, finalScore);
       babelEngine = simulateBabelEngine(codeContext, allIssues);
       multiVerseDse = simulateMultiVerseDse(codeContext, allIssues);
