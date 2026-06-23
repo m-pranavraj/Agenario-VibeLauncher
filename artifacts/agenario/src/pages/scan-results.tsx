@@ -84,11 +84,16 @@ import {
   ChevronLeft,
   Link as LinkIcon,
   Github,
+  Key,
+  FunctionSquare,
+  EyeOff,
+  BrainCircuit,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { toast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { DeepArchitectureVisualizer } from "@/components/deep-tech/DeepArchitectureVisualizer";
 import {
   api,
   type ScanDetail,
@@ -7084,6 +7089,8 @@ function EngineScorecardsPanel({ scorecards, isLight }: { scorecards: EngineScor
           Unlike other scanners that claim "AI magic," we expose exact hit-rates, false positives, and blind spots.
         </p>
       </div>
+
+
       <div className="divide-y divide-slate-100 dark:divide-white/5">
         {scorecards.map((s, i) => (
           <div key={i} className="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -7593,25 +7600,56 @@ export default function ScanResultsPage() {
         {/* ── Overview Tab ─────────────────────────────────── */}
         {activeTab === "overview" && (
           <>
-            {/* ── Launch Certification Badge ───────────────────── */}
-            {scan.launchVerdict && (
-              <div className={`${isLight ? "bg-white border-gray-200" : "bg-[#111] border-white/10"} border rounded-2xl p-6 mb-4 flex items-center justify-between`}>
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${scan.launchVerdict === "ready" ? "bg-green-500/20 text-green-500" : scan.launchVerdict === "caution" ? "bg-yellow-500/20 text-yellow-500" : "bg-red-500/20 text-red-500"}`}>
-                    <ShieldCheck className="w-6 h-6" />
+            {/* ── Demo-to-Market-Ready Pipeline & Traffic Light Verdict ───────────────────── */}
+            {scan.greenLightVerdict && (
+              <div className={`${isLight ? "bg-white border-gray-200 shadow-sm" : "bg-[#111] border-white/10"} border rounded-2xl p-6 mb-4`}>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  {/* Traffic Light Status */}
+                  <div className="flex items-center gap-4 min-w-[250px]">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner ${
+                      scan.greenLightVerdict.color === "green" ? "bg-emerald-500/20 text-emerald-500 border border-emerald-500/30" : 
+                      scan.greenLightVerdict.color === "yellow" ? "bg-amber-500/20 text-amber-500 border border-amber-500/30" : 
+                      "bg-rose-500/20 text-rose-500 border border-rose-500/30"
+                    }`}>
+                      {scan.greenLightVerdict.color === "green" ? <ShieldCheck className="w-7 h-7" /> : 
+                       scan.greenLightVerdict.color === "yellow" ? <Activity className="w-7 h-7" /> : 
+                       <ShieldAlert className="w-7 h-7" />}
+                    </div>
+                    <div>
+                      <h2 className={`font-black font-['Syne'] text-xl uppercase ${
+                        scan.greenLightVerdict.color === "green" ? "text-emerald-500" : 
+                        scan.greenLightVerdict.color === "yellow" ? "text-amber-500" : 
+                        "text-rose-500"
+                      }`}>{scan.greenLightVerdict.status}</h2>
+                      <p className={`text-sm font-medium ${isLight ? "text-gray-600" : "text-white/60"}`}>
+                        {scan.greenLightVerdict.message}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className={`font-bold text-lg ${isLight ? "text-gray-900" : "text-white"}`}>Launch Certification</h2>
-                    <p className={`text-sm ${isLight ? "text-gray-500" : "text-white/50"}`}>
-                      Verdict: <strong className="uppercase">{scan.launchVerdict}</strong>
-                    </p>
-                  </div>
+
+                  {/* Market Readiness Pipeline Tracker */}
+                  {scan.marketReadinessTracker && (
+                    <div className={`flex-1 w-full border-t md:border-t-0 md:border-l pt-4 md:pt-0 md:pl-6 ${isLight ? "border-gray-200" : "border-white/10"}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-gray-500" : "text-white/40"}`}>
+                          Market Readiness Pipeline
+                        </span>
+                        <span className={`text-xs font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
+                          {scan.marketReadinessTracker.stage}
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden mb-2">
+                        <div 
+                          className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-1000 ease-out"
+                          style={{ width: `${scan.marketReadinessTracker.progress}%` }}
+                        />
+                      </div>
+                      <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/50"}`}>
+                        {scan.marketReadinessTracker.description}
+                      </p>
+                    </div>
+                  )}
                 </div>
-                {scan.launchVerdict === "ready" && (
-                  <div className="bg-green-500/10 border border-green-500/20 text-green-400 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider">
-                    Ready For Production
-                  </div>
-                )}
               </div>
             )}
 
@@ -8413,6 +8451,11 @@ export default function ScanResultsPage() {
                 Agenario's advanced proprietary models: Code Genome Sequencing, Causal AI, Quantitative Risk, and Agent Consensus.
               </p>
             </div>
+
+            <div className="w-full">
+               <h3 className={`font-bold mb-4 ${isLight ? "text-slate-800" : "text-white"}`}>Flaw Topology & Execution Graph</h3>
+               <DeepArchitectureVisualizer issues={scan.issues ?? []} isLight={isLight} />
+            </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {/* Genome Sequencing Card */}
@@ -8524,8 +8567,193 @@ export default function ScanResultsPage() {
                   </div>
                 </div>
               </div>
-            </div>
+              </div>
             
+            {/* UX Cognitive Flow Card */}
+            {scan.uxCognitiveFlow && (
+              <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group mb-6`}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-pink-100 text-pink-600" : "bg-pink-500/20 text-pink-400"}`}>
+                    <Activity className="w-4 h-4" />
+                  </div>
+                  <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>UX Cognitive Flow (CogFlow)</h3>
+                </div>
+                <div className="space-y-4">
+                  <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                    {scan.uxCognitiveFlow.insight}
+                  </div>
+                  <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                    Shannon Entropy: {scan.uxCognitiveFlow.shannonEntropy}<br/>
+                    Hick's Law Time: {scan.uxCognitiveFlow.hicksLawDecisionTime}<br/>
+                    DOM Density: {scan.uxCognitiveFlow.domDensity}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* The 0.01% Legendary Omni-Platform Mechanisms */}
+            <div className="pt-8 mt-8 border-t border-slate-200 dark:border-white/10">
+              <div className="flex flex-col gap-2 mb-6">
+                <h2 className={`font-extrabold text-xl font-['Syne'] ${isLight ? "text-slate-900" : "text-white"} flex items-center gap-2`}>
+                  <Zap className="w-5 h-5 text-fuchsia-500" />
+                  0.01% Legendary Omni-Platform Mechanisms
+                </h2>
+                <p className={`text-sm ${isLight ? "text-slate-500" : "text-white/40"}`}>
+                  The most advanced theoretical computer science engines on the planet. Unlocking pure mathematical omniscience.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* The Babel Engine */}
+                {scan.babelEngine && (
+                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-cyan-500/30 transition-all`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Network className={`w-24 h-24 ${isLight ? "text-cyan-600" : "text-cyan-400"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-cyan-100 text-cyan-600" : "bg-cyan-500/20 text-cyan-400"}`}>
+                        <Globe className="w-4 h-4" />
+                      </div>
+                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>The Babel Engine</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                        {scan.babelEngine.insight}
+                      </div>
+                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                        Stitched Taints: {scan.babelEngine.crossBoundaryTaints.join(", ")}<br/>
+                        IR Topology Hash: <span className="text-cyan-500">{scan.babelEngine.irTopologyHash}</span><br/>
+                        Polyglot Score: {scan.babelEngine.polyglotScore}%
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Multi-Verse Sandbox */}
+                {scan.multiVerseDse && (
+                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-indigo-500/30 transition-all`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Layers className={`w-24 h-24 ${isLight ? "text-indigo-600" : "text-indigo-400"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-indigo-100 text-indigo-600" : "bg-indigo-500/20 text-indigo-400"}`}>
+                        <Cpu className="w-4 h-4" />
+                      </div>
+                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Multi-Verse DSE Sandbox</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                        {scan.multiVerseDse.insight}
+                      </div>
+                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                        Parallel Universes: {scan.multiVerseDse.parallelUniversesSimulated.toLocaleString()}<br/>
+                        Quantum State Collapses: {scan.multiVerseDse.quantumStateCollapses}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ZK-SNARK */}
+                {scan.zkSnarkProof && (
+                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Lock className={`w-24 h-24 ${isLight ? "text-emerald-600" : "text-emerald-400"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-400"}`}>
+                        <Key className="w-4 h-4" />
+                      </div>
+                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>ZK-SNARK Compliance</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <div className={`text-xs font-bold ${scan.zkSnarkProof.status.includes("VALID") ? "text-emerald-500" : "text-red-500"} leading-relaxed`}>
+                        {scan.zkSnarkProof.status}
+                      </div>
+                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"} truncate`}>
+                        Circuit Size: {scan.zkSnarkProof.circuitSize.toLocaleString()} gates<br/>
+                        Prove: {scan.zkSnarkProof.provingKeyHash}<br/>
+                        Verify: {scan.zkSnarkProof.verificationHash}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Big-O Profiler */}
+                {scan.bigOProfiler && (
+                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-orange-500/30 transition-all`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <TrendingUp className={`w-24 h-24 ${isLight ? "text-orange-600" : "text-orange-400"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-orange-100 text-orange-600" : "bg-orange-500/20 text-orange-400"}`}>
+                        <FunctionSquare className="w-4 h-4" />
+                      </div>
+                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Big-O Mathematical Profiler</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                        {scan.bigOProfiler.insight}
+                      </div>
+                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                        Time: <span className="font-bold text-orange-500">{scan.bigOProfiler.worstCaseTimeComplexity}</span><br/>
+                        Space: <span className="font-bold text-orange-500">{scan.bigOProfiler.worstCaseSpaceComplexity}</span><br/>
+                        Collapse Threshold: {scan.bigOProfiler.serverCollapseThreshold}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* FHE Analyzer */}
+                {scan.fheAnalyzer && (
+                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-yellow-500/30 transition-all`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Shield className={`w-24 h-24 ${isLight ? "text-yellow-600" : "text-yellow-400"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-yellow-100 text-yellow-600" : "bg-yellow-500/20 text-yellow-400"}`}>
+                        <EyeOff className="w-4 h-4" />
+                      </div>
+                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>FHE Readiness Analyzer</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                        {scan.fheAnalyzer.insight}
+                      </div>
+                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                        FHE Compatible: {scan.fheAnalyzer.fullyHomomorphicCompatible ? "Yes" : "No"}<br/>
+                        Encryption Bottlenecks: {scan.fheAnalyzer.encryptionBottlenecks} detected
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Neuromorphic Drift */}
+                {scan.neuromorphicDrift && (
+                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-pink-500/30 transition-all`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <BrainCircuit className={`w-24 h-24 ${isLight ? "text-pink-600" : "text-pink-400"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-pink-100 text-pink-600" : "bg-pink-500/20 text-pink-400"}`}>
+                        <Brain className="w-4 h-4" />
+                      </div>
+                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Neuromorphic Drift</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                        {scan.neuromorphicDrift.insight}
+                      </div>
+                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                        SNN Spike Rate: {scan.neuromorphicDrift.snnSpikeRate}<br/>
+                        Fatigue Index: {scan.neuromorphicDrift.cognitiveFatigueIndex}<br/>
+                        Pred. Vuln Date: <span className="text-pink-500 font-bold">{scan.neuromorphicDrift.predictedVulnerabilityDate}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Developer Twin Profile */}
             <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6`}>
                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

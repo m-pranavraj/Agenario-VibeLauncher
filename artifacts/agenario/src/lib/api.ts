@@ -435,6 +435,19 @@ export interface Scan {
   agentDebateResults: any | null;
   shadowTrafficInsight: any | null;
   developerTwinProfile: any | null;
+  topologicalAnalysis: any | null;
+  quantumVerification: any | null;
+  predictiveSmt: any | null;
+  zeroTrustEnclave: any | null;
+  marketReadinessTracker: any | null;
+  uxCognitiveFlow: any | null;
+  greenLightVerdict: any | null;
+  babelEngine: any | null;
+  multiVerseDse: any | null;
+  zkSnarkProof: any | null;
+  bigOProfiler: any | null;
+  fheAnalyzer: any | null;
+  neuromorphicDrift: any | null;
   launchImpact: {
     totalRevenueAtRisk: string;
     supportCostPerMonth: string;
