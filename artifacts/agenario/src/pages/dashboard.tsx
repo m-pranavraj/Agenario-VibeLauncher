@@ -37,7 +37,7 @@ export default function DashboardPage() {
   const [, setLocation] = useLocation();
   const { scans, loading: scansLoading } = useScans();
 
-  const visibleScans = (scans ?? []).filter((s) => s.status !== "failed");
+  const visibleScans = (scans ?? []);
 
   const t = {
     page:        isLight ? "bg-[#fdf4f8] text-gray-900 min-h-screen overflow-x-hidden" : "bg-[#050505] text-white min-h-screen overflow-x-hidden",
