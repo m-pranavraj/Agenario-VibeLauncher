@@ -804,12 +804,12 @@ async function runAnalysisPipeline(opts: {
       marketReadinessTracker = simulateMarketReadinessTracker(allIssues, finalScore);
       uxCognitiveFlow = simulateUxCognitiveFlow();
       greenLightVerdict = simulateGreenLightVerdict(allIssues, finalScore);
-      babelEngine = simulateBabelEngine(allIssues);
-      multiVerseDse = simulateMultiVerseDse(allIssues);
-      zkSnarkProof = simulateZkSnarkProof(allIssues);
-      bigOProfiler = simulateBigOProfiler(allIssues);
-      fheAnalyzer = simulateFheAnalyzer(allIssues);
-      neuromorphicDrift = simulateNeuromorphicDrift(allIssues);
+      babelEngine = simulateBabelEngine(codeContext, allIssues);
+      multiVerseDse = simulateMultiVerseDse(codeContext, allIssues);
+      zkSnarkProof = simulateZkSnarkProof(codeContext, allIssues);
+      bigOProfiler = simulateBigOProfiler(codeContext, allIssues);
+      fheAnalyzer = simulateFheAnalyzer(codeContext, allIssues);
+      neuromorphicDrift = simulateNeuromorphicDrift(codeContext, allIssues);
       tensorPayloadSignature = compileAstToTensorPayload(codeContext, allIssues);
       
       logger.info({ scanId }, "Deep Tech Engines execution complete");
