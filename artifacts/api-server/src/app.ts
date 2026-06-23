@@ -20,7 +20,7 @@ const { Pool } = pkg;
 const app: Express = express();
 
 // Trust Vercel + Render/Cloudflare reverse proxies so express-rate-limit and secure cookies work correctly
-app.set("trust proxy", 2);
+app.set("trust proxy", 1);
 
 // ── Security headers (Helmet) ─────────────────────────────────────────────
 app.use(
