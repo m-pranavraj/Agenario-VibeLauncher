@@ -261,32 +261,37 @@ function pillarFindingToIssueRow(scanId: number, f: any, agentName: string): typ
 router.get("/scans", async (req, res): Promise<void> => {
   if (!requireAuth(req, res)) return;
 
-  const [viewingUser] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId!));
-  const isCreator = viewingUser?.plan !== "free";
+  try {
+    const [viewingUser] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId!));
+    const isCreator = viewingUser?.plan !== "free";
 
-  const scans = await db
-    .select()
-    .from(scansTable)
-    .where(eq(scansTable.userId, req.session.userId!))
-    .orderBy(desc(scansTable.createdAt));
+    const scans = await db
+      .select()
+      .from(scansTable)
+      .where(eq(scansTable.userId, req.session.userId!))
+      .orderBy(desc(scansTable.createdAt));
 
-  res.json(
-    scans.map((s) => {
-      const base: Record<string, unknown> = {
-        ...s,
-        createdAt: s.createdAt.toISOString(),
-        completedAt: s.completedAt?.toISOString() ?? null,
-      };
-      // Strip creator-only deep tech fields for free plan users on list responses
-      if (!isCreator) {
-        base["digitalTwin"] = null;
-        base["predictiveIntel"] = null;
-        base["rootCause"] = null;
-        base["cleanupFindings"] = null;
-      }
-      return base;
-    }),
-  );
+    res.json(
+      scans.map((s) => {
+        const base: Record<string, unknown> = {
+          ...s,
+          createdAt: s.createdAt.toISOString(),
+          completedAt: s.completedAt?.toISOString() ?? null,
+        };
+        // Strip creator-only deep tech fields for free plan users on list responses
+        if (!isCreator) {
+          base["digitalTwin"] = null;
+          base["predictiveIntel"] = null;
+          base["rootCause"] = null;
+          base["cleanupFindings"] = null;
+        }
+        return base;
+      }),
+    );
+  } catch (err: any) {
+    console.error("GET /scans DB Error:", err);
+    res.status(500).json({ error: `Database Error: ${err.message}` });
+  }
 });
 
 // ── Core analysis pipeline ─────────────────────────────────────
