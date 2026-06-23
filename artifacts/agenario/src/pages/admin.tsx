@@ -118,9 +118,16 @@ export default function AdminPage() {
       <div className={`${t.page} flex items-center justify-center`}>
         <div className="text-center space-y-4">
           <ShieldCheck className="w-12 h-12 text-red-400/60 mx-auto" />
-          <p className="text-red-500 font-semibold">{error}</p>
-          <p className={`text-sm ${t.sub}`}>Make sure ADMIN_EMAIL is set in server secrets and matches your account email.</p>
-          <Link href="/dashboard" className="inline-block text-sm text-violet-500 hover:underline mt-2">← Back to Dashboard</Link>
+          <h2 className="text-xl font-bold font-['Syne']">{error === "Forbidden" || error.includes("Admin") ? "Admin Access Restricted" : "Not authenticated"}</h2>
+          <p className="text-sm opacity-60">
+            {error === "Forbidden" || error.includes("Admin") 
+              ? "Your email does not match the ADMIN_EMAIL environment variable on the server."
+              : "Make sure ADMIN_EMAIL is set in server secrets and matches your account email."}
+          </p>
+          <div className="text-xs text-red-500 mt-2 font-mono bg-red-500/10 p-2 rounded">{error}</div>
+          <Link href="/dashboard" className="inline-block mt-4 text-violet-400 hover:text-violet-300">
+            ← Back to Dashboard
+          </Link>
         </div>
       </div>
     );

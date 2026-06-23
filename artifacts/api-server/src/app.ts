@@ -113,7 +113,7 @@ app.use(
   }),
 );
 
-const isProduction = process.env["NODE_ENV"] === "production";
+const isProduction = process.env["NODE_ENV"] === "production" || !!process.env["RENDER"] || !!process.env["FRONTEND_URL"];
 
 function normalizeOrigin(origin: string): string {
   try {
