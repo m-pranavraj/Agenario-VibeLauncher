@@ -120,24 +120,39 @@ export default function ScanProgress() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Progress bar */}
-        <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? "bg-gray-200" : "bg-[#1a1a1a]"}`}>
-          <div
-            className={`h-full rounded-full transition-all duration-500 ease-out ${
-              failed ? "bg-red-500" : completed ? "bg-green-500" : "bg-gradient-to-r from-purple-500 to-pink-500"
-            }`}
-            style={{ width: `${completed ? 100 : failed ? 100 : latestProgress}%` }}
-          />
-        </div>
-
-        <div className="flex items-center justify-between mt-2 mb-8">
-          <span className={`text-xs ${isLight ? "text-gray-500" : "text-white/30"}`}>
-            {completed ? "Scan complete" : failed ? "Scan failed" : `${Math.round(latestProgress)}% complete`}
-          </span>
+        <div className="flex flex-col items-center justify-center mb-10 mt-4">
+          <div className="relative w-48 h-48 flex items-center justify-center">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+              <circle
+                cx="50" cy="50" r="45"
+                fill="transparent"
+                strokeWidth="4"
+                className={isLight ? "stroke-gray-200" : "stroke-white/10"}
+              />
+              <circle
+                cx="50" cy="50" r="45"
+                fill="transparent"
+                strokeWidth="4"
+                strokeLinecap="round"
+                className={failed ? "stroke-red-500" : completed ? "stroke-green-500" : "stroke-purple-500"}
+                strokeDasharray={2 * Math.PI * 45}
+                strokeDashoffset={2 * Math.PI * 45 * (1 - (completed ? 100 : failed ? 100 : latestProgress) / 100)}
+                style={{ transition: 'stroke-dashoffset 0.5s ease-in-out' }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className={`text-4xl font-['Syne'] font-bold ${completed ? "text-green-500" : failed ? "text-red-500" : isLight ? "text-gray-900" : "text-white"}`}>
+                {Math.round(completed ? 100 : failed ? 100 : latestProgress)}%
+              </span>
+              <span className={`text-xs mt-1 uppercase tracking-widest ${isLight ? "text-gray-500" : "text-white/40"}`}>
+                {completed ? "Complete" : failed ? "Failed" : "Analyzing"}
+              </span>
+            </div>
+          </div>
           {completed && (
             <Link href={`/scans/${scanId}`}>
-              <a className="text-xs text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1">
-                View results <ChevronRight className="w-3 h-3" />
+              <a className="mt-6 px-6 py-2.5 rounded-full bg-green-500 text-white font-semibold text-sm hover:bg-green-600 transition-colors shadow-lg shadow-green-500/20 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                View Deep Tech Report <ChevronRight className="w-4 h-4" />
               </a>
             </Link>
           )}

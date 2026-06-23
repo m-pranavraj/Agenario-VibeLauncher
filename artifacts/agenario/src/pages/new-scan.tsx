@@ -862,11 +862,18 @@ export default function NewScanPage() {
 
               <button
                 type="submit"
-                disabled={sourceType === "zip" ? !zipFile : !sourceInput.trim()}
+                disabled={analyzing || (sourceType === "zip" ? !zipFile : !sourceInput.trim())}
                 data-testid="button-analyze"
-                className={`w-full disabled:opacity-40 disabled:cursor-not-allowed font-semibold py-3.5 rounded-xl transition-all text-sm ${isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white hover:bg-white/90 text-black"}`}
+                className={`w-full flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed font-semibold py-3.5 rounded-xl transition-all text-sm ${isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white hover:bg-white/90 text-black"}`}
               >
-                Run Deep Analysis
+                {analyzing ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Initializing Scan...
+                  </>
+                ) : (
+                  "Run Deep Analysis"
+                )}
               </button>
 
               <p className={`text-center text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>
