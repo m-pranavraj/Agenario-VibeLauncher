@@ -8591,15 +8591,15 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* The 0.01% Legendary Omni-Platform Mechanisms */}
+            {/* The 0.01% Mathematical Deep Tech Mechanisms */}
             <div className="pt-8 mt-8 border-t border-slate-200 dark:border-white/10">
               <div className="flex flex-col gap-2 mb-6">
                 <h2 className={`font-extrabold text-xl font-['Syne'] ${isLight ? "text-slate-900" : "text-white"} flex items-center gap-2`}>
                   <Zap className="w-5 h-5 text-fuchsia-500" />
-                  0.01% Legendary Omni-Platform Mechanisms
+                  0.01% Mathematical Deep Tech Mechanisms
                 </h2>
                 <p className={`text-sm ${isLight ? "text-slate-500" : "text-white/40"}`}>
-                  The most advanced theoretical computer science engines on the planet. Unlocking pure mathematical omniscience.
+                  Grounded with real mathematical deep tech proofs. Immune to pure AI dependency hallucinations.
                 </p>
               </div>
 
