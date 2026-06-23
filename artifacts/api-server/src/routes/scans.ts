@@ -762,6 +762,9 @@ async function runAnalysisPipeline(opts: {
   let postQuantumReadiness = null;
   let dnaStorageCompiler = null;
   let bftConsensusGraph = null;
+  let kardashevLatency = null;
+  let agiAlignment = null;
+  let thermodynamicEntropy = null;
 
   try {
     const { compileAstToTensorPayload } = await import("../lib/enclave-tensor-bridge.js");
@@ -771,7 +774,7 @@ async function runAnalysisPipeline(opts: {
     const { computeGeneticDrift } = await import("../lib/genetic-drift.js");
     const { runMultiAgentDebate } = await import("../lib/multi-agent-debate.js");
     const { buildDeveloperTwin } = await import("../lib/developer-twin.js");
-    const { simulateTopologicalAnalysis, simulateQuantumVerification, simulatePredictiveSmt, simulateZeroTrustEnclave, simulateMarketReadinessTracker, simulateUxCognitiveFlow, simulateGreenLightVerdict, simulateBabelEngine, simulateMultiVerseDse, simulateZkSnarkProof, simulateBigOProfiler, simulateFheAnalyzer, simulateNeuromorphicDrift, simulatePostQuantumReadiness, simulateDnaStorageCompiler, simulateBftConsensusGraph } = await import("../lib/deep-tech-simulators.js");
+    const { simulateTopologicalAnalysis, simulateQuantumVerification, simulatePredictiveSmt, simulateZeroTrustEnclave, simulateMarketReadinessTracker, simulateUxCognitiveFlow, simulateGreenLightVerdict, simulateBabelEngine, simulateMultiVerseDse, simulateZkSnarkProof, simulateBigOProfiler, simulateFheAnalyzer, simulateNeuromorphicDrift, simulatePostQuantumReadiness, simulateDnaStorageCompiler, simulateBftConsensusGraph, simulateKardashevLatency, simulateAgiAlignment, simulateThermodynamicEntropy } = await import("../lib/deep-tech-simulators.js");
 
     if (codeContext && codeContext.keyFiles.length > 0) {
       const globalCsgNodes: any[] = [];
@@ -817,6 +820,9 @@ async function runAnalysisPipeline(opts: {
       postQuantumReadiness = simulatePostQuantumReadiness(codeContext, allIssues);
       dnaStorageCompiler = simulateDnaStorageCompiler(codeContext, allIssues);
       bftConsensusGraph = simulateBftConsensusGraph(codeContext, allIssues);
+      kardashevLatency = simulateKardashevLatency(codeContext, allIssues);
+      agiAlignment = simulateAgiAlignment(codeContext, allIssues);
+      thermodynamicEntropy = simulateThermodynamicEntropy(codeContext, allIssues);
       
       logger.info({ scanId }, "Deep Tech Engines execution complete");
     }
@@ -1022,6 +1028,9 @@ async function runAnalysisPipeline(opts: {
       postQuantumReadiness: postQuantumReadiness ?? null,
       dnaStorageCompiler: dnaStorageCompiler ?? null,
       bftConsensusGraph: bftConsensusGraph ?? null,
+      kardashevLatency: kardashevLatency ?? null,
+      agiAlignment: agiAlignment ?? null,
+      thermodynamicEntropy: thermodynamicEntropy ?? null,
       cleanupReport: cleanupReport ?? null,
       digitalTwin: digitalTwin ?? null,
       predictiveIntel: predictiveIntel ?? null,

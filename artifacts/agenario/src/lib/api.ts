@@ -452,6 +452,9 @@ export interface Scan {
   postQuantumReadiness?: any | null;
   dnaStorageCompiler?: any | null;
   bftConsensusGraph?: any | null;
+  kardashevLatency?: any | null;
+  agiAlignment?: any | null;
+  thermodynamicEntropy?: any | null;
   launchImpact: {
     totalRevenueAtRisk: string;
     supportCostPerMonth: string;

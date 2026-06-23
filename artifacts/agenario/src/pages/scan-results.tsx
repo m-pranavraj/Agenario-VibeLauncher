@@ -88,6 +88,8 @@ import {
   FunctionSquare,
   EyeOff,
   BrainCircuit,
+  Orbit,
+  Satellite,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
@@ -8845,6 +8847,78 @@ export default function ScanResultsPage() {
                       <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
                         Graph Edges: {scan.bftConsensusGraph.graphEdgesCalculated}<br/>
                         Survivability Limit: <span className="text-red-500 font-bold">{scan.bftConsensusGraph.bftSurvivabilityLimit}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Kardashev Latency */}
+                {scan.kardashevLatency && (
+                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-cyan-500/30 transition-all`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Orbit className={`w-24 h-24 ${isLight ? "text-cyan-600" : "text-cyan-400"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-cyan-100 text-cyan-600" : "bg-cyan-500/20 text-cyan-400"}`}>
+                        <Satellite className="w-4 h-4" />
+                      </div>
+                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Kardashev Code Compiler</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                        {scan.kardashevLatency.insight}
+                      </div>
+                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                        Dyson Swarm Threshold: <span className="text-cyan-500 font-bold">{scan.kardashevLatency.dysonSwarmLatencyThreshold}</span><br/>
+                        Interplanetary Packet Resilience: {scan.kardashevLatency.interplanetaryPacketLossResilience}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* AGI Alignment Prover */}
+                {scan.agiAlignment && (
+                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-fuchsia-500/30 transition-all`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Cpu className={`w-24 h-24 ${isLight ? "text-fuchsia-600" : "text-fuchsia-400"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-fuchsia-100 text-fuchsia-600" : "bg-fuchsia-500/20 text-fuchsia-400"}`}>
+                        <Bot className="w-4 h-4" />
+                      </div>
+                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>AGI Alignment Prover</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                        {scan.agiAlignment.insight}
+                      </div>
+                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                        Alignment Stability Score: <span className="text-fuchsia-500 font-bold">{scan.agiAlignment.alignmentStabilityScore}</span><br/>
+                        Containment Breach Prob: {scan.agiAlignment.agiContainmentBreachProbability}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Thermodynamic Entropy Profiler */}
+                {scan.thermodynamicEntropy && (
+                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-amber-500/30 transition-all`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Flame className={`w-24 h-24 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-amber-100 text-amber-600" : "bg-amber-500/20 text-amber-400"}`}>
+                        <Zap className="w-4 h-4" />
+                      </div>
+                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Thermodynamic Entropy</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                        {scan.thermodynamicEntropy.insight}
+                      </div>
+                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                        Algorithmic Entropy: <span className="text-amber-500 font-bold">{scan.thermodynamicEntropy.algorithmicEntropy}</span><br/>
+                        Landauer's Limit Heat: {scan.thermodynamicEntropy.heatDissipationJoules}
                       </div>
                     </div>
                   </div>
