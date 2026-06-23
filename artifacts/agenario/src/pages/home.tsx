@@ -395,40 +395,40 @@ export default function Home() {
               <motion.div variants={FADE_UP}>
                 <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium ${t.pill}`}>
                   <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-fuchsia-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-fuchsia-400" />
                   </span>
-                  Vibe Code Audit & Production Review Board
+                  The 0.01% Omni-Platform Code Oracle
                 </span>
               </motion.div>
 
               <motion.h1 variants={FADE_UP} className={`text-4xl sm:text-5xl lg:text-6xl font-heading font-extrabold leading-[1.05] tracking-tight ${t.h1}`}>
-                Ship your vibe-coded app<br />
+                Not just another AI tool.<br />
                 <span className={isLight
-                  ? "text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-violet-500 to-indigo-500"
+                  ? "text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500"
                   : "text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40"
                 }>
-                  with certainty.
+                  Pure Mathematical Truth.
                 </span>
               </motion.h1>
 
               <motion.p variants={FADE_UP} className={`text-lg leading-relaxed max-w-lg ${t.body}`}>
-                Your AI wrote the code, but is it secure? Agenario is an AI-powered security audit and production review board for vibe-coded apps. Parallel agent dimensions analyze compliance, security leaks, performance, and UX.
+                Agenario is a supreme blend of deep tech, formal verification compilers, and advanced mathematics. It is a production-grade code review engine built for enterprise, iOS, Android, and web scale. It doesn't guess—it proves.
               </motion.p>
 
-              <motion.div variants={FADE_UP} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${isLight ? "bg-green-50 border border-green-200/60 text-green-700" : "bg-green-500/[0.08] border border-green-500/20 text-green-400"}`}>
+              <motion.div variants={FADE_UP} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${isLight ? "bg-fuchsia-50 border border-fuchsia-200/60 text-fuchsia-700" : "bg-fuchsia-500/[0.08] border border-fuchsia-500/20 text-fuchsia-400"}`}>
                 <ShieldCheck className="w-3.5 h-3.5" />
-                Your code is never stored. Analyzed in-session only.
+                Zero-Trust Architectural Validation. Production Real.
               </motion.div>
 
               <motion.div variants={FADE_UP} className={`space-y-3 p-5 rounded-2xl border ${isLight ? "bg-gray-50/80 border-gray-100" : "bg-white/[0.03] border-white/[0.08]"}`}>
                 <div className="flex items-center gap-3">
                   <XCircle className="w-4 h-4 text-red-400/70 shrink-0" />
-                  <span className={`text-sm line-through ${t.bodyDim}`}>Prompt → Deploy → Production surprises hit your users</span>
+                  <span className={`text-sm line-through ${t.bodyDim}`}>Standard Heuristics → Hallucinations → False Positives</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <CheckCircle className="w-4 h-4 text-green-400 shrink-0" />
-                  <span className={`text-sm ${t.body}`}>Prompt → Build → <strong className={t.h2}>Agenario Review</strong> → Ship confidently</span>
+                  <CheckCircle className="w-4 h-4 text-fuchsia-400 shrink-0" />
+                  <span className={`text-sm ${t.body}`}>Deep Tech Engines → <strong className={t.h2}>Mathematical Proofs</strong> → Omni-Platform Scale</span>
                 </div>
               </motion.div>
 
