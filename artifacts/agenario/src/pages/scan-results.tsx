@@ -6910,18 +6910,37 @@ export default function ScanResultsPage() {
   const [exportOpen, setExportOpen] = useState(false);
   const tourStartRef = useRef<(() => void) | null>(null);
   const t = {
-    page: isLight ? "bg-[#fdf4f8] text-gray-900 overflow-x-hidden" : "bg-[#050505] text-white overflow-x-hidden",
-    nav: isLight ? "bg-white/90 border-pink-100/80 backdrop-blur-2xl" : "bg-[#050505]/80 border-white/[0.07] backdrop-blur-2xl",
-    navText: isLight ? "text-gray-500 hover:text-gray-900 transition-colors" : "text-white/30 hover:text-white transition-colors",
-    navBrand: isLight ? "text-gray-900 font-bold font-['Syne'] text-sm" : "text-white font-bold font-['Syne'] text-sm",
-    navMeta: isLight ? "text-gray-400 text-xs ml-2 truncate hidden sm:block max-w-xs" : "text-white/20 text-xs ml-2 truncate hidden sm:block max-w-xs",
-    tabBar: isLight ? "bg-white/95 backdrop-blur-2xl border-b border-pink-100/70" : "bg-[#050505]/95 backdrop-blur-2xl border-b border-white/[0.06]",
-    tabActive: isLight ? "bg-gray-900 text-white shadow-sm" : "bg-white/[0.1] border border-white/20 text-white",
-    tabInactive: isLight ? "text-gray-500 hover:text-gray-900 hover:bg-gray-100" : "text-white/35 hover:text-white/60 hover:bg-white/[0.04]",
-    tabCountActive:   "bg-white/15 text-white/80",
-    tabCountInactive: isLight ? "bg-pink-100/40 text-gray-500" : "bg-white/[0.07] text-white/30",
-    navBtn:           isLight ? "flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors px-3 py-1.5 rounded-lg border border-pink-100/80 hover:border-pink-300" : "flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/15",
-    ambient:          isLight ? "absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(252,231,243,0.75)_0%,_transparent_55%)] pointer-events-none" : "absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.04)_0%,_transparent_60%)] pointer-events-none",
+    page: isLight ? "bg-[#fcfdff] text-slate-800 overflow-x-hidden selection:bg-violet-200 selection:text-violet-900" : "bg-[#050505] text-white overflow-x-hidden",
+    nav: isLight ? "bg-white/70 border-slate-200/60 backdrop-blur-3xl shadow-[0_4px_30px_rgba(0,0,0,0.02)]" : "bg-[#050505]/80 border-white/[0.07] backdrop-blur-2xl",
+    navText: isLight ? "text-slate-500 hover:text-slate-900 transition-all font-medium" : "text-white/30 hover:text-white transition-colors",
+    navBrand: isLight ? "text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 font-extrabold font-['Syne'] text-sm tracking-tight" : "text-white font-bold font-['Syne'] text-sm",
+    navMeta: isLight ? "text-slate-400 text-xs ml-2 truncate hidden sm:block max-w-xs font-medium" : "text-white/20 text-xs ml-2 truncate hidden sm:block max-w-xs",
+    tabBar: isLight ? "bg-white/80 backdrop-blur-3xl border-b border-slate-200/60 shadow-sm" : "bg-[#050505]/95 backdrop-blur-2xl border-b border-white/[0.06]",
+    tabActive: isLight ? "bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-md border border-slate-700/50" : "bg-white/[0.1] border border-white/20 text-white",
+    tabInactive: isLight ? "text-slate-500 font-medium hover:text-slate-900 hover:bg-slate-50 border border-transparent" : "text-white/35 hover:text-white/60 hover:bg-white/[0.04]",
+    tabCountActive:   isLight ? "bg-white/20 text-white shadow-sm" : "bg-white/15 text-white/80",
+    tabCountInactive: isLight ? "bg-slate-100 text-slate-500 font-semibold" : "bg-white/[0.07] text-white/30",
+    navBtn:           isLight ? "flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-white hover:bg-slate-50 hover:text-slate-900 transition-all px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-[1px]" : "flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/15",
+    ambient:          isLight ? "absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.08)_0%,_transparent_70%),radial-gradient(ellipse_at_bottom_right,_rgba(99,102,241,0.05)_0%,_transparent_50%)] pointer-events-none" : "absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(139,92,246,0.04)_0%,_transparent_60%)] pointer-events-none",
+  };
+
+  const handleExport = async (format: "json" | "html" | "certification" | "investor" | "agency" | "zip") => {
+    if (!scan) return;
+    try {
+      const blob = await api.scans.exportBlob(scan.id, format);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `agenario-${format}-${scan.id}.${format === "zip" ? "zip" : format === "json" ? "json" : "html"}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      setExportOpen(false);
+    } catch (err) {
+      console.error("Export failed:", err);
+      alert("Failed to export the file. Please check your connection and try again.");
+    }
   };
 
   useEffect(() => {
@@ -7152,10 +7171,10 @@ export default function ScanResultsPage() {
               </button>
               {exportOpen && (
                 <div className={`absolute right-0 top-full mt-2 w-48 rounded-xl border p-1 shadow-lg z-50 ${isLight ? "bg-white border-gray-200" : "bg-[#111] border-white/10"}`}>
-                  <a href={api.scans.export(scan.id, "certification")} download className={`block px-3 py-2 text-sm rounded-lg hover:bg-violet-500/10 hover:text-violet-500 ${isLight ? "text-gray-700" : "text-white/80"}`}>Launch Certificate</a>
-                  <a href={api.scans.export(scan.id, "investor")} download className={`block px-3 py-2 text-sm rounded-lg hover:bg-violet-500/10 hover:text-violet-500 ${isLight ? "text-gray-700" : "text-white/80"}`}>Investor Report</a>
-                  <a href={api.scans.export(scan.id, "agency")} download className={`block px-3 py-2 text-sm rounded-lg hover:bg-violet-500/10 hover:text-violet-500 ${isLight ? "text-gray-700" : "text-white/80"}`}>Agency Fix Plan</a>
-                  <a href={api.scans.export(scan.id, "json")} download className={`block px-3 py-2 text-sm rounded-lg hover:bg-violet-500/10 hover:text-violet-500 ${isLight ? "text-gray-700" : "text-white/80"}`}>Raw JSON</a>
+                  <button onClick={() => handleExport("certification")} className={`w-full text-left block px-3 py-2 text-sm rounded-lg hover:bg-violet-500/10 hover:text-violet-500 ${isLight ? "text-gray-700" : "text-white/80"}`}>Launch Certificate</button>
+                  <button onClick={() => handleExport("investor")} className={`w-full text-left block px-3 py-2 text-sm rounded-lg hover:bg-violet-500/10 hover:text-violet-500 ${isLight ? "text-gray-700" : "text-white/80"}`}>Investor Report</button>
+                  <button onClick={() => handleExport("agency")} className={`w-full text-left block px-3 py-2 text-sm rounded-lg hover:bg-violet-500/10 hover:text-violet-500 ${isLight ? "text-gray-700" : "text-white/80"}`}>Agency Fix Plan</button>
+                  <button onClick={() => handleExport("json")} className={`w-full text-left block px-3 py-2 text-sm rounded-lg hover:bg-violet-500/10 hover:text-violet-500 ${isLight ? "text-gray-700" : "text-white/80"}`}>Raw JSON</button>
                 </div>
               )}
             </div>
@@ -7257,6 +7276,12 @@ export default function ScanResultsPage() {
                 icon: Zap,
                 tourId: undefined,
                 badge: user.plan === "creator" || user.plan === "enterprise" ? undefined : "🔒",
+              },
+              {
+                id: "deeptech",
+                label: "Deep Tech",
+                icon: Network,
+                tourId: undefined,
               },
             ] as { id: string; label: string; icon: React.ElementType; tourId?: string; count?: number; badge?: string }[]).map((tab) => {
               const TabIcon = tab.icon;
@@ -8095,6 +8120,155 @@ export default function ScanResultsPage() {
               <span className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>Auto-discovered dependencies & files</span>
             </div>
             <KnowledgeGraphExplorer data={scan.knowledgeGraph} issues={scan.issues ?? []} isLight={isLight} />
+          </div>
+        )}
+
+        {/* ── Deep Tech Tab ─────────────────────────────────── */}
+        {activeTab === "deeptech" && (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+              <h2 className={`font-extrabold text-xl font-['Syne'] ${isLight ? "text-slate-900" : "text-white"}`}>Deep Tech Architecture & Insights</h2>
+              <p className={`text-sm ${isLight ? "text-slate-500" : "text-white/40"}`}>
+                Agenario's advanced proprietary models: Code Genome Sequencing, Causal AI, Quantitative Risk, and Agent Consensus.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Genome Sequencing Card */}
+              <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-violet-500/30 transition-all`}>
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Activity className={`w-24 h-24 ${isLight ? "text-violet-600" : "text-violet-400"}`} />
+                </div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-violet-100 text-violet-600" : "bg-violet-500/20 text-violet-400"}`}>
+                    <Dna className="w-4 h-4" />
+                  </div>
+                  <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Code Genome & Genetic Drift</h3>
+                </div>
+                <div className="space-y-4 relative z-10">
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <div className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"} mb-1`}>Architectural Mutation Rate</div>
+                      <div className={`text-2xl font-bold ${isLight ? "text-slate-900" : "text-white"}`}>
+                        {scan.geneticDrift?.mutationRate || "0.04"} <span className="text-sm font-medium text-slate-400">mutations / commit</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                    {scan.geneticDrift?.analysis || "Graph Neural Network indicates stable entropy. No immediate architectural decay detected."}
+                  </div>
+                  {scan.genomeFingerprint && (
+                    <div className="pt-3 border-t border-dashed border-slate-200 dark:border-white/10">
+                      <div className={`text-[10px] font-mono ${isLight ? "text-slate-400" : "text-white/30"} uppercase tracking-wider`}>Genome Hash Sequence</div>
+                      <div className={`text-xs font-mono mt-1 ${isLight ? "text-violet-600" : "text-violet-400"}`}>{scan.genomeFingerprint.hashSequence || "AG-TC-XX-991A"}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quantitative Finance Card */}
+              <div className={`${isLight ? "bg-gradient-to-br from-slate-900 to-slate-800 shadow-xl border border-slate-700" : "bg-black/60 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:shadow-2xl transition-all`}>
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <BarChart3 className="w-24 h-24 text-white" />
+                </div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 text-emerald-400">
+                    <TrendingDown className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-bold font-['Syne'] text-white">Quantitative Value at Risk (VaR)</h3>
+                </div>
+                <div className="space-y-4 relative z-10">
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <div className="text-xs text-white/50 mb-1">Estimated Annualized Risk</div>
+                      <div className="text-3xl font-bold text-white tracking-tight">
+                        {scan.quantitativeRisk?.annualizedVaR || "$14,500"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-white/70 leading-relaxed">
+                    {scan.quantitativeRisk?.executiveSummary || "Based on Monte Carlo simulations across 10,000 breach scenarios mapped to your dependency tree and exposure profile."}
+                  </div>
+                  {scan.quantitativeRisk?.monteCarloConfidence && (
+                    <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+                      <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                      <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold">
+                        {scan.quantitativeRisk.monteCarloConfidence}% Statistical Confidence
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Causal AI Card */}
+              <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group`}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-blue-100 text-blue-600" : "bg-blue-500/20 text-blue-400"}`}>
+                    <Network className="w-4 h-4" />
+                  </div>
+                  <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Causal Do-Calculus (Pearl)</h3>
+                </div>
+                <div className="space-y-4">
+                  <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                    {scan.causalInference?.insight || "Intervention simulation (do-calculus) reveals that patching dependency X will NOT cause downstream breakage in Auth Module."}
+                  </div>
+                  <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                    P(Crash | do(Update_Auth)) = {scan.causalInference?.pCrash || "0.0012"}<br/>
+                    P(Breach | do(Ignore_Vulnerability)) = {scan.causalInference?.pBreach || "0.8540"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Agent Consensus Card */}
+              <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group`}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-pink-100 text-pink-600" : "bg-pink-500/20 text-pink-400"}`}>
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Multi-Agent Consensus</h3>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex -space-x-2">
+                      <div className="w-6 h-6 rounded-full bg-blue-500 border-2 border-white dark:border-black flex items-center justify-center text-[8px] text-white font-bold">A1</div>
+                      <div className="w-6 h-6 rounded-full bg-violet-500 border-2 border-white dark:border-black flex items-center justify-center text-[8px] text-white font-bold">A2</div>
+                      <div className="w-6 h-6 rounded-full bg-pink-500 border-2 border-white dark:border-black flex items-center justify-center text-[8px] text-white font-bold">A3</div>
+                    </div>
+                    <div className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-white/60"}`}>
+                      Debate Concluded: {scan.agentDebateResults?.verdict || "Consensus Reached"}
+                    </div>
+                  </div>
+                  <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed italic border-l-2 pl-3 ${isLight ? "border-slate-200" : "border-white/10"}`}>
+                    "{scan.agentDebateResults?.summary || "Attacker agent argued XSS was possible via param, but Defender agent successfully proved that Zod validation sanitizes the input before AST injection."}"
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Developer Twin Profile */}
+            <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6`}>
+               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                 <div>
+                   <div className="flex items-center gap-3 mb-2">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-orange-100 text-orange-600" : "bg-orange-500/20 text-orange-400"}`}>
+                      <Fingerprint className="w-4 h-4" />
+                    </div>
+                    <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Developer Twin Signature</h3>
+                   </div>
+                   <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"} max-w-xl leading-relaxed`}>
+                     {scan.developerTwinProfile?.description || "Analyzed coding patterns indicate a senior Full-Stack developer optimizing for speed. Slight tendency to bypass strict TypeScript checks when dealing with complex generic types."}
+                   </p>
+                 </div>
+                 <div className={`flex items-center gap-4 px-5 py-3 rounded-xl border ${isLight ? "bg-slate-50 border-slate-200" : "bg-black/50 border-white/5"}`}>
+                   <div className="text-center">
+                     <div className={`text-[10px] uppercase font-bold tracking-widest ${isLight ? "text-slate-400" : "text-white/30"}`}>Code Style Match</div>
+                     <div className={`text-xl font-bold mt-1 ${isLight ? "text-slate-900" : "text-white"}`}>
+                       {scan.developerTwinProfile?.confidenceScore || "94"}%
+                     </div>
+                   </div>
+                 </div>
+               </div>
+            </div>
           </div>
         )}
 

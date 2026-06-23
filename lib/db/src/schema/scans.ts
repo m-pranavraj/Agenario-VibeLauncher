@@ -190,6 +190,14 @@ export const scansTable = pgTable("scans", {
       }>;
     }>;
   }>(),
+  sbomData: jsonb("sbom_data").$type<any>(),
+  genomeFingerprint: jsonb("genome_fingerprint").$type<any>(),
+  causalInference: jsonb("causal_inference").$type<any>(),
+  quantitativeRisk: jsonb("quantitative_risk").$type<any>(),
+  geneticDrift: jsonb("genetic_drift").$type<any>(),
+  agentDebateResults: jsonb("agent_debate_results").$type<any>(),
+  shadowTrafficInsight: jsonb("shadow_traffic_insight").$type<any>(),
+  developerTwinProfile: jsonb("developer_twin_profile").$type<any>(),
   cleanupReport: jsonb("cleanup_report").$type<{
     totalFindings: number;
     errorCount: number;

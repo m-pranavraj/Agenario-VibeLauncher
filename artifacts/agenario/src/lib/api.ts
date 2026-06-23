@@ -410,6 +410,15 @@ export interface Scan {
   digitalTwin: DigitalTwinResult | null;
   predictiveIntel: PredictiveIntelResult | null;
   rootCause: RootCauseResult | null;
+
+  // New Deep Tech Fields
+  genomeFingerprint: any | null;
+  causalInference: any | null;
+  quantitativeRisk: any | null;
+  geneticDrift: any | null;
+  agentDebateResults: any | null;
+  shadowTrafficInsight: any | null;
+  developerTwinProfile: any | null;
   launchImpact: {
     totalRevenueAtRisk: string;
     supportCostPerMonth: string;
@@ -574,6 +583,14 @@ export const api = {
       request<{ scanId: number; status: string }>(`/scans/${scanId}/rescan`, { method: "POST" }),
     export: (scanId: number, format: "json" | "html" | "certification" | "investor" | "agency" | "zip" = "json") =>
       `${BASE}/scans/${scanId}/export?format=${format}`,
+    exportBlob: async (scanId: number, format: "json" | "html" | "certification" | "investor" | "agency" | "zip" = "json"): Promise<Blob> => {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${BASE}/scans/${scanId}/export?format=${format}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error("Failed to export file");
+      return res.blob();
+    },
   },
   billing: {
     createOrder: (plan: string, coupon?: string) =>

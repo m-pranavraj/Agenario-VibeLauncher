@@ -195,7 +195,137 @@ const LINE_PATTERNS: LinePattern[] = [
     fixPrompt: "Throw at startup if SESSION_SECRET is missing: `if (!process.env.SESSION_SECRET) throw new Error('SESSION_SECRET is required')`. Never use a fallback.",
     confidence: 97,
   },
+  // ── PATH TRAVERSAL ─────────────────────────────────────────────────
+  {
+    name: "Path Traversal via Filesystem with User Input",
+    pattern: /fs\.\w+\s*\(\s*(?:req\.|path\.join\s*\([^)]*req\.)/,
+    severity: "critical",
+    category: "injection",
+    description: "Filesystem operation (fs.readFile/writeFile/stat) called with a path from user input. Attackers use `../` sequences to traverse directories and read arbitrary files like .env, private keys, or /etc/passwd.",
+    fixPrompt: "Validate user-supplied paths against a base directory:\n```\nconst safeRoot = path.resolve('./uploads');\nconst requested = path.resolve(safeRoot, req.params.file);\nif (!requested.startsWith(safeRoot)) return res.status(403).json({ error: 'Forbidden' });\n```",
+    confidence: 88,
+  },
+  // ── OPEN REDIRECT ──────────────────────────────────────────────────
+  {
+    name: "Open Redirect via User-Controlled URL",
+    pattern: /res\.redirect\s*\(\s*req\./,
+    severity: "medium",
+    category: "auth",
+    description: "Express res.redirect() called with a URL directly from request parameters. Attackers use this to redirect users to phishing pages while appearing to link from your trusted domain.",
+    fixPrompt: "Validate redirect destinations against an allowlist of permitted URLs:\n```\nconst SAFE_HOSTS = ['yourdomain.com'];\ntry {\n  const url = new URL(req.query.redirectTo);\n  if (!SAFE_HOSTS.includes(url.hostname)) return res.redirect('/');\n  res.redirect(url.toString());\n} catch { res.redirect('/'); }\n```",
+    confidence: 85,
+  },
+  // ── WEBHOOK SECURITY ───────────────────────────────────────────────
+  {
+    name: "Stripe/Payment Webhook Without Signature Verification",
+    pattern: /(?:stripe|webhook).*(?:on|listen|post|router).*body(?!.*(?:stripe\.webhooks\.constructEvent|verifyWebhookSignature|stripe-signature|x-hub-signature))/i,
+    severity: "high",
+    category: "auth",
+    description: "Payment webhook handler appears to process events without verifying the webhook signature. Attackers can forge webhook events (e.g., payment.succeeded) to unlock services without paying.",
+    fixPrompt: "Always verify Stripe webhook signatures:\n```\nconst sig = req.headers['stripe-signature'];\nconst event = stripe.webhooks.constructEvent(req.rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);\n```",
+    confidence: 72,
+  },
+  // ── LOG INJECTION ──────────────────────────────────────────────────
+  {
+    name: "Log Injection via User-Controlled String Interpolation",
+    pattern: /console\.\w+\s*\(`[^`]*\$\{(?:req\.|user\.)/,
+    severity: "medium",
+    category: "exposure",
+    description: "User-controlled data interpolated directly into log messages. Attackers inject newline characters to forge fake log entries and contaminate audit trails.",
+    fixPrompt: "Use structured logging — never interpolate user data into log strings:\n```\nlogger.info({ userId: req.params.id, action: 'login' }); // ✅\nconsole.log(`User ${req.params.id} logged in`); // ❌\n```",
+    confidence: 80,
+  },
+  // ── INSECURE HTTP ──────────────────────────────────────────────────
+  {
+    name: "Disabled TLS Certificate Validation",
+    pattern: /rejectUnauthorized\s*:\s*false/,
+    severity: "critical",
+    category: "config",
+    description: "TLS certificate validation is disabled (`rejectUnauthorized: false`). This makes HTTPS connections vulnerable to man-in-the-middle attacks — any attacker on the network can intercept and modify traffic.",
+    fixPrompt: "Remove `rejectUnauthorized: false`. In development, use self-signed certs properly. In production, always validate certificates.",
+    confidence: 99,
+  },
+  // ── CSV INJECTION ──────────────────────────────────────────────────
+  {
+    name: "CSV/Spreadsheet Formula Injection",
+    pattern: /(?:csv|xlsx|spreadsheet).*(?:req\.|user\.)|(?:res\.attachment|res\.download).*\.csv/i,
+    severity: "medium",
+    category: "injection",
+    description: "CSV export that includes user-controlled data without sanitizing formula-injection characters. Users can inject formulas (=HYPERLINK(), =IMPORTDATA()) that execute in Excel/Google Sheets when a victim opens the export.",
+    fixPrompt: "Sanitize user data in CSV exports by escaping cells starting with =, +, -, @:\n```\nconst sanitize = (val) => /^[=+\\-@]/.test(val) ? `'${val}` : val;\n```",
+    confidence: 72,
+  },
+  // ── COMPETITOR PARITY: INTERNAL HOSTNAMES ────────────────────────
+  {
+    name: "Sensitive Data Exposure: Internal Hostnames",
+    pattern: /\b[a-zA-Z0-9.-]+\.(?:local|corp|internal|lan)\b/i,
+    severity: "high",
+    category: "exposure",
+    description: "Hostnames ending in .internal, .corp, .lan, or .local are present in code. These reveal internal network structure.",
+    fixPrompt: "Remove hardcoded internal hostnames. Use environment variables instead.",
+    confidence: 90,
+  },
+  // ── COMPETITOR PARITY: CREDENTIALS IN COMMENTS ────────────────────
+  {
+    name: "Credential Assignment in Comments",
+    pattern: /\/\/\s*(?:password|secret|token|api_key|key)\s*[:=]\s*["'][^"']+["']/i,
+    severity: "high",
+    category: "exposure",
+    description: "Comments containing password, secret, or token assignments were found. These values are visible to anyone who inspects the source.",
+    fixPrompt: "Remove all secrets from comments and source history.",
+    confidence: 95,
+  },
+  // ── COMPETITOR PARITY: HARDCODED ADMIN CREDS ──────────────────────
+  {
+    name: "Hardcoded Admin Credentials",
+    pattern: /(?:username|user|email)\s*[:=]\s*["'](?:admin|root|administrator)["']\s*[,;]?\s*(?:password|pass|pwd)\s*[:=]\s*["'][^"']+["']/i,
+    severity: "high",
+    category: "auth",
+    description: "Patterns consistent with hardcoded admin credentials or default username/password combinations were found.",
+    fixPrompt: "Remove hardcoded credentials. Use a secure database and environment variables.",
+    confidence: 90,
+  },
+  // ── COMPETITOR PARITY: EXPOSED BACKUP FILES ───────────────────────
+  {
+    name: "Exposed Backup Files Reference",
+    pattern: /(?:url|path|href)\s*[:=]\s*["']\/.*?(?:backup\.zip|backup\.sql|database\.sql|dump\.sql|\.env\.bak)["']/i,
+    severity: "high",
+    category: "exposure",
+    description: "Backup files are referenced in public code, indicating they may be publicly accessible on the server.",
+    fixPrompt: "Move backup files out of public web directories and deny access via server configuration.",
+    confidence: 85,
+  },
+  // ── COMPETITOR PARITY: SPF/DMARC AND CORS (Static heuristic) ──────
+  {
+    name: "CORS Allows All Origins (Access-Control-Allow-Origin: *)",
+    pattern: /Access-Control-Allow-Origin\s*['"]?\s*:\s*['"]?\*['"]?/i,
+    severity: "medium",
+    category: "config",
+    description: "Any website can make requests to this resource and read responses. For endpoints returning sensitive data, this is a data-exposure risk.",
+    fixPrompt: "Configure CORS with a strict allowlist of origins.",
+    confidence: 90,
+  },
+  {
+    name: "No SPF/DMARC Email Security Configuration",
+    pattern: /nodemailer\.createTransport|sendgrid|mailgun/i,
+    severity: "medium",
+    category: "config",
+    description: "Email sending capabilities detected, but codebase lacks explicit SPF/DMARC domain validation assertions. Emails may be spoofed.",
+    fixPrompt: "Ensure your sending domain has valid SPF and DMARC TXT records in your DNS provider.",
+    confidence: 50,
+  },
+  // ── INSECURE DESERIALIZATION ─────────────────────────────────────
+  {
+    name: "Unsafe Deserialization via node-serialize or serialize-javascript",
+    pattern: /require\s*\(\s*['"](?:node-serialize|serialize-javascript|js-yaml)['"]\s*\)/,
+    severity: "high",
+    category: "injection",
+    description: "Package known for deserialization vulnerabilities detected. `node-serialize` RCE exploit allows code execution via IIFE patterns in serialized objects.",
+    fixPrompt: "Remove `node-serialize`. Use JSON.parse() for safe deserialization. Validate schemas with Zod before deserializing any user data.",
+    confidence: 80,
+  },
 ];
+
 
 // ── File-level patterns (whole-file checks) ─────────────────────
 function checkRateLimiting(content: string, pkgDeps: Record<string, unknown>): boolean {
