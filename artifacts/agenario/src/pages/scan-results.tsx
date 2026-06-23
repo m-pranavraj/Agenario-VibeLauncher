@@ -30,6 +30,7 @@ import {
   Loader2,
   AlertTriangle,
   XCircle,
+  CheckCircle,
   CheckCircle2,
   CreditCard,
   Upload,
@@ -82,6 +83,7 @@ import {
   HelpCircle,
   ChevronLeft,
   Link as LinkIcon,
+  Github,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
@@ -103,6 +105,7 @@ import {
   type DigitalTwinResult,
   type PredictiveIntelResult,
   type RootCauseResult,
+  type EngineScorecard,
 } from "@/lib/api";
 import { motion } from "framer-motion";
 import { DempsterShaferVisualizer } from "@/components/deep-tech/DempsterShaferVisualizer";
@@ -365,6 +368,7 @@ function EvidenceCard({
   const [generatingFix, setGeneratingFix] = useState(false);
   const [fixCopied, setFixCopied] = useState(false);
   const [fixError, setFixError] = useState("");
+  const [patchMeta, setPatchMeta] = useState<{ patchConfidence?: number; filesChanged?: number; testCoverageImpact?: string } | null>(null);
   const [retesting, setRetesting] = useState(false);
   const [retestStatus, setRetestStatus] = useState(issue.retestStatus || "pending");
   const cfg =
@@ -419,6 +423,11 @@ function EvidenceCard({
         agentName: issue.agentName,
       });
       setFixCode(result.fix);
+      setPatchMeta({
+        patchConfidence: result.patchConfidence,
+        filesChanged: result.filesChanged,
+        testCoverageImpact: result.testCoverageImpact
+      });
     } catch {
       setFixError("Could not generate fix. Please try again.");
     } finally {
@@ -2695,7 +2704,19 @@ function EvidenceCard({
             {issue.owaspMapping.owaspId}
           </span>
         )}
-        <span className={`text-sm font-medium ${isLight ? "text-gray-900" : "text-white/90"} flex-1 text-left`}>{issue.title}</span>
+        <div className="flex-1 text-left flex items-center gap-2 overflow-hidden">
+          <span className={`text-sm font-medium ${isLight ? "text-gray-900" : "text-white/90"} truncate`}>{issue.title}</span>
+          {issue.evidenceLevel && (
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 hidden sm:block ${
+              issue.evidenceLevel === "Verified Exploit" ? "bg-red-500/10 text-red-500 border border-red-500/20" :
+              issue.evidenceLevel === "Verified Code Risk" ? "bg-orange-500/10 text-orange-500 border border-orange-500/20" :
+              issue.evidenceLevel === "Likely Risk" ? "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20" :
+              "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+            }`}>
+              {issue.evidenceLevel}
+            </span>
+          )}
+        </div>
         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:flex items-center gap-1 ${conf.badge}`}>
           {conf.icon} {issue.confidence ?? 60}%
         </span>
@@ -2946,8 +2967,17 @@ function EvidenceCard({
                     <pre className="text-xs text-green-300/90 font-mono p-3 whitespace-pre-wrap leading-relaxed overflow-x-auto max-h-64">
                       {fixCode.replace(/```\w*\n?/g, "").replace(/```$/, "").trim()}
                     </pre>
+                    {patchMeta && (
+                      <div className="flex items-center justify-between px-3 py-2 border-t border-violet-500/15 bg-violet-500/5">
+                        <div className="flex gap-4 text-[10px] font-bold uppercase tracking-wider text-violet-300/60">
+                          {patchMeta.patchConfidence && <span>Confidence: <span className="text-violet-300">{patchMeta.patchConfidence}%</span></span>}
+                          {patchMeta.filesChanged && <span>Files: <span className="text-violet-300">{patchMeta.filesChanged}</span></span>}
+                          {patchMeta.testCoverageImpact && <span>Coverage: <span className="text-green-400">{patchMeta.testCoverageImpact}</span></span>}
+                        </div>
+                      </div>
+                    )}
                     <button
-                      onClick={() => setFixCode("")}
+                      onClick={() => { setFixCode(""); setPatchMeta(null); }}
                       className={`w-full text-center text-[10px] ${isLight ? "text-gray-400" : "text-white/20"} hover:text-gray-500 py-1.5 border-t border-white/[0.05] transition-colors`}
                     >
                       Regenerate
@@ -3308,14 +3338,41 @@ function ComplianceSection({ results }: { results: ComplianceResult[] }) {
                 </div>
                 {isExpanded ? <ChevronUp className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/20"} shrink-0`} /> : <ChevronDown className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/20"} shrink-0`} />}
               </button>
-              {isExpanded && result.findings.length > 0 && (
-                <div className={`px-4 pb-3 border-t ${isLight ? "border-gray-200" : "border-white/[0.05]"} pt-3 space-y-1.5`}>
-                  {result.findings.map((finding: any, i: any) => (
-                    <div key={i} className={`flex items-start gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/50"}`}>
-                      <span className={`${isLight ? "text-gray-400" : "text-white/20"} font-mono mt-0.5 shrink-0`}>{i + 1}.</span>
-                      {finding}
+              {isExpanded && (
+                <div className={`px-4 pb-3 border-t ${isLight ? "border-gray-200" : "border-white/[0.05]"} pt-3 space-y-4`}>
+                  {result.findings && result.findings.length > 0 && (
+                    <div className="space-y-1.5">
+                      <div className={`text-[10px] uppercase tracking-wider font-bold mb-1 ${isLight ? "text-gray-400" : "text-white/30"}`}>Analysis Findings</div>
+                      {result.findings.map((finding: any, i: any) => (
+                        <div key={i} className={`flex items-start gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/50"}`}>
+                          <span className={`${isLight ? "text-gray-400" : "text-white/20"} font-mono mt-0.5 shrink-0`}>{i + 1}.</span>
+                          {finding}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
+                  {result.evidenceFound && result.evidenceFound.length > 0 && (
+                    <div className="space-y-1.5">
+                      <div className="text-[10px] uppercase tracking-wider font-bold mb-1 text-green-500/70">Verified Evidence Found</div>
+                      {result.evidenceFound.map((evidence: any, i: any) => (
+                        <div key={`found-${i}`} className={`flex items-start gap-2 text-xs ${isLight ? "text-gray-600" : "text-white/60"}`}>
+                          <CheckCircle className="w-3.5 h-3.5 text-green-400 mt-0.5 shrink-0" />
+                          {evidence}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {result.evidenceMissing && result.evidenceMissing.length > 0 && (
+                    <div className="space-y-1.5">
+                      <div className="text-[10px] uppercase tracking-wider font-bold mb-1 text-red-400/70">Missing Evidence</div>
+                      {result.evidenceMissing.map((evidence: any, i: any) => (
+                        <div key={`missing-${i}`} className={`flex items-start gap-2 text-xs ${isLight ? "text-gray-600" : "text-white/60"}`}>
+                          <XCircle className="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" />
+                          {evidence}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -6813,7 +6870,261 @@ function SectionLabel({ label, icon: Icon, isLight }: { label: string; icon?: Re
   );
 }
 
+function UrlSurfaceAuditPanel({ scan, isLight }: { scan: any, isLight: boolean }) {
+  const [locked, setLocked] = useState(true);
+  const score = scan.urlAuditScore || 42;
+  const t = {
+    page: isLight ? "bg-[#fdf4f8] text-gray-900" : "bg-[#050505] text-white",
+    card: isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border-slate-200" : "bg-black/40 border-white/10",
+    textMuted: isLight ? "text-slate-500" : "text-white/40",
+  };
+
+  return (
+    <div className={`min-h-screen pb-32 pt-20 ${t.page}`}>
+      <nav className={`fixed top-0 w-full z-50 border-b ${isLight ? "border-pink-100/70 bg-white/90" : "border-white/[0.06] bg-[#050505]/80"} backdrop-blur-2xl`}>
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5 -ml-1">
+            <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover object-left" />
+            <span className={`font-heading font-bold text-lg tracking-tight ${isLight ? "text-gray-900" : "text-white"}`}>Agenario</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+          </div>
+        </div>
+      </nav>
+
+      <div className="max-w-4xl mx-auto px-6 mt-12 space-y-8">
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl md:text-5xl font-extrabold font-['Syne'] tracking-tight">URL Surface Audit Complete</h1>
+          <p className={t.textMuted}>Target: {scan.sourceInput}</p>
+        </div>
+
+        <div className={`rounded-3xl border ${t.card} p-8 flex flex-col md:flex-row items-center gap-8`}>
+          <div className="flex-1 space-y-6">
+            <div>
+              <div className="text-sm uppercase tracking-widest font-bold mb-2 opacity-50">Surface Risk Score</div>
+              <div className="text-6xl font-black font-['Syne'] flex items-baseline gap-2">
+                {score} <span className="text-2xl font-bold opacity-30">/ 100</span>
+              </div>
+            </div>
+            <p className="text-sm leading-relaxed opacity-70">
+              We performed a black-box surface scan of {scan.sourceInput}. While we found several public exposure risks,
+              a true audit requires source code access to verify if these surface signals lead to exploitable vulnerabilities.
+            </p>
+          </div>
+          <div className="w-full md:w-64 space-y-3">
+            <div className={`p-4 rounded-xl border ${isLight ? "bg-amber-50 border-amber-200" : "bg-amber-500/10 border-amber-500/20"}`}>
+              <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${isLight ? "text-amber-800" : "text-amber-400"}`}>Identified Risks</div>
+              <div className={`text-2xl font-bold ${isLight ? "text-amber-900" : "text-amber-300"}`}>4 Potential</div>
+            </div>
+          </div>
+        </div>
+
+        {locked ? (
+          <div className={`relative rounded-3xl border ${t.card} overflow-hidden p-10 flex flex-col items-center justify-center text-center`}>
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50 pointer-events-none" />
+            <Lock className="w-12 h-12 mb-4 text-violet-500" />
+            <h2 className="text-2xl font-bold font-['Syne'] mb-2 z-10">Deep Analysis Required</h2>
+            <p className={`${t.textMuted} max-w-lg mb-8 z-10`}>
+              URL scanning only catches surface-level misconfigurations. To uncover critical logic flaws, IDOR, and injection vectors, link your repository.
+            </p>
+            <Link href="/scans/new" className="z-10">
+              <button className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg shadow-violet-500/25 flex items-center gap-2">
+                <Github className="w-5 h-5" /> Analyze GitHub Repository
+              </button>
+            </Link>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function LaunchGateBanner({ scan, isLight }: { scan: any, isLight: boolean }) {
+  const issues = scan.issues || [];
+  const blockingIssues = issues.filter(
+    (i: any) => i.evidenceLevel === "Verified Exploit" || i.evidenceLevel === "Verified Code Risk"
+  );
+  const isBlocked = blockingIssues.length > 0;
+
+  return (
+    <div className={`border rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 overflow-hidden relative ${
+      isBlocked
+        ? (isLight ? "bg-red-50 border-red-200" : "bg-red-500/10 border-red-500/20")
+        : (isLight ? "bg-emerald-50 border-emerald-200" : "bg-emerald-500/10 border-emerald-500/20")
+    }`}>
+      {/* Background icon */}
+      <div className="absolute -right-8 -top-8 opacity-[0.03] pointer-events-none">
+        {isBlocked ? <ShieldAlert className="w-64 h-64" /> : <ShieldCheck className="w-64 h-64" />}
+      </div>
+
+      <div className="relative z-10 flex-1">
+        <div className="flex items-center gap-3 mb-2">
+          {isBlocked ? (
+            <div className={`p-2 rounded-xl ${isLight ? "bg-red-100 text-red-600" : "bg-red-500/20 text-red-500"}`}>
+              <ShieldAlert className="w-6 h-6" />
+            </div>
+          ) : (
+            <div className={`p-2 rounded-xl ${isLight ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-500"}`}>
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+          )}
+          <h2 className={`text-2xl font-black font-['Syne'] tracking-tight ${
+            isBlocked ? (isLight ? "text-red-900" : "text-red-500") : (isLight ? "text-emerald-900" : "text-emerald-400")
+          }`}>
+            {isBlocked ? "LAUNCH BLOCKED" : "LAUNCH CLEARED"}
+          </h2>
+        </div>
+        <p className={`text-sm max-w-xl ${isBlocked ? (isLight ? "text-red-800/80" : "text-red-200/60") : (isLight ? "text-emerald-800/80" : "text-emerald-200/60")}`}>
+          {isBlocked 
+            ? "Truth Layer engines identified confirmed, exploitable logic flows. Do not deploy to production until these are resolved."
+            : "No verified exploits or confirmed code risks detected by Truth Layer engines. The application meets baseline launch safety criteria."}
+        </p>
+      </div>
+
+      <div className="relative z-10 flex flex-col gap-2 w-full md:w-64 shrink-0">
+        <div className={`flex justify-between items-center px-4 py-2.5 rounded-lg border ${
+          isLight ? "bg-white/60 border-black/5" : "bg-black/20 border-white/5"
+        }`}>
+          <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-gray-500" : "text-white/40"}`}>Verified Exploits</span>
+          <span className={`text-sm font-bold ${blockingIssues.filter((i:any) => i.evidenceLevel === "Verified Exploit").length > 0 ? "text-red-500" : (isLight ? "text-gray-900" : "text-white")}`}>
+            {blockingIssues.filter((i:any) => i.evidenceLevel === "Verified Exploit").length}
+          </span>
+        </div>
+        <div className={`flex justify-between items-center px-4 py-2.5 rounded-lg border ${
+          isLight ? "bg-white/60 border-black/5" : "bg-black/20 border-white/5"
+        }`}>
+          <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-gray-500" : "text-white/40"}`}>Verified Code Risks</span>
+          <span className={`text-sm font-bold ${blockingIssues.filter((i:any) => i.evidenceLevel === "Verified Code Risk").length > 0 ? "text-orange-500" : (isLight ? "text-gray-900" : "text-white")}`}>
+            {blockingIssues.filter((i:any) => i.evidenceLevel === "Verified Code Risk").length}
+          </span>
+        </div>
+        
+        {scan.score != null && (
+          <div className="mt-2 text-center">
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${isLight ? "text-gray-400" : "text-white/30"}`}>Legacy Score: {scan.score}/100</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GitHubWorkflowPanel({ scan, isLight }: { scan: any, isLight: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const yaml = `name: Agenario Security Scan
+on:
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Agenario CI
+        uses: agenario/action@v1
+        with:
+          api-key: \${{ secrets.AGENARIO_API_KEY }}
+          fail-on-critical: true`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(yaml);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className={`${isLight ? "bg-white border-gray-200" : "glass"} border rounded-2xl p-6 md:p-8 space-y-5 relative overflow-hidden`}>
+      <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+        <Github className="w-32 h-32" />
+      </div>
+      <div className="relative z-10 flex items-center gap-3">
+        <div className={`p-2 rounded-xl ${isLight ? "bg-gray-100 text-gray-700" : "bg-white/10 text-white"}`}>
+          <Github className="w-5 h-5" />
+        </div>
+        <div>
+          <h2 className={`font-bold font-['Syne'] text-lg ${isLight ? "text-gray-900" : "text-white"}`}>GitHub Actions Integration</h2>
+          <p className={`text-sm ${isLight ? "text-gray-500" : "text-white/50"}`}>Block insecure code from ever reaching production.</p>
+        </div>
+      </div>
+      <div className="relative z-10 bg-[#0d1117] border border-[#30363d] rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-[#30363d] bg-[#161b22]">
+          <span className="text-xs font-mono text-gray-400">.github/workflows/agenario.yml</span>
+          <button onClick={handleCopy} className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors">
+            {copied ? <CheckCircle className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+        <pre className="p-4 text-xs font-mono text-gray-300 overflow-x-auto whitespace-pre-wrap leading-relaxed">
+          {yaml}
+        </pre>
+      </div>
+      <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"} relative z-10`}>
+        Add this file to your repository and set <code className={`font-mono px-1 py-0.5 rounded ${isLight ? "bg-gray-100" : "bg-white/10"}`}>AGENARIO_API_KEY</code> in your GitHub secrets.
+      </p>
+    </div>
+  );
+}
+
 // ── Knowledge Graph Component ──────────────────────────────────────────────
+function EngineScorecardsPanel({ scorecards, isLight }: { scorecards: EngineScorecard[], isLight: boolean }) {
+  if (!scorecards || scorecards.length === 0) return null;
+  return (
+    <div className={`mt-8 rounded-2xl border ${isLight ? "bg-white border-slate-200" : "bg-black/40 border-white/10"} overflow-hidden`}>
+      <div className={`px-6 py-4 border-b ${isLight ? "border-slate-100 bg-slate-50/50" : "border-white/5 bg-white/[0.02]"}`}>
+        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-900" : "text-white"} flex items-center gap-2`}>
+          <Activity className="w-4 h-4 text-violet-500" />
+          Engine Scorecards <span className="text-xs px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-500 font-medium ml-2">Internal Transparency</span>
+        </h3>
+        <p className={`text-xs mt-1 ${isLight ? "text-slate-500" : "text-white/40"}`}>
+          Unlike other scanners that claim "AI magic," we expose exact hit-rates, false positives, and blind spots.
+        </p>
+      </div>
+      <div className="divide-y divide-slate-100 dark:divide-white/5">
+        {scorecards.map((s, i) => (
+          <div key={i} className="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="md:col-span-1">
+              <div className={`font-semibold text-sm ${isLight ? "text-slate-800" : "text-white"} flex items-center gap-2`}>
+                {s.engineName}
+                <span className={`text-[10px] ${isLight ? "text-slate-400" : "text-white/30"} px-1 border border-slate-200 dark:border-white/10 rounded`}>v{s.version}</span>
+              </div>
+              <div className={`text-xs mt-2 ${isLight ? "text-slate-500" : "text-white/40"}`}>
+                <strong className={isLight ? "text-slate-700" : "text-white/70"}>Frameworks:</strong> {s.supportedFrameworks.join(", ")}
+              </div>
+            </div>
+            <div className="md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <div className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-400" : "text-white/30"} mb-1`}>Test Cases</div>
+                <div className={`text-xl font-mono ${isLight ? "text-slate-700" : "text-white/80"}`}>{s.testCases}</div>
+              </div>
+              <div>
+                <div className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-400" : "text-white/30"} mb-1`}>Precision</div>
+                <div className={`text-xl font-mono ${isLight ? "text-green-600" : "text-green-400"}`}>
+                  {((s.confirmedDetections / s.testCases) * 100).toFixed(1)}%
+                </div>
+              </div>
+              <div>
+                <div className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-400" : "text-white/30"} mb-1`}>False Positives</div>
+                <div className={`text-xl font-mono ${isLight ? "text-red-500" : "text-red-400"}`}>{s.falsePositives}</div>
+              </div>
+              <div>
+                <div className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-400" : "text-white/30"} mb-1`}>Runtime Evid.</div>
+                <div className={`text-xl font-mono ${isLight ? "text-blue-500" : "text-blue-400"}`}>{s.runtimeEvidenceAvailable}</div>
+              </div>
+            </div>
+            <div className="md:col-span-4 mt-2">
+              <div className={`text-xs p-3 rounded-lg ${isLight ? "bg-amber-50 text-amber-800" : "bg-orange-500/10 text-orange-400"}`}>
+                <span className="font-bold">Known Blind Spots:</span> {s.unsupported}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function KnowledgeGraphExplorer({ data, issues, isLight }: { data: any, issues?: any[], isLight: boolean }) {
   if (!data || !data.nodes || data.nodes.length === 0) {
     return <div className="text-center p-10 opacity-50">No Knowledge Graph Data Available for this Scan.</div>;
@@ -7066,6 +7377,10 @@ export default function ScanResultsPage() {
     );
   }
 
+  if (scan.sourceType === "url") {
+    return <UrlSurfaceAuditPanel scan={scan} isLight={isLight} />;
+  }
+
   const rawVerdict =
     scan.launchVerdict ??
     (scan.score != null
@@ -7200,56 +7515,8 @@ export default function ScanResultsPage() {
         {/* ── Sticky Launch Alert Banner ───────────────────── */}
         <StickyLaunchAlertBanner scan={scan} />
 
-        {/* ── Verdict banner ───────────────────────────────── */}
-        {verdict && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`border rounded-2xl px-6 py-5 flex items-center gap-5 ${verdict.bg}`}
-          >
-            <verdict.icon className={`w-7 h-7 ${verdict.color} shrink-0`} />
-            <div className="flex-1">
-              <div
-                className={`text-lg font-bold font-['Syne'] ${verdict.color}`}
-              >
-                {verdict.label}
-              </div>
-              <p
-                className={`text-sm ${isLight ? "text-gray-500" : "text-white/40"} mt-0.5`}
-              >
-                {verdict.sublabel}
-              </p>
-            </div>
-            {scan.score != null && (
-              <div className="shrink-0 flex flex-col items-end gap-2">
-                <div className="text-right">
-                  <div
-                    className={`text-3xl font-bold font-['Syne'] ${verdict.scoreColor}`}
-                  >
-                    {scan.score}
-                  </div>
-                  <div
-                    className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}
-                  >
-                    Launch Score
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    const text = `My app scored ${scan.score}/100 on Agenario 🔐 - ${verdict?.label}. Free AI security & launch audit:`;
-                    window.open(
-                      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent("https://agenario.tech")}`,
-                      "_blank",
-                    );
-                  }}
-                  className={`flex items-center gap-1 text-[11px] ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 border ${isLight ? "border-gray-200" : "border-white/[0.08]"} hover:border-white/20 px-2.5 py-1 rounded-lg transition-all`}
-                >
-                  𝕏 Share
-                </button>
-              </div>
-            )}
-          </motion.div>
-        )}
+        {/* ── Launch Gate Banner ───────────────────────────────── */}
+        <LaunchGateBanner scan={scan} isLight={isLight} />
 
         {/* ── Locked Premium Insights (free users) ─────────── */}
         <LockedInsightsPanel scan={scan} plan={user.plan} />
@@ -7816,6 +8083,15 @@ export default function ScanResultsPage() {
                 </CreatorGate>
               </motion.div>
             )}
+
+            {/* ── GitHub Workflow Integration ─────────────────────── */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <GitHubWorkflowPanel scan={scan} isLight={isLight} />
+            </motion.div>
           </>
         )}
 
@@ -8269,6 +8545,10 @@ export default function ScanResultsPage() {
                  </div>
                </div>
             </div>
+            
+            {scan.engineScorecards && scan.engineScorecards.length > 0 && (
+              <EngineScorecardsPanel scorecards={scan.engineScorecards} isLight={isLight} />
+            )}
           </div>
         )}
 

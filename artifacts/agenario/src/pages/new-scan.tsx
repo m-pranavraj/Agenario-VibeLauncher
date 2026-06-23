@@ -509,6 +509,10 @@ export default function NewScanPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [authTesting, setAuthTesting] = useState(false);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authKeys, setAuthKeys] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOnboarded = () => {
@@ -538,6 +542,12 @@ export default function NewScanPage() {
         if (appDescription.trim()) params.append("appDescription", appDescription.trim());
         if (vibeTool) params.append("vibeTool", vibeTool);
         if (businessType) params.append("businessType", businessType);
+        
+        let authTestingPayload = undefined;
+        if (authTesting) {
+          authTestingPayload = { email: authEmail, password: authPassword, sandboxKeys: authKeys };
+          params.append("authTestingPayload", JSON.stringify(authTestingPayload));
+        }
 
         const response = await fetch(`/api/scans/upload?${params}`, {
           method: "POST",
@@ -559,6 +569,7 @@ export default function NewScanPage() {
           appDescription: appDescription.trim() || undefined,
           vibeTool: vibeTool || undefined,
           businessType: businessType || undefined,
+          authTestingPayload: authTesting ? { email: authEmail, password: authPassword, sandboxKeys: authKeys } : undefined,
         });
         setLocation(`/scans/${scan.id}/progress`);
       }
@@ -816,6 +827,38 @@ export default function NewScanPage() {
                   </div>
                 </div>
               )}
+
+              {/* Auth Testing UI */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setAuthTesting(!authTesting)}
+                  className={`flex items-center gap-2 text-xs font-medium transition-colors ${isLight ? (authTesting ? "text-violet-600" : "text-gray-500 hover:text-gray-900") : (authTesting ? "text-violet-400" : "text-white/40 hover:text-white/70")}`}
+                >
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center ${authTesting ? (isLight ? "bg-violet-600 border-violet-600" : "bg-violet-500 border-violet-500") : (isLight ? "border-gray-300" : "border-white/20")}`}>
+                    {authTesting && <CheckCircle className="w-3 h-3 text-white" />}
+                  </div>
+                  Safe Authenticated Testing (Optional)
+                </button>
+                {authTesting && (
+                  <div className={`mt-3 p-4 rounded-xl space-y-4 border ${isLight ? "bg-violet-50/50 border-violet-100" : "bg-violet-500/5 border-violet-500/20"}`}>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className={`block text-[10px] font-bold uppercase tracking-wider mb-1.5 ${isLight ? "text-violet-800/70" : "text-violet-300/50"}`}>Test Email</label>
+                        <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="admin@test.com" className={`w-full text-xs rounded-lg px-3 py-2 ${isLight ? "bg-white border-violet-200" : "bg-black/20 border-violet-500/20 text-white"}`} />
+                      </div>
+                      <div>
+                        <label className={`block text-[10px] font-bold uppercase tracking-wider mb-1.5 ${isLight ? "text-violet-800/70" : "text-violet-300/50"}`}>Test Password</label>
+                        <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} placeholder="••••••••" className={`w-full text-xs rounded-lg px-3 py-2 ${isLight ? "bg-white border-violet-200" : "bg-black/20 border-violet-500/20 text-white"}`} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={`block text-[10px] font-bold uppercase tracking-wider mb-1.5 ${isLight ? "text-violet-800/70" : "text-violet-300/50"}`}>Sandbox Keys (Optional)</label>
+                      <input type="text" value={authKeys} onChange={(e) => setAuthKeys(e.target.value)} placeholder="sk_test_..." className={`w-full text-xs rounded-lg px-3 py-2 ${isLight ? "bg-white border-violet-200" : "bg-black/20 border-violet-500/20 text-white"}`} />
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <button
                 type="submit"

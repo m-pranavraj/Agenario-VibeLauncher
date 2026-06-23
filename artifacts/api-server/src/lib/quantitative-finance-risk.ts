@@ -108,12 +108,16 @@ export function computeFinancialRisk(
   } else if (p95 > 5000) {
     recommendation = "defer_1_quarter";
     rating = "BBB";
-  } else {
+  } else if (p95 > 1000) {
     rating = "A";
+  } else if (p95 > 100) {
+    rating = "AA";
+  } else {
+    rating = "AAA";
   }
 
   // Adjust rating based on criticals
-  if (criticalCount === 0 && rating !== "AAA" && rating !== "AA") {
+  if (criticalCount === 0 && rating !== "AAA" && rating !== "AA" && rating !== "A") {
     rating = "A";
   }
 

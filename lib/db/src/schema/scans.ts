@@ -198,6 +198,9 @@ export const scansTable = pgTable("scans", {
   agentDebateResults: jsonb("agent_debate_results").$type<any>(),
   shadowTrafficInsight: jsonb("shadow_traffic_insight").$type<any>(),
   developerTwinProfile: jsonb("developer_twin_profile").$type<any>(),
+  engineScorecards: jsonb("engine_scorecards").$type<any[]>(),
+  authTestingPayload: jsonb("auth_testing_payload").$type<any>(),
+  urlAuditScore: integer("url_audit_score"),
   cleanupReport: jsonb("cleanup_report").$type<{
     totalFindings: number;
     errorCount: number;

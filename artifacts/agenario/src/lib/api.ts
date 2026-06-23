@@ -154,11 +154,22 @@ export interface ScanIssue {
   sourceEvidence?: string | null;
   retestResult?: string | null;
   evidenceQuality?: number;
-  evidenceLabel?: string;
+  evidenceLevel?: "Verified Exploit" | "Verified Code Risk" | "Likely Risk" | "Advisory";
   videoUrl?: string | null;
   retestStatus?: string | null;
   aiContext?: string;
   category?: string;
+}
+
+export interface EngineScorecard {
+  engineName: string;
+  version: string;
+  supportedFrameworks: string[];
+  testCases: number;
+  confirmedDetections: number;
+  falsePositives: number;
+  runtimeEvidenceAvailable: string;
+  unsupported: string;
 }
 
 export interface IssueCounts {
@@ -215,6 +226,8 @@ export interface ComplianceResult {
   score: number;
   status: string;
   findings: string[];
+  evidenceFound?: string[];
+  evidenceMissing?: string[];
   riskLevel: string;
 }
 
@@ -317,6 +330,9 @@ export interface Scan {
   riskForecast: RiskForecast | null;
   revenueIntelligence: RevenueIntelligence | null;
   complianceResults: ComplianceResult[] | null;
+  engineScorecards?: EngineScorecard[] | null;
+  urlAuditScore?: number | null;
+  authTestingPayload?: any | null;
   proofEvidence: ProofEvidence[] | null;
   sandboxMeta: SandboxMeta | null;
   regressionDiff: RegressionDiff | null;
@@ -571,10 +587,10 @@ export const api = {
   scans: {
     list: () => request<Scan[]>("/scans"),
     get: (id: number) => request<ScanDetail>(`/scans/${id}`),
-    create: (data: { sourceType: string; sourceInput: string; appDescription?: string; vibeTool?: string; businessType?: string }) =>
+    create: (data: { sourceType: string; sourceInput: string; appDescription?: string; vibeTool?: string; businessType?: string; authTestingPayload?: any }) =>
       request<ScanDetail>("/scans", { method: "POST", body: JSON.stringify(data) }),
     generateFix: (scanId: number, data: { title: string; description: string; fixPrompt: string; agentName: string }) =>
-      request<{ fix: string; language: string }>(`/scans/${scanId}/fix`, { method: "POST", body: JSON.stringify({ ...data, recommendation: data.fixPrompt }) }),
+      request<{ fix: string; language: string; patchConfidence?: number; filesChanged?: number; testCoverageImpact?: string }>(`/scans/${scanId}/fix`, { method: "POST", body: JSON.stringify({ ...data, recommendation: data.fixPrompt }) }),
     retest: (scanId: number, issueId: number) =>
       request<{ status: string }>(`/scans/${scanId}/issues/${issueId}/retest`, { method: "POST" }),
     ask: (scanId: number, question: string) =>

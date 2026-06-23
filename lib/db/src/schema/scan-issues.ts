@@ -27,6 +27,7 @@ export const scanIssuesTable = pgTable("scan_issues", {
   blastRadius: jsonb("blast_radius"),
   videoUrl: text("video_url"),
   retestStatus: text("retest_status").default("pending"),
+  evidenceLevel: text("evidence_level"),
 });
 
 export const insertScanIssueSchema = createInsertSchema(scanIssuesTable).omit({ id: true });
