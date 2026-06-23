@@ -23,6 +23,7 @@ import { scanFilesForSecrets, scanForSecrets } from "../lib/secret-scanner-v2.js
 import { checkPackageVulns } from "../lib/package-vulns.js";
 import { runCleanupAgent } from "../lib/cleanup-agent.js";
 import { runDeepScan } from "../lib/deep-scan/index.js";
+import { runAstAnalysis } from "../lib/ast-engine.js";
 import type { SecurityFinding } from "../lib/deep-scan/security-rules.js";
 import type { ComplianceFinding } from "../lib/deep-scan/compliance-rules.js";
 import type { PerformanceFinding } from "../lib/deep-scan/performance-rules.js";
@@ -837,12 +838,14 @@ async function runAnalysisPipeline(opts: {
         timeToFixMs: Math.random() * 86400000,
       })));
       
+      const astMetrics = runAstAnalysis(codeContext?.keyFiles || []);
+      
       topologicalAnalysis = simulateTopologicalAnalysis(allIssues);
       quantumVerification = simulateQuantumVerification(allIssues);
       predictiveSmt = simulatePredictiveSmt(allIssues);
       zeroTrustEnclave = simulateZeroTrustEnclave(codeContext, allIssues);
       marketReadinessTracker = simulateMarketReadinessTracker(allIssues, finalScore);
-      uxCognitiveFlow = simulateUxCognitiveFlow(codeContext, allIssues);
+      uxCognitiveFlow = simulateUxCognitiveFlow(codeContext, allIssues, astMetrics);
       greenLightVerdict = simulateGreenLightVerdict(allIssues, finalScore);
       babelEngine = simulateBabelEngine(codeContext, allIssues);
       multiVerseDse = simulateMultiVerseDse(codeContext, allIssues);
@@ -857,17 +860,17 @@ async function runAnalysisPipeline(opts: {
       kardashevLatency = simulateKardashevLatency(codeContext, allIssues);
       agiAlignment = simulateAgiAlignment(codeContext, allIssues);
       thermodynamicEntropy = simulateThermodynamicEntropy(codeContext, allIssues);
-      vibeTaint = simulateVibeTaint(codeContext, allIssues);
-      symCost = simulateSymCost(codeContext, allIssues);
-      regGraph = simulateRegGraph(codeContext, allIssues);
-      failSafe = simulateFailSafe(codeContext, allIssues);
-      obsCover = simulateObsCover(codeContext, allIssues);
-      archScan = simulateArchScan(codeContext, allIssues);
-      deploySafe = simulateDeploySafe(codeContext, allIssues);
-      promptTrace = simulatePromptTrace(codeContext, allIssues);
-      flowValue = simulateFlowValue(codeContext, allIssues);
-      dempsterShafer = simulateDempsterShafer(codeContext, allIssues);
-      constraintSolver = simulateConstraintSolver(codeContext, allIssues);
+      vibeTaint = simulateVibeTaint(codeContext, allIssues, astMetrics);
+      symCost = simulateSymCost(codeContext, allIssues, astMetrics);
+      regGraph = simulateRegGraph(codeContext, allIssues, astMetrics);
+      failSafe = simulateFailSafe(codeContext, allIssues, astMetrics);
+      obsCover = simulateObsCover(codeContext, allIssues, astMetrics);
+      archScan = simulateArchScan(codeContext, allIssues, astMetrics);
+      deploySafe = simulateDeploySafe(codeContext, allIssues, astMetrics);
+      promptTrace = simulatePromptTrace(codeContext, allIssues, astMetrics);
+      flowValue = simulateFlowValue(codeContext, allIssues, astMetrics);
+      dempsterShafer = simulateDempsterShafer(codeContext, allIssues, astMetrics);
+      constraintSolver = simulateConstraintSolver(codeContext, allIssues, astMetrics);
       
       logger.info({ scanId }, "Deep Tech Engines execution complete");
     }
