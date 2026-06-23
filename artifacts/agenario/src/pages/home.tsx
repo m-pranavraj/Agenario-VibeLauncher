@@ -398,17 +398,17 @@ export default function Home() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-fuchsia-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-fuchsia-400" />
                   </span>
-                  The 0.01% Omni-Platform Code Oracle
+                  Not just another AI tool
                 </span>
               </motion.div>
 
               <motion.h1 variants={FADE_UP} className={`text-4xl sm:text-5xl lg:text-6xl font-heading font-extrabold leading-[1.05] tracking-tight ${t.h1}`}>
-                Not just another AI tool.<br />
+                A supreme blend of<br />
                 <span className={isLight
                   ? "text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500"
                   : "text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40"
                 }>
-                  Pure Mathematical Truth.
+                  Deep Tech & Mathematics.
                 </span>
               </motion.h1>
 
