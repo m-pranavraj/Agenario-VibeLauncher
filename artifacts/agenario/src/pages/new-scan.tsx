@@ -520,13 +520,13 @@ export default function NewScanPage() {
     localStorage.setItem("agenario_onboarded", "true");
   };
 
-  if (!onboarded) {
-    return <OnboardingWizard onComplete={handleOnboarded} />;
-  }
-
   useEffect(() => {
     if (!loading && !user) setLocation("/login");
   }, [user, loading, setLocation]);
+
+  if (!onboarded) {
+    return <OnboardingWizard onComplete={handleOnboarded} />;
+  }
 
   const selectedType = SOURCE_TYPES.find((t) => t.id === sourceType)!;
 
