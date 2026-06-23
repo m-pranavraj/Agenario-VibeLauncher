@@ -1308,59 +1308,64 @@ router.post(
 router.get("/scans/:id", async (req, res): Promise<void> => {
   if (!requireAuth(req, res)) return;
 
-  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "Invalid scan id" });
-    return;
-  }
-
-  const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
-
-  if (!scan || scan.userId !== req.session.userId) {
-    res.status(404).json({ error: "Scan not found" });
-    return;
-  }
-
-  const issues = await db
-    .select()
-    .from(scanIssuesTable)
-    .where(eq(scanIssuesTable.scanId, id));
-
-  // Compute Evidence Quality
-  const enhancedIssues = issues.map((issue) => {
-    let quality = 40; // AI Reasoning only
-    if (issue.reproductionSteps && (issue.reproductionSteps as any)?.screenshotUrl) {
-      quality = 100;
-    } else if (issue.reproductionSteps && issue.filePath && issue.lineNumber) {
-      quality = 80;
-    } else if (issue.filePath && issue.lineNumber && issue.codeSnippet) {
-      quality = 60;
+  try {
+    const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const id = parseInt(raw, 10);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid scan id" });
+      return;
     }
-    
-    let qualityLabel = "AI Reasoning";
-    if (quality === 100) qualityLabel = "Runtime + Screenshot";
-    if (quality === 80) qualityLabel = "Runtime + Source";
-    if (quality === 60) qualityLabel = "Static + Source";
 
-    return { ...issue, evidenceQuality: quality, evidenceLabel: qualityLabel };
-  });
+    const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
 
-  const [viewingUser] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.id, req.session.userId!));
-  const plan = viewingUser?.plan ?? "free";
+    if (!scan || scan.userId !== req.session.userId) {
+      res.status(404).json({ error: "Scan not found" });
+      return;
+    }
 
-  let responseData: Record<string, unknown> = {
-    ...scan,
-    createdAt: scan.createdAt.toISOString(),
-    completedAt: scan.completedAt?.toISOString() ?? null,
-    issues: enhancedIssues,
-  };
+    const issues = await db
+      .select()
+      .from(scanIssuesTable)
+      .where(eq(scanIssuesTable.scanId, id));
 
-  responseData = applyTierGate(responseData, plan);
-  res.json(responseData);
+    // Compute Evidence Quality
+    const enhancedIssues = issues.map((issue) => {
+      let quality = 40; // AI Reasoning only
+      if (issue.reproductionSteps && (issue.reproductionSteps as any)?.screenshotUrl) {
+        quality = 100;
+      } else if (issue.reproductionSteps && issue.filePath && issue.lineNumber) {
+        quality = 80;
+      } else if (issue.filePath && issue.lineNumber && issue.codeSnippet) {
+        quality = 60;
+      }
+      
+      let qualityLabel = "AI Reasoning";
+      if (quality === 100) qualityLabel = "Runtime + Screenshot";
+      if (quality === 80) qualityLabel = "Runtime + Source";
+      if (quality === 60) qualityLabel = "Static + Source";
+
+      return { ...issue, evidenceQuality: quality, evidenceLabel: qualityLabel };
+    });
+
+    const [viewingUser] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, req.session.userId!));
+    const plan = viewingUser?.plan ?? "free";
+
+    let responseData: Record<string, unknown> = {
+      ...scan,
+      createdAt: scan.createdAt.toISOString(),
+      completedAt: scan.completedAt?.toISOString() ?? null,
+      issues: enhancedIssues,
+    };
+
+    responseData = applyTierGate(responseData, plan);
+    res.json(responseData);
+  } catch (err: any) {
+    console.error("GET /scans/:id DB Error:", err);
+    res.status(500).json({ error: `Database Error: ${err.message}` });
+  }
 });
 
 // ── POST /scans/:id/rescan — re-run analysis on a failed scan ────────────────
