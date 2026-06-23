@@ -90,6 +90,11 @@ export interface SandboxMeta {
   auditVulnCount?: number;
 }
 
+// =====================================================================
+// SCHEMA EXACTLY MATCHES ACTUAL SUPABASE DATABASE
+// Columns not yet in the DB are commented out below.
+// Run lib/db/migrate.js to add them when the DB migration succeeds.
+// =====================================================================
 export const scansTable = pgTable("scans", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -104,258 +109,63 @@ export const scansTable = pgTable("scans", {
   vibeTool: text("vibe_tool"),
   businessType: text("business_type"),
   issueCounts: jsonb("issue_counts").$type<{ critical: number; high: number; medium: number; low: number }>(),
-  riskForecast: jsonb("risk_forecast").$type<{
-    appType: string;
-    churnRisk: string;
-    conversionLoss: string;
-    authBreakageProbability: string;
-    checkoutFailureRisk: string;
-    incidentProbability: string;
-    supportLoadEstimate: string;
-    revenueAtRisk: string;
-    topFailureModes: string[];
-    executiveRecommendation: string;
-  }>(),
-  revenueIntelligence: jsonb("revenue_intelligence").$type<{
-    overallRevenueRisk: string;
-    leaks: Array<{
-      category: string;
-      severity: string;
-      impact: string;
-      description: string;
-      fix: string;
-    }>;
-    estimatedMonthlyImpact: string;
-    quickWins: string[];
-  }>(),
-  complianceResults: jsonb("compliance_results").$type<Array<{
-    framework: string;
-    score: number;
-    status: string;
-    findings: string[];
-    riskLevel: string;
-  }>>(),
+  riskForecast: jsonb("risk_forecast").$type<any>(),
+  revenueIntelligence: jsonb("revenue_intelligence").$type<any>(),
+  complianceResults: jsonb("compliance_results").$type<any>(),
   proofEvidence: jsonb("proof_evidence").$type<ProofEvidence[]>(),
-  sandboxMeta: jsonb("sandbox_meta").$type<SandboxMeta>(),
   regressionDiff: jsonb("regression_diff").$type<RegressionDiff>(),
   benchmarkPercentile: jsonb("benchmark_percentile").$type<BenchmarkData>(),
   launchDNA: jsonb("launch_dna").$type<LaunchDNA>(),
   cofounderNarrative: text("cofounder_narrative"),
   shadowApiFindings: jsonb("shadow_api_findings").$type<ShadowApiFindings>(),
   launchReplaySteps: jsonb("launch_replay_steps").$type<LaunchReplayStep[]>(),
-  secretScanResults: jsonb("secret_scan_results").$type<{
-    totalFound: number;
-    criticalCount: number;
-    highCount: number;
-    mediumCount: number;
-    hasCritical: boolean;
-    scannedChars: number;
-    findings: Array<{
-      id: string;
-      name: string;
-      category: string;
-      risk: "critical" | "high" | "medium";
-      maskedValue: string;
-      context: string;
-      lineHint: string;
-      recommendation: string;
-    }>;
-  }>(),
-  packageVulns: jsonb("package_vulns").$type<{
-    totalPackages: number;
-    vulnerableCount: number;
-    criticalCount: number;
-    highCount: number;
-    mediumCount: number;
-    hasCritical: boolean;
-    topCveId?: string;
-    topCvssScore?: number;
-    findings: Array<{
-      name: string;
-      installedVersion: string;
-      highestSeverity: string;
-      highestCvss: number;
-      fixVersion: string;
-      vulns: Array<{
-        cveId: string;
-        cvssScore: number;
-        severity: string;
-        title: string;
-        description: string;
-        affectedRange: string;
-        fixedIn: string;
-        attackVector: string;
-        exploitAvailable: boolean;
-        cvssVector: string;
-      }>;
-    }>;
-  }>(),
-  sbomData: jsonb("sbom_data").$type<any>(),
-  genomeFingerprint: jsonb("genome_fingerprint").$type<any>(),
-  causalInference: jsonb("causal_inference").$type<any>(),
-  quantitativeRisk: jsonb("quantitative_risk").$type<any>(),
-  geneticDrift: jsonb("genetic_drift").$type<any>(),
-  agentDebateResults: jsonb("agent_debate_results").$type<any>(),
-  shadowTrafficInsight: jsonb("shadow_traffic_insight").$type<any>(),
-  developerTwinProfile: jsonb("developer_twin_profile").$type<any>(),
-  topologicalAnalysis: jsonb("topological_analysis").$type<any>(),
-  quantumVerification: jsonb("quantum_verification").$type<any>(),
-  predictiveSmt: jsonb("predictive_smt").$type<any>(),
-  zeroTrustEnclave: jsonb("zero_trust_enclave").$type<any>(),
-  marketReadinessTracker: jsonb("market_readiness_tracker").$type<any>(),
-  uxCognitiveFlow: jsonb("ux_cognitive_flow").$type<any>(),
-  greenLightVerdict: jsonb("green_light_verdict").$type<any>(),
-  babelEngine: jsonb("babel_engine").$type<any>(),
-  multiVerseDse: jsonb("multi_verse_dse").$type<any>(),
-  zkSnarkProof: jsonb("zk_snark_proof").$type<any>(),
-  bigOProfiler: jsonb("big_o_profiler").$type<any>(),
-  fheAnalyzer: jsonb("fhe_analyzer").$type<any>(),
-  neuromorphicDrift: jsonb("neuromorphic_drift").$type<any>(),
-  tensorPayloadSignature: jsonb("tensor_payload_signature").$type<any>(),
+  secretScanResults: jsonb("secret_scan_results").$type<any>(),
+  packageVulns: jsonb("package_vulns").$type<any>(),
+  cleanupReport: jsonb("cleanup_report").$type<any>(),
+  cleanupFindings: jsonb("cleanup_findings").$type<any>(),
+  digitalTwin: jsonb("digital_twin").$type<any>(),
+  predictiveIntel: jsonb("predictive_intel").$type<any>(),
+  rootCause: jsonb("root_cause").$type<any>(),
+  launchImpact: jsonb("launch_impact").$type<any>(),
+  productHuntScore: jsonb("product_hunt_score").$type<any>(),
+  knowledgeGraph: jsonb("knowledge_graph").$type<any>(),
+  sandboxMeta: jsonb("sandbox_meta").$type<SandboxMeta>(),
+  certId: text("cert_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+
+  // ---- PENDING DB MIGRATION (run lib/db/migrate.js to add these) ----
+  // sbomData: jsonb("sbom_data").$type<any>(),
+  // genomeFingerprint: jsonb("genome_fingerprint").$type<any>(),
+  // causalInference: jsonb("causal_inference").$type<any>(),
+  // quantitativeRisk: jsonb("quantitative_risk").$type<any>(),
+  // geneticDrift: jsonb("genetic_drift").$type<any>(),
+  // agentDebateResults: jsonb("agent_debate_results").$type<any>(),
+  // shadowTrafficInsight: jsonb("shadow_traffic_insight").$type<any>(),
+  // developerTwinProfile: jsonb("developer_twin_profile").$type<any>(),
+  // topologicalAnalysis: jsonb("topological_analysis").$type<any>(),
+  // quantumVerification: jsonb("quantum_verification").$type<any>(),
+  // predictiveSmt: jsonb("predictive_smt").$type<any>(),
+  // zeroTrustEnclave: jsonb("zero_trust_enclave").$type<any>(),
+  // marketReadinessTracker: jsonb("market_readiness_tracker").$type<any>(),
+  // uxCognitiveFlow: jsonb("ux_cognitive_flow").$type<any>(),
+  // greenLightVerdict: jsonb("green_light_verdict").$type<any>(),
+  // babelEngine: jsonb("babel_engine").$type<any>(),
+  // multiVerseDse: jsonb("multi_verse_dse").$type<any>(),
+  // zkSnarkProof: jsonb("zk_snark_proof").$type<any>(),
+  // bigOProfiler: jsonb("big_o_profiler").$type<any>(),
+  // fheAnalyzer: jsonb("fhe_analyzer").$type<any>(),
+  // neuromorphicDrift: jsonb("neuromorphic_drift").$type<any>(),
+  // tensorPayloadSignature: jsonb("tensor_payload_signature").$type<any>(),
+  // engineScorecards: jsonb("engine_scorecards").$type<any[]>(),
+  // authTestingPayload: jsonb("auth_testing_payload").$type<any>(),
+  // urlAuditScore: integer("url_audit_score"),
   // postQuantumReadiness: jsonb("post_quantum_readiness").$type<any>(),
   // dnaStorageCompiler: jsonb("dna_storage_compiler").$type<any>(),
   // bftConsensusGraph: jsonb("bft_consensus_graph").$type<any>(),
   // kardashevLatency: jsonb("kardashev_latency").$type<any>(),
   // agiAlignment: jsonb("agi_alignment").$type<any>(),
   // thermodynamicEntropy: jsonb("thermodynamic_entropy").$type<any>(),
-  engineScorecards: jsonb("engine_scorecards").$type<any[]>(),
-  authTestingPayload: jsonb("auth_testing_payload").$type<any>(),
-  urlAuditScore: integer("url_audit_score"),
-  cleanupReport: jsonb("cleanup_report").$type<{
-    totalFindings: number;
-    errorCount: number;
-    warnCount: number;
-    infoCount: number;
-    autoFixableCount: number;
-    estimatedCleanupMinutes: number;
-    hasCritical: boolean;
-    debtScore: number;
-    summary: string;
-    topFiles: Array<{ path: string; issueCount: number }>;
-    categories: Record<string, number>;
-    findings: Array<{
-      id: string;
-      category: string;
-      severity: string;
-      title: string;
-      detail: string;
-      file: string;
-      lineHint?: string;
-      count?: number;
-      fixSuggestion: string;
-      autoFixable: boolean;
-    }>;
-  }>(),
-  cleanupFindings: jsonb("cleanup_findings").$type<{
-    totalFindings: number;
-    debtScore: number;
-    autoFixableCount: number;
-    estimatedCleanupMinutes: number;
-    hasCritical: boolean;
-    summary: string;
-    categories: Record<string, number>;
-    topFiles: Array<{ path: string; issueCount: number }>;
-  }>(),
-  digitalTwin: jsonb("digital_twin").$type<{
-    journeys: Array<{
-      name: string;
-      route: string;
-      status: "pass" | "degraded" | "fail";
-      steps: string[];
-      finding?: string;
-      latencyMs?: number;
-    }>;
-    chaosResults: Array<{
-      service: string;
-      scenario: string;
-      graceful: boolean;
-      impact: string;
-      severity: string;
-    }>;
-    attackSimulations: Array<{
-      type: string;
-      blocked: boolean;
-      detail: string;
-      severity: string;
-      vector?: string;
-    }>;
-    twinConfidenceScore: number;
-    journeyPassRate: number;
-    attackBlockRate: number;
-    simulatedUserCount: number;
-    summary: string;
-  }>(),
-  predictiveIntel: jsonb("predictive_intel").$type<{
-    releaseConfidenceScore: number;
-    outageProbability: number;
-    churnRiskPercent: number;
-    revenueAtRiskMonthly: string;
-    userFrustrationIndex: number;
-    customerTrustScore: number;
-    rollbackProbability: number;
-    forecasts: Array<{
-      metric: string;
-      value: string;
-      numericValue: number;
-      unit: string;
-      trend: string;
-      trendLabel: string;
-      detail: string;
-      color: string;
-    }>;
-    narrative: string;
-    confidenceLabel: string;
-  }>(),
-  rootCause: jsonb("root_cause").$type<{
-    chains: Array<{
-      issueTitle: string;
-      issueSeverity: string;
-      hops: Array<{
-        layer: string;
-        status: "clean" | "implicated" | "unknown";
-        finding: string;
-        evidence?: string;
-      }>;
-      blastRadius: string;
-      originLayer: string;
-      fixPR: string;
-    }>;
-    summary: string;
-  }>(),
-  launchImpact: jsonb("launch_impact").$type<{
-    totalRevenueAtRisk: string;
-    supportCostPerMonth: string;
-    trustImpact: string;
-    userImpact: string;
-    breakdown: Array<{
-      issueTitle: string;
-      severity: string;
-      revenueImpact: string;
-      trustImpact: string;
-      supportHours: string;
-    }>;
-    topRisk: string;
-    founderWarning: string;
-  }>(),
-  productHuntScore: jsonb("product_hunt_score").$type<{
-    score: number;
-    verdict: string;
-    categories: Array<{
-      name: string;
-      score: number;
-      status: "pass" | "warning" | "fail";
-      findings: string[];
-    }>;
-    topBlockers: string[];
-    readyToHunt: boolean;
-  }>(),
-  knowledgeGraph: jsonb("knowledge_graph").$type<{
-    nodes: Array<{ id: string; label: string; type: "file" | "function" | "route" | "table" | "dependency" }>;
-    edges: Array<{ from: string; to: string; label?: string }>;
-  }>(),
-  certId: text("cert_id"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  completedAt: timestamp("completed_at", { withTimezone: true }),
 });
 
 export const insertScanSchema = createInsertSchema(scansTable).omit({ id: true, createdAt: true });
