@@ -449,6 +449,9 @@ export interface Scan {
   fheAnalyzer: any | null;
   neuromorphicDrift: any | null;
   tensorPayloadSignature?: any | null;
+  postQuantumReadiness?: any | null;
+  dnaStorageCompiler?: any | null;
+  bftConsensusGraph?: any | null;
   launchImpact: {
     totalRevenueAtRisk: string;
     supportCostPerMonth: string;

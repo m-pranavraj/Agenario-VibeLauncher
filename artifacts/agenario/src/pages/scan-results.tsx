@@ -8777,6 +8777,78 @@ export default function ScanResultsPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Post-Quantum Readiness */}
+                {scan.postQuantumReadiness && (
+                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-purple-500/30 transition-all`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Fingerprint className={`w-24 h-24 ${isLight ? "text-purple-600" : "text-purple-400"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-purple-100 text-purple-600" : "bg-purple-500/20 text-purple-400"}`}>
+                        <Key className="w-4 h-4" />
+                      </div>
+                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Post-Quantum Cryptography</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                        {scan.postQuantumReadiness.insight}
+                      </div>
+                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                        Q-Day Survival Prob: <span className="text-purple-500 font-bold">{scan.postQuantumReadiness.qDaySurvivalProbability}</span><br/>
+                        Pre-Quantum Primitives: {scan.postQuantumReadiness.vulnerablePrimitivesDetected}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* DNA Storage Compiler */}
+                {scan.dnaStorageCompiler && (
+                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Layers className={`w-24 h-24 ${isLight ? "text-emerald-600" : "text-emerald-400"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-400"}`}>
+                        <Database className="w-4 h-4" />
+                      </div>
+                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>DNA Storage Compiler</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                        {scan.dnaStorageCompiler.insight}
+                      </div>
+                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                        Required ATCG Nucleotides: <span className="text-emerald-500 font-bold">{scan.dnaStorageCompiler.atcgNucleotidesRequired}</span><br/>
+                        Status: {scan.dnaStorageCompiler.archivalReadiness}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* BFT Consensus Graph */}
+                {scan.bftConsensusGraph && (
+                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-red-500/30 transition-all`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Network className={`w-24 h-24 ${isLight ? "text-red-600" : "text-red-400"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-red-100 text-red-600" : "bg-red-500/20 text-red-400"}`}>
+                        <Globe className="w-4 h-4" />
+                      </div>
+                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>BFT Consensus Architecture</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                        {scan.bftConsensusGraph.insight}
+                      </div>
+                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
+                        Graph Edges: {scan.bftConsensusGraph.graphEdgesCalculated}<br/>
+                        Survivability Limit: <span className="text-red-500 font-bold">{scan.bftConsensusGraph.bftSurvivabilityLimit}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

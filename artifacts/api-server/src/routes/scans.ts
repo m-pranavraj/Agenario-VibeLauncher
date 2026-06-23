@@ -759,6 +759,9 @@ async function runAnalysisPipeline(opts: {
   let fheAnalyzer = null;
   let neuromorphicDrift = null;
   let tensorPayloadSignature = null;
+  let postQuantumReadiness = null;
+  let dnaStorageCompiler = null;
+  let bftConsensusGraph = null;
 
   try {
     const { compileAstToTensorPayload } = await import("../lib/enclave-tensor-bridge.js");
@@ -768,7 +771,7 @@ async function runAnalysisPipeline(opts: {
     const { computeGeneticDrift } = await import("../lib/genetic-drift.js");
     const { runMultiAgentDebate } = await import("../lib/multi-agent-debate.js");
     const { buildDeveloperTwin } = await import("../lib/developer-twin.js");
-    const { simulateTopologicalAnalysis, simulateQuantumVerification, simulatePredictiveSmt, simulateZeroTrustEnclave, simulateMarketReadinessTracker, simulateUxCognitiveFlow, simulateGreenLightVerdict, simulateBabelEngine, simulateMultiVerseDse, simulateZkSnarkProof, simulateBigOProfiler, simulateFheAnalyzer, simulateNeuromorphicDrift } = await import("../lib/deep-tech-simulators.js");
+    const { simulateTopologicalAnalysis, simulateQuantumVerification, simulatePredictiveSmt, simulateZeroTrustEnclave, simulateMarketReadinessTracker, simulateUxCognitiveFlow, simulateGreenLightVerdict, simulateBabelEngine, simulateMultiVerseDse, simulateZkSnarkProof, simulateBigOProfiler, simulateFheAnalyzer, simulateNeuromorphicDrift, simulatePostQuantumReadiness, simulateDnaStorageCompiler, simulateBftConsensusGraph } = await import("../lib/deep-tech-simulators.js");
 
     if (codeContext && codeContext.keyFiles.length > 0) {
       const globalCsgNodes: any[] = [];
@@ -811,6 +814,9 @@ async function runAnalysisPipeline(opts: {
       fheAnalyzer = simulateFheAnalyzer(codeContext, allIssues);
       neuromorphicDrift = simulateNeuromorphicDrift(codeContext, allIssues);
       tensorPayloadSignature = compileAstToTensorPayload(codeContext, allIssues);
+      postQuantumReadiness = simulatePostQuantumReadiness(codeContext, allIssues);
+      dnaStorageCompiler = simulateDnaStorageCompiler(codeContext, allIssues);
+      bftConsensusGraph = simulateBftConsensusGraph(codeContext, allIssues);
       
       logger.info({ scanId }, "Deep Tech Engines execution complete");
     }
@@ -1013,6 +1019,9 @@ async function runAnalysisPipeline(opts: {
       fheAnalyzer: fheAnalyzer ?? null,
       neuromorphicDrift: neuromorphicDrift ?? null,
       tensorPayloadSignature: tensorPayloadSignature ?? null,
+      postQuantumReadiness: postQuantumReadiness ?? null,
+      dnaStorageCompiler: dnaStorageCompiler ?? null,
+      bftConsensusGraph: bftConsensusGraph ?? null,
       cleanupReport: cleanupReport ?? null,
       digitalTwin: digitalTwin ?? null,
       predictiveIntel: predictiveIntel ?? null,
