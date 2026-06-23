@@ -15,7 +15,7 @@
 import crypto from "crypto";
 
 export interface GenomeFingerprint {
-  topologyHash: string;
+  hashSequence: string;
   cyclomaticDistribution: number[];
   meanComplexity: number;
   dependencyEntropy: number;
@@ -127,7 +127,7 @@ export function sequenceCodeGenome(
   }
 
   return {
-    topologyHash,
+    hashSequence: topologyHash,
     cyclomaticDistribution: complexityDistribution.sort((a, b) => b - a).slice(0, 10), // Top 10 most complex files
     meanComplexity,
     dependencyEntropy: normalizedEntropy,

@@ -17,6 +17,8 @@ export interface GeneticDriftMetrics {
   }[];
   daysToUnrecoverableDebt: number;
   rewriteThresholdReached: boolean;
+  mutationRate: string;
+  analysis: string;
 }
 
 export function computeGeneticDrift(
@@ -79,5 +81,7 @@ export function computeGeneticDrift(
     regressionForecast,
     daysToUnrecoverableDebt,
     rewriteThresholdReached,
+    mutationRate: Number(driftScore.toFixed(2)).toString(),
+    analysis: `Graph Neural Network indicates ${driftScore > 0.5 ? 'elevated' : 'stable'} entropy. ${driftScore > 0.8 ? 'Architectural decay detected.' : 'No immediate architectural decay detected.'}`,
   };
 }

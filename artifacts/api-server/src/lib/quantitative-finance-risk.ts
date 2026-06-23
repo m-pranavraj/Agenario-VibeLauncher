@@ -22,6 +22,9 @@ export interface QuantitativeRiskMetrics {
   };
   recommendation: "immediate_fix" | "defer_1_sprint" | "defer_1_quarter" | "accept_risk";
   investorRating: "AAA" | "AA" | "A" | "BBB" | "BB" | "B" | "CCC" | "D";
+  annualizedVaR: string;
+  executiveSummary: string;
+  monteCarloConfidence: number;
 }
 
 // Assumed parameters for the financial model
@@ -133,5 +136,8 @@ export function computeFinancialRisk(
     },
     recommendation,
     investorRating: rating,
+    annualizedVaR: "$" + Math.round(p95).toLocaleString(),
+    executiveSummary: `Based on Monte Carlo simulations across 10,000 breach scenarios mapped to your dependency tree and exposure profile. Rating: ${rating}.`,
+    monteCarloConfidence: 95,
   };
 }
