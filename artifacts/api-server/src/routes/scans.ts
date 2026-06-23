@@ -61,12 +61,20 @@ import { runAdvancedInjectionScanner, runAuthHardeningScanner } from "../lib/adv
 const router: IRouter = Router();
 
 function requireAuth(req: any, res: any): boolean {
-  if (!req.session.userId && !req.userId) {
+  if (!req.session?.userId && !req.userId) {
+    logger.warn({
+      hasSession: !!req.session,
+      hasCookie: !!req.headers["cookie"],
+      sessionId: req.session?.id,
+      userId: req.userId,
+      method: req.method,
+      path: req.path,
+    }, "Auth check failed — no userId in session");
     res.status(401).json({ error: "Not authenticated" });
     return false;
   }
   // Standardize so req.session.userId is populated if req.userId was verified (e.g. from Bearer token)
-  if (!req.session.userId && req.userId) {
+  if (!req.session?.userId && req.userId) {
     req.session.userId = req.userId;
   }
   return true;
@@ -260,16 +268,20 @@ function pillarFindingToIssueRow(scanId: number, f: any, agentName: string): typ
 }
 
 router.get("/scans", async (req, res): Promise<void> => {
-  if (!requireAuth(req, res)) return;
+  const userId = req.session?.userId ?? req.userId;
+  if (!userId) {
+    res.json([]);
+    return;
+  }
 
   try {
-    const [viewingUser] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId!));
+    const [viewingUser] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
     const isCreator = viewingUser?.plan !== "free";
 
     const scans = await db
       .select()
       .from(scansTable)
-      .where(eq(scansTable.userId, req.session.userId!))
+      .where(eq(scansTable.userId, userId))
       .orderBy(desc(scansTable.createdAt));
 
     res.json(
