@@ -246,7 +246,7 @@ export default function Home() {
   };
 
   return (
-    <div className={`min-h-screen overflow-x-hidden font-sans ${t.page} ${isLight ? "selection:bg-pink-200/50 selection:text-gray-900" : "selection:bg-violet-500/20 selection:text-white"}`}>
+    <div className={`relative w-full min-h-screen overflow-x-hidden font-sans ${t.page} ${isLight ? "selection:bg-pink-200/50 selection:text-gray-900" : "selection:bg-violet-500/20 selection:text-white"}`}>
 
       {/* ── Ambient background ───────────────────────────────── */}
       {isLight ? (
@@ -402,7 +402,7 @@ export default function Home() {
                 </span>
               </motion.div>
 
-              <motion.h1 variants={FADE_UP} className={`text-4xl sm:text-5xl lg:text-6xl font-heading font-extrabold leading-[1.05] tracking-tight ${t.h1}`}>
+              <motion.h1 variants={FADE_UP} className={`text-3xl sm:text-5xl lg:text-6xl font-heading font-extrabold leading-[1.05] tracking-tight break-words ${t.h1}`}>
                 A supreme blend of<br />
                 <span className={isLight
                   ? "text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500"
@@ -416,17 +416,17 @@ export default function Home() {
                 Agenario is a supreme blend of deep tech, formal verification compilers, and advanced mathematics. It is a production-grade code review engine built for enterprise, iOS, Android, and web scale. It doesn't guess—it proves.
               </motion.p>
 
-              <motion.div variants={FADE_UP} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${isLight ? "bg-fuchsia-50 border border-fuchsia-200/60 text-fuchsia-700" : "bg-fuchsia-500/[0.08] border border-fuchsia-500/20 text-fuchsia-400"}`}>
+              <motion.div variants={FADE_UP} className={`inline-flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${isLight ? "bg-fuchsia-50 border border-fuchsia-200/60 text-fuchsia-700" : "bg-fuchsia-500/[0.08] border border-fuchsia-500/20 text-fuchsia-400"}`}>
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Zero-Trust Architectural Validation. Production Real.
               </motion.div>
 
               <motion.div variants={FADE_UP} className={`space-y-3 p-5 rounded-2xl border ${isLight ? "bg-gray-50/80 border-gray-100" : "bg-white/[0.03] border-white/[0.08]"}`}>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                   <XCircle className="w-4 h-4 text-red-400/70 shrink-0" />
                   <span className={`text-sm line-through ${t.bodyDim}`}>Pure AI Dependency → Hallucinations → False Positives</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                   <CheckCircle className="w-4 h-4 text-fuchsia-400 shrink-0" />
                   <span className={`text-sm ${t.body}`}>Deep Tech Engines → <strong className={t.h2}>Mathematical Proofs</strong> → Real Grounded Truth</span>
                 </div>
@@ -481,7 +481,7 @@ export default function Home() {
               {!isLight && <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.05] via-transparent to-blue-500/[0.04] pointer-events-none rounded-2xl" />}
               {isLight && <div className="absolute inset-0 bg-gradient-to-br from-pink-500/[0.04] via-transparent to-violet-500/[0.03] pointer-events-none rounded-2xl" />}
               <div className="relative z-10 space-y-5">
-                <div className={`flex items-center justify-between pb-4 border-b ${isLight ? "border-pink-100/60" : "border-white/[0.07]"}`}>
+                <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b ${isLight ? "border-pink-100/60" : "border-white/[0.07]"}`}>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <Github className={`w-3.5 h-3.5 ${t.bodyDim}`} />
@@ -489,7 +489,7 @@ export default function Home() {
                     </div>
                     <h3 className={`font-heading font-bold ${t.h2}`}>Launch Readiness Report</h3>
                   </div>
-                  <div className="text-right">
+                  <div className="text-left sm:text-right">
                     <div className="text-3xl font-heading font-bold text-green-500">76<span className={`text-sm ${t.bodyDim}`}>/100</span></div>
                     <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-0.5">Launch with Caution</p>
                   </div>
@@ -506,15 +506,15 @@ export default function Home() {
                       initial={{ opacity: 0, x: 12 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.6 + i * 0.12 }}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${item.bg}`}
+                      className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-4 py-3 rounded-xl border ${item.bg}`}
                     >
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${item.badge}`}>{item.severity}</span>
-                      <span className={`text-sm flex-1 ${t.body}`}>{item.title}</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide shrink-0 ${item.badge}`}>{item.severity}</span>
+                      <span className={`text-sm flex-1 break-words min-w-0 w-full ${t.body}`}>{item.title}</span>
                     </motion.div>
                   ))}
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
                   {[
                     { label: "3 issues", sub: "Security",   color: "text-red-500"    },
                     { label: "2 issues", sub: "Compliance", color: "text-amber-500"  },
