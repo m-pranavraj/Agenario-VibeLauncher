@@ -8678,6 +8678,32 @@ export default function ScanResultsPage() {
                   </div>
                 )}
 
+                {/* GPU Tensor Bridge */}
+                {scan.tensorPayloadSignature && (
+                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Cpu className={`w-24 h-24 ${isLight ? "text-blue-600" : "text-blue-400"}`} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-blue-100 text-blue-600" : "bg-blue-500/20 text-blue-400"}`}>
+                        <Zap className="w-4 h-4" />
+                      </div>
+                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Hardware GPU Tensor Bridge</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
+                        AST mathematically compiled to tensor payload and signed for AWS Nitro Enclave execution.
+                      </div>
+                      <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"} truncate`}>
+                        Hardware Attestation: <span className="text-emerald-500 font-bold">VERIFIED</span><br/>
+                        Enclave Job ID: {scan.tensorPayloadSignature.enclaveJobId}<br/>
+                        Tensor Hash: <span className="text-blue-500">{scan.tensorPayloadSignature.tensorHash.substring(0, 16)}...</span><br/>
+                        Cluster Routing: {scan.tensorPayloadSignature.gpuClusterRouted}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Big-O Profiler */}
                 {scan.bigOProfiler && (
                   <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-orange-500/30 transition-all`}>

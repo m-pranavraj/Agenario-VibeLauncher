@@ -758,8 +758,10 @@ async function runAnalysisPipeline(opts: {
   let bigOProfiler = null;
   let fheAnalyzer = null;
   let neuromorphicDrift = null;
+  let tensorPayloadSignature = null;
 
   try {
+    const { compileAstToTensorPayload } = await import("../lib/enclave-tensor-bridge.js");
     const { sequenceCodeGenome } = await import("../lib/genome-sequencing.js");
     const { runCausalDoCalculus } = await import("../lib/causal-do-calculus.js");
     const { computeFinancialRisk } = await import("../lib/quantitative-finance-risk.js");
@@ -808,6 +810,7 @@ async function runAnalysisPipeline(opts: {
       bigOProfiler = simulateBigOProfiler(allIssues);
       fheAnalyzer = simulateFheAnalyzer(allIssues);
       neuromorphicDrift = simulateNeuromorphicDrift(allIssues);
+      tensorPayloadSignature = compileAstToTensorPayload(codeContext, allIssues);
       
       logger.info({ scanId }, "Deep Tech Engines execution complete");
     }
@@ -1009,6 +1012,7 @@ async function runAnalysisPipeline(opts: {
       bigOProfiler: bigOProfiler ?? null,
       fheAnalyzer: fheAnalyzer ?? null,
       neuromorphicDrift: neuromorphicDrift ?? null,
+      tensorPayloadSignature: tensorPayloadSignature ?? null,
       cleanupReport: cleanupReport ?? null,
       digitalTwin: digitalTwin ?? null,
       predictiveIntel: predictiveIntel ?? null,

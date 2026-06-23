@@ -211,6 +211,7 @@ export const scansTable = pgTable("scans", {
   bigOProfiler: jsonb("big_o_profiler").$type<any>(),
   fheAnalyzer: jsonb("fhe_analyzer").$type<any>(),
   neuromorphicDrift: jsonb("neuromorphic_drift").$type<any>(),
+  tensorPayloadSignature: jsonb("tensor_payload_signature").$type<any>(),
   engineScorecards: jsonb("engine_scorecards").$type<any[]>(),
   authTestingPayload: jsonb("auth_testing_payload").$type<any>(),
   urlAuditScore: integer("url_audit_score"),

@@ -448,6 +448,7 @@ export interface Scan {
   bigOProfiler: any | null;
   fheAnalyzer: any | null;
   neuromorphicDrift: any | null;
+  tensorPayloadSignature?: any | null;
   launchImpact: {
     totalRevenueAtRisk: string;
     supportCostPerMonth: string;
