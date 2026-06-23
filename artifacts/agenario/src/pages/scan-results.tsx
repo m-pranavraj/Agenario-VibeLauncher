@@ -8595,65 +8595,6 @@ export default function ScanResultsPage() {
 
             {/* The 0.01% Mathematical Deep Tech Mechanisms */}
             <div className="pt-8 mt-8 border-t border-slate-200 dark:border-white/10">
-              
-              {/* MASTER CONFIDENTIAL BLUEPRINT HEADER */}
-              <div className={`mb-10 p-6 rounded-2xl border-l-4 border-l-red-500 ${isLight ? "bg-red-50 border border-red-100" : "bg-red-950/20 border border-red-900/30"} relative overflow-hidden group`}>
-                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                  <ShieldAlert className="w-32 h-32 text-red-500" />
-                </div>
-                
-                <div className="relative z-10 space-y-6">
-                  {/* CAUTION BADGE */}
-                  <div className="flex items-center gap-3">
-                    <span className="px-3 py-1 bg-red-500 text-white text-[10px] font-black uppercase tracking-widest rounded flex items-center gap-1.5">
-                      <AlertTriangle className="w-3 h-3" /> CAUTION
-                    </span>
-                    <h2 className={`font-extrabold text-lg md:text-xl font-['Syne'] uppercase tracking-wide ${isLight ? "text-red-700" : "text-red-400"}`}>
-                      CONFIDENTIAL: Agenario Master Deep Architecture & Service Blueprint
-                    </h2>
-                  </div>
-
-                  {/* PROPRIETARY IP WARNING */}
-                  <div className={`p-4 rounded-lg border border-dashed ${isLight ? "bg-red-100/50 border-red-300 text-red-800" : "bg-red-900/20 border-red-800 text-red-300"}`}>
-                    <p className="text-xs md:text-sm font-semibold uppercase tracking-wider mb-1">Highly Confidential & Proprietary IP</p>
-                    <p className="text-xs leading-relaxed opacity-90">
-                      This document details the architectural and operational topologies that power Agenario. It outlines our 21 proprietary analysis mechanisms, constraint-based algorithms, and evidence-driven service models. Distribution is strictly limited.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Executive Summary */}
-                    <div>
-                      <h3 className={`font-bold text-sm uppercase tracking-wider mb-2 ${isLight ? "text-slate-800" : "text-white"}`}>Executive Summary & The Evidence-Driven Moat</h3>
-                      <p className={`text-xs leading-relaxed ${isLight ? "text-slate-600" : "text-slate-400"}`}>
-                        Agenario abandons the industry-standard heuristic approach of feeding raw strings into Large Language Models. Instead, Agenario is a deterministic, graph-based, constraint-based analysis pipeline. It builds a multi-dimensional structural model of the codebase, executes constraint solvers to prove selected exploit paths when the modeled conditions are satisfied, and relies on multi-agent AI solely as a consensus and translation layer.
-                        <br/><br/>
-                        This ensures that critical findings require reproducible deterministic or runtime evidence and outputs a robust, enterprise-grade threat and revenue impact assessment.
-                      </p>
-                    </div>
-
-                    {/* Execution Pipeline */}
-                    <div>
-                      <h3 className={`font-bold text-sm uppercase tracking-wider mb-2 ${isLight ? "text-slate-800" : "text-white"}`}>The End-to-End Execution Pipeline</h3>
-                      <p className={`text-xs leading-relaxed mb-3 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
-                        The execution flow is designed for absolute resilience, combining live-fire dynamic sandboxing with static constraint-based analysis.
-                      </p>
-                      {/* Diagram Representation */}
-                      <div className={`p-3 rounded border font-mono text-[9px] sm:text-[10px] leading-relaxed overflow-x-auto ${isLight ? "bg-slate-900 text-emerald-400 border-slate-800" : "bg-black/60 text-emerald-400/80 border-white/10"}`}>
-                        <div className="text-slate-500 mb-1">```mermaid</div>
-                        graph TD<br/>
-                        &nbsp;&nbsp;A[Source Upload] --&gt; B[CSG Generation]<br/>
-                        &nbsp;&nbsp;B --&gt; C&#123;Constraint Solvers&#125;<br/>
-                        &nbsp;&nbsp;C --&gt;|Sat| D[Exploit Proof]<br/>
-                        &nbsp;&nbsp;C --&gt;|Unsat| E[Safe]<br/>
-                        &nbsp;&nbsp;D --&gt; F[Multi-Agent Consensus]<br/>
-                        <div className="text-slate-500 mt-1">```</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               <div className="flex flex-col gap-2 mb-6">
                 <h2 className={`font-extrabold text-xl font-['Syne'] ${isLight ? "text-slate-900" : "text-white"} flex items-center gap-2`}>
                   <Zap className="w-5 h-5 text-fuchsia-500" />
