@@ -68,7 +68,20 @@ function normalizeLiveUrl(url: string): string {
 }
 
 // ─── Try to launch a real Chromium browser ────────────────────────────────────
+let globalBrowserPool: any = null;
+let activeContexts = 0;
+const MAX_CONCURRENT_BROWSERS = 5;
+
 async function launchBrowser(): Promise<{ browser: any; available: boolean }> {
+  if (globalBrowserPool) {
+    if (activeContexts >= MAX_CONCURRENT_BROWSERS) {
+      logger.warn("Playwright connection pool exhausted. Falling back to AST/Static.");
+      return { browser: null, available: false };
+    }
+    activeContexts++;
+    return { browser: globalBrowserPool, available: true };
+  }
+
   const executablePaths = [
     process.env["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"],
     process.env["CHROMIUM_EXECUTABLE_PATH"],
@@ -97,6 +110,8 @@ async function launchBrowser(): Promise<{ browser: any; available: boolean }> {
         ],
         timeout: BROWSER_TIMEOUT,
       });
+      globalBrowserPool = browser;
+      activeContexts++;
       logger.info({ executablePath }, "Playwright Chromium launched successfully");
       return { browser, available: true };
     } catch {
@@ -113,6 +128,8 @@ async function launchBrowser(): Promise<{ browser: any; available: boolean }> {
       args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--single-process", "--no-zygote"],
       timeout: BROWSER_TIMEOUT,
     });
+    globalBrowserPool = browser;
+    activeContexts++;
     logger.info("Playwright Chromium launched (bundled path)");
     return { browser, available: true };
   } catch (err) {
@@ -881,7 +898,7 @@ export async function runLiveUrlProofs(baseUrl: string): Promise<ProofEvidence[]
     } catch (err) {
       logger.warn({ err }, "Real browser probes failed");
     } finally {
-      await browser.close().catch(() => {});
+      activeContexts--;
     }
   }
 
@@ -932,7 +949,7 @@ export async function captureSandboxLaunchProof(
       codeRef: `${ctx.startCommand} → http://127.0.0.1:${ctx.port}`,
     };
   } finally {
-    await browser.close().catch(() => {});
+    activeContexts--;
   }
 }
 

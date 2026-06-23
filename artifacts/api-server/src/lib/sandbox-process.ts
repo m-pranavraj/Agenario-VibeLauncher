@@ -52,9 +52,17 @@ export function spawnManagedProcess(
   env: Record<string, string>,
 ): ManagedProcess {
   const logs: string[] = [];
+  
+  // Inject strict OS-level memory limits for Node.js sandbox processes
+  const finalEnv = { 
+    ...process.env, 
+    ...env,
+    NODE_OPTIONS: `${env.NODE_OPTIONS || ""} --max-old-space-size=512`.trim(),
+  };
+
   const proc = spawn(command, args, {
     cwd,
-    env: { ...process.env, ...env },
+    env: finalEnv,
     stdio: ["ignore", "pipe", "pipe"],
     shell: isWindows,
     detached: !isWindows,

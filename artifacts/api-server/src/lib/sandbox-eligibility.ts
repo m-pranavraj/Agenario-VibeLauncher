@@ -5,6 +5,7 @@
 
 import fs from "fs";
 import path from "path";
+import os from "os";
 
 export type PackageManager = "pnpm" | "npm" | "yarn";
 
@@ -138,6 +139,16 @@ export function assessSandboxEligibility(
   framework: string,
 ): SandboxEligibility {
   const blockers: string[] = [];
+
+  // Memory Load Shedding
+  const freeMemMB = os.freemem() / (1024 * 1024);
+  if (freeMemMB < 1024) {
+    return {
+      eligible: false,
+      reason: `Host OS memory is critically low (${Math.round(freeMemMB)}MB free). Aggressive fallback to AST-only analysis.`,
+      blockers: ["oom_load_shedding"],
+    };
+  }
 
   if (process.env["SANDBOX_ENABLED"] === "false") {
     return {

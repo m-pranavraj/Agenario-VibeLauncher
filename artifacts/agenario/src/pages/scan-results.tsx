@@ -2911,7 +2911,10 @@ function EvidenceCard({
                     a.download = `fix-${issue.findingId || "patch"}.patch`;
                     document.body.appendChild(a);
                     a.click();
-                    document.body.removeChild(a);
+                    setTimeout(() => {
+                      document.body.removeChild(a);
+                      window.URL.revokeObjectURL(url);
+                    }, 100);
                   }}
                   className={`flex items-center gap-1 text-xs ${isLight ? "text-violet-600 bg-violet-50 hover:bg-violet-100" : "text-violet-300 bg-violet-500/20 hover:bg-violet-500/30"} px-2 py-1 rounded transition-colors`}
                 >
@@ -7245,8 +7248,10 @@ export default function ScanResultsPage() {
       a.download = `agenario-${format}-${scan.id}.${format === "zip" ? "zip" : format === "json" ? "json" : "html"}`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      a.remove();
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      }, 100);
       setExportOpen(false);
     } catch (err) {
       console.error("Export failed:", err);
