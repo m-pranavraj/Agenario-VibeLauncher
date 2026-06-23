@@ -424,11 +424,11 @@ export default function Home() {
               <motion.div variants={FADE_UP} className={`space-y-3 p-5 rounded-2xl border ${isLight ? "bg-gray-50/80 border-gray-100" : "bg-white/[0.03] border-white/[0.08]"}`}>
                 <div className="flex items-center gap-3">
                   <XCircle className="w-4 h-4 text-red-400/70 shrink-0" />
-                  <span className={`text-sm line-through ${t.bodyDim}`}>Standard Heuristics → Hallucinations → False Positives</span>
+                  <span className={`text-sm line-through ${t.bodyDim}`}>Pure AI Dependency → Hallucinations → False Positives</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <CheckCircle className="w-4 h-4 text-fuchsia-400 shrink-0" />
-                  <span className={`text-sm ${t.body}`}>Deep Tech Engines → <strong className={t.h2}>Mathematical Proofs</strong> → Omni-Platform Scale</span>
+                  <span className={`text-sm ${t.body}`}>Deep Tech Engines → <strong className={t.h2}>Mathematical Proofs</strong> → Real Grounded Truth</span>
                 </div>
               </motion.div>
 
