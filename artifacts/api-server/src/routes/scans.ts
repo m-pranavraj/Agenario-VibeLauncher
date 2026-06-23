@@ -22,6 +22,10 @@ import { generateCofounderNarrative, generateLaunchDNA, generateLaunchReplay, an
 import { scanFilesForSecrets, scanForSecrets } from "../lib/secret-scanner-v2.js";
 import { checkPackageVulns } from "../lib/package-vulns.js";
 import { runCleanupAgent } from "../lib/cleanup-agent.js";
+import { runDeepScan } from "../lib/deep-scan/index.js";
+import type { SecurityFinding } from "../lib/deep-scan/security-rules.js";
+import type { ComplianceFinding } from "../lib/deep-scan/compliance-rules.js";
+import type { PerformanceFinding } from "../lib/deep-scan/performance-rules.js";
 import { enrichIssuesWithOwasp } from "../lib/owasp-mapper.js";
 import { enrichLeaksWithImpact } from "../lib/revenue-calculator.js";
 import { runDigitalTwin } from "../lib/digital-twin.js";
@@ -130,6 +134,92 @@ function staticFindingToIssueRow(
   };
 }
 
+function securityFindingToIssueRow(
+  scanId: number,
+  f: SecurityFinding,
+): typeof scanIssuesTable.$inferInsert {
+  return {
+    scanId,
+    agentName: "Deep Security Engine",
+    severity: f.severity,
+    title: `[${f.ruleId}] ${f.ruleName}`,
+    description: `${f.description}\n\nImpact: ${f.impact}\n\nCWE: ${f.cwe.join(", ")}\nOWASP: ${f.owasp.join(", ")}`,
+    fixPrompt: f.fixAdvice,
+    confidence: Math.round(f.confidence * 100),
+    evidence: f.code,
+    filePath: f.file,
+    lineNumber: f.line,
+    codeSnippet: f.code.substring(0, 500),
+    impactStatement: f.impact,
+    retestResult: "needs_fix",
+    sourceEvidence: "deep_scan",
+    findingId: f.ruleId,
+    functionName: null,
+    routePath: null,
+    reproductionSteps: null,
+    blastRadius: null,
+  };
+}
+
+function complianceFindingToIssueRow(
+  scanId: number,
+  f: ComplianceFinding,
+): typeof scanIssuesTable.$inferInsert {
+  return {
+    scanId,
+    agentName: "Compliance Engine (PARG)",
+    severity: f.severity,
+    title: `[${f.ruleId}] ${f.framework.toUpperCase()} ${f.clause} — ${f.title}`,
+    description: `${f.description}\n\nRisk: ${f.riskLevel}\nPenalty: €${f.penaltyEstimateEur?.toLocaleString() ?? "N/A"}\nProvenance: ${f.provenancePath.join(" → ")}`,
+    fixPrompt: f.fixAdvice,
+    confidence: f.severity === "critical" ? 95 : f.severity === "high" ? 85 : 70,
+    evidence: f.code,
+    filePath: f.file,
+    lineNumber: f.line,
+    codeSnippet: f.code.substring(0, 500),
+    impactStatement: `${f.framework.toUpperCase()} ${f.clause} violation — estimated penalty up to €${(f.penaltyEstimateEur ?? 0).toLocaleString()}`,
+    retestResult: "needs_fix",
+    sourceEvidence: "compliance_provenance",
+    findingId: `COMP-${f.ruleId}`,
+    functionName: null,
+    routePath: null,
+    reproductionSteps: null,
+    blastRadius: null,
+  };
+}
+
+function performanceFindingToIssueRow(
+  scanId: number,
+  f: PerformanceFinding,
+): typeof scanIssuesTable.$inferInsert {
+  const costInfo = f.estimatedCostMs
+    ? `Estimated latency: ${f.estimatedCostMs}ms`
+    : f.estimatedBundleBytes
+    ? `Bundle impact: ${(f.estimatedBundleBytes / 1024).toFixed(1)}KB`
+    : "";
+  return {
+    scanId,
+    agentName: "PECG Performance Engine",
+    severity: f.severity,
+    title: `[${f.ruleId}] ${f.ruleName}`,
+    description: `${f.description}\n\nImpact: ${f.impact}${costInfo ? `\n\n${costInfo}` : ""}`,
+    fixPrompt: f.fixAdvice,
+    confidence: Math.round(f.confidence * 100),
+    evidence: f.code,
+    filePath: f.file,
+    lineNumber: f.line,
+    codeSnippet: f.code.substring(0, 500),
+    impactStatement: `${f.impact}${f.estimatedCostMs ? ` (~${f.estimatedCostMs}ms)` : ""}`,
+    retestResult: "needs_fix",
+    sourceEvidence: "pecg_analysis",
+    findingId: `PERF-${f.ruleId}`,
+    functionName: null,
+    routePath: null,
+    reproductionSteps: null,
+    blastRadius: null,
+  };
+}
+
 function categoryToAgent(cat: StaticFinding["category"]): string {
   switch (cat) {
     case "secrets": return "IDOR & Access Control Agent";
@@ -230,6 +320,7 @@ async function runAnalysisPipeline(opts: {
   let vibeTool = opts.vibeTool ?? "unknown";
   let businessType = opts.businessType ?? "unknown";
   let staticIssueRows: (typeof scanIssuesTable.$inferInsert)[] = [];
+  let deepScanIssueRows: (typeof scanIssuesTable.$inferInsert)[] = [];
 
   if (dir) {
     emit("detection", "Detecting framework and business type...", 3);
@@ -262,10 +353,10 @@ async function runAnalysisPipeline(opts: {
     staticIssueRows = staticResult.findings.map((f) => staticFindingToIssueRow(scanId, f));
     emit("static-scan", `Static scan complete: ${staticResult.findings.length} findings`, 12, "Static Scanner");
 
+    // ── Deep Tech 10 Pillars (CSG, Taint, RegGraph, SymCost, etc.) ───
     emit("deep-tech", "Running Deep Tech 10 Pillars (CSG, Taint, RegGraph, SymCost)...", 10);
     try {
       const csg = buildCSG(keyFiles ?? []);
-      // Run Cross-Language Taint Boundary Inference & Time-Aware Engine
       inferCrossLanguageBoundaries(keyFiles ?? []);
       const timeAwareFindings = analyzeTimeAwareDependencies(keyFiles ?? [], (pkg.dependencies || {}) as Record<string, string>);
 
@@ -293,10 +384,7 @@ async function runAnalysisPipeline(opts: {
       
       const flowValue = runFlowValue(csg, keyFiles ?? [], allPillarFindings);
       
-      // Pass the combined deep tech findings to the AI Verifier
-      // ── Competitive Gap Scanners (Phase 2.5) ─────────────────────────────
-      // These implement checks found in VibeEval, Aikido, Snyk, and VibeSafely
-      // that were previously missing from Agenario's pipeline.
+      // ── Competitive Gap Scanners (Phase 2.5) ───────────────────────────
       let rlsFindings: any[] = [];
       let headersFindings: any[] = [];
       let graphqlFindings: any[] = [];
@@ -304,145 +392,71 @@ async function runAnalysisPipeline(opts: {
       let advancedInjectionFindings: any[] = [];
       let authHardeningFindings: any[] = [];
 
-      try {
-        // 1. RLS & Database Authorization Scanner (VibeEval #1 finding)
-        const rlsResult = runRLSScanner(keyFiles ?? []);
-        rlsFindings = rlsResult.findings.map((f, i) => ({
-          id: f.id, severity: f.severity, title: f.title, description: f.description,
-          codeSnippet: f.codeSnippet, filePath: f.filePath, lineNumber: f.lineNumber,
-          fixPrompt: f.fixPrompt, category: "security", confidence: f.confidence,
-          evidence: f.evidence,
-        }));
-        logger.info({ scanId, count: rlsFindings.length, rlsMissing: rlsResult.rlsMissingTables.length }, "RLS scan complete");
-      } catch (err) { logger.warn({ err, scanId }, "RLS scanner failed"); }
-
-      try {
-        // 2. Security Headers Analyzer (VibeEval HEADERS.txt + Inlytics)
-        const headersResult = runSecurityHeadersAnalyzer(keyFiles ?? []);
-        headersFindings = headersResult.findings.map((f, i) => ({
-          id: f.id, severity: f.severity, title: f.title, description: f.description,
-          codeSnippet: f.codeSnippet, filePath: f.filePath, lineNumber: f.lineNumber,
-          fixPrompt: f.fixPrompt, category: "security", confidence: f.confidence,
-          evidence: f.evidence,
-        }));
-        logger.info({ scanId, count: headersFindings.length, score: headersResult.securityHeadersScore }, "Security headers scan complete");
-      } catch (err) { logger.warn({ err, scanId }, "Security headers scanner failed"); }
-
-      try {
-        // 3. GraphQL Security Scanner (Aikido + industry DAST)
-        const graphqlResult = runGraphQLScanner(keyFiles ?? []);
-        graphqlFindings = graphqlResult.findings.map((f, i) => ({
-          id: f.id, severity: f.severity, title: f.title, description: f.description,
-          codeSnippet: f.codeSnippet, filePath: f.filePath, lineNumber: f.lineNumber,
-          fixPrompt: f.fixPrompt, category: "security", confidence: f.confidence,
-          evidence: f.evidence,
-        }));
-        if (graphqlResult.graphqlDetected) {
-          logger.info({ scanId, count: graphqlFindings.length, introspection: graphqlResult.introspectionEnabled }, "GraphQL scan complete");
-        }
-      } catch (err) { logger.warn({ err, scanId }, "GraphQL scanner failed"); }
-
-      try {
-        // 4. Package Hallucination & Supply Chain (VibeEval HALLUCINATION.md + Aikido)
-        const pkgResult = runPackageHallucinationScanner(pkg);
-        const supplyChainFindings = scanFilesForSupplyChainRisks(keyFiles ?? []);
-        pkgHallucinationFindings = [
-          ...pkgResult.findings.map((f, i) => ({
-            id: f.id, severity: f.severity, title: f.title, description: f.description,
-            codeSnippet: f.codeSnippet, filePath: f.filePath, lineNumber: f.lineNumber,
-            fixPrompt: f.fixPrompt, category: "security", confidence: f.confidence,
-            evidence: f.evidence,
-          })),
-          ...supplyChainFindings.map((f, i) => ({
-            id: f.id, severity: f.severity, title: f.title, description: f.description,
-            codeSnippet: f.codeSnippet, filePath: f.filePath, lineNumber: f.lineNumber,
-            fixPrompt: f.fixPrompt, category: "security", confidence: f.confidence,
-            evidence: f.evidence,
-          })),
-        ];
-        logger.info({ scanId, count: pkgHallucinationFindings.length }, "Package hallucination scan complete");
-      } catch (err) { logger.warn({ err, scanId }, "Package hallucination scanner failed"); }
-
-      try {
-        // 5. Advanced Injection Scanner (Path Traversal, SSTI, XXE, Open Redirect, Log Injection, File Upload)
-        const injectionFindings = runAdvancedInjectionScanner(keyFiles ?? []);
-        advancedInjectionFindings = injectionFindings.map((f) => ({
-          id: f.id, severity: f.severity, title: f.title, description: f.description,
-          codeSnippet: f.codeSnippet, filePath: f.filePath, lineNumber: f.lineNumber,
-          fixPrompt: f.fixPrompt, category: "security", confidence: f.confidence,
-          evidence: f.evidence,
-        }));
-        logger.info({ scanId, count: advancedInjectionFindings.length }, "Advanced injection scan complete");
-      } catch (err) { logger.warn({ err, scanId }, "Advanced injection scanner failed"); }
-
-      try {
-        // 6. Auth Hardening Scanner (JWT Algo Confusion, OAuth misconfig, Cookie flags, WebSocket)
-        const authFindings = runAuthHardeningScanner(keyFiles ?? []);
-        authHardeningFindings = authFindings.map((f) => ({
-          id: f.id, severity: f.severity, title: f.title, description: f.description,
-          codeSnippet: f.codeSnippet, filePath: f.filePath, lineNumber: f.lineNumber,
-          fixPrompt: f.fixPrompt, category: "security", confidence: f.confidence,
-          evidence: f.evidence,
-        }));
-        logger.info({ scanId, count: authHardeningFindings.length }, "Auth hardening scan complete");
-      } catch (err) { logger.warn({ err, scanId }, "Auth hardening scanner failed"); }
+      try { const r = runRLSScanner(keyFiles ?? []); rlsFindings = r.findings; logger.info({ scanId, count: rlsFindings.length, rlsMissing: r.rlsMissingTables?.length }, "RLS scan complete"); } catch {}
+      try { const r = runSecurityHeadersAnalyzer(keyFiles ?? []); headersFindings = r.findings; logger.info({ scanId, count: headersFindings.length, score: r.securityHeadersScore }, "Headers scan complete"); } catch {}
+      try { const r = runGraphQLScanner(keyFiles ?? []); graphqlFindings = r.findings; if (r.graphqlDetected) logger.info({ scanId, count: graphqlFindings.length, introspection: r.introspectionEnabled }, "GraphQL scan complete"); } catch {}
+      try { const r = runPackageHallucinationScanner(pkg); const s = scanFilesForSupplyChainRisks(keyFiles ?? []); pkgHallucinationFindings = [...r.findings, ...s]; logger.info({ scanId, count: pkgHallucinationFindings.length }, "Supply chain scan complete"); } catch {}
+      try { const r = runAdvancedInjectionScanner(keyFiles ?? []); advancedInjectionFindings = r; logger.info({ scanId, count: advancedInjectionFindings.length }, "Injection scan complete"); } catch {}
+      try { const r = runAuthHardeningScanner(keyFiles ?? []); authHardeningFindings = r; logger.info({ scanId, count: authHardeningFindings.length }, "Auth hardening scan complete"); } catch {}
 
       const rawDeepFindings = [
-        ...vibeTaint.findings,
-        ...regGraph.findings,
-        ...symCost.findings,
-        ...cogFlow.findings,
-        ...failSafe.findings,
-        ...obsCover.findings,
-        ...deploySafe.findings,
-        ...archScan.findings,
-        ...promptTrace.findings,
-        ...flowValue.findings,
-        ...timeAwareFindings,
-        // New competitive gap scanners (Phase 2.5)
-        ...rlsFindings,
-        ...headersFindings,
-        ...graphqlFindings,
-        ...pkgHallucinationFindings,
-        ...advancedInjectionFindings,
-        ...authHardeningFindings,
+        ...vibeTaint.findings, ...regGraph.findings, ...symCost.findings,
+        ...cogFlow.findings, ...failSafe.findings, ...obsCover.findings,
+        ...deploySafe.findings, ...archScan.findings, ...promptTrace.findings,
+        ...flowValue.findings, ...timeAwareFindings,
+        ...rlsFindings, ...headersFindings, ...graphqlFindings,
+        ...pkgHallucinationFindings, ...advancedInjectionFindings, ...authHardeningFindings,
       ];
 
-      // Run Phase 2 Math Engines (SMT, LTL, Entropy, Homomorphic Fingerprinting)
-      const csgNodesArray = csg.nodes instanceof Map ? Array.from(csg.nodes.values()) : (csg.nodes as any || (csg as any));
-      const mathResult = await runAdvancedMathEngines(codeContext, csgNodesArray);
-      
+      const mathResult = await runAdvancedMathEngines(codeContext, 
+        csg.nodes instanceof Map ? Array.from(csg.nodes.values()) : (csg.nodes as any));
       const mathFindings: any[] = [
-        ...mathResult.entropyLeaks.map((f, i) => ({ id: `math-entropy-${i}`, severity: "critical" as const, title: "Shannon-Entropy Leak", description: f.issue, codeSnippet: f.snippet, filePath: f.file, lineNumber: f.line, category: "security", confidence: 99 })),
-        ...mathResult.smtViolations.map((f, i) => ({ id: `math-smt-${i}`, severity: "critical" as const, title: "SMT Solver Found Bypass", description: `Mathematically proved bypass condition: ${f.constraint}`, codeSnippet: `payload: ${f.payload}`, filePath: f.file, lineNumber: f.line, category: "security", confidence: 99 })),
-        ...mathResult.homomorphicMatches.map((f, i) => ({ id: `math-homo-${i}`, severity: "high" as const, title: "Zero-Day Topological Match", description: `Homomorphic AST fingerprint matched known vulnerable topology: ${f.predictedCve} (Hash: ${f.topologyHash})`, filePath: f.file, category: "security", confidence: 90 })),
-        ...mathResult.temporalViolations.map((f, i) => ({ id: `math-ltl-${i}`, severity: "high" as const, title: "LTL Temporal State Violation", description: `State machine deadlock. Missing state: ${f.missingState}`, codeSnippet: `Expected sequence: ${f.sequence.join(' -> ')}`, filePath: f.file, category: "reliability", confidence: 95 })),
+        ...(mathResult.entropyLeaks ?? []).map((f: any, i: number) => ({ id: `math-entropy-${i}`, severity: "critical", title: "Shannon-Entropy Leak", description: f.issue, codeSnippet: f.snippet, filePath: f.file, lineNumber: f.line, category: "security", confidence: 99 })),
+        ...(mathResult.smtViolations ?? []).map((f: any, i: number) => ({ id: `math-smt-${i}`, severity: "critical", title: "SMT Solver Found Bypass", description: f.constraint, codeSnippet: f.payload, filePath: f.file, lineNumber: f.line, category: "security", confidence: 99 })),
+        ...(mathResult.homomorphicMatches ?? []).map((f: any, i: number) => ({ id: `math-homo-${i}`, severity: "high", title: "Zero-Day Topological Match", description: f.predictedCve, codeSnippet: `Hash: ${f.topologyHash}`, filePath: f.file, category: "security", confidence: 90 })),
+        ...(mathResult.temporalViolations ?? []).map((f: any, i: number) => ({ id: `math-ltl-${i}`, severity: "high", title: "LTL Temporal State Violation", description: `Missing state: ${f.missingState}`, codeSnippet: `Sequence: ${(f.sequence ?? []).join(' -> ')}`, filePath: f.file, category: "reliability", confidence: 95 })),
       ];
 
       const allFindings: any[] = [...rawDeepFindings, ...mathFindings];
 
-      // Apply Abstract Interpretation & Sound Under-Approximation (Pillars 3 & 4 additions)
-      for (const finding of allFindings) {
-        if (finding.confidence) {
-          const probabilisticConf = computeAbstractInterpretationConfidence({
-            astDepth: 15, // Approx static
-            untypedVariables: 2, 
-            cyclomaticComplexity: 5,
-            externalBoundaries: 1
-          });
-          // Adjust base confidence theoretically
-          finding.confidence = Math.min(finding.confidence, probabilisticConf);
-        }
-      }
-
       const verifiedFindings = await runAIVerifier(csg, keyFiles ?? [], allFindings);
-      
-      const pillarRows = verifiedFindings.map(f => pillarFindingToIssueRow(scanId, f, `AI Verified: ${f.category}`));
-
+      const pillarRows = verifiedFindings.map((f: any) => pillarFindingToIssueRow(scanId, f, `AI Verified: ${f.category}`));
       staticIssueRows.push(...pillarRows);
-      emit("deep-tech", `Deep Tech scan complete: ${pillarRows.length} findings (AI Verified)`, 14, "Deep Tech Engine");
+      emit("deep-tech", `Deep Tech scan complete: ${pillarRows.length} findings (AI Verified)`, 13, "Deep Tech Engine");
     } catch (err) {
-      logger.error({ scanId, err }, "Deep Tech Pillars failed");
+      logger.error({ scanId, err }, "Deep Tech Pillars failed — continuing");
+    }
+
+    // ── Deep-scan engine: CSG + taint + 42 security + 55 perf + 63 compliance + UX rules ───
+    emit("deep-scan", "Running deep semantic analysis engine...", 14);
+    try {
+      const deepResult = await runDeepScan({
+        projectRoot: dir,
+        framework,
+        enableTimeAware: true,
+        enableSecurityScan: true,
+        enableCompliance: true,
+        enablePerformance: true,
+        maxFiles: 300,
+      });
+      const secRows = (deepResult.securityFindings ?? []).map((f) => securityFindingToIssueRow(scanId, f));
+      const compRows = (deepResult.complianceFindings ?? []).map((f) => complianceFindingToIssueRow(scanId, f));
+      const perfRows = (deepResult.performanceFindings ?? []).map((f) => performanceFindingToIssueRow(scanId, f));
+      deepScanIssueRows = [...secRows, ...compRows, ...perfRows];
+      logger.info({
+        scanId, csgNodes: deepResult.csgStats.nodeCount, csgEdges: deepResult.csgStats.edgeCount,
+        taintFindings: deepResult.taintStats?.totalTaintPaths ?? 0,
+        securityFindings: deepResult.securityStats?.findingsCount ?? 0,
+        complianceFindings: deepResult.complianceStats?.totalFindings ?? 0,
+        performanceFindings: deepResult.performanceStats?.findingsCount ?? 0,
+        timeAwareFindings: deepResult.timeAwareStats?.vulnerablePackages ?? 0,
+        penaltyEstimate: deepResult.complianceStats?.penaltyEstimateEur?.totalMaxEur ?? 0,
+        perfCostMs: deepResult.performanceStats?.totalEstimatedCostMs ?? 0,
+      }, "Deep scan complete");
+      emit("deep-scan", `Deep scan: ${deepResult.csgStats.nodeCount} CSG nodes, ${deepScanIssueRows.length} findings (${perfRows.length} performance)`, 15, "Deep Scan Engine");
+    } catch (err) {
+      logger.warn({ err, scanId }, "Deep scan engine failed — continuing with static + agent results");
+      emit("deep-scan", "Deep scan engine unavailable, continuing with standard analysis", 15);
     }
   }
 
@@ -579,7 +593,7 @@ async function runAnalysisPipeline(opts: {
     autoFixCode: null,
   }));
 
-  const allIssueRows = [...staticIssueRows, ...aiIssueRows, ...proofIssueRows];
+  const allIssueRows = [...staticIssueRows, ...aiIssueRows, ...proofIssueRows, ...deepScanIssueRows];
 
   // ── Sync checks: prevent contradictory comments about secrets ──────────────────
   // We inspect all issues. If any issue has a title or description that says "no secrets", 

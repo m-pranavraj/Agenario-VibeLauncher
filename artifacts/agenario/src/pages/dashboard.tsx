@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { useScans } from "@/hooks/use-scans";
-import { ChevronRight, Plus, LogOut, Zap, Brain, Activity, BarChart3, BookOpen, Loader2, ShieldCheck, Key, Menu, X } from "lucide-react";
+import { ChevronRight, Plus, LogOut, Zap, Brain, Activity, BarChart3, BookOpen, Loader2, ShieldCheck, Key, Menu, X, AlertTriangle, RefreshCw } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useState } from "react";
 
@@ -35,9 +35,11 @@ export default function DashboardPage() {
   const { user, logout, loading } = useAuth();
   const isLight = useIsLight();
   const [, setLocation] = useLocation();
-  const { scans, loading: scansLoading } = useScans();
+  const { scans, loading: scansLoading, error: scansError } = useScans();
 
-  const visibleScans = (scans ?? []);
+  const completedScans = (scans ?? []).filter((s) => s.status !== "failed" && s.status !== "running" && s.status !== "pending");
+  const runningScans = (scans ?? []).filter((s) => s.status === "running" || s.status === "pending");
+  const failedScans = (scans ?? []).filter((s) => s.status === "failed");
 
   const t = {
     page:        isLight ? "bg-[#fdf4f8] text-gray-900 min-h-screen overflow-x-hidden" : "bg-[#050505] text-white min-h-screen overflow-x-hidden",
@@ -222,7 +224,26 @@ export default function DashboardPage() {
           <div className="flex items-center justify-center py-24">
             <Loader2 className={`w-6 h-6 animate-spin ${isLight ? "text-gray-300" : "text-white/30"}`} />
           </div>
-        ) : visibleScans.length === 0 ? (
+        ) : scansError ? (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={t.emptyCard}
+          >
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 border ${isLight ? "bg-red-50/50 border-red-200" : "bg-red-500/10 border-red-500/20"}`}>
+              <AlertTriangle className={`w-6 h-6 ${isLight ? "text-red-500" : "text-red-400"}`} />
+            </div>
+            <h3 className={`font-bold text-lg font-['Syne'] mb-2 ${t.h1}`}>Could not load scans</h3>
+            <p className={`text-sm max-w-xs mx-auto mb-6 ${t.sub}`}>
+              {scansError}
+            </p>
+            <button onClick={() => window.location.reload()} className={isLight
+              ? "inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors text-sm"
+              : "inline-flex items-center gap-2 bg-white hover:bg-white/90 text-black font-semibold px-6 py-2.5 rounded-xl transition-colors text-sm"}>
+              <RefreshCw className="w-4 h-4" /> Reload
+            </button>
+          </motion.div>
+        ) : scans.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -247,7 +268,78 @@ export default function DashboardPage() {
           </motion.div>
         ) : (
           <div className="space-y-2.5">
-            {visibleScans.map((scan, i) => (
+            {failedScans.length > 0 && (
+              <div className="mb-4">
+                <div className={`flex items-center gap-2 mb-2 px-1 ${isLight ? "text-red-600" : "text-red-400"}`}>
+                  <AlertTriangle className="w-4 h-4" />
+                  <span className="text-sm font-medium">{failedScans.length} scan{failedScans.length > 1 ? "s" : ""} failed — click to rescan</span>
+                </div>
+                {failedScans.map((scan) => (
+                  <motion.div key={scan.id} className="mb-2">
+                    <div className={`${isLight ? "bg-red-50/50 border border-red-200" : "bg-red-500/5 border border-red-500/20"} rounded-xl p-4`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-[52px] h-[52px] flex items-center justify-center">
+                            <AlertTriangle className={`w-5 h-5 ${isLight ? "text-red-500" : "text-red-400"}`} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className={`text-sm font-medium truncate ${isLight ? "text-gray-800" : "text-white/85"}`}>{scan.sourceInput}</p>
+                            <p className={`text-xs mt-0.5 ${isLight ? "text-red-500" : "text-red-400"}`}>
+                              Failed · {scan.sourceType} · {new Date(scan.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <Link
+                          href={`/scans/${scan.id}/rescan`}
+                          className={`shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                            isLight
+                              ? "bg-red-100 text-red-700 hover:bg-red-200"
+                              : "bg-red-500/20 text-red-300 hover:bg-red-500/30"
+                          }`}
+                        >
+                          <RefreshCw className="w-3 h-3 inline mr-1" />
+                          Rescan
+                        </Link>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {runningScans.length > 0 && (
+              <div className="mb-4">
+                <div className={`flex items-center gap-2 mb-2 px-1 ${isLight ? "text-blue-600" : "text-blue-400"}`}>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm font-medium">{runningScans.length} scan{runningScans.length > 1 ? "s" : ""} in progress</span>
+                </div>
+                {runningScans.map((scan) => (
+                  <motion.div key={scan.id}>
+                    <Link href={`/scans/${scan.id}`} className={t.card}>
+                      <div className="shrink-0">
+                        <div className="w-[52px] h-[52px] flex items-center justify-center">
+                          <Loader2 className={`w-5 h-5 animate-spin ${isLight ? "text-blue-500" : "text-blue-400"}`} />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={t.scanTitle}>{scan.sourceInput}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-xs ${isLight ? "text-blue-500" : "text-blue-400"}`}>Running</span>
+                          <span className={t.separator}>·</span>
+                          <span className={t.scanMeta}>{scan.sourceType}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={t.scanDate}>{new Date(scan.createdAt).toLocaleDateString()}</span>
+                        <ChevronRight className={t.chevron} />
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {completedScans.map((scan, i) => (
               <motion.div
                 key={scan.id}
                 initial={{ opacity: 0, y: 12 }}
