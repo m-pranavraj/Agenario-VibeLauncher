@@ -408,12 +408,12 @@ export default function Home() {
                   ? "text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500"
                   : "text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40"
                 }>
-                  Deep Tech & Mathematics.
+                  Deep Tech.
                 </span>
               </motion.h1>
 
               <motion.p variants={FADE_UP} className={`text-lg leading-relaxed max-w-lg ${t.body}`}>
-                Agenario is a supreme blend of deep tech, formal verification compilers, and advanced mathematics. It is a production-grade code review engine built for enterprise, iOS, Android, and web scale. It doesn't guess—it proves.
+                Agenario is a supreme blend of deep tech and formal verification compilers. It is a production-grade code review engine built for enterprise, iOS, Android, and web scale. It doesn't guess—it proves.
               </motion.p>
 
               <motion.div variants={FADE_UP} className={`inline-flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${isLight ? "bg-fuchsia-50 border border-fuchsia-200/60 text-fuchsia-700" : "bg-fuchsia-500/[0.08] border border-fuchsia-500/20 text-fuchsia-400"}`}>
