@@ -314,10 +314,11 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           },
+          family: 4,                // Force IPv4 to prevent IPv6 ENETUNREACH issues
           connectionTimeout: 10000, // 10 seconds connection timeout
           greetingTimeout: 10000,   // 10 seconds greeting timeout
           socketTimeout: 15000,     // 15 seconds socket timeout
-        });
+        } as any);
       } else {
         console.log("[SMTP] No SMTP_HOST found in env. Generating temporary Ethereal account...");
         const testAccount = await nodemailer.createTestAccount();
@@ -329,7 +330,8 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
             user: testAccount.user,
             pass: testAccount.pass,
           },
-        });
+          family: 4,                // Force IPv4
+        } as any);
       }
 
       const info = await transporter.sendMail({
@@ -349,7 +351,7 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
       });
 
       if (!process.env.SMTP_HOST) {
-        console.log(`[DEV ONLY] Ethereal Test Email URL: ${nodemailer.getTestMessageUrl(info)}`);
+        console.log(`[DEV ONLY] Ethereal Test Email URL: ${nodemailer.getTestMessageUrl(info as any)}`);
       }
     } catch (error) {
       console.error("Failed to send password reset email asynchronously:", error);
