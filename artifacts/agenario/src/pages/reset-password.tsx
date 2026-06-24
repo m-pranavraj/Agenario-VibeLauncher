@@ -120,7 +120,10 @@ export default function ResetPasswordPage() {
                   }`}
                 >
                   <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-                  <p className="text-sm font-medium leading-relaxed">If an account with that email exists, we've sent a password reset link.</p>
+                  <p className="text-sm font-medium leading-relaxed">
+                    If an account with that email exists, we've sent a password reset link.<br/>
+                    <span className="opacity-80 mt-1 block">Please be sure to check your spam folder if you don't find it in your inbox.</span>
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
