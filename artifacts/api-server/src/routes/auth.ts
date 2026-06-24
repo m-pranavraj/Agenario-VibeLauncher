@@ -328,7 +328,7 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
     }
 
     const info = await transporter.sendMail({
-      from: '"Agenario Security" <noreply@agenario.com>',
+      from: `"Agenario Security" <${process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@agenario.com"}>`,
       to: email,
       subject: "Password Reset Request",
       text: `You requested a password reset. Please click the following link to create a new password: ${resetUrl}`,
