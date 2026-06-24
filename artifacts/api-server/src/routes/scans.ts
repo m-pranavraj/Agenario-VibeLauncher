@@ -268,7 +268,7 @@ function pillarFindingToIssueRow(scanId: number, f: any, agentName: string): typ
 }
 
 router.get("/scans", async (req, res): Promise<void> => {
-  const userId = req.session?.userId ?? req.userId;
+  const userId = req.session?.userId ?? (req as any).userId;
   if (!userId) {
     res.json([]);
     return;

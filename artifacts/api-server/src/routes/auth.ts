@@ -299,58 +299,62 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
 
   const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/update-password?token=${resetToken}`;
 
-  try {
-    let transporter;
-    
-    // Use real SMTP if provided, otherwise use Ethereal for testing
-    if (process.env.SMTP_HOST) {
-      transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || "587"),
-        secure: process.env.SMTP_SECURE === "true",
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
+  // Send the email asynchronously in the background (fire-and-forget) to avoid blocking the HTTP response
+  (async () => {
+    try {
+      let transporter;
+      
+      // Use real SMTP if provided, otherwise use Ethereal for testing
+      if (process.env.SMTP_HOST) {
+        transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT || "587"),
+          secure: process.env.SMTP_SECURE === "true",
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+          connectionTimeout: 10000, // 10 seconds connection timeout
+          greetingTimeout: 10000,   // 10 seconds greeting timeout
+          socketTimeout: 15000,     // 15 seconds socket timeout
+        });
+      } else {
+        console.log("[SMTP] No SMTP_HOST found in env. Generating temporary Ethereal account...");
+        const testAccount = await nodemailer.createTestAccount();
+        transporter = nodemailer.createTransport({
+          host: "smtp.ethereal.email",
+          port: 587,
+          secure: false,
+          auth: {
+            user: testAccount.user,
+            pass: testAccount.pass,
+          },
+        });
+      }
+
+      const info = await transporter.sendMail({
+        from: `"Agenario Security" <${process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@agenario.com"}>`,
+        to: email,
+        subject: "Password Reset Request",
+        text: `You requested a password reset. Please click the following link to create a new password: ${resetUrl}`,
+        html: `
+          <div style="font-family: sans-serif; max-w-md; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px;">
+            <h2 style="color: #333;">Password Reset Request</h2>
+            <p>We received a request to reset your password for your Agenario account.</p>
+            <p>Click the button below to choose a new password. This link is valid for 15 minutes.</p>
+            <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #000; color: #fff; text-decoration: none; border-radius: 5px; margin-top: 15px;">Reset Password</a>
+            <p style="margin-top: 20px; font-size: 12px; color: #888;">If you didn't request this, you can safely ignore this email.</p>
+          </div>
+        `,
       });
-    } else {
-      console.log("[SMTP] No SMTP_HOST found in env. Generating temporary Ethereal account...");
-      const testAccount = await nodemailer.createTestAccount();
-      transporter = nodemailer.createTransport({
-        host: "smtp.ethereal.email",
-        port: 587,
-        secure: false,
-        auth: {
-          user: testAccount.user,
-          pass: testAccount.pass,
-        },
-      });
+
+      if (!process.env.SMTP_HOST) {
+        console.log(`[DEV ONLY] Ethereal Test Email URL: ${nodemailer.getTestMessageUrl(info)}`);
+      }
+    } catch (error) {
+      console.error("Failed to send password reset email asynchronously:", error);
     }
-
-    const info = await transporter.sendMail({
-      from: `"Agenario Security" <${process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@agenario.com"}>`,
-      to: email,
-      subject: "Password Reset Request",
-      text: `You requested a password reset. Please click the following link to create a new password: ${resetUrl}`,
-      html: `
-        <div style="font-family: sans-serif; max-w-md; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px;">
-          <h2 style="color: #333;">Password Reset Request</h2>
-          <p>We received a request to reset your password for your Agenario account.</p>
-          <p>Click the button below to choose a new password. This link is valid for 15 minutes.</p>
-          <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #000; color: #fff; text-decoration: none; border-radius: 5px; margin-top: 15px;">Reset Password</a>
-          <p style="margin-top: 20px; font-size: 12px; color: #888;">If you didn't request this, you can safely ignore this email.</p>
-        </div>
-      `,
-    });
-
-    if (!process.env.SMTP_HOST) {
-      console.log(`[DEV ONLY] Ethereal Test Email URL: ${nodemailer.getTestMessageUrl(info)}`);
-    }
-
-  } catch (error) {
-    console.error("Failed to send password reset email:", error);
-    // Continue anyway so we don't leak user existence on email failure
-  }
+  })();
 
   res.json({ success: true, message: "If an account with that email exists, we sent a password reset link." });
 });
