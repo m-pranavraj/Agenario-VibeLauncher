@@ -303,23 +303,45 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
   (async () => {
     try {
       const dns = await import("dns");
-      let transporter;
+      const { promisify } = await import("util");
       
-      const customLookup = (hostname: string, options: any, callback: any) => {
-        dns.lookup(hostname, { ...options, family: 4 }, callback);
-      };
+      // Force Node to prefer IPv4 over IPv6 globally
+      if (typeof dns.setDefaultResultOrder === "function") {
+        dns.setDefaultResultOrder("ipv4first");
+      }
+      
+      const resolve4 = promisify(dns.resolve4);
+      let smtpHost = process.env.SMTP_HOST || "";
+      let tlsOptions: any = {};
+      
+      // If we are using a hostname (like smtp.gmail.com), resolve it to IPv4 manually
+      // to completely bypass any system IPv6 preferences.
+      if (smtpHost && !/^[0-9.]+$/.test(smtpHost)) {
+        try {
+          const ips = await resolve4(smtpHost);
+          if (ips && ips.length > 0) {
+            console.log(`[SMTP] Manually resolved ${smtpHost} to IPv4: ${ips[0]}`);
+            tlsOptions.servername = smtpHost; // Keep hostname verification for SSL
+            smtpHost = ips[0];                // Connect directly to the IPv4 address
+          }
+        } catch (dnsErr) {
+          console.error(`[SMTP] Manual DNS resolve4 failed for ${smtpHost}, falling back to hostname:`, dnsErr);
+        }
+      }
+
+      let transporter;
 
       // Use real SMTP if provided, otherwise use Ethereal for testing
       if (process.env.SMTP_HOST) {
         transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
+          host: smtpHost,
           port: parseInt(process.env.SMTP_PORT || "587"),
           secure: process.env.SMTP_SECURE === "true",
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           },
-          lookup: customLookup,     // Force IPv4 DNS lookup to prevent ENETUNREACH on Render
+          tls: tlsOptions,
           connectionTimeout: 10000, // 10 seconds connection timeout
           greetingTimeout: 10000,   // 10 seconds greeting timeout
           socketTimeout: 15000,     // 15 seconds socket timeout
@@ -335,7 +357,6 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
             user: testAccount.user,
             pass: testAccount.pass,
           },
-          lookup: customLookup,     // Force IPv4
         } as any);
       }
 
