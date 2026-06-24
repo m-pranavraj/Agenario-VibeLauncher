@@ -306,6 +306,41 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
   // Send the email asynchronously in the background (fire-and-forget) to avoid blocking the HTTP response
   (async () => {
     try {
+      const subject = "Password Reset Request";
+      const text = `You requested a password reset. Please click the following link to create a new password: ${resetUrl}`;
+      const html = `
+        <div style="font-family: sans-serif; max-w-md; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px;">
+          <h2 style="color: #333;">Password Reset Request</h2>
+          <p>We received a request to reset your password for your Agenario account.</p>
+          <p>Click the button below to choose a new password. This link is valid for 15 minutes.</p>
+          <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #000; color: #fff; text-decoration: none; border-radius: 5px; margin-top: 15px;">Reset Password</a>
+          <p style="margin-top: 20px; font-size: 12px; color: #888;">If you didn't request this, you can safely ignore this email.</p>
+        </div>
+      `;
+
+      // Bypass Render's SMTP firewall by routing to the Vercel Proxy if configured
+      if (process.env.MAIL_PROXY_URL) {
+        console.log(`[SMTP] Routing email through Vercel proxy at ${process.env.MAIL_PROXY_URL}`);
+        const proxyResp = await fetch(process.env.MAIL_PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            secret: process.env.MAIL_PROXY_SECRET,
+            to: email,
+            subject,
+            text,
+            html
+          })
+        });
+        
+        if (!proxyResp.ok) {
+           const errText = await proxyResp.text();
+           throw new Error(`Proxy HTTP ${proxyResp.status}: ${errText}`);
+        }
+        console.log("[SMTP] Successfully sent via Vercel proxy!");
+        return; // Early exit since proxy succeeded
+      }
+
       const dns = await import("dns");
       const { promisify } = await import("util");
       
@@ -367,17 +402,9 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
       const info = await transporter.sendMail({
         from: `"Agenario Security" <${process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@agenario.com"}>`,
         to: email,
-        subject: "Password Reset Request",
-        text: `You requested a password reset. Please click the following link to create a new password: ${resetUrl}`,
-        html: `
-          <div style="font-family: sans-serif; max-w-md; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px;">
-            <h2 style="color: #333;">Password Reset Request</h2>
-            <p>We received a request to reset your password for your Agenario account.</p>
-            <p>Click the button below to choose a new password. This link is valid for 15 minutes.</p>
-            <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #000; color: #fff; text-decoration: none; border-radius: 5px; margin-top: 15px;">Reset Password</a>
-            <p style="margin-top: 20px; font-size: 12px; color: #888;">If you didn't request this, you can safely ignore this email.</p>
-          </div>
-        `,
+        subject,
+        text,
+        html,
       });
 
       if (!process.env.SMTP_HOST) {

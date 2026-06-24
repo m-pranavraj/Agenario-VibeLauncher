@@ -70,6 +70,10 @@ catalogs:
 importers:
 
   .:
+    dependencies:
+      nodemailer:
+        specifier: ^9.0.1
+        version: 9.0.1
     devDependencies:
       '@esbuild/win32-x64':
         specifier: 0.27.3
@@ -1632,6 +1636,7 @@ packages:
   '@esbuild/win32-x64@0.27.3':
     resolution: {integrity: sha512-4uJGhsxuptu3OcpVAzli+/gWusVGwZZHTlS63hh++ehExkVT8SgiEf7/uC/PclrPPkLhZqGgCTjd0VWLo6xMqA==}
     engines: {node: '>=18'}
+    cpu: [x64]
     os: [win32]
 
   '@esbuild/win32-x64@0.27.7':
@@ -2856,6 +2861,7 @@ packages:
 
   '@rollup/rollup-win32-x64-msvc@4.62.0':
     resolution: {integrity: sha512-5L+T1fMX4RIEBoZzT0+sQ0PhTS36NULFmMXtl1TZo44TMAROIMHbZufSOjVWt/Y622BtxgxtaNOokbTDvfsrZA==}
+    cpu: [x64]
     os: [win32]
 
   '@scalar/helpers@0.5.2':
