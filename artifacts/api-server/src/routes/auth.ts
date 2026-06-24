@@ -302,8 +302,13 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
   // Send the email asynchronously in the background (fire-and-forget) to avoid blocking the HTTP response
   (async () => {
     try {
+      const dns = await import("dns");
       let transporter;
       
+      const customLookup = (hostname: string, options: any, callback: any) => {
+        dns.lookup(hostname, { ...options, family: 4 }, callback);
+      };
+
       // Use real SMTP if provided, otherwise use Ethereal for testing
       if (process.env.SMTP_HOST) {
         transporter = nodemailer.createTransport({
@@ -314,7 +319,7 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           },
-          family: 4,                // Force IPv4 to prevent IPv6 ENETUNREACH issues
+          lookup: customLookup,     // Force IPv4 DNS lookup to prevent ENETUNREACH on Render
           connectionTimeout: 10000, // 10 seconds connection timeout
           greetingTimeout: 10000,   // 10 seconds greeting timeout
           socketTimeout: 15000,     // 15 seconds socket timeout
@@ -330,7 +335,7 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
             user: testAccount.user,
             pass: testAccount.pass,
           },
-          family: 4,                // Force IPv4
+          lookup: customLookup,     // Force IPv4
         } as any);
       }
 
