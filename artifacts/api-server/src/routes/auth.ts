@@ -298,6 +298,10 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
     .where(eq(usersTable.id, user.id));
 
   const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/update-password?token=${resetToken}`;
+  console.log(`\n================================================================`);
+  console.log(`[PASSWORD RESET] User: ${email}`);
+  console.log(`[PASSWORD RESET] Link: ${resetUrl}`);
+  console.log(`================================================================\n`);
 
   // Send the email asynchronously in the background (fire-and-forget) to avoid blocking the HTTP response
   (async () => {
