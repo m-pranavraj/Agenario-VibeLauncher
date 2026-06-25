@@ -26,7 +26,7 @@ const CLASSICAL_BOTTLENECKS = [
   { pattern: /\bcrypto\.(pbkdf2|scrypt|bcrypt|argon2|randomBytes|randomFill)\b/, reason: "Non-linear cryptographic hash — incompatible with FHE batching", overhead: "10^6x", scheme: "none" as const },
   { pattern: /\b(Math\.random|Date\.now|performance\.now|getTime)\b/, reason: "Non-deterministic entropy source — breaks FHE evaluation determinism", overhead: "prohibitive", scheme: "none" as const },
   { pattern: /\b(JSON\.stringify|JSON\.parse)\b/, reason: "Variable-length serialization — FHE requires fixed-size slots", overhead: "10^4x", scheme: "none" as const },
-  { pattern: /\b(if|switch|case|? :)\b.*\b(ciphertext|encrypted|ct)\b/gi, reason: "Branching on encrypted data requires TFHE bootstrapping (10-100ms per gate)", overhead: "10^5x", scheme: "TFHE" as const },
+  { pattern: /\b(if|switch|case|\?)\b.*\b(ciphertext|encrypted|ct)\b/gi, reason: "Branching on encrypted data requires TFHE bootstrapping (10-100ms per gate)", overhead: "10^5x", scheme: "TFHE" as const },
   { pattern: /\b(forEach|map|filter|reduce)\b.*\b(ciphertext|encrypted)\b/gi, reason: "Ciphertext loop operations require costly SIMD packing", overhead: "10^3x", scheme: "CKKS" as const },
   { pattern: /\b(fetch|axios|http\.get|http\.post)\b/, reason: "Network I/O cannot be homomorphically evaluated — must happen outside FHE boundary", overhead: "N/A", scheme: "none" as const },
   { pattern: /\b(console\.log|console\.error|console\.warn)\b/, reason: "Logging is side-effect — cannot be evaluated on ciphertext", overhead: "N/A", scheme: "none" as const },
