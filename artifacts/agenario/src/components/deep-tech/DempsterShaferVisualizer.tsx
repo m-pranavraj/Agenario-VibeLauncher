@@ -231,8 +231,29 @@ function FindingDetail({ finding, index }: { finding: DempsterShaferFinding; ind
   );
 }
 
-export function DempsterShaferVisualizer({ data }: { data: DempsterShaferResult }) {
+export function DempsterShaferVisualizer({ data }: { data: DempsterShaferResult | null }) {
   const isLight = useIsLight();
+
+  if (!data) {
+    return (
+      <div className={`rounded-2xl border p-6 ${isLight ? "bg-white border-slate-200" : "bg-black/40 border-white/10"}`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isLight ? "bg-indigo-100 text-indigo-600" : "bg-indigo-500/20 text-indigo-400"}`}>
+            <GitMerge className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Dempster-Shafer Evidence Fusion</h3>
+            <p className={`text-[10px] ${isLight ? "text-slate-400" : "text-white/30"}`}>Multi-signal evidence confidence</p>
+          </div>
+        </div>
+        <div className={`p-4 rounded-lg ${isLight ? "bg-slate-50" : "bg-white/5"} flex items-center gap-3`}>
+          <CheckCircle2 className="w-4 h-4 text-green-400" />
+          <span className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>No evidence fusion data available. Connect this engine to the scan pipeline.</span>
+        </div>
+      </div>
+    );
+  }
+
   const agg = data.aggregate;
 
   const overallVerdict =

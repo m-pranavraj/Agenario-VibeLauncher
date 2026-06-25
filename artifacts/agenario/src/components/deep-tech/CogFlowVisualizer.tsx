@@ -5,9 +5,26 @@ import { useIsLight } from "@/hooks/use-is-light";
 interface CogFlowItem { functionName: string; file: string; line: number; complexity: number; category: string; breakdown: { nesting: number; loops: number; conditionals: number; recursion: number; logicalOps: number; }; }
 interface CogFlowData { score: number; maxComplexity: number; avgComplexity: number; totalHighComplexity: number; functions: CogFlowItem[]; }
 
-export function CogFlowVisualizer({ data }: { data: CogFlowData }) {
+export function CogFlowVisualizer({ data }: { data: CogFlowData | null }) {
   const isLight = useIsLight();
   const [expanded, setExpanded] = useState(false);
+
+  if (!data) {
+    return (
+      <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-pink-100 text-pink-600" : "bg-pink-500/20 text-pink-400"}`}>
+            <Brain className="w-4 h-4" />
+          </div>
+          <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>CogFlow — Cognitive Load Profiler</h3>
+        </div>
+        <div className={`p-4 rounded-lg ${isLight ? "bg-slate-50" : "bg-white/5"} flex items-center gap-3`}>
+          <CheckCircle2 className="w-4 h-4 text-green-400" />
+          <span className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>No cognitive load data available. Connect this engine to the scan pipeline.</span>
+        </div>
+      </div>
+    );
+  }
 
   const complexFns = data.functions?.filter(f => f.category === "high" || f.category === "extreme") || [];
   const sortedFns = [...(data.functions || [])].sort((a, b) => b.complexity - a.complexity);

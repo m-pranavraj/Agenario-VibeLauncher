@@ -1,6 +1,7 @@
 import { type CodeContext, getAnyClient, smartModel, fastModel, extractJson } from "./agents.js";
 import { type CSG } from "./csg-builder.js";
 import { logger } from "./logger.js";
+import { normalizeEvidence, combineMasses, computeBelief, computePlausibility } from "./dempster-shafer.js";
 
 export interface VerifiedFinding {
   id: string;
@@ -31,13 +32,15 @@ export interface VerifiedFinding {
  * m1(A) = m1, m1(Theta) = 1 - m1
  * m2(A) = m2, m2(Theta) = 1 - m2
  */
-function fuseDempsterShafer(m1: number, m2: number): number {
-  const m1_A = m1 / 100;
-  const m1_Theta = 1 - m1_A;
-  const m2_A = m2 / 100;
-  const m2_Theta = 1 - m2_A;
-  const combined_A = (m1_A * m2_A) + (m1_A * m2_Theta) + (m1_Theta * m2_A);
-  return Math.min(Math.round(combined_A * 100), 100);
+function fuseDempsterShafer(c1: number, c2: number): number {
+  const s1 = normalizeEvidence(c1, 0.85, 1, "high");
+  const s2 = normalizeEvidence(c2, 0.85, 1, "high");
+  const combined = combineMasses(s1, s2);
+  const { belV } = computeBelief(combined);
+  const { plV } = computePlausibility(combined);
+  const intervalWidth = plV - belV;
+  const confidence = Math.round(belV * (1 - intervalWidth * 0.5) * 100);
+  return Math.max(0, Math.min(100, confidence));
 }
 
 /**

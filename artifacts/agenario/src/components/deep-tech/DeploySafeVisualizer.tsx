@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Shield, ShieldAlert, ShieldCheck, AlertTriangle, XCircle, ChevronDown, ChevronUp, Terminal, FileText, Key } from "lucide-react";
+import { Shield, ShieldAlert, ShieldCheck, AlertTriangle, XCircle, ChevronDown, ChevronUp, Terminal, FileText, Key, CheckCircle2 } from "lucide-react";
 import { useIsLight } from "@/hooks/use-is-light";
 
 interface InfraFinding { ruleId: string; severity: string; message: string; file: string; line: number; remediation: string; category: string; }
@@ -12,9 +12,26 @@ const SEV_CONFIG: Record<string, { label: string; color: string; icon: any }> = 
   low:      { label: "Low",      color: "text-slate-400", icon: Shield },
 };
 
-export function DeploySafeVisualizer({ data }: { data: DeploySafeData }) {
+export function DeploySafeVisualizer({ data }: { data: DeploySafeData | null }) {
   const isLight = useIsLight();
   const [expanded, setExpanded] = useState(false);
+
+  if (!data) {
+    return (
+      <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-orange-100 text-orange-600" : "bg-orange-500/20 text-orange-400"}`}>
+            <Shield className="w-4 h-4" />
+          </div>
+          <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>DeploySafe — Infrastructure Verifier</h3>
+        </div>
+        <div className={`p-4 rounded-lg ${isLight ? "bg-slate-50" : "bg-white/5"} flex items-center gap-3`}>
+          <CheckCircle2 className="w-4 h-4 text-green-400" />
+          <span className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>No deployment data available. Connect this engine to the scan pipeline.</span>
+        </div>
+      </div>
+    );
+  }
 
   const scoreColor = data.score >= 70 ? "text-green-400" : data.score >= 40 ? "text-yellow-400" : "text-red-400";
 

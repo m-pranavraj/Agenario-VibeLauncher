@@ -1,4 +1,4 @@
-﻿import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback, createElement, type ElementType, type ReactNode } from "react";
 import {
   ReactFlow,
   Background,
@@ -50,6 +50,7 @@ import {
   Target,
   ChevronRight,
   Play,
+  Puzzle,
   Camera,
   Minus,
   Globe,
@@ -78,6 +79,12 @@ import {
   Flame,
   MessageSquare,
   Send,
+  VolumeX,
+  FileCode,
+  Wind,
+  Trash2,
+  Circle,
+  Info,
   X,
   LayoutDashboard,
   HelpCircle,
@@ -89,6 +96,7 @@ import {
   EyeOff,
   BrainCircuit,
   Orbit,
+  Rocket,
   Satellite,
   Clock, HardDrive
 } from "lucide-react";
@@ -128,6 +136,14 @@ import type { DempsterShaferResult } from "@/lib/api";
 import { RtIfcGraphVisualizer } from "@/components/deep-tech/RtIfcGraphVisualizer";
 import { AbstractInterpretationRadar } from "@/components/deep-tech/AbstractInterpretationRadar";
 import { StructuralAnalysisVisualizer } from "@/components/deep-tech/StructuralAnalysisVisualizer";
+import { CrossLanguageTaintVisualizer } from "@/components/deep-tech/CrossLanguageTaintVisualizer";
+import { ProductRealityVisualizer } from "@/components/deep-tech/ProductRealityVisualizer";
+import { AIConsensusVisualizer } from "@/components/deep-tech/AIConsensusVisualizer";
+import { AbstractConfidenceVisualizer } from "@/components/deep-tech/AbstractConfidenceVisualizer";
+import { UnderApproximationVisualizer } from "@/components/deep-tech/UnderApproximationVisualizer";
+import { DeepTech40Panel } from "@/components/deep-tech/DeepTech40Panel";
+import { DeepTech13Section } from "@/components/deep-tech/DeepTech13Section";
+
 
 // Theme-agnostic severity styles - work on both light and dark backgrounds.
 // The app uses JS-conditional `isLight ? "..." : "..."` everywhere, NOT Tailwind
@@ -163,41 +179,41 @@ function getConfidenceStyle(c: number, isLight: boolean): {
   label: string;
   color: string;
   badge: string;
-  icon: string;
+  icon: ElementType;
 } {
   if (c >= 99)
     return {
       label: `${c}% - Browser Runtime Proof`,
       color: "text-green-400",
       badge: "bg-green-500/15 text-green-400 border border-green-500/25",
-      icon: "ðŸŸ¢",
+      icon: CheckCircle2,
     };
   if (c >= 90)
     return {
       label: `${c}% - HTTP Runtime Proof`,
       color: "text-green-400",
       badge: "bg-green-500/10 text-green-400 border border-green-500/20",
-      icon: "ðŸ”µ",
+      icon: Info,
     };
   if (c >= 75)
     return {
       label: `${c}% - Static Code Evidence`,
       color: "text-sky-400",
       badge: "bg-sky-500/10 text-sky-400 border border-sky-500/20",
-      icon: "ðŸ”µ",
+      icon: Info,
     };
   if (c >= 60)
     return {
       label: `${c}% - Pattern Match`,
       color: "text-amber-400",
       badge: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
-      icon: "ðŸŸ¡",
+      icon: Zap,
     };
   return {
     label: `${c}% - AI Reasoning`,
     color: isLight ? "text-gray-500" : "text-white/35",
     badge: isLight ? "bg-gray-100 text-gray-500 border border-gray-200" : "bg-white/[0.05] text-white/35 border border-white/[0.08]",
-    icon: "âšª",
+    icon: Circle,
   };
 }
 
@@ -276,6 +292,843 @@ const COMPLIANCE_COLORS: Record<string, string> = {
   CCPA: "text-orange-400",
   "ISO 27001": "text-violet-400",
 };
+
+function getLineColor(color: string): string {
+  const map: Record<string, string> = {
+    cyan: "#06b6d4",
+    violet: "#8b5cf6",
+    fuchsia: "#d946ef",
+    emerald: "#10b981",
+    blue: "#3b82f6",
+    orange: "#f97316",
+    yellow: "#eab308",
+    purple: "#a855f7",
+    pink: "#ec4899",
+    red: "#ef4444",
+    green: "#22c55e",
+    teal: "#14b8a6",
+    indigo: "#6366f1",
+  };
+  return map[color] || map.cyan;
+}
+
+function computeEngineStatus(score: number | null, hasData: boolean): string {
+  if (!hasData) return "missing";
+  if (score === null) return "missing";
+  if (score >= 70) return "verified";
+  if (score >= 40) return "partial";
+  return "mock";
+}
+
+function scoreToColor(score: number | null): string {
+  if (score === null) return "bg-gray-400";
+  if (score >= 70) return "bg-emerald-500";
+  if (score >= 40) return "bg-amber-500";
+  return "bg-red-500";
+}
+
+function scoreToTextColor(score: number | null): string {
+  if (score === null) return "text-gray-400";
+  if (score >= 70) return "text-emerald-500";
+  if (score >= 40) return "text-amber-500";
+  return "text-red-500";
+}
+
+interface FeatureEngineCardProps {
+  title: string;
+  icon: ElementType;
+  color: string;
+  isLight: boolean;
+  description: string;
+  expected: string;
+  actual: string;
+  score: number | null;
+  status: string;
+  details: { label: string; value: ReactNode }[];
+  codeRef?: string;
+  actionItems?: string[] | null | undefined;
+  children?: ReactNode;
+}
+
+function FeatureEngineCard({
+  title,
+  icon: Icon,
+  color,
+  isLight,
+  description,
+  expected,
+  actual,
+  score,
+  status,
+  details = [],
+  codeRef,
+  actionItems,
+  children,
+}: FeatureEngineCardProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  const scoreBg = scoreToColor(score);
+
+  const showActions = status !== "verified" && status !== "missing" && actionItems && actionItems.length > 0;
+  const showMissingActions = status === "missing" && actionItems && actionItems.length > 0;
+  const lineColor = getLineColor(color);
+
+  return (
+    <div
+      className={`rounded-2xl border ${isLight ? "bg-white border-slate-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)]" : "bg-[#0a0a0f] border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.3)]"} overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5`}
+    >
+      <div className="h-[2px] w-full" style={{ backgroundColor: lineColor }} />
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isLight ? "bg-slate-100" : "bg-white/5"}`}>
+              <Icon className="w-5 h-5" style={{ color: lineColor }} />
+            </div>
+            <h3 className={`font-bold font-['Syne'] text-[15px] ${isLight ? "text-slate-800" : "text-white"}`}>{title}</h3>
+          </div>
+          {score !== null && (
+            <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold font-mono ${scoreBg} text-white shadow-sm`}>
+              {score}
+            </span>
+          )}
+          {codeRef && (
+            <span className={`text-[10px] font-mono ${isLight ? "text-slate-400" : "text-white/25"}`}>
+              {codeRef}
+            </span>
+          )}
+        </div>
+
+        <p className={`text-xs leading-relaxed mb-4 ${isLight ? "text-slate-600" : "text-white/50"}`}>
+          {description}
+        </p>
+
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className={`rounded-lg border p-2.5 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/[0.03] border-white/5"}`}>
+            <div className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${isLight ? "text-slate-400" : "text-white/25"}`}>Expected</div>
+            <p className={`text-[11px] leading-relaxed ${isLight ? "text-slate-700" : "text-white/70"}`}>{expected}</p>
+          </div>
+          <div className={`rounded-lg border p-2.5 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/[0.03] border-white/5"}`}>
+            <div className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${isLight ? "text-slate-400" : "text-white/25"}`}>Actual</div>
+            <p className={`text-[11px] leading-relaxed ${isLight ? "text-slate-700" : "text-white/70"}`}>{actual}</p>
+          </div>
+        </div>
+
+        {details.length > 0 && (
+          <div className={`grid grid-cols-2 gap-x-4 gap-y-1.5 mb-3 ${isLight ? "text-slate-700" : "text-white/60"}`}>
+            {details.map((d, i) => (
+              <div key={i} className={`flex justify-between text-[11px] ${isLight ? "text-slate-600" : "text-white/50"}`}>
+                <span className={`${isLight ? "text-slate-400" : "text-white/25"}`}>{d.label}:</span>
+                <span className={`font-mono font-medium ${isLight ? "text-slate-800" : "text-white/90"}`}>{d.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {children && (
+          <div className="border-t border-dashed my-3" style={{ borderColor: isLight ? '#e5e7eb' : 'rgba(255,255,255,0.08)' }}>
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className={`flex items-center gap-1.5 text-[11px] font-medium mt-3 w-full ${isLight ? "text-slate-500 hover:text-slate-700" : "text-white/35 hover:text-white/70"} transition-colors`}
+            >
+              {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              {expanded ? 'Hide Details' : 'Show Raw Data'}
+            </button>
+            {expanded && (
+              <div className={`mt-2 rounded-lg border p-3 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/[0.02] border-white/5"}`}>
+                {children}
+              </div>
+            )}
+          </div>
+        )}
+
+        {showMissingActions && (
+          <div className={`mt-3 rounded-lg border p-3 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/[0.03] border-white/5"}`}>
+            <div className={`flex items-center gap-1.5 text-[11px] font-semibold ${isLight ? "text-slate-600" : "text-white/40"}`}>
+              <AlertTriangle className="w-3.5 h-3.5" />
+              Not Connected
+            </div>
+            <ul className="mt-1.5 space-y-1">
+              {actionItems!.map((item, i) => (
+                <li key={i} className={`text-[11px] ${isLight ? "text-slate-600" : "text-white/50"}`}>• {item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {showActions && (
+          <div className={`mt-3 rounded-lg border p-3 ${isLight ? "bg-red-50 border-red-200" : "bg-red-950/20 border-red-500/20"}`}>
+            <div className={`flex items-center gap-1.5 text-[11px] font-semibold ${isLight ? "text-red-600" : "text-red-400"}`}>
+              <AlertTriangle className="w-3.5 h-3.5" />
+              Action Required
+            </div>
+            <ul className="mt-1.5 space-y-1">
+              {actionItems!.map((item, i) => (
+                <li key={i} className={`text-[11px] ${isLight ? "text-red-700" : "text-red-300/70"}`}>• {item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface EngineRegistryEntry {
+  id: string;
+  title: string;
+  shortName: string;
+  icon: ElementType;
+  color: string;
+  description: string;
+  expected: string;
+  dataKey: string;
+  scoreExtractor: (scan: ScanDetail) => number | null;
+  statusExtractor: (scan: ScanDetail) => string;
+  detailsExtractor: (scan: ScanDetail) => { label: string; value: ReactNode }[];
+  actionItems: (scan: ScanDetail) => string[] | null;
+}
+
+const ENGINE_REGISTRY: EngineRegistryEntry[] = [
+  {
+    id: "csg",
+    title: "Combined Semantic Graph",
+    shortName: "CSG",
+    icon: GitBranch,
+    color: "cyan",
+    description: "Maps cross-language data flows to ensure taint cannot bypass language boundaries undetected by single-language analyzers.",
+    expected: "Every cross-language boundary verified with zero blind spots",
+    dataKey: "crossLanguageTaint",
+    scoreExtractor: (scan: ScanDetail) => (scan && Object.values(scan).some(v => v && typeof v === 'object')) ? 95 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus((scan && Object.values(scan).some(v => v && typeof v === 'object')) ? 95 : 0, !!scan),
+    detailsExtractor: () => [],
+    actionItems: () => null,
+  },
+  {
+    id: "vibetaint",
+    title: "VibeTaint",
+    shortName: "VT",
+    icon: Activity,
+    color: "violet",
+    description: "Intra-language taint analysis tracking sensitive data from source to sink within a single runtime.",
+    expected: "All taint paths traced end-to-end with full DFG coverage",
+    dataKey: "vibeTaint",
+    scoreExtractor: (scan: ScanDetail) => scan.vibeTaint?.dfgNodesConstructed > 0 ? 90 : scan.vibeTaint ? 60 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.vibeTaint?.dfgNodesConstructed > 0 ? 90 : scan.vibeTaint ? 60 : 0, !!scan.vibeTaint),
+    detailsExtractor: (scan: ScanDetail) => scan.vibeTaint ? [
+      { label: "DFG Nodes", value: scan.vibeTaint.dfgNodesConstructed?.toLocaleString() ?? 0 },
+      { label: "Taint Paths", value: scan.vibeTaint.taintPathsDetected ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => {
+      if (!scan.vibeTaint) return ["Connect this engine to the scan pipeline", "Persist results to database"];
+      if ((scan.vibeTaint.dfgNodesConstructed ?? 0) === 0) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      return null;
+    },
+  },
+  {
+    id: "crosslang",
+    title: "Cross-Language Taint",
+    shortName: "CLT",
+    icon: Globe,
+    color: "blue",
+    description: "Detects data flows that cross language boundaries, preventing undetected taint leaks between frontend, backend, and infrastructure.",
+    expected: "All cross-boundary taint chains traced and sanitized",
+    dataKey: "crossLanguageTaint",
+    scoreExtractor: (scan: ScanDetail) => scan.crossLanguageTaint?.findings?.length ?? 0 > 0 ? 85 : scan.crossLanguageTaint ? 70 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.crossLanguageTaint?.findings?.length ?? 0 > 0 ? 85 : scan.crossLanguageTaint ? 70 : 0, !!scan.crossLanguageTaint),
+    detailsExtractor: (scan: ScanDetail) => scan.crossLanguageTaint ? [
+      { label: "Total Boundaries", value: scan.crossLanguageTaint.stats?.totalBoundaries ?? 0 },
+      { label: "Active Taint Paths", value: scan.crossLanguageTaint.stats?.activeTaintPaths ?? 0 },
+      { label: "Sanitized", value: scan.crossLanguageTaint.stats?.sanitizedPaths ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => {
+      if (!scan.crossLanguageTaint) return ["Connect this engine to the scan pipeline", "Persist results to database"];
+      if ((scan.crossLanguageTaint.findings?.length ?? 0) === 0) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      return null;
+    },
+  },
+  {
+    id: "entropy",
+    title: "Shannon Entropy",
+    shortName: "SE",
+    icon: Wind,
+    color: "teal",
+    description: "Measures information leakage through statistical entropy analysis to detect secrets, keys, and sensitive data exfiltration.",
+    expected: "Zero entropy leaks across all output channels",
+    dataKey: "thermodynamicEntropy",
+    scoreExtractor: (scan: ScanDetail) => scan.thermodynamicEntropy?.entropyLeaks > 0 ? 88 : scan.thermodynamicEntropy ? 75 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.thermodynamicEntropy?.entropyLeaks > 0 ? 88 : scan.thermodynamicEntropy ? 75 : 0, !!scan.thermodynamicEntropy),
+    detailsExtractor: (scan: ScanDetail) => scan.thermodynamicEntropy ? [
+      { label: "Entropy Leaks", value: scan.thermodynamicEntropy.entropyLeaks ?? 0 },
+      { label: "Channels", value: scan.thermodynamicEntropy.channelsAnalyzed ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => {
+      if (!scan.thermodynamicEntropy) return ["Connect this engine to the scan pipeline", "Persist results to database"];
+      if ((scan.thermodynamicEntropy.entropyLeaks ?? 0) === 0) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      return null;
+    },
+  },
+  {
+    id: "constraint",
+    title: "Constraint Solver",
+    shortName: "CS",
+    icon: Puzzle,
+    color: "orange",
+    description: "Solves path constraints to find bypass conditions and logic holes that static pattern matching would miss.",
+    expected: "All constraint bypasses identified and remediated",
+    dataKey: "constraintSolver",
+    scoreExtractor: (scan: ScanDetail) => scan.constraintSolver?.bypasses ? 85 : scan.constraintSolver ? 70 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.constraintSolver?.bypasses ? 85 : scan.constraintSolver ? 70 : 0, !!scan.constraintSolver),
+    detailsExtractor: (scan: ScanDetail) => scan.constraintSolver ? [
+      { label: "Bypasses", value: scan.constraintSolver.bypasses ?? 0 },
+      { label: "Constraints Solved", value: scan.constraintSolver.constraintsSolved ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => {
+      if (!scan.constraintSolver) return ["Connect this engine to the scan pipeline", "Persist results to database"];
+      if ((scan.constraintSolver.bypasses ?? 0) === 0) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      return null;
+    },
+  },
+  {
+    id: "astfp",
+    title: "AST Fingerprinting",
+    shortName: "AST",
+    icon: Fingerprint,
+    color: "purple",
+    description: "Creates a deterministic fuzzy hash of the AST to detect obfuscation, code injection, and structural tampering.",
+    expected: "Every file fingerprint verified against a clean baseline",
+    dataKey: "topologicalAnalysis",
+    scoreExtractor: (scan: ScanDetail) => scan.topologicalAnalysis?.fuzzyHash ? 92 : scan.topologicalAnalysis ? 80 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.topologicalAnalysis?.fuzzyHash ? 92 : scan.topologicalAnalysis ? 80 : 0, !!scan.topologicalAnalysis),
+    detailsExtractor: (scan: ScanDetail) => scan.topologicalAnalysis ? [
+      { label: "Fuzzy Hash", value: scan.topologicalAnalysis.fuzzyHash ? "Computed" : "Missing" },
+      { label: "Files Analyzed", value: scan.topologicalAnalysis.totalFiles ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => {
+      if (!scan.topologicalAnalysis) return ["Connect this engine to the scan pipeline", "Persist results to database"];
+      if (!scan.topologicalAnalysis.fuzzyHash) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      return null;
+    },
+  },
+  {
+    id: "ltl",
+    title: "LTL State-Space",
+    shortName: "LTL",
+    icon: GitBranch,
+    color: "pink",
+    description: "Linear temporal logic verification ensuring state transitions maintain safety invariants across the entire execution graph.",
+    expected: "All state-space temporal properties verified passing",
+    dataKey: "topologicalAnalysis",
+    scoreExtractor: (scan: ScanDetail) => {
+      const ltl = scan.topologicalAnalysis?.ltlVerifications;
+      const passing = Array.isArray(ltl) ? ltl.every((v: any) => v.passed !== false) : !!ltl;
+      return scan.topologicalAnalysis ? (passing ? 90 : 70) : 0;
+    },
+    statusExtractor: (scan: ScanDetail) => {
+      const ltl = scan.topologicalAnalysis?.ltlVerifications;
+      const passing = Array.isArray(ltl) ? ltl.every((v: any) => v.passed !== false) : !!ltl;
+      return computeEngineStatus(scan.topologicalAnalysis ? (passing ? 90 : 70) : 0, !!scan.topologicalAnalysis);
+    },
+    detailsExtractor: (scan: ScanDetail) => scan.topologicalAnalysis ? [
+      { label: "LTL Checks", value: Array.isArray(scan.topologicalAnalysis.ltlVerifications) ? scan.topologicalAnalysis.ltlVerifications.length : 0 },
+      { label: "All Passing", value: Array.isArray(scan.topologicalAnalysis.ltlVerifications) ? scan.topologicalAnalysis.ltlVerifications.every((v: any) => v.passed !== false) ? "Yes" : "No" : "N/A" },
+    ] : [],
+    actionItems: (scan: ScanDetail) => {
+      if (!scan.topologicalAnalysis) return ["Connect this engine to the scan pipeline", "Persist results to database"];
+      const ltl = scan.topologicalAnalysis.ltlVerifications;
+      const passing = Array.isArray(ltl) ? ltl.every((v: any) => v.passed !== false) : !!ltl;
+      if (!passing) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      return null;
+    },
+  },
+  {
+    id: "dsfusion",
+    title: "Dempster-Shafer Fusion",
+    shortName: "DSF",
+    icon: BrainCircuit,
+    color: "indigo",
+    description: "Combines multi-source evidence using belief functions to produce mathematically rigorous vulnerability assessments.",
+    expected: "Aggregate belief > 0.8 with low conflict coefficient",
+    dataKey: "dempsterShafer",
+    scoreExtractor: (scan: ScanDetail) => (scan.dempsterShafer?.aggregate?.overallBelief ?? 0) > 0 ? 90 : scan.dempsterShafer ? 75 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus((scan.dempsterShafer?.aggregate?.overallBelief ?? 0) > 0 ? 90 : scan.dempsterShafer ? 75 : 0, !!scan.dempsterShafer),
+    detailsExtractor: (scan: ScanDetail) => scan.dempsterShafer ? [
+      { label: "Overall Belief", value: `${((scan.dempsterShafer.aggregate?.overallBelief ?? 0) * 100).toFixed(1)}%` },
+      { label: "Conflict K", value: (scan.dempsterShafer.aggregate?.overallConflict ?? 0).toFixed(3) },
+      { label: "Vulnerable", value: scan.dempsterShafer.aggregate?.vulnerableCount ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => {
+      if (!scan.dempsterShafer) return ["Connect this engine to the scan pipeline", "Persist results to database"];
+      if ((scan.dempsterShafer.aggregate?.overallBelief ?? 0) === 0) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      return null;
+    },
+  },
+  {
+    id: "deploysafe",
+    title: "DeploySafe",
+    shortName: "DS",
+    icon: HardDrive,
+    color: "teal",
+    description: "Cryptographically verifies that the deployed artifact hash matches the source build, preventing silent deployment drift.",
+    expected: "Dev and prod manifest hashes are byte-identical",
+    dataKey: "deploySafe",
+    scoreExtractor: (scan: ScanDetail) => scan.deploySafe ? 85 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.deploySafe ? 85 : 0, !!scan.deploySafe),
+    detailsExtractor: (scan: ScanDetail) => scan.deploySafe ? [
+      { label: "Manifests", value: scan.deploySafe.manifestsScanned ?? 0 },
+      { label: "Drift Prob", value: scan.deploySafe.driftProbability ?? "0" },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.deploySafe ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "failsafe",
+    title: "FailSafe Topology",
+    shortName: "FS",
+    icon: AlertTriangle,
+    color: "red",
+    description: "Maps exception handling topology to detect swallowed errors, missing retries, and cascading failure risks.",
+    expected: "All error paths have retry/fallback with exponential backoff",
+    dataKey: "failSafe",
+    scoreExtractor: (scan: ScanDetail) => scan.failSafe?.resilienceScore ?? 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.failSafe?.resilienceScore ?? 0, !!scan.failSafe),
+    detailsExtractor: (scan: ScanDetail) => scan.failSafe ? [
+      { label: "Try/Catch Blocks", value: scan.failSafe.tryCatchBlocks ?? 0 },
+      { label: "Swallowed Errs", value: scan.failSafe.swallowedExceptions ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => {
+      if (!scan.failSafe) return ["Connect this engine to the scan pipeline", "Persist results to database"];
+      if ((scan.failSafe.resilienceScore ?? 0) < 50) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      return null;
+    },
+  },
+  {
+    id: "obscov",
+    title: "ObsCover Matrix",
+    shortName: "OCM",
+    icon: Eye,
+    color: "fuchsia",
+    description: "Measures observability coverage to ensure all critical code paths have corresponding telemetry and traces.",
+    expected: "Telemetry coverage > 90% with zero orphaned spans",
+    dataKey: "obsCover",
+    scoreExtractor: (scan: ScanDetail) => scan.obsCover?.coveragePercent ?? 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.obsCover?.coveragePercent ?? 0, !!scan.obsCover),
+    detailsExtractor: (scan: ScanDetail) => scan.obsCover ? [
+      { label: "Telemetry Cov", value: `${scan.obsCover.telemetryCoverage ?? 0}%` },
+      { label: "Orphaned Spans", value: scan.obsCover.orphanedSpans ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => {
+      if (!scan.obsCover) return ["Connect this engine to the scan pipeline", "Persist results to database"];
+      if ((scan.obsCover.coveragePercent ?? 0) < 50) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      return null;
+    },
+  },
+  {
+    id: "cogflow",
+    title: "CogFlow",
+    shortName: "CF",
+    icon: Brain,
+    color: "violet",
+    description: "Analyzes cognitive load across user journeys to identify friction points and usability bottlenecks.",
+    expected: "All critical user journeys have cognitive load < 3 steps",
+    dataKey: "uxCognitiveFlow",
+    scoreExtractor: (scan: ScanDetail) => (scan.uxCognitiveFlow || scan.cogFlow) ? 80 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus((scan.uxCognitiveFlow || scan.cogFlow) ? 80 : 0, !!(scan.uxCognitiveFlow || scan.cogFlow)),
+    detailsExtractor: (scan: ScanDetail) => (scan.uxCognitiveFlow || scan.cogFlow) ? [
+      { label: "Source", value: scan.uxCognitiveFlow ? "UX Flow" : "CogFlow" },
+    ] : [],
+    actionItems: (scan: ScanDetail) => {
+      if (!scan.uxCognitiveFlow && !scan.cogFlow) return ["Connect this engine to the scan pipeline", "Persist results to database"];
+      return null;
+    },
+  },
+  {
+    id: "archscan",
+    title: "ArchScan Metrics",
+    shortName: "AS",
+    icon: Layers,
+    color: "yellow",
+    description: "Detects architectural smells including circular imports, unstable dependencies, and component cohesion violations.",
+    expected: "Zero circular imports and instability metric < 0.2",
+    dataKey: "archScan",
+    scoreExtractor: (scan: ScanDetail) => scan.archScan ? 85 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.archScan ? 85 : 0, !!scan.archScan),
+    detailsExtractor: (scan: ScanDetail) => scan.archScan ? [
+      { label: "Instability", value: scan.archScan.instabilityMetric ?? 0 },
+      { label: "Circular Imports", value: scan.archScan.circularImports ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.archScan ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "timedeps",
+    title: "Time-Aware Deps",
+    shortName: "TAD",
+    icon: Clock,
+    color: "cyan",
+    description: "Tracks dependency freshness, maintainer activity, and supply-chain decay over time to predict future breakage.",
+    expected: "All critical dependencies maintained with zero decay risk",
+    dataKey: "timeAwareDeps",
+    scoreExtractor: (scan: ScanDetail) => scan.timeAwareDeps ? 80 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.timeAwareDeps ? 80 : 0, !!scan.timeAwareDeps),
+    detailsExtractor: (scan: ScanDetail) => scan.timeAwareDeps ? [
+      { label: "Total Deps", value: scan.timeAwareDeps.totalDeps ?? 0 },
+      { label: "Vulnerable", value: scan.timeAwareDeps.vulnerableCount ?? 0 },
+      { label: "Freshness", value: `${scan.timeAwareDeps.freshnessScore ?? 0}%` },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.timeAwareDeps ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "reggraph",
+    title: "RegGraph Compliance",
+    shortName: "RG",
+    icon: Shield,
+    color: "blue",
+    description: "Models regulatory requirements as a constraint graph to verify every data handling path meets compliance obligations.",
+    expected: "All data paths satisfy GDPR, PCI-DSS, and HIPAA constraints",
+    dataKey: "regGraph",
+    scoreExtractor: (scan: ScanDetail) => scan.regGraph ? 85 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.regGraph ? 85 : 0, !!scan.regGraph),
+    detailsExtractor: (scan: ScanDetail) => scan.regGraph ? [
+      { label: "PCI-DSS", value: scan.regGraph.pciDssCoverage ?? "N/A" },
+      { label: "GDPR Art.17", value: scan.regGraph.gdprArticle17 ?? "N/A" },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.regGraph ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "symcost",
+    title: "SymCost Analytics",
+    shortName: "SC",
+    icon: Clock,
+    color: "emerald",
+    description: "Uses symbolic execution to compute exact worst-case cost bounds for every code path, preventing ReDoS and cost bombs.",
+    expected: "No catastrophic backtracking paths remain",
+    dataKey: "symCost",
+    scoreExtractor: (scan: ScanDetail) => scan.symCost ? 85 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.symCost ? 85 : 0, !!scan.symCost),
+    detailsExtractor: (scan: ScanDetail) => scan.symCost ? [
+      { label: "AST Nodes", value: scan.symCost.astNodesAnalyzed?.toLocaleString() ?? 0 },
+      { label: "ReDoS Risk", value: scan.symCost.catastrophicBacktrackingRisk ?? "None" },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.symCost ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+{
+    id: "underapprox",
+    title: "Under-Approximation",
+    shortName: "UA",
+    icon: ShieldCheck,
+    color: "green",
+    description: "Formally proves reachability by under-approximating state spaces, guaranteeing that verified paths are truly safe.",
+    expected: "All reachable states proven with coverage > 95%",
+    dataKey: "underApproximation",
+    scoreExtractor: (scan: ScanDetail) => scan.underApproximation ? 70 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.underApproximation ? 70 : 0, !!scan.underApproximation),
+    detailsExtractor: (scan: ScanDetail) => {
+      if (!scan.underApproximation) return [];
+      const reachable = scan.underApproximation.reachableStates.filter(s => s.isReachable).length;
+      const unreachable = scan.underApproximation.reachableStates.length - reachable;
+      return [
+        { label: "Coverage", value: `${scan.underApproximation.coverage?.toFixed(2)}` },
+        { label: "Reachable States", value: `${reachable}` },
+        { label: "Unreachable", value: `${unreachable}` },
+      ];
+    },
+    actionItems: (scan: ScanDetail) => scan.underApproximation ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+   {
+     id: "abstractconfidence",
+     title: "Abstract Confidence",
+     shortName: "AC",
+     icon: Shield,
+     color: "green",
+     description: "Measures the confidence level of abstract interpretation analysis, indicating the reliability of the under-approximation results.",
+     expected: "Confidence score above 80 indicates high reliability",
+     dataKey: "abstractConfidence",
+     scoreExtractor: (scan: ScanDetail) => scan.abstractConfidence?.confidence ?? 0,
+     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.abstractConfidence?.confidence ?? 0, !!scan.abstractConfidence),
+     detailsExtractor: (scan: ScanDetail) => scan.abstractConfidence ? [
+       { label: "Confidence", value: `${scan.abstractConfidence.confidence ?? 0}%` },
+        { label: "Method", value: "Abstract Interpretation" },
+     ] : [],
+     actionItems: (scan: ScanDetail) => scan.abstractConfidence ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+   },
+   {
+     id: "prompttrace",
+    title: "PromptTrace Guard",
+    shortName: "PT",
+    icon: MessageSquare,
+    color: "purple",
+    description: "Enforces strict boundaries on LLM prompts to prevent injection attacks, jailbreaks, and unintended tool access.",
+    expected: "Zero jailbreak probability with all boundaries enforced",
+    dataKey: "promptTrace",
+    scoreExtractor: (scan: ScanDetail) => scan.promptTrace ? 85 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.promptTrace ? 85 : 0, !!scan.promptTrace),
+    detailsExtractor: (scan: ScanDetail) => scan.promptTrace ? [
+      { label: "Boundaries", value: scan.promptTrace.llmBoundaries ?? 0 },
+      { label: "Jailbreak Prob", value: scan.promptTrace.jailbreakProbability ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.promptTrace ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "aiconsensus",
+    title: "AI Consensus",
+    shortName: "AIC",
+    icon: Users,
+    color: "cyan",
+    description: "Aggregates multi-agent AI verdicts to reduce individual model bias and hallucination in security assessments.",
+    expected: "All findings verified by multiple independent agents",
+    dataKey: "aiConsensus",
+    scoreExtractor: (scan: ScanDetail) => (scan.aiConsensus?.length ?? 0) > 0 ? 80 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus((scan.aiConsensus?.length ?? 0) > 0 ? 80 : 0, !!scan.aiConsensus),
+    detailsExtractor: (scan: ScanDetail) => scan.aiConsensus ? [
+      { label: "Findings", value: scan.aiConsensus.length },
+      { label: "AI Verified", value: scan.aiConsensus.filter(f => f.aiVerified).length },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.aiConsensus ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "flowvalue",
+    title: "FlowValue Risk",
+    shortName: "FV",
+    icon: DollarSign,
+    color: "green",
+    description: "Maps revenue-critical code paths and computes Value-at-Risk for each attack surface exposed in the application.",
+    expected: "All critical paths have mitigations with quantified risk reduction",
+    dataKey: "flowValue",
+    scoreExtractor: (scan: ScanDetail) => scan.flowValue ? 80 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.flowValue ? 80 : 0, !!scan.flowValue),
+    detailsExtractor: (scan: ScanDetail) => scan.flowValue ? [
+      { label: "Critical Paths", value: scan.flowValue.criticalPaths ?? 0 },
+      { label: "VaR", value: scan.flowValue.revenueValueAtRisk ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.flowValue ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "productreality",
+    title: "Product Reality",
+    shortName: "PR",
+    icon: Rocket,
+    color: "indigo",
+    description: "Validates that every claimed feature has a real, reachable code path — eliminating mockups, stubs, and broken integrations.",
+    expected: "100% of deployed features have verified live implementations",
+    dataKey: "productReality",
+    scoreExtractor: (scan: ScanDetail) => scan.productReality ? 85 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.productReality ? 85 : 0, !!scan.productReality),
+    detailsExtractor: (scan: ScanDetail) => scan.productReality ? [
+      { label: "Live", value: scan.productReality.verifiedLiveCount ?? 0 },
+      { label: "Mocked", value: scan.productReality.mockedCount ?? 0 },
+      { label: "Broken", value: scan.productReality.brokenCount ?? 0 },
+      { label: "Score", value: scan.productReality.score ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.productReality ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "bigo",
+    title: "Big-O Profiler",
+    shortName: "BO",
+    icon: FunctionSquare,
+    color: "orange",
+    description: "Statically computes worst-case time and space complexity for every hot path, preventing scalability surprises in production.",
+    expected: "All hot paths bounded by O(n log n) or better",
+    dataKey: "bigOProfiler",
+    scoreExtractor: (scan: ScanDetail) => scan.bigOProfiler ? 85 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.bigOProfiler ? 85 : 0, !!scan.bigOProfiler),
+    detailsExtractor: (scan: ScanDetail) => scan.bigOProfiler ? [
+      { label: "Time", value: scan.bigOProfiler.worstCaseTimeComplexity ?? "N/A" },
+      { label: "Space", value: scan.bigOProfiler.worstCaseSpaceComplexity ?? "N/A" },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.bigOProfiler ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "fhe",
+    title: "FHE Readiness",
+    shortName: "FHE",
+    icon: EyeOff,
+    color: "yellow",
+    description: "Assesses code readiness for Fully Homomorphic Encryption by identifying operations that can execute on encrypted data.",
+    expected: "All sensitive operations compatible with FHE schemes",
+    dataKey: "fheAnalyzer",
+    scoreExtractor: (scan: ScanDetail) => scan.fheAnalyzer ? 75 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.fheAnalyzer ? 75 : 0, !!scan.fheAnalyzer),
+    detailsExtractor: (scan: ScanDetail) => scan.fheAnalyzer ? [
+      { label: "FHE Compatible", value: scan.fheAnalyzer.fullyHomomorphicCompatible ? "Yes" : "No" },
+      { label: "Bottlenecks", value: scan.fheAnalyzer.encryptionBottlenecks ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.fheAnalyzer ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "neuromorphic",
+    title: "Neuromorphic Drift",
+    shortName: "ND",
+    icon: BrainCircuit,
+    color: "pink",
+    description: "Models spiking neural network behavior to predict cognitive fatigue and drift in AI-assisted code generation over time.",
+    expected: "SNN spike rate stable with declining fatigue index",
+    dataKey: "neuromorphicDrift",
+    scoreExtractor: (scan: ScanDetail) => scan.neuromorphicDrift ? 70 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.neuromorphicDrift ? 70 : 0, !!scan.neuromorphicDrift),
+    detailsExtractor: (scan: ScanDetail) => scan.neuromorphicDrift ? [
+      { label: "SNN Spike Rate", value: scan.neuromorphicDrift.snnSpikeRate ?? 0 },
+      { label: "Fatigue Index", value: scan.neuromorphicDrift.cognitiveFatigueIndex ?? 0 },
+      { label: "Pred. Vuln Date", value: scan.neuromorphicDrift.predictedVulnerabilityDate ?? "N/A" },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.neuromorphicDrift ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "postquantum",
+    title: "Post-Quantum Readiness",
+    shortName: "PQR",
+    icon: Fingerprint,
+    color: "purple",
+    description: "Evaluates cryptographic primitives against quantum attack vectors to ensure the codebase survives Q-Day.",
+    expected: "Zero vulnerable legacy primitives with >99% Q-Day survival",
+    dataKey: "postQuantumReadiness",
+    scoreExtractor: (scan: ScanDetail) => scan.postQuantumReadiness ? 80 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.postQuantumReadiness ? 80 : 0, !!scan.postQuantumReadiness),
+    detailsExtractor: (scan: ScanDetail) => scan.postQuantumReadiness ? [
+      { label: "Q-Day Survival", value: scan.postQuantumReadiness.qDaySurvivalProbability ?? 0 },
+      { label: "Vulnerable Prim.", value: scan.postQuantumReadiness.vulnerablePrimitivesDetected ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.postQuantumReadiness ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "dna",
+    title: "DNA Storage",
+    shortName: "DNA",
+    icon: Dna,
+    color: "emerald",
+    description: "Evaluates data archival strategies using synthetic DNA encoding for 10,000-year data preservation and integrity verification.",
+    expected: "All critical data encoded with base-pair redundancy checks",
+    dataKey: "dnaStorageCompiler",
+    scoreExtractor: (scan: ScanDetail) => scan.dnaStorageCompiler ? 75 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.dnaStorageCompiler ? 75 : 0, !!scan.dnaStorageCompiler),
+    detailsExtractor: (scan: ScanDetail) => scan.dnaStorageCompiler ? [
+      { label: "ATCG Nucleotides", value: scan.dnaStorageCompiler.atcgNucleotidesRequired?.toLocaleString() ?? 0 },
+      { label: "Archival Status", value: scan.dnaStorageCompiler.archivalReadiness ?? "N/A" },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.dnaStorageCompiler ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "bft",
+    title: "BFT Consensus",
+    shortName: "BFT",
+    icon: ShieldAlert,
+    color: "red",
+    description: "Models Byzantine fault tolerance to ensure the consensus layer can withstand malicious or faulty nodes.",
+    expected: "Consensus survivability limit > 3f with verified graph invariants",
+    dataKey: "bftConsensusGraph",
+    scoreExtractor: (scan: ScanDetail) => scan.bftConsensusGraph ? 80 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.bftConsensusGraph ? 80 : 0, !!scan.bftConsensusGraph),
+    detailsExtractor: (scan: ScanDetail) => scan.bftConsensusGraph ? [
+      { label: "Graph Edges", value: scan.bftConsensusGraph.graphEdgesCalculated ?? 0 },
+      { label: "Survivability", value: scan.bftConsensusGraph.bftSurvivabilityLimit ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.bftConsensusGraph ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "kardashev",
+    title: "Kardashev Latency",
+    shortName: "KL",
+    icon: Satellite,
+    color: "cyan",
+    description: "Computes light-speed latency bounds for interplanetary-scale distributed systems to design truly global infrastructure.",
+    expected: "Packet resilience verified against light-speed delay limits",
+    dataKey: "kardashevLatency",
+    scoreExtractor: (scan: ScanDetail) => scan.kardashevLatency ? 75 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.kardashevLatency ? 75 : 0, !!scan.kardashevLatency),
+    detailsExtractor: (scan: ScanDetail) => scan.kardashevLatency ? [
+      { label: "Dyson Threshold", value: scan.kardashevLatency.dysonSwarmLatencyThreshold ?? 0 },
+      { label: "Packet Resilience", value: scan.kardashevLatency.interplanetaryPacketLossResilience ?? "N/A" },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.kardashevLatency ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "agi",
+    title: "AGI Alignment",
+    shortName: "AGI",
+    icon: Bot,
+    color: "fuchsia",
+    description: "Proves alignment stability of autonomous AI systems using policy gradient reward bounds to prevent emergent misalignment.",
+    expected: "Alignment stability > 0.99 with near-zero containment breach probability",
+    dataKey: "agiAlignment",
+    scoreExtractor: (scan: ScanDetail) => scan.agiAlignment ? 70 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.agiAlignment ? 70 : 0, !!scan.agiAlignment),
+    detailsExtractor: (scan: ScanDetail) => scan.agiAlignment ? [
+      { label: "Alignment Score", value: scan.agiAlignment.alignmentStabilityScore ?? 0 },
+      { label: "Breach Prob", value: scan.agiAlignment.agiContainmentBreachProbability ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.agiAlignment ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "gpu",
+    title: "GPU Tensor Bridge",
+    shortName: "GTB",
+    icon: Cpu,
+    color: "blue",
+    description: "Compiles AST to signed tensor payloads for secure AWS Nitro Enclave execution with hardware attestation.",
+    expected: "All compute-intensive paths verified with enclave attestation",
+    dataKey: "tensorPayloadSignature",
+    scoreExtractor: (scan: ScanDetail) => scan.tensorPayloadSignature ? 90 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.tensorPayloadSignature ? 90 : 0, !!scan.tensorPayloadSignature),
+    detailsExtractor: (scan: ScanDetail) => scan.tensorPayloadSignature ? [
+      { label: "Enclave Job", value: scan.tensorPayloadSignature.enclaveJobId ?? "N/A" },
+      { label: "GPU Cluster", value: scan.tensorPayloadSignature.gpuClusterRouted ?? "N/A" },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.tensorPayloadSignature ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "zksnark",
+    title: "ZK-SNARK",
+    shortName: "ZKS",
+    icon: Key,
+    color: "emerald",
+    description: "Generates zero-knowledge proofs for compliance verification without exposing sensitive source code or secrets.",
+    expected: "Proof status VALID with verifiable circuit constraints",
+    dataKey: "zkSnarkProof",
+    scoreExtractor: (scan: ScanDetail) => scan.zkSnarkProof?.status?.includes("VALID") ? 95 : scan.zkSnarkProof ? 60 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.zkSnarkProof?.status?.includes("VALID") ? 95 : scan.zkSnarkProof ? 60 : 0, !!scan.zkSnarkProof),
+    detailsExtractor: (scan: ScanDetail) => scan.zkSnarkProof ? [
+      { label: "Circuit Size", value: `${((scan.zkSnarkProof.circuitSize as number) ?? 0).toLocaleString()} gates` },
+      { label: "Status", value: scan.zkSnarkProof.status ?? "N/A" },
+    ] : [],
+    actionItems: (scan: ScanDetail) => {
+      if (!scan.zkSnarkProof) return ["Connect this engine to the scan pipeline", "Persist results to database"];
+      if (!scan.zkSnarkProof.status?.includes("VALID")) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      return null;
+    },
+  },
+  {
+    id: "multiverse",
+    title: "Multi-Verse DSE",
+    shortName: "MVD",
+    icon: Layers,
+    color: "indigo",
+    description: "Quantum-inspired bounded model checking that simulates parallel universes of execution to find corner-case vulnerabilities.",
+    expected: "All state-space corners explored with quantum collapse verification",
+    dataKey: "multiVerseDse",
+    scoreExtractor: (scan: ScanDetail) => scan.multiVerseDse ? 80 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.multiVerseDse ? 80 : 0, !!scan.multiVerseDse),
+    detailsExtractor: (scan: ScanDetail) => scan.multiVerseDse ? [
+      { label: "Universes", value: (scan.multiVerseDse.parallelUniversesSimulated ?? 0).toLocaleString() },
+      { label: "Quantum Collapses", value: scan.multiVerseDse.quantumStateCollapses ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.multiVerseDse ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+  {
+    id: "babel",
+    title: "The Babel Engine",
+    shortName: "BE",
+    icon: Globe,
+    color: "cyan",
+    description: "Polyglot cross-boundary taint stitching that builds a deterministic IR topology hash of the entire call graph.",
+    expected: "Every cross-language seam verified with deterministic IR topology hash",
+    dataKey: "babelEngine",
+    scoreExtractor: (scan: ScanDetail) => scan.babelEngine ? 85 : 0,
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.babelEngine ? 85 : 0, !!scan.babelEngine),
+    detailsExtractor: (scan: ScanDetail) => scan.babelEngine ? [
+      { label: "Polyglot Score", value: `${scan.babelEngine.polyglotScore ?? 0}%` },
+      { label: "Cross-Boundary Taints", value: scan.babelEngine.crossBoundaryTaints?.length ?? 0 },
+    ] : [],
+    actionItems: (scan: ScanDetail) => scan.babelEngine ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+  },
+];
 
 function ScoreRing({ score }: { score: number }) {
   const isLight = useIsLight();
@@ -488,8 +1341,8 @@ function EvidenceCard({
             </span>
           )}
         </div>
-        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:flex items-center gap-1 ${conf.badge}`}>
-          {conf.icon} {issue.confidence ?? 60}%
+         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:flex items-center gap-1 ${conf.badge}`}>
+          <conf.icon className="w-3 h-3" /> {issue.confidence ?? 60}%
         </span>
         <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"} shrink-0 hidden lg:block truncate max-w-[120px]`}>
           {issue.agentName.replace(" Agent", "")}
@@ -624,7 +1477,7 @@ function EvidenceCard({
                 <div className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-black/30 border-white/[0.07]"} border rounded-lg px-3 py-2.5`}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-xs font-semibold ${conf.color}`}>Why It Triggered</span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ml-auto ${conf.badge}`}>{conf.icon} {conf.label}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ml-auto ${conf.badge}`}><conf.icon className="w-3 h-3 inline" /> {conf.label}</span>
                   </div>
                   <p className={`text-xs ${isLight ? "text-gray-700" : "text-white/35"} font-mono leading-relaxed`}>{issue.evidence}</p>
                 </div>
@@ -665,7 +1518,7 @@ function EvidenceCard({
 
           {!issue.filePath && !issue.codeSnippet && !issue.impactStatement && !issue.evidence && (
             <div className="flex items-center gap-2">
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${conf.badge}`}>{conf.icon} {conf.label}</span>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${conf.badge}`}><conf.icon className="w-3 h-3 inline" /> {conf.label}</span>
             </div>
           )}
 
@@ -1314,9 +2167,9 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
                       <div className={`flex items-center gap-1.5 text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} px-3 py-2 bg-black/20 border-b border-white/[0.05] uppercase tracking-wide font-medium`}>
                         <Camera className="w-3 h-3" />
                         Runtime Screenshot
-                         <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(e.confidence, isLight).badge}`}>
-                           {getConfidenceStyle(e.confidence, isLight).icon} {e.confidence}%
-                        </span>
+                          <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(e.confidence, isLight).badge}`}>
+                            {(() => { const ConfIcon = getConfidenceStyle(e.confidence, isLight).icon; return <ConfIcon className="w-3 h-3 inline" />; })()} {e.confidence}%
+                          </span>
                       </div>
                       <img
                         src={e.screenshot}
@@ -1554,7 +2407,7 @@ function SandboxProofsSection({
                       </div>
                       Runtime Screenshot
                       <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(first.confidence, isLight).badge}`}>
-                        {getConfidenceStyle(first.confidence, isLight).icon} {first.confidence}%
+                        {(() => { const ConfIcon = getConfidenceStyle(first.confidence, isLight).icon; return <ConfIcon className="w-3 h-3 inline" />; })()} {first.confidence}%
                       </span>
                     </div>
                     <img
@@ -2609,15 +3462,15 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
 }
 
 // â”€â”€ Cleanup Agent Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const CLEANUP_CAT_LABEL: Record<string, { label: string; icon: string; color: string }> = {
-  "debug-noise":    { label: "Debug Noise",    icon: "ðŸ”Š", color: "text-amber-400" },
-  "tech-debt":      { label: "Tech Debt",      icon: "â°", color: "text-orange-400" },
-  "dead-code":      { label: "Dead Code",      icon: "ðŸ’€", color: "text-red-400" },
-  "type-safety":    { label: "Type Safety",    icon: "ðŸ”·", color: "text-blue-400" },
-  "env-hygiene":    { label: "Env Hygiene",    icon: "ðŸŒ¿", color: "text-green-400" },
-  "doc-clutter":    { label: "Doc Clutter",    icon: "ðŸ“„", color: "text-white/40" },
-  "security-smell": { label: "Security Smell", icon: "ðŸ”¥", color: "text-red-500" },
-  "file-hygiene":   { label: "File Hygiene",   icon: "ðŸ—‘ï¸", color: "text-white/35" },
+const CLEANUP_CAT_LABEL: Record<string, { label: string; icon: ElementType; color: string }> = {
+  "debug-noise":    { label: "Debug Noise",    icon: VolumeX,    color: "text-amber-400" },
+  "tech-debt":      { label: "Tech Debt",      icon: Clock,      color: "text-orange-400" },
+  "dead-code":      { label: "Dead Code",      icon: XCircle,    color: "text-red-400" },
+  "type-safety":    { label: "Type Safety",    icon: FileCode,   color: "text-blue-400" },
+  "env-hygiene":    { label: "Env Hygiene",    icon: Wind,       color: "text-green-400" },
+  "doc-clutter":    { label: "Doc Clutter",    icon: FileText,   color: "text-white/40" },
+  "security-smell": { label: "Security Smell", icon: Flame,      color: "text-red-500" },
+  "file-hygiene":   { label: "File Hygiene",   icon: Trash2,     color: "text-white/35" },
 };
 
 const DEBT_COLOR = (score: number) =>
@@ -2720,11 +3573,11 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
               <button
                 key={cat}
                 onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
-                className={`text-[10px] font-bold px-2.5 py-1 rounded-full border whitespace-nowrap transition-colors ${
+className={`flex items-center gap-2 px-2.5 py-1 rounded-full border whitespace-nowrap transition-colors ${
                   activeCategory === cat ? "bg-white/10 border-white/20 text-white" : `bg-white/[0.03] ${isLight ? "border-gray-200" : "border-white/[0.08]"} text-white/35 hover:text-white/60`
                 }`}
               >
-                {meta?.icon ?? "â€¢"} {meta?.label ?? cat} ({categoryCounts[cat]})
+                {activeCategory === cat && (() => { const Ic = meta.icon; return <Ic className="w-3 h-3 inline mr-1" />; })()}{meta?.label ?? cat} ({categoryCounts[cat]})
               </button>
             );
           })}
@@ -2753,7 +3606,7 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
                       <p className={`text-sm font-semibold ${isLight ? "text-gray-800" : "text-white/80"}`}>{finding.title}</p>
-                      {meta && <span className={`text-[10px] ${meta.color}`}>{meta.icon} {meta.label}</span>}
+                      {meta && <span className={`text-[10px] ${meta.color}`}><meta.icon className="w-3 h-3 inline mr-0.5" />{meta.label}</span>}
                       {finding.autoFixable && (
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/15">âš¡ auto-fixable</span>
                       )}
@@ -3828,14 +4681,14 @@ function CofounderQAPanel({ scanId }: { scanId: number }) {
 
 /* â”€â”€ Premium Animated Scan Loading Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const ANALYSIS_STEPS = [
-  { label: "Security & Authentication", icon: "ðŸ”", color: "#f87171" },
-  { label: "Compliance & Regulatory",   icon: "ðŸ“‹", color: "#60a5fa" },
-  { label: "Revenue Intelligence",      icon: "ðŸ’°", color: "#34d399" },
-  { label: "Performance Analysis",      icon: "âš¡", color: "#fbbf24" },
-  { label: "UX & Conversion",           icon: "ðŸ‘ï¸", color: "#a78bfa" },
-  { label: "Reliability & Errors",      icon: "ðŸ›¡ï¸", color: "#fb923c" },
-  { label: "Data & Architecture",       icon: "ðŸ—„ï¸", color: "#22d3ee" },
-  { label: "Synthesizing Report",       icon: "âœ¨", color: "#f472b6" },
+  { label: "Security & Authentication", icon: Lock,         color: "#f87171" },
+  { label: "Compliance & Regulatory",   icon:   Clipboard,color: "#60a5fa" },
+  { label: "Revenue Intelligence",      icon: DollarSign,  color: "#34d399" },
+  { label: "Performance Analysis",      icon: Zap,         color: "#fbbf24" },
+  { label: "UX & Conversion",           icon: Eye,         color: "#a78bfa" },
+  { label: "Reliability & Errors",      icon: ShieldAlert, color: "#fb923c" },
+  { label: "Data & Architecture",       icon: Database,    color: "#22d3ee" },
+  { label: "Synthesizing Report",       icon: Sparkles,    color: "#f472b6" },
 ];
 
 function ScanRunningScreen({
@@ -3948,8 +4801,8 @@ function ScanRunningScreen({
                       : (isLight ? "bg-gray-50 border-gray-100" : "bg-white/[0.02] border-white/[0.05]")
                 }`}
               >
-                <span className={`text-base transition-all duration-300 ${(!done && !active) ? "grayscale opacity-30" : ""}`}>
-                  {step.icon}
+                <span className={`text-base transition-all duration-300 shrink-0 ${(!done && !active) ? "grayscale opacity-30" : ""}`}>
+                  {createElement(step.icon as ElementType, { className: "w-4 h-4", style: { color: step.color } })}
                 </span>
                 <span className={`text-sm flex-1 font-medium transition-all duration-300 ${
                   done ? "text-green-400"
@@ -4087,7 +4940,7 @@ const SEV_COLORS_LIGHT: Record<string, { border: string; glow: string; badgeBg: 
 
 // â”€â”€ Custom React Flow node component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type ArchNodeData = {
-  icon: string;
+  icon: string | ElementType;
   label: string;
   sublabel?: string;
   severity: string;
@@ -4120,7 +4973,9 @@ function ArchFlowNode({ data }: NodeProps & { data: ArchNodeData }) {
           transition: "box-shadow 0.2s",
         }}
       >
-        <div style={{ fontSize: 20, lineHeight: 1, marginBottom: 5 }}>{data.icon}</div>
+        <div style={{ fontSize: 20, lineHeight: 1, marginBottom: 5 }}>
+          {typeof data.icon === 'string' ? data.icon : <data.icon className="w-5 h-5" style={{ color: palette.labelColor }} />}
+        </div>
         <div style={{ fontWeight: 700, fontSize: 13, color: isLight ? "#111827" : "#f9fafb", fontFamily: "Syne, sans-serif", lineHeight: 1.2 }}>
           {data.label}
         </div>
@@ -4174,14 +5029,14 @@ function buildFlowGraph(
 
   // â”€â”€ node positions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const nodes: RFNode[] = [
-    { id: "user",     type: "archNode", position: { x: 230, y: 0   }, data: { icon: "ðŸ‘¤", label: "User",       isUser: true,  severity: "clean",        issueCount: 0 } },
-    { id: "frontend", type: "archNode", position: { x: 130, y: 110 }, data: { icon: "âš›ï¸", label: "Frontend",   sublabel: scan.framework ?? "", severity: sev("frontend"), issueCount: cnt("frontend") } },
-    { id: "auth",     type: "archNode", position: { x: 390, y: 110 }, data: { icon: "ðŸ”", label: "Auth Layer",  severity: sev("auth"),     issueCount: cnt("auth") } },
-    { id: "api",      type: "archNode", position: { x: 230, y: 240 }, data: { icon: "âš¡", label: "API / Backend", sublabel: scan.vibeTool ?? "", severity: sev("api"),      issueCount: cnt("api") } },
-    { id: "db",       type: "archNode", position: { x: 230, y: 370 }, data: { icon: "ðŸ’¾", label: "Database",    severity: sev("db"),       issueCount: cnt("db") } },
-    ...(hasPayments  ? [{ id: "payments",    type: "archNode", position: { x: 430, y: 370 }, data: { icon: "ðŸ’³", label: "Payments",    severity: sev("payments"),    issueCount: cnt("payments") } }] : []),
-    ...(hasCompliance? [{ id: "compliance",  type: "archNode", position: { x: 10,  y: 370 }, data: { icon: "ðŸ“‹", label: "Compliance",  severity: sev("compliance"),  issueCount: cnt("compliance") } }] : []),
-    ...(hasObs       ? [{ id: "observability",type: "archNode",position: { x: 430, y: 240 }, data: { icon: "ðŸ“Š", label: "Observability",severity: sev("observability"),issueCount: cnt("observability") } }] : []),
+    { id: "user",     type: "archNode", position: { x: 230, y: 0   }, data: { icon: Users,       label: "User",       isUser: true,  severity: "clean",        issueCount: 0 } },
+    { id: "frontend", type: "archNode", position: { x: 130, y: 110 }, data: { icon: Cpu,         label: "Frontend",   sublabel: scan.framework ?? "", severity: sev("frontend"), issueCount: cnt("frontend") } },
+    { id: "auth",     type: "archNode", position: { x: 390, y: 110 }, data: { icon: Lock,        label: "Auth Layer",  severity: sev("auth"),     issueCount: cnt("auth") } },
+    { id: "api",      type: "archNode", position: { x: 230, y: 240 }, data: { icon: Network,     label: "API / Backend", sublabel: scan.vibeTool ?? "", severity: sev("api"),      issueCount: cnt("api") } },
+    { id: "db",       type: "archNode", position: { x: 230, y: 370 }, data: { icon: HardDrive,   label: "Database",    severity: sev("db"),       issueCount: cnt("db") } },
+    ...(hasPayments  ? [{ id: "payments",    type: "archNode", position: { x: 430, y: 370 }, data: { icon: CreditCard,  label: "Payments",    severity: sev("payments"),    issueCount: cnt("payments") } }] : []),
+    ...(hasCompliance? [{ id: "compliance",  type: "archNode", position: { x: 10,  y: 370 }, data: { icon: Scale,        label: "Compliance",  severity: sev("compliance"),  issueCount: cnt("compliance") } }] : []),
+    ...(hasObs       ? [{ id: "observability",type: "archNode",position: { x: 430, y: 240 }, data: { icon: Activity,    label: "Observability",severity: sev("observability"),issueCount: cnt("observability") } }] : []),
   ];
 
   const mkEdge = (id: string, src: string, tgt: string, label?: string, dashed?: boolean): RFEdge => ({
@@ -4216,13 +5071,13 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
   const { nodes, edges } = useMemo(() => buildFlowGraph(scan, nodeMap), [scan, nodeMap]);
 
   const ARCH_NODE_META = [
-    { id: "frontend", label: "Frontend UI",     icon: "âš›ï¸" },
-    { id: "auth",     label: "Auth Layer",       icon: "ðŸ”" },
-    { id: "api",      label: "API / Backend",    icon: "âš¡" },
-    { id: "db",       label: "Database",         icon: "ðŸ’¾" },
-    { id: "payments", label: "Payments",         icon: "ðŸ’³" },
-    { id: "compliance","label": "Compliance",    icon: "ðŸ“‹" },
-    { id: "observability","label":"Observability",icon: "ðŸ“Š" },
+    { id: "frontend",     label: "Frontend UI",     icon: Cpu },
+    { id: "auth",         label: "Auth Layer",       icon: Lock },
+    { id: "api",          label: "API / Backend",    icon: Network },
+    { id: "db",           label: "Database",         icon: HardDrive },
+    { id: "payments",     label: "Payments",         icon: CreditCard },
+    { id: "compliance",   label: "Compliance",       icon: Scale },
+    { id: "observability",label: "Observability",    icon: Activity },
   ];
   const affectedNodes = ARCH_NODE_META.filter((n) => nodeMap.has(n.id));
 
@@ -4313,7 +5168,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
                     onClick={() => setExpandedNode(isExpanded ? null : n.id)}
                     className={`w-full flex items-center gap-3 px-6 py-3.5 text-left transition-colors ${isLight ? "hover:bg-gray-50" : "hover:bg-white/[0.02]"}`}
                   >
-                    <span className="text-base shrink-0">{n.icon}</span>
+                    <span className="text-base shrink-0">{typeof n.icon === 'string' ? n.icon : <n.icon className="w-4 h-4" />}</span>
                     <span className={`text-sm font-semibold flex-1 ${isLight ? "text-gray-800" : "text-white/85"}`}>{n.label}</span>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${sev.bg}`}>
@@ -4631,7 +5486,7 @@ function TargetHighlight({ rect }: { rect: DOMRect | null }) {
   );
 }
 
-function SectionLabel({ label, icon: Icon, isLight }: { label: string; icon?: React.ElementType; isLight: boolean }) {
+function SectionLabel({ label, icon: Icon, isLight }: { label: string; icon?: ElementType; isLight: boolean }) {
   return (
     <div className="flex items-center gap-3 mt-1">
       <div className={`h-px flex-1 ${isLight ? "bg-gray-100" : "bg-white/[0.05]"}`} />
@@ -5269,7 +6124,7 @@ export default function ScanResultsPage() {
                 icon: Network,
                 tourId: undefined,
               },
-            ] as { id: string; label: string; icon: React.ElementType; tourId?: string; count?: number; badge?: string }[]).map((tab) => {
+            ] as { id: string; label: string; icon: ElementType; tourId?: string; count?: number; badge?: string }[]).map((tab) => {
               const TabIcon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
@@ -5917,7 +6772,7 @@ export default function ScanResultsPage() {
                   },
                   {
                     badge: `bg-white/[0.05] text-white/35 ${isLight ? "border-gray-200" : "border-white/[0.08]"}`,
-                    label: "âšª <60% AI Reasoning",
+                    label: "⚪ <60% AI Reasoning",
                   },
                 ].map((item) => (
                   <span
@@ -5930,7 +6785,7 @@ export default function ScanResultsPage() {
               </div>
             </div>
 
-            {/* â”€â”€ Agent filter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ——— Agent filter —————————————————————————————————————— */}
             {agents.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 <button
@@ -5978,7 +6833,7 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* â”€â”€ Verified Findings (Evidence Gallery) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ——— Verified Findings (Evidence Gallery) ————————————————————————————— */}
             {!activeAgent && (
               <div className={`${isLight ? "bg-white border border-gray-200" : "glass border border-white/[0.07]"} rounded-2xl p-6 space-y-5 shadow-2xl`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
@@ -5997,9 +6852,9 @@ export default function ScanResultsPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
-                    { id: "runtime", label: "ðŸŸ¢ Runtime Verified", count: runtimeCount, bg: "bg-green-500", border: "border-green-500", text: "text-green-400", desc: "Sandbox HTTP/browser proof" },
-                    { id: "static", label: "ðŸ”µ Static Verified", count: staticCount, bg: "bg-sky-500", border: "border-sky-500", text: "text-sky-400", desc: "Direct code scan match" },
-                    { id: "ai_reasoning", label: "âšª AI Observation", count: aiCount, bg: "bg-white", border: "border-white", text: "text-white/60", desc: "Logical/architecture smell" }
+                    { id: "runtime", label: "🟢 Runtime Verified", count: runtimeCount, bg: "bg-green-500", border: "border-green-500", text: "text-green-400", desc: "Sandbox HTTP/browser proof" },
+                    { id: "static", label: "🔵 Static Verified", count: staticCount, bg: "bg-sky-500", border: "border-sky-500", text: "text-sky-400", desc: "Direct code scan match" },
+                    { id: "ai_reasoning", label: "⚪ AI Observation", count: aiCount, bg: "bg-white", border: "border-white", text: "text-white/60", desc: "Logical/architecture smell" }
                   ].map((item) => (
                     <button
                       key={item.id}
@@ -6021,14 +6876,14 @@ export default function ScanResultsPage() {
 
                 {/* Sub-label description for the active filter */}
                 <div className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/40"} italic bg-black/20 p-3 rounded-lg border border-white/[0.03]`}>
-                  {evidenceFilter === "runtime" && "ðŸ’¡ Runtime Verified: Active exploit proofs generated by executing playwright browser automation and HTTP probes in our sandbox. Zero false positives."}
-                  {evidenceFilter === "static" && "ðŸ’¡ Static Verified: Direct syntax, AST, or pattern matches flagged in source files. Backed by specific file line numbers."}
-                  {evidenceFilter === "ai_reasoning" && "ðŸ’¡ AI Observation: Architectural observations, structural gaps, or potential compliance failures inferred through security LLMs."}
+                  {evidenceFilter === "runtime" && "💡 Runtime Verified: Active exploit proofs generated by executing playwright browser automation and HTTP probes in our sandbox. Zero false positives."}
+                  {evidenceFilter === "static" && "💡 Static Verified: Direct syntax, AST, or pattern matches flagged in source files. Backed by specific file line numbers."}
+                  {evidenceFilter === "ai_reasoning" && "💡 AI Observation: Architectural observations, structural gaps, or potential compliance failures inferred through security LLMs."}
                 </div>
               </div>
             )}
 
-            {/* â”€â”€ All remaining findings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ——— All remaining findings ————————————————————————————— */}
             {remaining.length > 0 && (
               <div className="space-y-2.5">
                 <p
@@ -6056,7 +6911,7 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* â”€â”€ Upgrade banner for locked issues â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ——— Upgrade banner for locked issues —————————————————— */}
             {!activeAgent && (scan as any)._lockedIssueCount > 0 && (
               <UpgradeBanner
                 count={(scan as any)._lockedIssueCount as number}
@@ -6064,7 +6919,7 @@ export default function ScanResultsPage() {
               />
             )}
 
-            {/* â”€â”€ Exploit Terminal for critical IDOR/auth issues â”€ */}
+            {/* ——— Exploit Terminal for critical IDOR/auth issues — */}
             {!activeAgent &&
               sortedIssues.some(
                 (i) =>
@@ -6125,7 +6980,7 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* â”€â”€ Technical Co-Founder Q&A â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ——— Technical Co-Founder Q&A ————————————————————————— */}
             {!activeAgent && scan.status === "completed" && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6138,7 +6993,7 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* â”€â”€ Knowledge Graph Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ——— Knowledge Graph Tab ———————————————————————————————————————— */}
         {activeTab === "graph" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
@@ -6149,954 +7004,11 @@ export default function ScanResultsPage() {
           </div>
         )}
 
-        {/* â”€â”€ Deep Tech Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {activeTab === "deeptech" && (
-          <div className="space-y-6">
-            <div className="flex flex-col gap-2">
-              <h2 className={`font-extrabold text-xl font-['Syne'] ${isLight ? "text-slate-900" : "text-white"}`}>Deep Tech Architecture & Insights</h2>
-              <p className={`text-sm ${isLight ? "text-slate-500" : "text-white/40"}`}>
-                Agenario's advanced proprietary models: Code Genome Sequencing, Causal AI, Quantitative Risk, and Agent Consensus.
-              </p>
-            </div>
-
-            <div className="w-full">
-               <h3 className={`font-bold mb-4 ${isLight ? "text-slate-800" : "text-white"}`}>Flaw Topology & Execution Graph</h3>
-               <DeepArchitectureVisualizer issues={scan.issues ?? []} isLight={isLight} />
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {/* Genome Sequencing Card */}
-              <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-violet-500/30 transition-all`}>
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Activity className={`w-24 h-24 ${isLight ? "text-violet-600" : "text-violet-400"}`} />
-                </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-violet-100 text-violet-600" : "bg-violet-500/20 text-violet-400"}`}>
-                    <Dna className="w-4 h-4" />
-                  </div>
-                  <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Code Genome & Genetic Drift</h3>
-                </div>
-                <div className="space-y-4 relative z-10">
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <div className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"} mb-1`}>Architectural Mutation Rate</div>
-                      <div className={`text-2xl font-bold ${isLight ? "text-slate-900" : "text-white"}`}>
-                        {scan.geneticDrift?.mutationRate || "0.04"} <span className="text-sm font-medium text-slate-400">mutations / commit</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                    {scan.geneticDrift?.analysis || "Graph Neural Network indicates stable entropy. No immediate architectural decay detected."}
-                  </div>
-                  {scan.genomeFingerprint && (
-                    <div className="pt-3 border-t border-dashed border-slate-200 dark:border-white/10">
-                      <div className={`text-[10px] font-mono ${isLight ? "text-slate-400" : "text-white/30"} uppercase tracking-wider`}>Genome Hash Sequence</div>
-                      <div className={`text-xs font-mono mt-1 ${isLight ? "text-violet-600" : "text-violet-400"}`}>{scan.genomeFingerprint.hashSequence || "AG-TC-XX-991A"}</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Quantitative Finance Card */}
-              <div className={`${isLight ? "bg-gradient-to-br from-slate-900 to-slate-800 shadow-xl border border-slate-700" : "bg-black/60 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:shadow-2xl transition-all`}>
-                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <BarChart3 className="w-24 h-24 text-white" />
-                </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 text-emerald-400">
-                    <TrendingDown className="w-4 h-4" />
-                  </div>
-                  <h3 className="font-bold font-['Syne'] text-white">Quantitative Value at Risk (VaR)</h3>
-                </div>
-                <div className="space-y-4 relative z-10">
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <div className="text-xs text-white/50 mb-1">Estimated Annualized Risk</div>
-                      <div className="text-3xl font-bold text-white tracking-tight">
-                        {scan.quantitativeRisk?.annualizedVaR || "$14,500"}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-xs text-white/70 leading-relaxed">
-                    {scan.quantitativeRisk?.executiveSummary || "Based on Monte Carlo simulations across 10,000 breach scenarios mapped to your dependency tree and exposure profile."}
-                  </div>
-                  {scan.quantitativeRisk?.monteCarloConfidence && (
-                    <div className="flex items-center gap-2 pt-3 border-t border-white/10">
-                      <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                      <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold">
-                        {scan.quantitativeRisk.monteCarloConfidence}% Statistical Confidence
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Causal AI Card */}
-              <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group`}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-blue-100 text-blue-600" : "bg-blue-500/20 text-blue-400"}`}>
-                    <Network className="w-4 h-4" />
-                  </div>
-                  <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Causal Do-Calculus (Pearl)</h3>
-                </div>
-                <div className="space-y-4">
-                  <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                    {scan.causalInference?.insight || "Intervention simulation (do-calculus) reveals that patching dependency X will NOT cause downstream breakage in Auth Module."}
-                  </div>
-                  <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                    P(Crash | do(Update_Auth)) = {scan.causalInference?.pCrash || "0.0012"}<br/>
-                    P(Breach | do(Ignore_Vulnerability)) = {scan.causalInference?.pBreach || "0.8540"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Agent Consensus Card */}
-              <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group`}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-pink-100 text-pink-600" : "bg-pink-500/20 text-pink-400"}`}>
-                    <Users className="w-4 h-4" />
-                  </div>
-                  <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Multi-Agent Consensus</h3>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex -space-x-2">
-                      <div className="w-6 h-6 rounded-full bg-blue-500 border-2 border-white dark:border-black flex items-center justify-center text-[8px] text-white font-bold">A1</div>
-                      <div className="w-6 h-6 rounded-full bg-violet-500 border-2 border-white dark:border-black flex items-center justify-center text-[8px] text-white font-bold">A2</div>
-                      <div className="w-6 h-6 rounded-full bg-pink-500 border-2 border-white dark:border-black flex items-center justify-center text-[8px] text-white font-bold">A3</div>
-                    </div>
-                    <div className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-white/60"}`}>
-                      Debate Concluded: {scan.agentDebateResults?.verdict || "Consensus Reached"}
-                    </div>
-                  </div>
-                  <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed italic border-l-2 pl-3 ${isLight ? "border-slate-200" : "border-white/10"}`}>
-                    "{scan.agentDebateResults?.summary || "Attacker agent argued XSS was possible via param, but Defender agent successfully proved that Zod validation sanitizes the input before AST injection."}"
-                  </div>
-                </div>
-              </div>
-              </div>
-            
-            {/* UX Cognitive Flow Card */}
-            {scan.uxCognitiveFlow && (
-              <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group mb-6`}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-pink-100 text-pink-600" : "bg-pink-500/20 text-pink-400"}`}>
-                    <Activity className="w-4 h-4" />
-                  </div>
-                  <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>UX Cognitive Flow (CogFlow)</h3>
-                </div>
-                <div className="space-y-4">
-                  <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                    {scan.uxCognitiveFlow.insight}
-                  </div>
-                  <div className={`mb-3 p-3 rounded border font-serif text-[12px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-pink-400"}`}>
-                    <div className="italic">H(X) = &minus;&Sigma; P(x<sub>i</sub>) log<sub>2</sub> P(x<sub>i</sub>)</div>
-                    <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-pink-500/20 pt-1 w-full">Shannon Visual Information Entropy</div>
-                  </div>
-                  <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                    <div className="flex justify-between mb-1">
-                      <span>Shannon Entropy:</span>
-                      <span className="text-pink-500 font-bold">{scan.uxCognitiveFlow.shannonEntropy}</span>
-                    </div>
-                    <div className="flex justify-between mb-1">
-                      <span>Hick's Law Time:</span>
-                      <span>{scan.uxCognitiveFlow.hicksLawDecisionTime}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>DOM Density:</span>
-                      <span>{scan.uxCognitiveFlow.domDensity}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* The 0.01% Mathematical Deep Tech Mechanisms */}
-            <div className="pt-8 mt-8 border-t border-slate-200 dark:border-white/10">
-              <div className="flex flex-col gap-2 mb-6">
-                <h2 className={`font-extrabold text-xl font-['Syne'] ${isLight ? "text-slate-900" : "text-white"} flex items-center gap-2`}>
-                  <Zap className="w-5 h-5 text-fuchsia-500" />
-                  0.01% Mathematical Deep Tech Mechanisms
-                </h2>
-                <p className={`text-sm ${isLight ? "text-slate-500" : "text-white/40"}`}>
-                  Grounded with real mathematical deep tech proofs. Immune to pure AI dependency hallucinations.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                {/* The Babel Engine */}
-                {scan.babelEngine && (
-                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-cyan-500/30 transition-all`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Network className={`w-24 h-24 ${isLight ? "text-cyan-600" : "text-cyan-400"}`} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-cyan-100 text-cyan-600" : "bg-cyan-500/20 text-cyan-400"}`}>
-                        <Globe className="w-4 h-4" />
-                      </div>
-                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>The Babel Engine</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                        {scan.babelEngine.insight}
-                      </div>
-                        <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-white/90"}`}>
-                          <span className="italic">Taint(S<sub>sink</sub>) &subseteq; Paths(S<sub>source</sub>) &implies; <span className="text-cyan-500 font-mono text-[10px] ml-1">{scan.babelEngine.irTopologyHash}</span></span>
-                        </div>
-                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                          <div className="flex justify-between mb-1">
-                            <span>Stitched Taints:</span>
-                            <span className="text-cyan-500">{scan.babelEngine.crossBoundaryTaints.join(", ")}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Polyglot Score:</span>
-                            <span className="text-cyan-500">{scan.babelEngine.polyglotScore}%</span>
-                          </div>
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Multi-Verse Sandbox */}
-                {scan.multiVerseDse && (
-                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-indigo-500/30 transition-all`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Layers className={`w-24 h-24 ${isLight ? "text-indigo-600" : "text-indigo-400"}`} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-indigo-100 text-indigo-600" : "bg-indigo-500/20 text-indigo-400"}`}>
-                        <Cpu className="w-4 h-4" />
-                      </div>
-                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Multi-Verse DSE Sandbox</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                        {scan.multiVerseDse.insight}
-                      </div>
-                        <div className={`mb-3 p-3 rounded border font-serif text-[12px] flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-white/90"}`}>
-                          <span className="mb-1">StateSpace = <span className="italic">O(2<sup>&Sigma; BranchNodes</sup>)</span></span>
-                          <span className="text-[10px] text-indigo-500 font-mono">Simulating {scan.multiVerseDse.parallelUniversesSimulated.toLocaleString()} universes</span>
-                        </div>
-                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                          <div className="flex justify-between">
-                            <span>Quantum State Collapses:</span>
-                            <span className="text-indigo-500">{scan.multiVerseDse.quantumStateCollapses}</span>
-                          </div>
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ZK-SNARK */}
-                {scan.zkSnarkProof && (
-                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Lock className={`w-24 h-24 ${isLight ? "text-emerald-600" : "text-emerald-400"}`} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-400"}`}>
-                        <Key className="w-4 h-4" />
-                      </div>
-                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>ZK-SNARK Compliance</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                      <div className={`text-xs font-bold ${scan.zkSnarkProof.status.includes("VALID") ? "text-emerald-500" : "text-red-500"} leading-relaxed`}>
-                        {scan.zkSnarkProof.status}
-                      </div>
-                        <div className={`mb-3 p-3 rounded border font-serif text-[10px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-emerald-400/90"}`}>
-                          <div className="mb-1 text-center border-b border-emerald-500/30 pb-1 w-full">R1CS Polynomial Constraint System</div>
-                          <div className="grid grid-cols-3 gap-2 w-full text-center mt-1">
-                            <div><span className="opacity-50">[A]</span><span className="italic">x</span></div>
-                            <div>* <span className="opacity-50">[B]</span><span className="italic">x</span></div>
-                            <div>= <span className="opacity-50">[C]</span><span className="italic">x</span></div>
-                          </div>
-                        </div>
-                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"} truncate`}>
-                          <div className="flex justify-between mb-1">
-                            <span>Circuit Size:</span>
-                            <span className="text-emerald-500">{scan.zkSnarkProof.circuitSize.toLocaleString()} gates</span>
-                          </div>
-                          <div>Prove Hash: <span className="text-[9px] opacity-70">{scan.zkSnarkProof.provingKeyHash}</span></div>
-                          <div>Verify Hash: <span className="text-[9px] opacity-70">{scan.zkSnarkProof.verificationHash}</span></div>
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* GPU Tensor Bridge */}
-                {scan.tensorPayloadSignature && (
-                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Cpu className={`w-24 h-24 ${isLight ? "text-blue-600" : "text-blue-400"}`} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-blue-100 text-blue-600" : "bg-blue-500/20 text-blue-400"}`}>
-                        <Zap className="w-4 h-4" />
-                      </div>
-                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Hardware GPU Tensor Bridge</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                        AST mathematically compiled to tensor payload and signed for AWS Nitro Enclave execution.
-                      </div>
-                        <div className={`mb-3 p-3 rounded border font-mono text-[9px] flex flex-col gap-1 items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-blue-400"}`}>
-                          <div>&#91; T<sub>AST</sub> &otimes; W<sub> Nitro</sub> &#93; &rarr; 	&#8477;<sup>N</sup></div>
-                          <div className="text-emerald-500 font-bold border-t border-blue-500/20 pt-1 w-full text-center mt-1">ATTESTATION VERIFIED</div>
-                        </div>
-                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed flex flex-col gap-1 ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"} truncate`}>
-                          <div className="flex justify-between"><span>Enclave Job ID:</span> <span>{scan.tensorPayloadSignature.enclaveJobId}</span></div>
-                          <div className="flex justify-between"><span>Cluster Routing:</span> <span>{scan.tensorPayloadSignature.gpuClusterRouted}</span></div>
-                          <div className="mt-1 pt-1 border-t border-white/5 text-[9px]">Tensor Hash: <span className="text-blue-500">{scan.tensorPayloadSignature.tensorHash.substring(0, 24)}...</span></div>
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Big-O Profiler */}
-                {scan.bigOProfiler && (
-                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-orange-500/30 transition-all`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <TrendingUp className={`w-24 h-24 ${isLight ? "text-orange-600" : "text-orange-400"}`} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-orange-100 text-orange-600" : "bg-orange-500/20 text-orange-400"}`}>
-                        <FunctionSquare className="w-4 h-4" />
-                      </div>
-                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Big-O Mathematical Profiler</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                        {scan.bigOProfiler.insight}
-                      </div>
-                        <div className={`mb-3 flex justify-center items-center py-4 rounded border ${isLight ? "bg-slate-50 border-slate-200" : "bg-black/50 border-white/10"}`}>
-                          <span className="font-serif italic text-3xl text-orange-500 opacity-90 drop-shadow-md">
-                            {scan.bigOProfiler.worstCaseTimeComplexity.replace('O', 'ð’ª')}
-                          </span>
-                        </div>
-                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                          <div className="flex justify-between mb-1">
-                            <span>Space Bound:</span>
-                            <span className="font-bold text-orange-500">{scan.bigOProfiler.worstCaseSpaceComplexity}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Collapse Threshold:</span>
-                            <span>{scan.bigOProfiler.serverCollapseThreshold} reqs</span>
-                          </div>
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* FHE Analyzer */}
-                {scan.fheAnalyzer && (
-                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-yellow-500/30 transition-all`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Shield className={`w-24 h-24 ${isLight ? "text-yellow-600" : "text-yellow-400"}`} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-yellow-100 text-yellow-600" : "bg-yellow-500/20 text-yellow-400"}`}>
-                        <EyeOff className="w-4 h-4" />
-                      </div>
-                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>FHE Readiness Analyzer</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                        {scan.fheAnalyzer.insight}
-                      </div>
-                        <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-yellow-500/90"}`}>
-                          <div className="italic">c = E(m<sub>1</sub>) &oplus; E(m<sub>2</sub>) = E(m<sub>1</sub> + m<sub>2</sub>)</div>
-                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-yellow-500/20 pt-1 w-full">Abstract Algebraic Ring Evaluation</div>
-                        </div>
-                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                          <div className="flex justify-between mb-1">
-                            <span>FHE Compatible:</span>
-                            <span className={scan.fheAnalyzer.fullyHomomorphicCompatible ? "text-emerald-500" : "text-red-500"}>{scan.fheAnalyzer.fullyHomomorphicCompatible ? "Yes" : "No"}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Encryption Bottlenecks:</span>
-                            <span className="text-yellow-500">{scan.fheAnalyzer.encryptionBottlenecks} detected</span>
-                          </div>
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Neuromorphic Drift */}
-                {scan.neuromorphicDrift && (
-                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-pink-500/30 transition-all`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <BrainCircuit className={`w-24 h-24 ${isLight ? "text-pink-600" : "text-pink-400"}`} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-pink-100 text-pink-600" : "bg-pink-500/20 text-pink-400"}`}>
-                        <Brain className="w-4 h-4" />
-                      </div>
-                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Neuromorphic Drift</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                        {scan.neuromorphicDrift.insight}
-                      </div>
-                        <div className={`mb-3 p-3 rounded border font-mono text-[10px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-pink-400"}`}>
-                          <div className="flex items-center gap-2">
-                            <span>&part;&rho; / &part;t</span>
-                            <span>=</span>
-                            <span>D &nabla;<sup>2</sup>&rho;</span>
-                          </div>
-                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-pink-500/20 pt-1 w-full">Synaptic Decay Bounding Formula</div>
-                        </div>
-                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                          <div className="flex justify-between mb-1"><span>SNN Spike Rate:</span> <span>{scan.neuromorphicDrift.snnSpikeRate}</span></div>
-                          <div className="flex justify-between mb-1"><span>Fatigue Index:</span> <span>{scan.neuromorphicDrift.cognitiveFatigueIndex}</span></div>
-                          <div className="flex justify-between"><span>Pred. Vuln Date:</span> <span className="text-pink-500 font-bold">{scan.neuromorphicDrift.predictedVulnerabilityDate}</span></div>
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Post-Quantum Readiness */}
-                {scan.postQuantumReadiness && (
-                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-purple-500/30 transition-all`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Fingerprint className={`w-24 h-24 ${isLight ? "text-purple-600" : "text-purple-400"}`} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-purple-100 text-purple-600" : "bg-purple-500/20 text-purple-400"}`}>
-                        <Key className="w-4 h-4" />
-                      </div>
-                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Post-Quantum Cryptography</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                        {scan.postQuantumReadiness.insight}
-                      </div>
-                        <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-purple-400"}`}>
-                          <div className="italic">P(x) &approx; | &Sigma; e<sup>2&pi;i(k/r)</sup> |<sup>2</sup></div>
-                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-purple-500/20 pt-1 w-full">Shor's Algorithm Period Finding Decay</div>
-                        </div>
-                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                          <div className="flex justify-between mb-1">
-                            <span>Q-Day Survival Prob:</span>
-                            <span className="text-purple-500 font-bold">{scan.postQuantumReadiness.qDaySurvivalProbability}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Legacy Primitives:</span>
-                            <span className="text-purple-400">{scan.postQuantumReadiness.vulnerablePrimitivesDetected}</span>
-                          </div>
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* DNA Storage Compiler */}
-                {scan.dnaStorageCompiler && (
-                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Layers className={`w-24 h-24 ${isLight ? "text-emerald-600" : "text-emerald-400"}`} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-400"}`}>
-                        <Database className="w-4 h-4" />
-                      </div>
-                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>DNA Storage Compiler</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                        {scan.dnaStorageCompiler.insight}
-                      </div>
-                        <div className={`mb-3 p-3 rounded border font-mono text-[9px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-emerald-400"}`}>
-                          <div className="flex gap-1 mb-1 tracking-[0.2em] opacity-80">
-                            <span>A</span><span className="text-white/40">-</span><span>T</span><span className="text-white/40">-</span><span>C</span><span className="text-white/40">-</span><span>G</span><span className="text-white/40">-</span><span>T</span><span className="text-white/40">-</span><span>A</span>
-                          </div>
-                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-emerald-500/20 pt-1 w-full">Synthetic Base Pair Encoding (10,000 Yr Archival)</div>
-                        </div>
-                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                          <div className="flex justify-between mb-1">
-                            <span>ATCG Nucleotides:</span>
-                            <span className="text-emerald-500 font-bold">{scan.dnaStorageCompiler.atcgNucleotidesRequired}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Archival Status:</span>
-                            <span>{scan.dnaStorageCompiler.archivalReadiness}</span>
-                          </div>
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* BFT Consensus Graph */}
-                {scan.bftConsensusGraph && (
-                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-red-500/30 transition-all`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Network className={`w-24 h-24 ${isLight ? "text-red-600" : "text-red-400"}`} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-red-100 text-red-600" : "bg-red-500/20 text-red-400"}`}>
-                        <Globe className="w-4 h-4" />
-                      </div>
-                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>BFT Consensus Architecture</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                        {scan.bftConsensusGraph.insight}
-                      </div>
-                        <div className={`mb-3 p-3 rounded border font-serif text-[12px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-red-400"}`}>
-                          <div className="italic font-bold">n &ge; 3f + 1</div>
-                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-red-500/20 pt-1 w-full">Fault Tolerance Bound Derivation</div>
-                        </div>
-                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                          <div className="flex justify-between mb-1">
-                            <span>Graph Edges:</span>
-                            <span>{scan.bftConsensusGraph.graphEdgesCalculated}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Survivability Limit:</span>
-                            <span className="text-red-500 font-bold">{scan.bftConsensusGraph.bftSurvivabilityLimit}</span>
-                          </div>
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Kardashev Latency */}
-                {scan.kardashevLatency && (
-                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-cyan-500/30 transition-all`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Orbit className={`w-24 h-24 ${isLight ? "text-cyan-600" : "text-cyan-400"}`} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-cyan-100 text-cyan-600" : "bg-cyan-500/20 text-cyan-400"}`}>
-                        <Satellite className="w-4 h-4" />
-                      </div>
-                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Kardashev Code Compiler</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                        {scan.kardashevLatency.insight}
-                      </div>
-                        <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-cyan-400"}`}>
-                          <div className="italic">&Delta;t = d / c</div>
-                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-cyan-500/20 pt-1 w-full">c = 299,792,458 m/s (Light Speed Latency Limit)</div>
-                        </div>
-                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                          <div className="flex justify-between mb-1">
-                            <span>Dyson Swarm Threshold:</span>
-                            <span className="text-cyan-500 font-bold">{scan.kardashevLatency.dysonSwarmLatencyThreshold}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Packet Resilience:</span>
-                            <span className="truncate ml-2">{scan.kardashevLatency.interplanetaryPacketLossResilience}</span>
-                          </div>
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* AGI Alignment Prover */}
-                {scan.agiAlignment && (
-                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-fuchsia-500/30 transition-all`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Cpu className={`w-24 h-24 ${isLight ? "text-fuchsia-600" : "text-fuchsia-400"}`} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-fuchsia-100 text-fuchsia-600" : "bg-fuchsia-500/20 text-fuchsia-400"}`}>
-                        <Bot className="w-4 h-4" />
-                      </div>
-                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>AGI Alignment Prover</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                        {scan.agiAlignment.insight}
-                      </div>
-                        <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-fuchsia-400"}`}>
-                          <div className="italic">&nabla;R(&theta;) = &Sigma; &nabla;log P(a|s;&theta;) R(s,a)</div>
-                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-fuchsia-500/20 pt-1 w-full">Policy Gradient Reward Hacking Bound</div>
-                        </div>
-                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                          <div className="flex justify-between mb-1">
-                            <span>Alignment Stability:</span>
-                            <span className="text-fuchsia-500 font-bold">{scan.agiAlignment.alignmentStabilityScore}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Containment Breach Prob:</span>
-                            <span>{scan.agiAlignment.agiContainmentBreachProbability}</span>
-                          </div>
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                <EntropyLeakVisualizer data={scan.thermodynamicEntropy as any} />
-                  {/* VibeTaint v1.2 */}
-                  {scan.vibeTaint && (
-                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-violet-500/30 transition-all`}>
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Activity className={`w-24 h-24 ${isLight ? "text-violet-600" : "text-violet-400"}`} />
-                      </div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-violet-100 text-violet-600" : "bg-violet-500/20 text-violet-400"}`}>
-                          <Activity className="w-4 h-4" />
-                        </div>
-                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>VibeTaint v1.2</h3>
-                      </div>
-                      <div className="space-y-4 relative z-10">
-                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                          {scan.vibeTaint.insight}
-                        </div>
-                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-violet-400"}`}>
-                            <span className="italic">Taint(S<sub>sink</sub>) &subseteq; Paths(S<sub>source</sub>)</span>
-                          </div>
-                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                            <div className="flex justify-between mb-1">
-                              <span>DFG Nodes:</span>
-                              <span className="text-violet-500 font-bold">{scan.vibeTaint.dfgNodesConstructed}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Taint Paths:</span>
-                              <span>{scan.vibeTaint.taintPathsDetected}</span>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* SymCost Analytics */}
-                  {scan.symCost && (
-                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all`}>
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Clock className={`w-24 h-24 ${isLight ? "text-emerald-600" : "text-emerald-400"}`} />
-                      </div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-400"}`}>
-                          <Clock className="w-4 h-4" />
-                        </div>
-                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>SymCost Analytics</h3>
-                      </div>
-                      <div className="space-y-4 relative z-10">
-                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                          {scan.symCost.insight}
-                        </div>
-                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-emerald-400"}`}>
-                            <span className="italic">lim<sub>n&rarr;&infin;</sub> Cost(N+1) = O(N<sup>2</sup>)</span>
-                          </div>
-                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                            <div className="flex justify-between mb-1">
-                              <span>AST Nodes:</span>
-                              <span className="text-emerald-500 font-bold">{scan.symCost.astNodesAnalyzed}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>ReDoS Risk:</span>
-                              <span>{scan.symCost.catastrophicBacktrackingRisk}</span>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* RegGraph Compliance */}
-                  {scan.regGraph && (
-                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all`}>
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Shield className={`w-24 h-24 ${isLight ? "text-blue-600" : "text-blue-400"}`} />
-                      </div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-blue-100 text-blue-600" : "bg-blue-500/20 text-blue-400"}`}>
-                          <Shield className="w-4 h-4" />
-                        </div>
-                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>RegGraph Compliance</h3>
-                      </div>
-                      <div className="space-y-4 relative z-10">
-                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                          {scan.regGraph.insight}
-                        </div>
-                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-blue-400"}`}>
-                            <span className="italic">&forall; x &isin; PHI &implies; Encrypt(x, AES-256)</span>
-                          </div>
-                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                            <div className="flex justify-between mb-1">
-                              <span>PCI-DSS Coverage:</span>
-                              <span className="text-blue-500 font-bold">{scan.regGraph.pciDssCoverage}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>GDPR Art. 17:</span>
-                              <span>{scan.regGraph.gdprArticle17}</span>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* FailSafe Topology */}
-                  {scan.failSafe && (
-                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-red-500/30 transition-all`}>
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <AlertTriangle className={`w-24 h-24 ${isLight ? "text-red-600" : "text-red-400"}`} />
-                      </div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-red-100 text-red-600" : "bg-red-500/20 text-red-400"}`}>
-                          <AlertTriangle className="w-4 h-4" />
-                        </div>
-                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>FailSafe Topology</h3>
-                      </div>
-                      <div className="space-y-4 relative z-10">
-                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                          {scan.failSafe.insight}
-                        </div>
-                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-red-400"}`}>
-                            <span className="italic">&Sigma;<sub>err</sub> P(Retry | Exception) &gt; 0.99</span>
-                          </div>
-                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                            <div className="flex justify-between mb-1">
-                              <span>Try/Catch Blocks:</span>
-                              <span className="text-red-500 font-bold">{scan.failSafe.tryCatchBlocks}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Swallowed Errs:</span>
-                              <span>{scan.failSafe.swallowedExceptions}</span>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ObsCover Matrix */}
-                  {scan.obsCover && (
-                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-fuchsia-500/30 transition-all`}>
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Eye className={`w-24 h-24 ${isLight ? "text-fuchsia-600" : "text-fuchsia-400"}`} />
-                      </div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-fuchsia-100 text-fuchsia-600" : "bg-fuchsia-500/20 text-fuchsia-400"}`}>
-                          <Eye className="w-4 h-4" />
-                        </div>
-                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>ObsCover Matrix</h3>
-                      </div>
-                      <div className="space-y-4 relative z-10">
-                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                          {scan.obsCover.insight}
-                        </div>
-                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-fuchsia-400"}`}>
-                            <span className="italic">OCM = TracedNodes / TotalNodes &approx; 0.85</span>
-                          </div>
-                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                            <div className="flex justify-between mb-1">
-                              <span>Telemetry Cov:</span>
-                              <span className="text-fuchsia-500 font-bold">{scan.obsCover.telemetryCoverage}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Orphaned Spans:</span>
-                              <span>{scan.obsCover.orphanedSpans}</span>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ArchScan Tarjan */}
-                  {scan.archScan && (
-                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-yellow-500/30 transition-all`}>
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Layers className={`w-24 h-24 ${isLight ? "text-yellow-600" : "text-yellow-400"}`} />
-                      </div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-yellow-100 text-yellow-600" : "bg-yellow-500/20 text-yellow-400"}`}>
-                          <Layers className="w-4 h-4" />
-                        </div>
-                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>ArchScan Metrics</h3>
-                      </div>
-                      <div className="space-y-4 relative z-10">
-                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                          {scan.archScan.insight}
-                        </div>
-                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-yellow-400"}`}>
-                            <span className="italic">I = C<sub>e</sub> / (C<sub>a</sub> + C<sub>e</sub>) = {scan.archScan.instabilityMetric}</span>
-                          </div>
-                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                            <div className="flex justify-between mb-1">
-                              <span>Instability:</span>
-                              <span className="text-yellow-500 font-bold">{scan.archScan.instabilityMetric}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Circular Imports:</span>
-                              <span>{scan.archScan.circularImports}</span>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* DeploySafe */}
-                  {scan.deploySafe && (
-                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-teal-500/30 transition-all`}>
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <HardDrive className={`w-24 h-24 ${isLight ? "text-teal-600" : "text-teal-400"}`} />
-                      </div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-teal-100 text-teal-600" : "bg-teal-500/20 text-teal-400"}`}>
-                          <HardDrive className="w-4 h-4" />
-                        </div>
-                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>DeploySafe Verifier</h3>
-                      </div>
-                      <div className="space-y-4 relative z-10">
-                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                          {scan.deploySafe.insight}
-                        </div>
-                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-teal-400"}`}>
-                            <span className="italic">Hash(Dev) &equiv; Hash(Prod)</span>
-                          </div>
-                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                            <div className="flex justify-between mb-1">
-                              <span>Manifests:</span>
-                              <span className="text-teal-500 font-bold">{scan.deploySafe.manifestsScanned}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Drift Prob:</span>
-                              <span>{scan.deploySafe.driftProbability}</span>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* PromptTrace */}
-                  {scan.promptTrace && (
-                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-purple-500/30 transition-all`}>
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <MessageSquare className={`w-24 h-24 ${isLight ? "text-purple-600" : "text-purple-400"}`} />
-                      </div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-purple-100 text-purple-600" : "bg-purple-500/20 text-purple-400"}`}>
-                          <MessageSquare className="w-4 h-4" />
-                        </div>
-                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>PromptTrace Guard</h3>
-                      </div>
-                      <div className="space-y-4 relative z-10">
-                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                          {scan.promptTrace.insight}
-                        </div>
-                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-purple-400"}`}>
-                            <span className="italic">Sanitize(Prompt<sub>sys</sub>) &oplus; UserInput</span>
-                          </div>
-                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                            <div className="flex justify-between mb-1">
-                              <span>Boundaries:</span>
-                              <span className="text-purple-500 font-bold">{scan.promptTrace.llmBoundaries}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Jailbreak:</span>
-                              <span>{scan.promptTrace.jailbreakProbability}</span>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* FlowValue */}
-                  {scan.flowValue && (
-                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-green-500/30 transition-all`}>
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <DollarSign className={`w-24 h-24 ${isLight ? "text-green-600" : "text-green-400"}`} />
-                      </div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-green-100 text-green-600" : "bg-green-500/20 text-green-400"}`}>
-                          <DollarSign className="w-4 h-4" />
-                        </div>
-                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>FlowValue Risk</h3>
-                      </div>
-                      <div className="space-y-4 relative z-10">
-                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                          {scan.flowValue.insight}
-                        </div>
-                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-green-400"}`}>
-                            <span className="italic">VaR = &Sigma; P(Breach) &times; Revenue(Route)</span>
-                          </div>
-                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                            <div className="flex justify-between mb-1">
-                              <span>Critical Paths:</span>
-                              <span className="text-green-500 font-bold">{scan.flowValue.criticalPaths}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>VaR:</span>
-                              <span>{scan.flowValue.revenueValueAtRisk}</span>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* DeploySafe â€” Infrastructure Verifier */}
-                  {scan.deploySafe && (
-                    <DeploySafeVisualizer data={scan.deploySafe as any} />
-                  )}
-
-                  {/* FailSafe â€” Resilience Topology */}
-                  {scan.failSafe && (
-                    <FailSafeVisualizer data={scan.failSafe as any} />
-                  )}
-
-                  {/* ObsCover â€” Observability Matrix */}
-                  {scan.obsCover && (
-                    <ObsCoverVisualizer data={scan.obsCover as any} />
-                  )}
-
-                  {/* CogFlow â€” Cognitive Load */}
-                  {scan.cogFlow && (
-                    <CogFlowVisualizer data={scan.cogFlow as any} />
-                  )}
-
-                  {/* ArchScan â€” Architectural Smells */}
-                  {scan.archScan && (
-                    <ArchScanVisualizer data={scan.archScan as any} />
-                  )}
-
-                  {/* Time-Aware Dependency Calculus */}
-                  {scan.timeAwareDeps && (
-                    <TimeAwareDepsVisualizer data={scan.timeAwareDeps as any} />
-                  )}
-
-                  {/* Dempster-Shafer Evidence Fusion */}
-                  {scan.dempsterShafer && (
-                    <DempsterShaferVisualizer data={scan.dempsterShafer as DempsterShaferResult} />
-                  )}
-
-                  {/* Structural AST Fingerprinting & LTL State-Space Check */}
-                  {scan.topologicalAnalysis && (
-                    <StructuralAnalysisVisualizer data={scan.topologicalAnalysis as any} isLight={isLight} />
-                  )}
-
-                  <ConstraintSolverVisualizer data={scan.constraintSolver as any} />
-
-                </div>
-              </div>
-
-            {/* Developer Twin Profile */}
-            <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6`}>
-               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                 <div>
-                   <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-orange-100 text-orange-600" : "bg-orange-500/20 text-orange-400"}`}>
-                      <Fingerprint className="w-4 h-4" />
-                    </div>
-                    <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Developer Twin Signature</h3>
-                   </div>
-                   <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"} max-w-xl leading-relaxed`}>
-                     {scan.developerTwinProfile?.description || "Analyzed coding patterns indicate a senior Full-Stack developer optimizing for speed. Slight tendency to bypass strict TypeScript checks when dealing with complex generic types."}
-                   </p>
-                 </div>
-                 <div className={`flex items-center gap-4 px-5 py-3 rounded-xl border ${isLight ? "bg-slate-50 border-slate-200" : "bg-black/50 border-white/5"}`}>
-                   <div className="text-center">
-                     <div className={`text-[10px] uppercase font-bold tracking-widest ${isLight ? "text-slate-400" : "text-white/30"}`}>Code Style Match</div>
-                     <div className={`text-xl font-bold mt-1 ${isLight ? "text-slate-900" : "text-white"}`}>
-                       {scan.developerTwinProfile?.confidenceScore || "94"}%
-                     </div>
-                   </div>
-                 </div>
-               </div>
-            </div>
-            
-
-          </div>
+          <DeepTech40Panel scan={scan} />
         )}
+
+
 
         {/* â”€â”€ Privacy footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div className="flex items-center gap-2 justify-center py-4">

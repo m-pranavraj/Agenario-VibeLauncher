@@ -5,9 +5,26 @@ import { useIsLight } from "@/hooks/use-is-light";
 interface TelemetryBoundary { file: string; line: number; blockType: string; hasLogging: boolean; hasTracing: boolean; coverage: string; }
 interface ObsCoverData { observabilityDebtScore: number; coveragePct: number; totalBlocks: number; coveredBlocks: number; partialBlocks: number; uncoveredBlocks: number; recommendedActions: string[]; boundaries?: TelemetryBoundary[]; }
 
-export function ObsCoverVisualizer({ data }: { data: ObsCoverData }) {
+export function ObsCoverVisualizer({ data }: { data: ObsCoverData | null }) {
   const isLight = useIsLight();
   const [expanded, setExpanded] = useState(false);
+
+  if (!data) {
+    return (
+      <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-violet-100 text-violet-600" : "bg-violet-500/20 text-violet-400"}`}>
+            <Eye className="w-4 h-4" />
+          </div>
+          <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>ObsCover — Observability Matrix</h3>
+        </div>
+        <div className={`p-4 rounded-lg ${isLight ? "bg-slate-50" : "bg-white/5"} flex items-center gap-3`}>
+          <CheckCircle2 className="w-4 h-4 text-green-400" />
+          <span className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>No observability data available. Connect this engine to the scan pipeline.</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden`}>

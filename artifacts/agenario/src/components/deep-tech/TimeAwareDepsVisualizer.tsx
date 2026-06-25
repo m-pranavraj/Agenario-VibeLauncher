@@ -5,9 +5,29 @@ import { useIsLight } from "@/hooks/use-is-light";
 interface DepPkg { name: string; currentVersion: string; daysSinceLastPublish: number; deprecated: boolean; openVulnerabilities: number; maintainers: number; hasTypes: boolean; }
 interface TimeAwareDepsData { score: number; totalDeps: number; deprecatedCount: number; staleCount: number; vulnerableCount: number; meanDecayDays: number; meanMaintainers: number; packages?: DepPkg[]; }
 
-export function TimeAwareDepsVisualizer({ data }: { data: TimeAwareDepsData }) {
+export function TimeAwareDepsVisualizer({ data }: { data: TimeAwareDepsData | null }) {
   const isLight = useIsLight();
   const [expanded, setExpanded] = useState(false);
+
+  if (!data) {
+    return (
+      <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-cyan-100 text-cyan-600" : "bg-cyan-500/20 text-cyan-400"}`}>
+            <Package className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Time-Aware Dependencies</h3>
+            <p className={`text-[10px] ${isLight ? "text-slate-400" : "text-white/30"}`}>Supply chain decay analysis</p>
+          </div>
+        </div>
+        <div className={`p-4 rounded-lg ${isLight ? "bg-slate-50" : "bg-white/5"} flex items-center gap-3`}>
+          <CheckCircle2 className="w-4 h-4 text-green-400" />
+          <span className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>No dependency data available. Connect this engine to the scan pipeline.</span>
+        </div>
+      </div>
+    );
+  }
 
   const riskPkgs = (data.packages || []).filter(p => p.deprecated || p.daysSinceLastPublish > 365 || p.openVulnerabilities > 0);
   const sortedPkgs = [...(data.packages || [])].sort((a, b) => b.daysSinceLastPublish - a.daysSinceLastPublish);

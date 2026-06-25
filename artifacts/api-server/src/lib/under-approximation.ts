@@ -10,7 +10,7 @@ export type AbstractDomain = "sign" | "interval" | "constant" | "type" | "taint"
 export interface AbstractValue {
   domain: AbstractDomain;
   value: string | number | null;
-  possibleValues: Set<string | number>;
+  possibleValues: string[] | number[];
   isTop: boolean;
   isBottom: boolean;
   type: string;
@@ -20,7 +20,7 @@ export interface ReachableState {
   nodeId: string;
   filePath: string;
   line: number;
-  abstractValues: Map<string, AbstractValue>;
+  abstractValues: Record<string, any>;
   pathConstraint: string[];
   isReachable: boolean;
   proofSteps: string[];
@@ -153,14 +153,14 @@ export function analyzeReachableStates(
               const right = extractExpressionString(condition.right);
               const op = condition.operator;
 
-              abstractValues.set("condition", {
-                domain: "interval",
-                value: `${left} ${op} ${right}`,
-                possibleValues: new Set([true, false]),
-                isTop: false,
-                isBottom: false,
-                type: "boolean",
-              });
+abstractValues.set("condition", {
+                 domain: "interval",
+                 value: `${left} ${op} ${right}`,
+                 possibleValues: [true, false],
+                 isTop: false,
+                 isBottom: false,
+                 type: "boolean",
+               });
 
               pathProofs.push(`Abstract domain: interval. Concrete condition: ${left} ${op} ${right}`);
 
@@ -189,15 +189,15 @@ export function analyzeReachableStates(
             }
           }
 
-          const state: ReachableState = {
-            nodeId: `if_${file.path}_${lineNum}`,
-            filePath: file.path,
-            line: lineNum,
-            abstractValues,
-            pathConstraint: [testStr],
-            isReachable: conditionReachable,
-            proofSteps: pathProofs,
-          };
+const state: ReachableState = {
+             nodeId: `if_${file.path}_${lineNum}`,
+             filePath: file.path,
+             line: lineNum,
+             abstractValues: Object.fromEntries(abstractValues),
+             pathConstraint: [testStr],
+             isReachable: conditionReachable,
+             proofSteps: pathProofs,
+           };
 
           if (conditionReachable) {
             reachableStates.push(state);
@@ -219,29 +219,29 @@ export function analyzeReachableStates(
             proofs.push(`SOUND UNDER-APPROX: typedDensity=${typedDensity.toFixed(2)} — logical paths under-approximated due to untyped variables`);
           }
 
-          reachableStates.push({
-            nodeId: `logical_${file.path}_${lineNum}`,
-            filePath: file.path,
-            line: lineNum,
-            abstractValues: new Map(),
-            pathConstraint: [expr],
-            isReachable: typedDensity >= 0.2,
-            proofSteps: proofs,
-          });
+reachableStates.push({
+             nodeId: `logical_${file.path}_${lineNum}`,
+             filePath: file.path,
+             line: lineNum,
+             abstractValues: {},
+             pathConstraint: [expr],
+             isReachable: typedDensity >= 0.2,
+             proofSteps: proofs,
+           });
         },
 
         ConditionalExpression(path: any) {
           totalPaths++;
           const lineNum = path.node.loc?.start?.line || 0;
-          reachableStates.push({
-            nodeId: `ternary_${file.path}_${lineNum}`,
-            filePath: file.path,
-            line: lineNum,
-            abstractValues: new Map(),
-            pathConstraint: ["ternary branch"],
-            isReachable: true,
-            proofSteps: ["Abstract domain: constant propagation — ternary expressions resolved via folding"],
-          });
+reachableStates.push({
+             nodeId: `ternary_${file.path}_${lineNum}`,
+             filePath: file.path,
+             line: lineNum,
+             abstractValues: {},
+             pathConstraint: ["ternary branch"],
+             isReachable: true,
+             proofSteps: ["Abstract domain: constant propagation — ternary expressions resolved via folding"],
+           });
         },
       });
     } catch {}

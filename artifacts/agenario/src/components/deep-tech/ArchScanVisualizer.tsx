@@ -6,10 +6,27 @@ interface CircularDep { cycle: string[]; length: number; }
 interface ModuleMetric { file: string; afferentCoupling: number; efferentCoupling: number; instability: number; distance: number; }
 interface ArchScanData { score: number; instabilityTrend: string; circularDependencies: CircularDep[]; hotSpots: ModuleMetric[]; moduleMetrics?: ModuleMetric[]; }
 
-export function ArchScanVisualizer({ data }: { data: ArchScanData }) {
+export function ArchScanVisualizer({ data }: { data: ArchScanData | null }) {
   const isLight = useIsLight();
   const [expanded, setExpanded] = useState(false);
   const [showHotspots, setShowHotspots] = useState(true);
+
+  if (!data) {
+    return (
+      <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-cyan-100 text-cyan-600" : "bg-cyan-500/20 text-cyan-400"}`}>
+            <GitMerge className="w-4 h-4" />
+          </div>
+          <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>ArchScan — Architecture Smells</h3>
+        </div>
+        <div className={`p-4 rounded-lg ${isLight ? "bg-slate-50" : "bg-white/5"} flex items-center gap-3`}>
+          <CheckCircle2 className="w-4 h-4 text-green-400" />
+          <span className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>No architecture data available. Connect this engine to the scan pipeline.</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden`}>
