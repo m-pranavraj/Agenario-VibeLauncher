@@ -274,8 +274,8 @@ const SAMPLE_ISSUES = [
 function OnboardingWizard({ onComplete }: { onComplete: () => void }) {
   const isLight = useIsLight();
   const [step, setStep] = useState(0);
-  const bg = isLight ? "bg-white text-gray-900" : "bg-[#050505] text-white";
-  const cardBg = isLight ? "bg-gray-50 border-gray-200" : "bg-[#0a0a0a] border-[#1a1a1a]";
+  const bg = isLight ? "bg-[#fdf4f8] text-gray-900" : "bg-[#050505] text-white";
+  const cardBg = isLight ? "bg-white border-gray-200" : "bg-[#0a0a0a] border-[#1a1a1a]";
 
   if (step === 0) {
     return (

@@ -102,6 +102,13 @@ export interface CSGNode {
     // Cost modeling
     estimatedCostMs?: number;
     estimatedBundleKb?: number;
+    // ── Reality Check (Product Reality Engine) ────────────────────────
+    isMockSource?: boolean;
+    isUIComponent?: boolean;
+    hasLocalState?: boolean;
+    hasFetch?: boolean;
+    hasForm?: boolean;
+    persistenceVerified?: boolean;
   };
 }
 

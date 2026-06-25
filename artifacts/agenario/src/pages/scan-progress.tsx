@@ -48,8 +48,8 @@ export default function ScanProgress() {
   const [completed, setCompleted] = useState(false);
   const [failed, setFailed] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
-  const bg = isLight ? "bg-white text-gray-900" : "bg-[#050505] text-white";
-  const cardBg = isLight ? "bg-gray-50 border-gray-200" : "bg-[#0a0a0a] border-[#1a1a1a]";
+  const bg = isLight ? "bg-[#fdf4f8] text-gray-900" : "bg-[#050505] text-white";
+  const cardBg = isLight ? "bg-white border-gray-200" : "bg-[#0a0a0a] border-[#1a1a1a]";
 
   useEffect(() => {
     if (!scanId) return;
@@ -84,7 +84,7 @@ export default function ScanProgress() {
     };
   }, [completed, scanId, setLocation]);
 
-  const latestProgress = events.length > 0 ? events[events.length - 1].progress : 0;
+  const latestProgress = events.length > 0 ? Math.min(100, Math.max(0, events[events.length - 1].progress)) : 0;
 
   if (!scanId) {
     return (
@@ -163,44 +163,44 @@ export default function ScanProgress() {
         <div
           ref={terminalRef}
           className={`font-mono text-sm rounded-xl border overflow-y-auto p-4 ${
-            isLight ? "bg-gray-900 text-green-400 border-gray-700" : "bg-[#000] text-green-400 border-[#1a1a1a]"
+            isLight ? "bg-gray-50 text-gray-800 border-gray-200" : "bg-[#000] text-green-400 border-[#1a1a1a]"
           }`}
           style={{ height: "60vh", minHeight: "400px" }}
         >
           {events.length === 0 && (
-            <div className="text-white/30 animate-pulse">
-              <span className="text-purple-400">$</span> Connecting to scan engine...
+            <div className={`${isLight ? "text-gray-400" : "text-white/30"} animate-pulse`}>
+              <span className={`${isLight ? "text-gray-600" : "text-purple-400"}`}>$</span> <span className={`${isLight ? "text-gray-400" : "text-white/30"}`}>Connecting to scan engine...</span>
             </div>
           )}
           {events.map((event, i) => (
-            <div key={i} className="mb-1 leading-relaxed">
-              <span className="text-purple-400">$</span>{" "}
-              <span className="text-cyan-400">[{PHASE_LABELS[event.phase] || event.phase}]</span>{" "}
-              <span className={event.status === "error" ? "text-red-400" : event.status === "complete" ? "text-green-400" : "text-white/80"}>
+            <div key={i} className={`mb-1 leading-relaxed ${isLight ? "text-gray-700" : ""}`}>
+              <span className={`${isLight ? "text-gray-600" : "text-purple-400"}`}>$</span>{" "}
+              <span className={isLight ? "text-gray-500" : "text-cyan-400"}>[{PHASE_LABELS[event.phase] || event.phase}]</span>{" "}
+              <span className={event.status === "error" ? "text-red-500" : event.status === "complete" ? "text-green-600" : isLight ? "text-gray-800" : "text-white/80"}>
                 {event.message}
               </span>
               {event.agentName && (
-                <span className="text-yellow-400/60 text-xs ml-2">({event.agentName})</span>
+                <span className={`text-xs ml-2 ${isLight ? "text-gray-400" : "text-yellow-400/60"}`}>({event.agentName})</span>
               )}
               {event.issuesFound !== undefined && (
-                <span className="text-orange-400 ml-2">{event.issuesFound} issues</span>
+                <span className={`ml-2 ${isLight ? "text-orange-500" : "text-orange-400"}`}>{event.issuesFound} issues</span>
               )}
             </div>
           ))}
           {!completed && !failed && (
-            <div className="animate-pulse mt-1">
-              <span className="text-purple-400">$</span>{" "}
-              <span className="text-white/30">_</span>
+            <div className={`animate-pulse mt-1 ${isLight ? "text-gray-400" : ""}`}>
+              <span className={`${isLight ? "text-gray-600" : "text-purple-400"}`}>$</span>{" "}
+              <span className={`${isLight ? "text-gray-400" : "text-white/30"}`}>_</span>
             </div>
           )}
           {failed && (
-            <div className="mt-2 text-red-400">
-              <span className="text-purple-400">$</span> ERROR: {error || "Scan pipeline encountered an error"}
+            <div className={`mt-2 ${isLight ? "text-red-600" : "text-red-400"}`}>
+              <span className={`${isLight ? "text-gray-600" : "text-purple-400"}`}>$</span> ERROR: {error || "Scan pipeline encountered an error"}
             </div>
           )}
           {completed && (
-            <div className="mt-2 text-green-400 font-bold">
-              <span className="text-purple-400">$</span> ✓ Scan complete! Redirecting to results...
+            <div className={`mt-2 font-bold ${isLight ? "text-green-600" : "text-green-400"}`}>
+              <span className={`${isLight ? "text-gray-600" : "text-purple-400"}`}>$</span> ✓ Scan complete! Redirecting to results...
             </div>
           )}
         </div>

@@ -235,7 +235,7 @@ function buildLeak(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PART 2: CONSTRAINT-BASED EXPLOIT SOLVER (AST-grounded)
+// PART 2: CONSTRAINT-BASED EXPLOIT SOLVER (DPLL SAT Engine)
 // ═══════════════════════════════════════════════════════════════════════════
 
 interface ExtractedConstraint {
@@ -246,6 +246,42 @@ interface ExtractedConstraint {
   operator: string;
   right: string;
   conditionType: ConstraintPayload["conditionType"];
+}
+
+// ─── SAT Solver Core ────────────────────────────────────────────────────
+
+type VarId = number;
+
+interface Literal {
+  var: VarId;
+  negated: boolean;
+}
+
+interface Clause {
+  literals: Literal[];
+}
+
+type BoolFormula = { type: "atom"; var: VarId; name: string }
+  | { type: "not"; expr: BoolFormula }
+  | { type: "and"; left: BoolFormula; right: BoolFormula }
+  | { type: "or"; left: BoolFormula; right: BoolFormula };
+
+interface SatAssignment {
+  [key: number]: boolean;
+}
+
+interface SatResult {
+  satisfiable: boolean;
+  model: SatAssignment | null;
+  satisfyingAssignments: Record<string, string> | null;
+  bypassType: ConstraintPayload["bypassType"] | null;
+}
+
+interface ConstraintClause {
+  formula: BoolFormula;
+  variableNames: Map<VarId, string>;
+  domains: Map<VarId, Set<string>>;
+  concreteValues: Map<VarId, string>;
 }
 
 function classifyConstraint(left: string, right: string, op: string): ConstraintPayload["conditionType"] {
@@ -388,109 +424,431 @@ function extractFromExpression(
   }
 }
 
-function solveConstraint(c: ExtractedConstraint): ConstraintPayload | null {
-  const leftVar = c.left.replace(/^this\./, "").replace(/^req\./, "").replace(/^user\./, "");
-  const cleanRight = c.right.replace(/['"`]/g, "");
+// ─── Boolean Formula Representation ────────────────────────────────────
 
-  // Skip non-security constraints (math, loops, etc.)
-  if (/^\d+$/.test(leftVar) && /^\d+$/.test(cleanRight)) return null;
+let nextVarId = 1;
+const varNameMap = new Map<VarId, string>();
+const varDomainMap = new Map<VarId, Set<string>>();
 
-  let assignments: Record<string, string> = {};
-  let payload = "";
-  let bypassType: ConstraintPayload["bypassType"] = "direct_value";
+function freshVar(name: string, domain?: string): VarId {
+  const id = nextVarId++;
+  varNameMap.set(id, name);
+  if (domain) {
+    if (!varDomainMap.has(id)) varDomainMap.set(id, new Set());
+    varDomainMap.get(id)!.add(domain);
+  }
+  return id;
+}
 
-  switch (c.operator) {
+function atom(name: string, domain?: string): BoolFormula {
+  return { type: "atom", var: freshVar(name, domain), name };
+}
+
+function not(e: BoolFormula): BoolFormula {
+  if (e.type === "not") return e.expr;
+  if (e.type === "atom") return { type: "not", expr: e };
+  return { type: "not", expr: e };
+}
+
+function and(a: BoolFormula, b: BoolFormula): BoolFormula {
+  return { type: "and", left: a, right: b };
+}
+
+function or(a: BoolFormula, b: BoolFormula): BoolFormula {
+  return { type: "or", left: a, right: b };
+}
+
+// ─── CNF Conversion ────────────────────────────────────────────────────
+
+interface CNF {
+  clauses: Clause[];
+  varCount: number;
+}
+
+function toCNF(formula: BoolFormula): CNF {
+  const clauses: Clause[] = [];
+
+  function collectAtoms(f: BoolFormula): VarId[] {
+    switch (f.type) {
+      case "atom": return [f.var];
+      case "not": return collectAtoms(f.expr);
+      case "and": return [...collectAtoms(f.left), ...collectAtoms(f.right)];
+      case "or": return [...collectAtoms(f.left), ...collectAtoms(f.right)];
+    }
+  }
+
+  function getVars(f: BoolFormula): Set<VarId> {
+    const vars = new Set<VarId>();
+    function walk(node: BoolFormula) {
+      if (node.type === "atom") vars.add(node.var);
+      else if (node.type === "not") walk(node.expr);
+      else { walk(node.left); walk(node.right); }
+    }
+    walk(f);
+    return vars;
+  }
+
+  // Tseitin transformation for CNF conversion
+  const auxVarCount = { value: 0 };
+  const auxClauses: Clause[] = [];
+
+  function tseitin(f: BoolFormula): VarId {
+    switch (f.type) {
+      case "atom": return f.var;
+      case "not": {
+        const v = tseitin(f.expr);
+        const aux = freshVar(`aux_not_${auxVarCount.value++}`);
+        auxClauses.push({ literals: [{ var: aux, negated: true }, { var: v, negated: false }] });
+        auxClauses.push({ literals: [{ var: aux, negated: false }, { var: v, negated: true }] });
+        return aux;
+      }
+      case "and": {
+        const l = tseitin(f.left);
+        const r = tseitin(f.right);
+        const aux = freshVar(`aux_and_${auxVarCount.value++}`);
+        auxClauses.push({ literals: [{ var: aux, negated: true }, { var: l, negated: false }] });
+        auxClauses.push({ literals: [{ var: aux, negated: true }, { var: r, negated: false }] });
+        auxClauses.push({ literals: [{ var: aux, negated: false }, { var: l, negated: true }, { var: r, negated: true }] });
+        return aux;
+      }
+      case "or": {
+        const l = tseitin(f.left);
+        const r = tseitin(f.right);
+        const aux = freshVar(`aux_or_${auxVarCount.value++}`);
+        auxClauses.push({ literals: [{ var: aux, negated: false }, { var: l, negated: true }] });
+        auxClauses.push({ literals: [{ var: aux, negated: false }, { var: r, negated: true }] });
+        auxClauses.push({ literals: [{ var: aux, negated: true }, { var: l, negated: false }, { var: r, negated: false }] });
+        return aux;
+      }
+    }
+  }
+
+  const topVar = tseitin(formula);
+  auxClauses.push({ literals: [{ var: topVar, negated: false }] });
+  const allVars = getVars(formula);
+  return {
+    clauses: [...auxClauses, ...clauses],
+    varCount: allVars.size + auxVarCount.value,
+  };
+}
+
+// ─── DPLL SAT Solver ───────────────────────────────────────────────────
+
+function unitPropagate(clauses: Clause[], model: SatAssignment): { clauses: Clause[]; model: SatAssignment; conflict?: boolean } {
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const unitClauses: Clause[] = [];
+    const newClauses: Clause[] = [];
+
+    for (const clause of clauses) {
+      const unassigned: Literal[] = [];
+      let satisfied = false;
+
+      for (const lit of clause.literals) {
+        const val = model[lit.var];
+        if (val !== undefined) {
+          if ((lit.negated && !val) || (!lit.negated && val)) {
+            satisfied = true;
+            break;
+          }
+        } else {
+          unassigned.push(lit);
+        }
+      }
+
+      if (satisfied) continue;
+
+      if (unassigned.length === 0) {
+        return { clauses: [], model, conflict: true };
+      }
+
+      if (unassigned.length === 1) {
+        const lit = unassigned[0];
+        model[lit.var] = !lit.negated;
+        unitClauses.push(clause);
+        changed = true;
+      } else {
+        newClauses.push(clause);
+      }
+    }
+    clauses = newClauses;
+  }
+  return { clauses, model };
+}
+
+function pureLiteralEliminate(clauses: Clause[], model: SatAssignment): { clauses: Clause[]; model: SatAssignment } {
+  const varOccurrences = new Map<VarId, { pos: number; neg: number }>();
+
+  for (const clause of clauses) {
+    for (const lit of clause.literals) {
+      const occ = varOccurrences.get(lit.var) || { pos: 0, neg: 0 };
+      if (lit.negated) occ.neg++;
+      else occ.pos++;
+      varOccurrences.set(lit.var, occ);
+    }
+  }
+
+  const pureVars: VarId[] = [];
+  for (const [v, occ] of varOccurrences) {
+    if (occ.pos === 0 || occ.neg === 0) {
+      if (model[v] === undefined) {
+        pureVars.push(v);
+        model[v] = occ.pos > 0;
+      }
+    }
+  }
+
+  if (pureVars.length === 0) return { clauses, model };
+
+  const newClauses = clauses.filter(clause => {
+    for (const lit of clause.literals) {
+      if (pureVars.includes(lit.var)) {
+        const val = model[lit.var];
+        if ((lit.negated && !val) || (!lit.negated && val)) return false;
+      }
+    }
+    return true;
+  });
+
+  return { clauses: newClauses, model };
+}
+
+function dpll(clauses: Clause[], model: SatAssignment = {}): SatResult {
+  const result = unitPropagate(clauses, model);
+  if (result.conflict) return { satisfiable: false, model: null, satisfyingAssignments: null, bypassType: null };
+
+  let remaining = result.clauses;
+  let currentModel = result.model;
+
+  // Pure literal elimination
+  let pure = pureLiteralEliminate(remaining, currentModel);
+  remaining = pure.clauses;
+  currentModel = pure.model;
+
+  if (remaining.length === 0) {
+    return { satisfiable: true, model: currentModel, satisfyingAssignments: null, bypassType: null };
+  }
+
+  // Choose variable with highest occurrence
+  const varCounts = new Map<VarId, number>();
+  for (const clause of remaining) {
+    for (const lit of clause.literals) {
+      if (currentModel[lit.var] === undefined) {
+        varCounts.set(lit.var, (varCounts.get(lit.var) || 0) + 1);
+      }
+    }
+  }
+
+  let bestVar: VarId | null = null;
+  let bestCount = -1;
+  for (const [v, count] of varCounts) {
+    if (count > bestCount) { bestCount = count; bestVar = v; }
+  }
+
+  if (bestVar === null) {
+    return { satisfiable: true, model: currentModel, satisfyingAssignments: null, bypassType: null };
+  }
+
+  // Try true
+  const modelTrue = { ...currentModel, [bestVar]: true };
+  const satTrue = dpll(remaining, modelTrue);
+  if (satTrue.satisfiable) return satTrue;
+
+  // Try false
+  const modelFalse = { ...currentModel, [bestVar]: false };
+  return dpll(remaining, modelFalse);
+}
+
+// ─── Constraint → Boolean Formula ──────────────────────────────────────
+
+function constraintToFormula(c: ExtractedConstraint): { formula: BoolFormula; varNames: Map<VarId, string>; domains: Map<VarId, Set<string>> } | null {
+  const left = c.left.replace(/^this\./, "").replace(/^req\./, "").replace(/^user\./, "").replace(/^body\./, "").trim();
+  const cleanRight = c.right.replace(/['"`]/g, "").trim();
+  const op = c.operator;
+
+  if (!left || !cleanRight) return null;
+  if (/^\d+$/.test(left) && /^\d+$/.test(cleanRight)) return null;
+
+  const varNames = new Map<VarId, string>();
+  const domains = new Map<VarId, Set<string>>();
+
+  function registerVar(name: string, domain?: string): VarId {
+    const v = freshVar(name, domain);
+    varNames.set(v, name);
+    if (domain) {
+      if (!domains.has(v)) domains.set(v, new Set());
+      domains.get(v)!.add(domain);
+    }
+    return v;
+  }
+
+  let formula: BoolFormula;
+
+  switch (op) {
     case "===":
     case "==": {
-      if (cleanRight === "undefined") {
-        assignments[leftVar] = "undefined";
-        payload = `{ "${leftVar}": undefined }  (or omit the field entirely)`;
-        bypassType = "null_bypass";
-      } else if (cleanRight === "null") {
-        assignments[leftVar] = "null";
-        payload = `{ "${leftVar}": null }`;
-        bypassType = "null_bypass";
-      } else if (cleanRight === "true" || cleanRight === "false") {
-        assignments[leftVar] = cleanRight;
-        payload = `{ "${leftVar}": ${cleanRight} }`;
-        bypassType = "direct_value";
-      } else if (cleanRight === "0") {
-        assignments[leftVar] = "0";
-        payload = `{ "${leftVar}": 0 }`;
-        bypassType = "type_coercion";
-      } else {
-        assignments[leftVar] = cleanRight;
-        payload = `{ "${leftVar}": "${cleanRight}" }`;
-        bypassType = "direct_value";
-      }
+      const v = registerVar(left, cleanRight);
+      formula = { type: "and", left: atom(`${left}=="true"`), right: { type: "atom", var: v, name: `${left}=="${cleanRight}"` } };
+      // Simpler: just encode as literal that must be true
+      formula = { type: "atom", var: v, name: `${left}=="${cleanRight}"` };
       break;
     }
     case "!==":
     case "!=": {
-      if (cleanRight === "admin" || cleanRight === "true") {
-        assignments[leftVar] = "user";
-        payload = `{ "${leftVar}": "user" }  (anything other than "${cleanRight}")`;
-        bypassType = "negation";
-      } else if (cleanRight === "undefined" || cleanRight === "null") {
-        assignments[leftVar] = cleanRight === "undefined" ? "null" : "undefined";
-        payload = `{ "${leftVar}": ${assignments[leftVar]} }  (passing the field)`;
-        bypassType = "negation";
-      } else {
-        assignments[leftVar] = cleanRight;
-        payload = `{ "${leftVar}": "${cleanRight}" }`;
-        bypassType = "negation";
-      }
+      const v = registerVar(left, cleanRight);
+      formula = { type: "not", expr: { type: "atom", var: v, name: `${left}=="${cleanRight}"` } };
       break;
     }
     case ">":
     case ">=": {
-      const num = parseInt(cleanRight, 10);
-      if (!isNaN(num)) {
-        assignments[leftVar] = String(num + 1);
-        payload = `{ "${leftVar}": ${num + 1} }`;
-        bypassType = "direct_value";
-      }
+      const v = registerVar(left, `>${cleanRight}`);
+      formula = { type: "atom", var: v, name: `${left} ${op} ${cleanRight}` };
       break;
     }
     case "<":
     case "<=": {
-      const num = parseInt(cleanRight, 10);
-      if (!isNaN(num)) {
-        assignments[leftVar] = String(Math.max(0, num - 1));
-        payload = `{ "${leftVar}": ${Math.max(0, num - 1)} }`;
-        bypassType = "direct_value";
-      }
+      const v = registerVar(left, `<${cleanRight}`);
+      formula = { type: "atom", var: v, name: `${left} ${op} ${cleanRight}` };
       break;
     }
     case "includes":
     case "startsWith":
     case "endsWith": {
-      assignments[leftVar] = cleanRight;
-      payload = `{ "${leftVar}": "${cleanRight}" }  (must ${c.operator} "${cleanRight}")`;
-      bypassType = "direct_value";
+      const v = registerVar(left, cleanRight);
+      formula = { type: "atom", var: v, name: `${left}.${op}("${cleanRight}")` };
       break;
     }
     case "test":
     case "match": {
-      assignments[leftVar] = `[matches pattern: ${cleanRight}]`;
-      payload = `{ "${leftVar}": "value_matching_${cleanRight.replace(/[^a-zA-Z0-9]/g, "_")}" }  (must match regex)`;
-      bypassType = "direct_value";
+      const v = registerVar(left, `regex:${cleanRight}`);
+      formula = { type: "atom", var: v, name: `${left}.match(/${cleanRight}/)` };
       break;
     }
     case "in": {
-      assignments[leftVar] = cleanRight;
-      payload = `{ "${cleanRight}": "any_value" }  (property "${cleanRight}" must exist in ${leftVar})`;
-      bypassType = "direct_value";
-      break;
-    }
-    case "instanceof": {
-      assignments[leftVar] = `[instance of ${cleanRight}]`;
-      payload = `{ "${leftVar}": <${cleanRight}_instance> }`;
-      bypassType = "direct_value";
+      const v = registerVar(cleanRight, `in_${left}`);
+      formula = { type: "atom", var: v, name: `${cleanRight} in ${left}` };
       break;
     }
     default:
       return null;
+  }
+
+  return { formula, varNames, domains };
+}
+
+// ─── SAT-Based Constraint Solver ───────────────────────────────────────
+
+function solveWithSAT(c: ExtractedConstraint): SatResult | null {
+  nextVarId = 1;
+  varNameMap.clear();
+  varDomainMap.clear();
+
+  const parsed = constraintToFormula(c);
+  if (!parsed) return null;
+
+  const { formula, varNames, domains } = parsed;
+  const cnf = toCNF(formula);
+
+  const result = dpll(cnf.clauses);
+
+  if (!result.satisfiable) {
+    return { satisfiable: false, model: null, satisfyingAssignments: null, bypassType: null };
+  }
+
+  const model = result.model!;
+  const assignments: Record<string, string> = {};
+  let bypassType: ConstraintPayload["bypassType"] = "direct_value";
+
+  for (const [varId, value] of Object.entries(model)) {
+    const v = parseInt(varId);
+    const name = varNames.get(v);
+    if (!name) continue;
+
+    const domainSet = domains.get(v);
+    if (domainSet && domainSet.size > 0) {
+      const concreteValue = Array.from(domainSet)[0];
+      assignments[name] = concreteValue;
+    } else {
+      assignments[name] = value ? "true" : "false";
+    }
+
+    if (name.includes("!==") || name.includes("!=")) {
+      bypassType = "negation";
+    } else if (name.includes("===") || name.includes("==")) {
+      if (assignments[name] === "null" || assignments[name] === "undefined") {
+        bypassType = "null_bypass";
+      } else if (assignments[name] === "0") {
+        bypassType = "type_coercion";
+      } else {
+        bypassType = "direct_value";
+      }
+    } else if (name.includes(">") || name.includes("<")) {
+      bypassType = "direct_value";
+    } else if (name.includes("includes") || name.includes("startsWith") || name.includes("endsWith")) {
+      bypassType = "direct_value";
+    }
+  }
+
+  // Generate payload
+  let payload = "";
+  const keys = Object.keys(assignments);
+  if (keys.length === 1) {
+    const k = keys[0];
+    const v = assignments[k];
+    if (v === "null" || v === "undefined") {
+      payload = `{ "${k}": ${v} }`;
+    } else if (v === "true" || v === "false" || /^-?\d+$/.test(v)) {
+      payload = `{ "${k}": ${v} }`;
+    } else {
+      payload = `{ "${k}": "${v}" }`;
+    }
+  } else if (keys.length > 1) {
+    const pairs = keys.map(k => {
+      const v = assignments[k];
+      if (v === "null" || v === "undefined") return `"${k}": ${v}`;
+      if (v === "true" || v === "false" || /^-?\d+$/.test(v)) return `"${k}": ${v}`;
+      return `"${k}": "${v}"`;
+    });
+    payload = `{ ${pairs.join(", ")} }`;
+  }
+
+  // Post-process: if negation bypass, adjust payload to reflect what WOULD work
+  if (bypassType === "negation") {
+    payload = `SAT solution: ${payload} — bypass via ${bypassType}`;
+  }
+
+  return {
+    satisfiable: true,
+    model,
+    satisfyingAssignments: assignments,
+    bypassType,
+  };
+}
+
+function solveConstraint(c: ExtractedConstraint): ConstraintPayload | null {
+  const leftVar = c.left.replace(/^this\./, "").replace(/^req\./, "").replace(/^user\./, "");
+  const cleanRight = c.right.replace(/['"`]/g, "");
+
+  if (/^\d+$/.test(leftVar) && /^\d+$/.test(cleanRight)) return null;
+
+  const satResult = solveWithSAT(c);
+  if (!satResult || !satResult.satisfiable || !satResult.satisfyingAssignments) {
+    return null;
+  }
+
+  const assignments = satResult.satisfyingAssignments;
+  const bypassType = satResult.bypassType!;
+
+  let payload = "";
+  for (const [k, v] of Object.entries(assignments)) {
+    if (v === "null" || v === "undefined") {
+      payload += `{ "${k}": ${v} }`;
+    } else if (v === "true" || v === "false" || /^-?\d+$/.test(v)) {
+      payload += `{ "${k}": ${v} }`;
+    } else {
+      payload += `{ "${k}": "${v}" }`;
+    }
   }
 
   return {

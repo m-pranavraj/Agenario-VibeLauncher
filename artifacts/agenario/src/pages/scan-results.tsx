@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
+﻿import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   ReactFlow,
   Background,
@@ -159,7 +159,7 @@ const SEVERITY_CONFIG = {
   },
 };
 
-function getConfidenceStyle(c: number): {
+function getConfidenceStyle(c: number, isLight: boolean): {
   label: string;
   color: string;
   badge: string;
@@ -170,34 +170,34 @@ function getConfidenceStyle(c: number): {
       label: `${c}% - Browser Runtime Proof`,
       color: "text-green-400",
       badge: "bg-green-500/15 text-green-400 border border-green-500/25",
-      icon: "🟢",
+      icon: "ðŸŸ¢",
     };
   if (c >= 90)
     return {
       label: `${c}% - HTTP Runtime Proof`,
       color: "text-green-400",
       badge: "bg-green-500/10 text-green-400 border border-green-500/20",
-      icon: "🔵",
+      icon: "ðŸ”µ",
     };
   if (c >= 75)
     return {
       label: `${c}% - Static Code Evidence`,
       color: "text-sky-400",
       badge: "bg-sky-500/10 text-sky-400 border border-sky-500/20",
-      icon: "🔵",
+      icon: "ðŸ”µ",
     };
   if (c >= 60)
     return {
       label: `${c}% - Pattern Match`,
       color: "text-amber-400",
       badge: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
-      icon: "🟡",
+      icon: "ðŸŸ¡",
     };
   return {
     label: `${c}% - AI Reasoning`,
-    color: "text-white/35",
-    badge: "bg-white/[0.05] text-white/35 border border-white/[0.08]",
-    icon: "⚪",
+    color: isLight ? "text-gray-500" : "text-white/35",
+    badge: isLight ? "bg-gray-100 text-gray-500 border border-gray-200" : "bg-white/[0.05] text-white/35 border border-white/[0.08]",
+    icon: "âšª",
   };
 }
 
@@ -391,7 +391,7 @@ function EvidenceCard({
   const cfg =
     SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ??
     SEVERITY_CONFIG.low;
-  const conf = getConfidenceStyle(issue.confidence ?? 60);
+  const conf = getConfidenceStyle(issue.confidence ?? 60, isLight);
 
   const { data: commImpact } = useQuery({
     queryKey: ["/intelligence/failures", issue.title],
@@ -458,2254 +458,8 @@ function EvidenceCard({
     >
       <button
         onClick={() => setExpanded(!expanded)}
-        className={`w-full flex items-center gap-3 p-4 text-left 
-           
-         
-        
-         
-        
-          
-        
-         
-        
-         
-        ? (
-          <ChevronUp
- 
-              ) : (
-  
-           
-         
-        )
-         
-        
-           
-          
-            
-          
-           
-           
-           
-                      
-                    
-                        
-                      
-                                     
-                    
-                       
-                       
-                         
-                         
-                             
-                    
-                       
-                       
-                      
-                    (
-                      
-                        
-                      
-                    )
-                 
-                
-                      
-                    
-                     
-                    
-                      
-                    
-                   
-                  
-                    
-                  
-                      
-                    
-                   
-                  
-                    
-                  
-           
-           
-               
-                 
-                
-                  
-                    
-           
-          
-               
-              
-                
-               ? (
-                    
-                    
-                  )(
-                  
-                    
-                    
-                  
-                )
-             
-            
-              
-            ( ? (
-                        
-                        
-                      ) : (
-                   
-                        
-                      
-                    )
-                        
-                       
-                       
-                      (
-                          
-                            
-                            
-                          
-                        )(
-                          
-                            
-                            
-                          
-                        )
-                        
-                        
-                        ()
-   
-   
-   
-   
-       
-           
-         
-        
-         
-        
-          
-        
-             
-            
-              
-            
-           
-          
-               
-              
-                
-               ? (
-                    
-                    
-                   ) : (
-              
-                    
-                    
-                  
-                )
-             
-            
-              
-            
-             
-            
-              
-            
-           
-          
-             
-            
-              
-            
-             
-             
-            >      <button 
-                {" "}
-                 
-           
-          
-            
-          >  <button 
-            
- 
- 
- 
- 
- ,
-
- 
- 
- 
- 
-       
-       
-      
-       
-                  
-        
-     
-         
-                    
-          
-        
-           
-              
-               
-               
-            
-          
-            
-          
-           
-              
-               
-               
-            
-          
-            
-          
-           
-                      
-            
-          {" "}
-           
- 
- ,
-
- 
- ;
-
-     
-            
-      
-       
-                  
-        
-      
-         
-            
-             
-             
-          
-        
-         
-            
-             
-             
-          
-        
-         
-         
-                    
-          
-        
-          
-        
-          
-        
-          
-        
-         >
-        
-        
-           
-          
-              
-            
-               
-              
-            
-         
-        
-              
-            
-             
-            
-              
-            (
-              
-                
-                
-              
-            )(
-              
-                
-                
-              
-            )
-     
-     
-       
-       
-         
-         
-     
-  :
-       
-   : 
-               : 
-     
-    
-         
-       
-         
-        
-          
-        
-          
-        
-           
-           
-           ,
-         
-           
-           
-           ,
-         
-           
-           
-           ,
-         
-           
-           
-          
-               
-              
-            
-               
-              
-               
-              
-                
-              
-         
-        
-           
-          
-            
-          
-           
-          
-            
-          
-         
-           
-            
-          
-           
-          
-            
-          
-         
-        
-           
-          
-            
-          
-               
-               
-              
-                 
-                
-                  
-                
-            
-          
-           
-          
-            
-          
-     
-    
-         
-       
-         
-        
-          
-        
-         
-        
-          (){" "}
-         
-        
-           
-             
-             
-               
-               
-           
-             
-             
-               
-               
-           
-             
-             
-            
-                 
-                
-                      
-                    
-                     
-                    
-                      
-                    
-                   
-                  
-                    (
-                  
-                   
-                 
-                )(
-                  
-                   
-                 
-                )
-                 
-                
-                     
-                     
-                    
-                       
-                      
-                        
-                      
- ,
-
- ;
-
-   
-     
-     
-       
-       
-     
-    
-         
-       
-         
-        
-          
-        
-            
-          
-            
-          
-            
-          
-           
-          
-            
-          
-             
-             
-               
-               
-              
-                   
-                  
-                    
-                  
-                   
-                  
-                    
-                  
-                   
-                  
-                    
-                  >          
-                  (
-                    
-                     
-                   
-                  )(
-                    
-                     
-                   
-                  )
-                   
-                  
-                               
-                      
-                    
-                       
-                      
-                                       
-                          
-                        
-                         
-                        
-                          
-                        
-            
-          
-               
-               
-              
-   
-   
-   
-   ,
- 
-   
-   
-   
-   ,
- 
-   
-   
-   
-   ,
- 
-   
-   
-   
-   ,
- 
-   
-   
-   
-   ,
- 
-   
-   
-   
-   ,
- 
-     
-    
-         
-       
-         
-        
-          
-        
-       
-      
-       
-       
-           
-           
-             
-             
-            
-                 
-                
-                 
-                
-                  
-                
-                 
-                (
-                  
-                   
-                 
-                )(
-                  
-                   
-                 
-                )
-                 
-                
-                       
-                     
-                        
-                      
-                     
-                    
-                       
-                      
-                         
-                        
-                          
-                   
-                  
-                       
-                      
-                        
-                         
-                         
-                        
-                           
-                          
-                            
-                          
-                     
-                    
-                       
-                      
-                        
-                      
-                       
-                      
-                        
-                      
-                        
-                      
-                       
-                      
-                        
-                      
-                       
-                      
-                         
-                        
-                          
-                        
-                         
-                        
-                          
-                        
-    ,
-  
-    ,
-  
-     
-    
-         
-        
-          
-        
-         
-        
-     
-    
-         
-       
-         
-        
-          
-        
-             
-            
-       
-      
-           
-           (
-             
-            )(
-              
-            )(
-              
-            )
-            
-             
-            
-              {" "}
-             
-            
-         
-        
-           
-          
-            
-          
-           
-          
-            
-          
-         
-        
-           
-          
-            
-          
-           
-          
-            
-          
-         
-        
-           
-            
-          
-           
-          
-            
-          
-            
-          
-             
-             
-                 
-                
-                  
-                
-                 
-                
-                  
-                
-            
-          
-             
-             
-            
-     
-    
-         
-       
-         
-        
-          
-        
-         
-        
-          
-        
-           
-               
-              
-                
-              
-               
-              
-                 
-                 
-               
-               
-               
-              
-         
-        
-          
-        
-  
-                 
-""
- 
- 
- ,
-
-    ,
-  
-     
-    
-       
-      
-             
-            
-              
-            
-             
-            
-           
-          >    
-            
-             
-            
-              
-            
-           
-          
-              
-            
-           
-          
-                  
-                    
-                    
-                      
-                    
-                    
-                    
-                      ,
-                    
-                   
-                  
-                   
-                      
-                       
-                       
-                         
-                         
-                    
-                  
-             
-            
-                 
-                    
-                  
-                   
-                   
-                  
-                       
-                      
-                       
-                      
-                        
-                      
-                         
-                        
-              
-                 
-                 
-             
-            
-              
-            
-     
-     
-     
-     ,
-   
-     
-     
-     
-     ,
-   
-     
-     
-     
-     ,
-   
-     
-    
-         
-       
-         >
-        
-        
-         
-        
-          
-        
-           
-                  
-                
-                     
-                     
-                   
-                   
-                   
-                  
-                    
-                  
-                   
-                   
-                  
-                   
-                
-              
-     
-    
-         
-       
-         
-        
-          
-        
-       
-      
-       
-           
-               
-           
-                ? ()?(
-):(
-         
-          )
-               
-               
-              
-                 
-                
-                     
-                       
-                       
-                         
-                           
-                   
-                 
-               
-              
-                   
-                  
-                    
-                  
-                   
-                  
-                   
-                  
-                    
-                  
-              
-            
-             
-            
-              
-             
-             
-     
-    
-         
-       
-         
-        
-          
-        
-          
-        
-           
-           
-          
-            
-          
-     
-    
-         
-       
-         
-        
-          
-        
-         
-        
-       
-      
-        
-      
-           
-          
-            
-          
-             
-             
-            
-               
-              
-                 
-                
-                  
-                
-                 
-                
-                  
-                
-         
-        
-           
-          
-            
-          
-              
-                
-                 
-                 
-                
-                  
-                  
-         
-           
-          
-            
-          
-               
-               
-              
-                
-              
-   
-     
-     
-       
-       
-     
-     
-     ,
-   
-     
-     
-     ,
-   (
-          
-        )(
-          
-        )
-         
-        
-               
-              
-                
-              
-                   
-                
-              
-   
-   
-   ,
- 
-   
-   
-   ,
- 
-   
-   
-   ,
- 
- 
- ,
-
- 
- ;
-
-    
-  
-     
-     
-     
-    
-       
-      
-           
-            
-          
-           
-          
-            
-          
-           
-          
-            
-          
-           
-          
-            
-           
-          
-                
-               
-               
-               
-                 
-                 
-                
-                     
-                   
-                         
-                        
-                         
-                        
-                          
-                         (
-                         >                  
-                          
-                        )
-                       
-                      
-                        
-                      
-                             
-                            
-                           
-                          
-                           
-                          
-                            
-                          
-                           
-                          
-                            
-                          
-                              
-                            
-                 
-                
-                  
-                 
-                
-                 
-                
-   
-   
-     
-     
-       
-       
-   
-   
-     
-     
- 
- ,
-
- 
- ;
-
-    |
-   
-     
-     
-     
-    
-       
-      
-           
-            
-          
-           
-          
-            
-          
-             
-            
-           
-          
-            
-          
-           
-          
-            
-           
-          
-               
-               
-                 
-                 
-                   
-                   
-                  
-                                       
-                          
-                        
-                         
-                          
-                        
-                         
-                        
-                          
-                        
-                          
-                        
-                         
-                        
-                          
-                        
-                       
-                      
-                        
-                        {" "}
-                       
-                      
-                     
-                    (
-                      
-                       
-                     
-                    )(
-                      
-                       
-                     
-                    )
-                         
-                         
-                        
-                             
-                            
-                             
-                            
-                              
-                            
-                           
-                          
-                            
-                          
-                           
-                          
-                            
-                          
-                               
-                              
-                                
-                              
-                               
-                              
-                                
-                              
-                               
-                              
-                                
-                              
-                                
-                              
-                               
-                              
-                                
-                              
-                                
-                              
-                           
-                          
-                            
-                          
-                             
-                            
-                              
-                            
-                             
-                            
-                              
-                             
-                            >                <button 
-                          
-                 
-                
-                  
-                  
-                
-                 
-                
-  
- 
-
-   
-   
-   ,
- 
-   
-   
-     
-     
- ,
-
- ;
-
-    ,
-  
-        
-         ,
-      
-     
-     
-     
-    
-       
-      
-               
-              
-            
-             
-            
-              
-            
-             
-              
-            
-             
-            
-              
-            
-               
-                     : 
-                          :  
-            
-              
-            
-           
-          
-            
-          
-             
-            
-              
-            (
-              
-            )(
-              
-            )
-              
-            
-           
-           
-           ,
-         
-              
-            
-             
-            
-              
-            
-               
-               
-                 
-                
-                   
-                   
-           
-          
-            
-          
-             
-                  :
-                      :
-                   
-                  
-                       
-                      
-                        
-                      (
-                        
-                          
-                        
-                      )
-                          
-                        
-                        
-                      
-                     
-                    
-                      
-                    
-                     
-                    
-           
-          
-            
-          
-               
-               
-              
-                 
-                
-                  
-                
-                 
-                
-                  
-                
- 
- ,
-
- 
- ;
-
-    
-  
-     
-     
-     
-     ,
-   
-     
-     
-     
-     ,
-   
-     
-     
-     
-     ,
-   
-     
-     
-     
-    
-       
-      
-         
-        
-          
-        
-            
-          
-       
-      
-           
-           
-           
-             
-               
-               
-                 
-                 ,
-         
-           
-           
-           
-             
-               
-               
-                 
-                 ,
-         
-           
-           
-           ,
-         
-           
-           
-          
-              
-            
-             
-            
-              
-            
-       
-      
-            
-             
-             
-             ,
-             
-             
-             
-             ,
-             
-             
-             
-             ,
-             
-        
-            
-                 
-               
-                     
-                    
-                      
-                    
-                     
-                    
-                      
-                    
-                     
-                    
-                      
-                    (
-                      
-                       
-                      
-                        
-                      
-                    )
-                      
-                       
-                       
-                      
-               
-             
-                   
-                  
-                    
-                  
-                   
-                  
-                   
-                  
-                    
-                  
-                       
-                  
-                
-                 
-                
-                  
-                
-             
-            
-               
-             
-            
-              
-            
-                 
-               
-                     
-                    
-                      
-                    
-                     
-                    
-                     
-                    
-                      
-                    
-                   
-                  
-                    
-                  (
-                    
-                     
-                    
-                      
-                    
-                  )
-       
-      
-          
-        
- 
- ,
-
- 
- ;
-
-       
-       
-      
-           
-           
-           
-           
-           
-         
-           
-           
-           
-           
-           
-           
-         
-            
-          
-           
-          
-            
-          
-     
-     
-     
-    
-       
-      
-         >
-        
-        
-         
-        
-          
-        
-       
-      
-           
-          
-             
-             
-            
-              
-           
-           
-          
-             
-            
-              
-            
-             
-            
-              
-            
-             
-            (
-                
-              )(
-                
-              )(
-                
-              )
-             
-            
-              
-            
- 
- ,
-
- 
- ;
-
-    
-   
-   
-   
-   
-   ,
-  
-     
-     
-     
-     ,
-   
-     
-     
-     
-     ,
-   
-     
-     
-     
-     ,
-   
-     
-     
-     
-    
-       
-      
-         >
-        
-        
-         
-        
-          
-        
-       
-      
-          
-        
-            
-               
-             
-                 
-                
-                  
-                
-                 
-                  {" "}
-                 (){" "}
-                 
-                
-               
-              (
-                
-                 
-               
-              )(
-                
-                 
-               
-              )()
-                           
-                          
-                             
-                            
-                               
-                             
-                               
-                              
-                                
-                              
-                             
-                            
-                              
-                            
-                               
-                              
-                                
-                              >            
-                    
-                   
-                  
-                    
-                  
-                 
-                
-                   
-                  
-                     
-                    
-                      
-                    
-                       
-                      (
-                          
-                            
-                            
-                          
-                        )(
-                          
-                            
-                            
-                          
-                        )
-                       
-                       
-                      
-                        
-                      
-                   
-                  
- ,
-
- ;
-
-   
-     
-     
-       
-       
-   
-     
-     
-       
-       
-    ,
-  
-     
-     
-     
-    
-       
-      
-         >
-        
-        
-         
-        
-       
-      
-           
-           
-           ,
-         
-           
-           
-           ,
-         
-           
-           
-           ,
-         
-           
-           
-          
-              
-            
-             
-            
-              
-            
-         
-        
-           
-          
-            
-          
-                       
-                  
-                
-                 
-                
-                 
-                
-                  
-                
-       
-      
-         >
-        
-        
-         
-        
-           
-          
-            
-          
-               
-               
-              {" "}
-               
-           
-           (
-             
-            )(
-              
-            )
- ,
-
- ;
-(
-        ,
-      )
-       
-     
-          
-        
-         >
-        
-          
-        (
-          
-            
-          
-        )(
-          
-            
-          
-        )
-     
-   
-     
-   
-   
-   
-   
-   ;
- 
-     
-     
-     
-     ,
-   
-     
-     
-     
-     ,
-   
-     
-     
-     
-     ,
-   
-     
-     
-     
-     ,
-   
-      
-     
-     ,
-    
-          ,
-        
-     
-     
-     
-    
-       
-      
-         
-       
-         >
-        
-        
-         
-          
-        
-         (
-            
-              
-              
-            
-          )(
-            
-              
-              
-            
-          )
-       
-      
-           
-          
-           
-          
-            
-           (
-           
-              
-            
-          )
-               
-              
-                
-              
-                 
-                 
-                
-                           
-                  (
-                      
-                       
-                     
-                    )>          <p 
-                    
-                     
-                    
-                      
-                    
-         
-           
-             
-      
-         
-       
-             >
-           
-          
-                   
-          
- 
- ,
-
- 
- ;
-
-   
-   
-   ;
- 
-           
-       
-           
-           
-           
-           
-           
-           
-         
-        
-          
-        
-           
-           
-          
-               
-              
-                
-              
-               
-              
-                
-              {" "}
-         
- ,
-
- ;
-
-     
-    
-         
-       
-         
-        
-          
-        
-          
-        
-          
-        >
-        
-         
-        
-          
-        
-         
-           
-          
-            
-          
-           
-          
-            
-          
-         
-           
-          
-            
-          
-           
-          
-            
-          
-            
-          
-            
-          
-            
-          (
-              
-            )(
-              
-            )
-            
-                 
-                    
-                  
-                       
-                      
-                        
-                      
-                       
-                      
-                        
-                      
-                         
-                        
-                          
-                        
-                          
-                        
-                         
-                        
-                          
-                        
-                          
-                        
-                         
-                        
-                          
-                        
-                         
-                        
-                          
-                        
- ,
-
- ;
-
-   
-     
-     
-       
-       
-   
-     
-    
-         
-       
-         
-        
-          
-        
-                 
-        
-           
-           
-           
-           
-          
-             
-             
-             
-             
-             
-             
-           
-             
-             
-             
-             
-             
-             
-             
-           
-              
-            
-             
-            
-              
-            
-           
-          
-            
-          
-                 
-                 
-                
-             
-               
-               
-                 
-                 
-             
-               
-               
-                 
-                 
-               
-               
-              
-                     
-                     
-                     
-                     
-                    
-                       
-                       
-                       
-                       
-                       
-                       
-                     
-                       
-                       
-                       
-                       
-                          
-                           
-                           
-                             
-                             
-                        
-                     
-                        
-                      
-                   
-                  
-                    
-                  
-                   
-                  
-                    
-                  (
-                    
-                     
-                   
-                  )(
-                    
-                     
-                   
-                  )
-                   
-                  
-                       
-                       
-                      
-                         
-                        
-                          
-                        
-     
-    
-         
-       
-         
-        
-          
-        
-         
-        
-          
-        
-           
-         (
-            
-          )(
-            
-          )(
-            
-              
-            
-          )
-                 >
-             
-            
-              
-            
-     
-    
-           
-             ,
-         
-               
-               
-               ,
-             
-             
-             
-             
-             
-            
-               
-               
-               
-               
-               
-             
-               
-               
-               
-               
-               
-               
-                 
-                 ,
-               
-               
-              
-                
-              >  <h2 
-            
-             
-            
-                 
-                 
-                 ,
-               
-                       
-                       
-                       
-                       
-                 
-                
-                   
-                       
-                           
-                         
-                           
-                
-                   
-                   
-                   
-                  
-                     
-                     
-                     ,
-                   
-           
-          
-    
-  
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-
-     
-   
-     
-       
-          
-           
-            
-             
-               
-           
-            
-                
-     
-       
-        
-          
-            
-   ()
-       
-      
-             
-            
-              
-            
-             
-            
-              
-             
-            (
-                
-                  
-                  
-                
-              )(
-                
-              )
-               ${isLight ? "hover:bg-gray-50/50" : "hover:bg-white/[0.02]"} transition-colors`}
-        data-testid={`issue-${issue.id}`}
+         className={`w-full flex items-center gap-3 p-4 text-left ${isLight ? "hover:bg-gray-50/50" : "hover:bg-white/[0.02]"} transition-colors`}
+         data-testid={`issue-${issue.id}`}
       >
         {rank && (
           <span className={`w-5 h-5 rounded-full ${isLight ? "bg-gray-100" : "bg-white/[0.06]"} border ${isLight ? "border-gray-200" : "border-white/[0.1]"} flex items-center justify-center text-[10px] font-bold ${isLight ? "text-gray-500" : "text-white/40"} shrink-0`}
@@ -2749,7 +503,7 @@ function EvidenceCard({
         <div className={`px-4 pb-4 space-y-3 border-t ${isLight ? "border-gray-200" : "border-white/[0.05]"} pt-3`}>
           <p className={`text-sm ${isLight ? "text-gray-500" : "text-white/55"} leading-relaxed`}>{issue.description}</p>
 
-          {/* ── Deep Tech Visualizers ──────────────────────────────── */}
+          {/* â”€â”€ Deep Tech Visualizers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           <div className="space-y-4 my-4">
             {/* Show DS fusion inline indicator */}
             {issue.confidence && issue.confidence > 50 && (
@@ -2776,7 +530,7 @@ function EvidenceCard({
             )}
           </div>
 
-          {/* ── Evidence Graph Chain ──────────────────────────────── */}
+          {/* â”€â”€ Evidence Graph Chain â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           {(issue.filePath || issue.codeSnippet || issue.impactStatement || issue.evidence) && (
             <div className="space-y-2">
               {/* File + Line badge row */}
@@ -2797,7 +551,7 @@ function EvidenceCard({
                         ? "bg-sky-500/10 text-sky-400 border-sky-500/20"
                         : `bg-white/[0.05] text-white/35 ${isLight ? "border-gray-200" : "border-white/[0.08]"}`
                     }`}>
-                      {issue.sourceEvidence === "runtime" ? "🟢 Runtime" : issue.sourceEvidence === "static" ? "🔵 Static" : "⚪ AI Reasoning"}
+                      {issue.sourceEvidence === "runtime" ? "ðŸŸ¢ Runtime" : issue.sourceEvidence === "static" ? "ðŸ”µ Static" : "âšª AI Reasoning"}
                     </span>
                   )}
                   {issue.retestResult && (
@@ -2806,7 +560,7 @@ function EvidenceCard({
                         ? "bg-green-500/10 text-green-400 border-green-500/20"
                         : "bg-red-500/10 text-red-400/70 border-red-500/20"
                     }`}>
-                      {issue.retestResult === "fixed" ? "✓ Fixed" : "⚠ Needs Fix"}
+                      {issue.retestResult === "fixed" ? "âœ“ Fixed" : "âš  Needs Fix"}
                     </span>
                   )}
                 </div>
@@ -2817,7 +571,7 @@ function EvidenceCard({
                 <div className="bg-black/50 border border-amber-500/15 rounded-lg overflow-hidden">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/[0.06] border-b border-amber-500/10">
                     <Terminal className="w-3 h-3 text-amber-400/50" />
-                    <span className="text-[10px] text-amber-400/50 font-medium uppercase tracking-wide">Vulnerable Code {issue.functionName ? `— Function: ${issue.functionName}` : ""}</span>
+                    <span className="text-[10px] text-amber-400/50 font-medium uppercase tracking-wide">Vulnerable Code {issue.functionName ? `â€” Function: ${issue.functionName}` : ""}</span>
                     {issue.lineNumber && <span className="text-[10px] text-amber-500/40 ml-auto">Line {issue.lineNumber}</span>}
                   </div>
                   <pre className="px-3 py-2.5 text-[11px] font-mono text-red-300/80 leading-relaxed overflow-x-auto whitespace-pre-wrap">
@@ -2960,7 +714,7 @@ function EvidenceCard({
             </div>
           )}
 
-          {/* ── AI Fix Generator ─────────────────── */}
+          {/* â”€â”€ AI Fix Generator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           {scanId && (
             isCreator ? (
               <div className="space-y-2">
@@ -2971,8 +725,8 @@ function EvidenceCard({
                     className={`flex items-center gap-1.5 text-xs bg-violet-500/15 hover:bg-violet-500/25 disabled:opacity-50 ${isLight ? "text-violet-600" : "text-violet-300"} font-semibold px-3 py-2 rounded-lg transition-all border border-violet-500/30 w-full justify-center`}
                   >
                     {generatingFix
-                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Generating patch…</>
-                      : <><Sparkles className="w-3.5 h-3.5" />⚡ Generate Code Fix</>}
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Generating patchâ€¦</>
+                      : <><Sparkles className="w-3.5 h-3.5" />âš¡ Generate Code Fix</>}
                   </button>
                 ) : (
                   <div className="bg-black/50 border border-violet-500/25 rounded-lg overflow-hidden">
@@ -3011,7 +765,7 @@ function EvidenceCard({
                 onClick={() => window.location.href = "/pricing"}
                 className="flex items-center gap-1.5 text-xs text-violet-400/50 border border-violet-500/20 px-3 py-2 rounded-lg w-full justify-center hover:bg-violet-500/5 transition-colors"
               >
-                <Lock className="w-3 h-3" />⚡ Generate Code Fix - Creator Plan
+                <Lock className="w-3 h-3" />âš¡ Generate Code Fix - Creator Plan
               </button>
             )
           )}
@@ -3025,7 +779,7 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
   const isLight = useIsLight();
   const cfg = SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
   const fileHint = issue.evidence?.startsWith("Found in:") ? issue.evidence : null;
-  const fixPreview = issue.fixPrompt && !issue.fixPrompt.startsWith("🔒")
+  const fixPreview = issue.fixPrompt && !issue.fixPrompt.startsWith("ðŸ”’")
     ? issue.fixPrompt.slice(0, 60)
     : null;
   const [copied, setCopied] = useState(false);
@@ -3098,7 +852,7 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
           <div className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-black/30 border-white/[0.07]"} border rounded-lg px-3 py-2.5 relative overflow-hidden`}>
             <div className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/25"} mb-1`}>1-Click Fix Prompt</div>
             <p className={`text-xs font-mono ${isLight ? "text-gray-700" : "text-white/40"} leading-relaxed`} style={{ filter: "blur(3.5px)", userSelect: "none" }}>
-              {fixPreview}…
+              {fixPreview}â€¦
             </p>
             <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
               <Link href="/pricing"
@@ -3210,7 +964,7 @@ function ExploitTerminalCard({ issue }: { issue: ScanIssue }) {
         <div className="w-3 h-3 rounded-full bg-red-500" />
         <div className="w-3 h-3 rounded-full bg-amber-500" />
         <div className="w-3 h-3 rounded-full bg-green-500 opacity-30" />
-        <span className="text-[10px] text-red-400/70 font-mono ml-2 uppercase tracking-widest">Exploit Terminal · {issue.agentName}</span>
+        <span className="text-[10px] text-red-400/70 font-mono ml-2 uppercase tracking-widest">Exploit Terminal Â· {issue.agentName}</span>
         <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold uppercase">
           {issue.severity}
         </span>
@@ -3353,7 +1107,7 @@ function ComplianceSection({ results }: { results: ComplianceResult[] }) {
                   </div>
                   <div className={`text-[11px] ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>
                     {result.findings.length} finding{result.findings.length !== 1 ? "s" : ""}
-                    {result.riskLevel && ` · ${result.riskLevel} risk`}
+                    {result.riskLevel && ` Â· ${result.riskLevel} risk`}
                   </div>
                 </div>
                 {isExpanded ? <ChevronUp className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/20"} shrink-0`} /> : <ChevronDown className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/20"} shrink-0`} />}
@@ -3424,7 +1178,7 @@ function RevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligence 
           <div className="text-[10px] text-amber-400/70 uppercase tracking-wide">Proportional Revenue Exposure</div>
           <div className="text-sm font-bold text-amber-400">{revenue.estimatedMonthlyImpact}</div>
           <div className="text-[10px] text-amber-400/50 leading-relaxed">
-            This is a proportional estimate — actual exposure scales with your revenue. A ₹1Cr/mo business would see roughly this exposure; a ₹10Cr/mo business, ~10×.
+            This is a proportional estimate â€” actual exposure scales with your revenue. A â‚¹1Cr/mo business would see roughly this exposure; a â‚¹10Cr/mo business, ~10Ã—.
           </div>
         </div>
       )}
@@ -3484,9 +1238,9 @@ function RevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligence 
   );
 }
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // New Feature Panels
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const PROOF_TYPE_CONFIG = {
   idor: { label: "IDOR Probe", icon: Lock, color: "text-red-400", bg: "bg-red-500/[0.07] border-red-500/20" },
@@ -3560,8 +1314,8 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
                       <div className={`flex items-center gap-1.5 text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} px-3 py-2 bg-black/20 border-b border-white/[0.05] uppercase tracking-wide font-medium`}>
                         <Camera className="w-3 h-3" />
                         Runtime Screenshot
-                        <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(e.confidence).badge}`}>
-                          {getConfidenceStyle(e.confidence).icon} {e.confidence}%
+                         <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(e.confidence, isLight).badge}`}>
+                           {getConfidenceStyle(e.confidence, isLight).icon} {e.confidence}%
                         </span>
                       </div>
                       <img
@@ -3582,7 +1336,7 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
                         onClick={() => copySteps(i, e.steps)}
                         className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors`}
                       >
-                        {copied === i ? "✓ Copied" : "Copy"}
+                        {copied === i ? "âœ“ Copied" : "Copy"}
                       </button>
                     </div>
                     <ol className="space-y-2">
@@ -3632,26 +1386,26 @@ function ConfidenceBadges({ evidence }: { evidence: ProofEvidence[] }) {
       <div className="flex flex-wrap gap-4 items-center text-xs">
         <span className={`${isLight ? "text-gray-400" : "text-white/20"} uppercase tracking-widest font-medium text-[10px]`}>Confidence Scale</span>
         <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/15 border border-green-500/25 text-green-400 text-[10px] font-semibold">
-          🟢 99% Browser Runtime{browserCount > 0 ? ` (${browserCount})` : ""}
+          ðŸŸ¢ 99% Browser Runtime{browserCount > 0 ? ` (${browserCount})` : ""}
         </span>
         <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-semibold">
-          🔵 90% HTTP Runtime{httpCount > 0 ? ` (${httpCount})` : ""}
+          ðŸ”µ 90% HTTP Runtime{httpCount > 0 ? ` (${httpCount})` : ""}
         </span>
         <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[10px] font-semibold">
-          🔵 75% Static Code{staticCount > 0 ? ` (${staticCount})` : ""}
+          ðŸ”µ 75% Static Code{staticCount > 0 ? ` (${staticCount})` : ""}
         </span>
         <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-semibold">
-          🟡 60% Pattern Match
+          ðŸŸ¡ 60% Pattern Match
         </span>
         <span className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-white/35 text-[10px] font-semibold ${isLight ? "bg-gray-100 border-gray-200" : "bg-white/[0.05] border-white/[0.08]"}`}>
-          ⚪ &lt;60% AI Reasoning
+          âšª &lt;60% AI Reasoning
         </span>
       </div>
     </div>
   );
 }
 
-// ── Sandbox Proofs Section ────────────────────────────────────────────────
+// â”€â”€ Sandbox Proofs Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Free users see the first proof (screenshot + steps) as a clear glimpse.
 // Remaining proofs are blurred behind a Creator gate.
 function SandboxProofsSection({
@@ -3676,7 +1430,7 @@ function SandboxProofsSection({
 
   const ineligibleMessage = (() => {
     if (sourceType === "description") {
-      return "Text descriptions can't be executed in a sandbox — upload a GitHub repo or ZIP file.";
+      return "Text descriptions can't be executed in a sandbox â€” upload a GitHub repo or ZIP file.";
     }
     if (sandboxMeta?.reason) return sandboxMeta.reason;
     if (sourceType === "url") {
@@ -3695,7 +1449,7 @@ function SandboxProofsSection({
 
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden aurora-card`}>
-      {/* ── Section header ── */}
+      {/* â”€â”€ Section header â”€â”€ */}
       <div className={`flex items-center gap-2.5 px-6 py-4 border-b ${isLight ? "border-gray-100" : "border-white/[0.06]"}`}>
         <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isLight ? "bg-violet-50 border border-violet-200" : "bg-violet-500/15 border border-violet-500/25"}`}>
           <Camera className="w-3.5 h-3.5 text-violet-500" />
@@ -3720,7 +1474,7 @@ function SandboxProofsSection({
 
       <div className="p-6 space-y-4">
         {proofs.length === 0 ? (
-          /* ── No proofs: placeholder + explanation ── */
+          /* â”€â”€ No proofs: placeholder + explanation â”€â”€ */
           <div className="space-y-4">
             {/* Demo screenshot placeholder */}
             <div className="relative rounded-xl overflow-hidden border border-dashed border-violet-500/20 bg-gradient-to-br from-violet-500/[0.04] to-indigo-500/[0.04]">
@@ -3753,7 +1507,7 @@ function SandboxProofsSection({
                   </p>
                   {sandboxMeta?.blockers && sandboxMeta.blockers.length > 0 && (
                     <p className={`text-[10px] mt-2 font-mono ${isLight ? "text-gray-400" : "text-white/25"}`}>
-                      {sandboxMeta.blockers.join(" · ")}
+                      {sandboxMeta.blockers.join(" Â· ")}
                     </p>
                   )}
                 </div>
@@ -3761,19 +1515,19 @@ function SandboxProofsSection({
             </div>
             <div className={`text-xs leading-relaxed ${isLight ? "text-gray-400" : "text-white/35"} text-center`}>
               {sandboxMeta?.status === "completed" ? (
-                <>GitHubbox ran <span className={`font-semibold ${isLight ? "text-gray-600" : "text-white/60"}`}>install → dev server → live probes</span> against your code in an isolated workspace.</>
+                <>GitHubbox ran <span className={`font-semibold ${isLight ? "text-gray-600" : "text-white/60"}`}>install â†’ dev server â†’ live probes</span> against your code in an isolated workspace.</>
               ) : (
                 <>Submit a <span className={`font-semibold ${isLight ? "text-gray-600" : "text-white/60"}`}>Node.js web app</span> (GitHub or ZIP with a dev/start script) for real Chromium screenshots and runtime security probes.</>
               )}
             </div>
           </div>
         ) : (
-          /* ── Proofs exist ── */
+          /* â”€â”€ Proofs exist â”€â”€ */
           <div className="space-y-4">
-            {/* ── FIRST PROOF: always visible ── */}
+            {/* â”€â”€ FIRST PROOF: always visible â”€â”€ */}
             <div>
               <div className={`text-[10px] font-semibold uppercase tracking-widest mb-2.5 ${isLight ? "text-gray-400" : "text-white/25"}`}>
-                Live Evidence · Proof 1 of {proofs.length}
+                Live Evidence Â· Proof 1 of {proofs.length}
               </div>
               <div className={`border rounded-xl overflow-hidden ${isLight ? "border-gray-200" : "border-white/[0.08]"}`}>
                 {/* Proof header bar */}
@@ -3789,7 +1543,7 @@ function SandboxProofsSection({
                   </span>
                 </div>
 
-                {/* Screenshot — full width, always visible */}
+                {/* Screenshot â€” full width, always visible */}
                 {first.screenshot ? (
                   <div className="relative">
                     <div className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-medium uppercase tracking-wide ${isLight ? "text-gray-400 bg-gray-50 border-b border-gray-100" : "text-white/25 bg-black/30 border-b border-white/[0.05]"}`}>
@@ -3799,8 +1553,8 @@ function SandboxProofsSection({
                         <div className="w-2 h-2 rounded-full bg-green-400/60" />
                       </div>
                       Runtime Screenshot
-                      <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(first.confidence).badge}`}>
-                        {getConfidenceStyle(first.confidence).icon} {first.confidence}%
+                      <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(first.confidence, isLight).badge}`}>
+                        {getConfidenceStyle(first.confidence, isLight).icon} {first.confidence}%
                       </span>
                     </div>
                     <img
@@ -3814,7 +1568,7 @@ function SandboxProofsSection({
                   <div className={`flex items-center justify-center h-32 ${isLight ? "bg-gray-50" : "bg-black/20"}`}>
                     <div className="text-center">
                       <Globe className={`w-6 h-6 mx-auto mb-2 ${isLight ? "text-gray-300" : "text-white/20"}`} />
-                      <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>HTTP probe · No screenshot captured</p>
+                      <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>HTTP probe Â· No screenshot captured</p>
                       {first.url && <code className="text-[10px] text-violet-400 mt-1 block">{first.url}</code>}
                     </div>
                   </div>
@@ -3832,7 +1586,7 @@ function SandboxProofsSection({
                   </div>
                 </div>
 
-                {/* Reproduction steps — collapsible */}
+                {/* Reproduction steps â€” collapsible */}
                 <div className={`border-t ${isLight ? "border-gray-100" : "border-white/[0.05]"}`}>
                   <button
                     onClick={() => setStepsOpen((v) => !v)}
@@ -3856,7 +1610,7 @@ function SandboxProofsSection({
               </div>
             </div>
 
-            {/* ── REMAINING PROOFS: locked for free users ── */}
+            {/* â”€â”€ REMAINING PROOFS: locked for free users â”€â”€ */}
             {rest.length > 0 && (
               <CreatorGate
                 plan={plan}
@@ -3888,7 +1642,7 @@ function SandboxProofsSection({
               </CreatorGate>
             )}
 
-            {/* ── Confidence legend ── */}
+            {/* â”€â”€ Confidence legend â”€â”€ */}
             <ConfidenceBadges evidence={proofs} />
           </div>
         )}
@@ -3910,7 +1664,7 @@ function RegressionPanel({ diff }: { diff: RegressionDiff }) {
         {diff.previousScanId && (
           <Link href={`/scans/${diff.previousScanId}`}>
             <span className={`ml-auto text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} hover:text-white/50 transition-colors cursor-pointer`}>
-              vs Scan #{diff.previousScanId} →
+              vs Scan #{diff.previousScanId} â†’
             </span>
           </Link>
         )}
@@ -3927,7 +1681,7 @@ function RegressionPanel({ diff }: { diff: RegressionDiff }) {
             {diff.scoreDelta > 0 ? "+" : ""}{diff.scoreDelta} points
           </div>
           {diff.previousScore != null && (
-            <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>from {diff.previousScore} → {(diff.previousScore ?? 0) + (diff.scoreDelta ?? 0)}</span>
+            <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>from {diff.previousScore} â†’ {(diff.previousScore ?? 0) + (diff.scoreDelta ?? 0)}</span>
           )}
         </div>
       )}
@@ -4033,7 +1787,7 @@ function BenchmarkPanel({ data }: { data: BenchmarkData }) {
   );
 }
 
-// ── VibeCode Intelligence Network ────────────────────────────────────────────
+// â”€â”€ VibeCode Intelligence Network â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const VIBE_TOOL_PATTERNS: Record<string, {
   label: string;
@@ -4046,7 +1800,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
 }> = {
   "replit": {
     label: "Replit AI",
-    emoji: "🟠",
+    emoji: "ðŸŸ ",
     color: "text-orange-400",
     bg: "bg-orange-500/[0.06]",
     border: "border-orange-500/20",
@@ -4061,7 +1815,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
   },
   "cursor": {
     label: "Cursor AI",
-    emoji: "🔵",
+    emoji: "ðŸ”µ",
     color: "text-sky-400",
     bg: "bg-sky-500/[0.06]",
     border: "border-sky-500/20",
@@ -4076,7 +1830,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
   },
   "lovable": {
     label: "Lovable",
-    emoji: "🩷",
+    emoji: "ðŸ©·",
     color: "text-pink-400",
     bg: "bg-pink-500/[0.06]",
     border: "border-pink-500/20",
@@ -4091,7 +1845,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
   },
   "bolt": {
     label: "Bolt",
-    emoji: "⚡",
+    emoji: "âš¡",
     color: "text-yellow-400",
     bg: "bg-yellow-500/[0.06]",
     border: "border-yellow-500/20",
@@ -4106,7 +1860,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
   },
   "windsurf": {
     label: "Windsurf / Codeium",
-    emoji: "🌊",
+    emoji: "ðŸŒŠ",
     color: "text-cyan-400",
     bg: "bg-cyan-500/[0.06]",
     border: "border-cyan-500/20",
@@ -4121,7 +1875,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
   },
   "copilot": {
     label: "GitHub Copilot",
-    emoji: "🤖",
+    emoji: "ðŸ¤–",
     color: "text-violet-400",
     bg: "bg-violet-500/[0.06]",
     border: "border-violet-500/20",
@@ -4197,7 +1951,7 @@ function VibeCodeIntelPanel({ vibeTool, issues, vibeToolRank }: {
               return (
                 <div key={i} className="flex items-start gap-2.5 text-xs">
                   <span className={`mt-0.5 shrink-0 text-sm ${matched ? "text-red-400" : "text-white/15"}`}>
-                    {matched ? "⚠" : "✓"}
+                    {matched ? "âš " : "âœ“"}
                   </span>
                   <span className={matched ? "text-white/60" : isLight ? "text-gray-400" : "text-white/20"}>
                     {p}
@@ -4402,7 +2156,7 @@ function LaunchReplaySection({ steps }: { steps: LaunchReplayStep[] }) {
         <div className="border border-red-500/25 bg-red-500/[0.05] rounded-xl p-4 flex items-start gap-3">
           <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
           <div>
-            <div className="text-xs font-bold text-red-400 mb-0.5">🔴 DO NOT LAUNCH</div>
+            <div className="text-xs font-bold text-red-400 mb-0.5">ðŸ”´ DO NOT LAUNCH</div>
             <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/50"} leading-relaxed`}>
               {failCount} critical user journey failure{failCount !== 1 ? "s" : ""} detected. Real users will experience these in their first session.
               Fix these before going live - first impressions are permanent.
@@ -4547,7 +2301,7 @@ function ShareBadgeButton({ scan }: { scan: ScanDetail }) {
   );
 }
 
-// ── Secret & API Key Leakage Panel ───────────────────────────────────────────
+// â”€â”€ Secret & API Key Leakage Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const RISK_CONFIG = {
   critical: { bg: "bg-red-500/[0.08] border-red-500/20", badge: "bg-red-500/15 text-red-400 border-red-500/25", dot: "bg-red-500" },
   high: { bg: "bg-amber-500/[0.06] border-amber-500/18", badge: "bg-amber-500/15 text-amber-400 border-amber-500/25", dot: "bg-amber-500" },
@@ -4555,17 +2309,17 @@ const RISK_CONFIG = {
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
-  payment: "💳 Payment",
-  "cloud-credentials": "☁️ Cloud",
-  database: "🗄️ Database",
-  cryptographic: "🔑 Cryptographic",
-  auth: "🔐 Auth",
-  "ai-api": "🤖 AI API",
-  email: "📧 Email",
-  communication: "💬 Comms",
-  vcs: "📦 VCS",
-  credentials: "🔓 Credentials",
-  generic: "⚠️ Generic",
+  payment: "ðŸ’³ Payment",
+  "cloud-credentials": "â˜ï¸ Cloud",
+  database: "ðŸ—„ï¸ Database",
+  cryptographic: "ðŸ”‘ Cryptographic",
+  auth: "ðŸ” Auth",
+  "ai-api": "ðŸ¤– AI API",
+  email: "ðŸ“§ Email",
+  communication: "ðŸ’¬ Comms",
+  vcs: "ðŸ“¦ VCS",
+  credentials: "ðŸ”“ Credentials",
+  generic: "âš ï¸ Generic",
 };
 
 function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["secretScanResults"]>; isCreator: boolean }) {
@@ -4577,7 +2331,7 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
       className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
       <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} flex items-center gap-3`}>
         <div className="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
-          <span className="text-sm">🔍</span>
+          <span className="text-sm">ðŸ”</span>
         </div>
         <div className="flex-1">
           <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}
@@ -4597,7 +2351,7 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
           )}
           {data.totalFound === 0 && (
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/25">
-              ✓ No secrets found
+              âœ“ No secrets found
             </span>
           )}
         </div>
@@ -4655,7 +2409,7 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
                           <Lock className="w-3 h-3 text-violet-400 shrink-0" />
                           <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/35"}`}>{finding.context}</span>
                           <Link href="/pricing">
-                            <span className="text-xs text-violet-400 hover:text-violet-300 font-semibold ml-auto cursor-pointer">Unlock →</span>
+                            <span className="text-xs text-violet-400 hover:text-violet-300 font-semibold ml-auto cursor-pointer">Unlock â†’</span>
                           </Link>
                         </div>
                       )}
@@ -4684,7 +2438,7 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
   );
 }
 
-// ── Package CVE Vulnerability Panel ─────────────────────────────────────────
+// â”€â”€ Package CVE Vulnerability Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const CVSS_COLOR = (score: number) =>
   score >= 9 ? "text-red-400" : score >= 7 ? "text-amber-400" : score >= 4 ? "text-yellow-400" : "text-white/40";
 
@@ -4701,12 +2455,12 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
       className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
       <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} flex items-center gap-3`}>
         <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-          <span className="text-sm">📦</span>
+          <span className="text-sm">ðŸ“¦</span>
         </div>
         <div className="flex-1">
           <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}
           >Dependency CVE Tracker</h2>
-          <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-xs mt-0.5`}>{data.totalPackages} packages scanned · NVD + GitHub Advisory DB</p>
+          <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-xs mt-0.5`}>{data.totalPackages} packages scanned Â· NVD + GitHub Advisory DB</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {data.hasCritical && (
@@ -4721,7 +2475,7 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
           )}
           {data.vulnerableCount === 0 && (
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/25">
-              ✓ No known CVEs
+              âœ“ No known CVEs
             </span>
           )}
           {data.topCvssScore && (
@@ -4764,11 +2518,11 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
           >{pkg.name}</span>
                         <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>
                         v{pkg.installedVersion}</span>
-                        <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>→</span>
+                        <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>â†’</span>
                         <span className="text-xs text-green-400/70 font-mono">v{pkg.fixVersion}</span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${sevCfg.badge}`}>{sev}</span>
                       </div>
-                      <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>{pkg.vulns.length} CVE{pkg.vulns.length !== 1 ? "s" : ""} · CVSS {pkg.highestCvss.toFixed(1)}</p>
+                      <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>{pkg.vulns.length} CVE{pkg.vulns.length !== 1 ? "s" : ""} Â· CVSS {pkg.highestCvss.toFixed(1)}</p>
                     </div>
                     <div className={`text-xl font-bold font-['Syne'] shrink-0 ${CVSS_COLOR(pkg.highestCvss)}`}>
                       {pkg.highestCvss.toFixed(1)}
@@ -4786,7 +2540,7 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
                             <span className={`text-sm font-bold ${CVSS_COLOR(vuln.cvssScore)}`}>CVSS {vuln.cvssScore.toFixed(1)}</span>
                             {vuln.exploitAvailable && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 shrink-0">
-                                ⚡ EXPLOIT PUBLIC
+                                âš¡ EXPLOIT PUBLIC
                               </span>
                             )}
                           </div>
@@ -4854,16 +2608,16 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
   );
 }
 
-// ── Cleanup Agent Panel ──────────────────────────────────────────────────────
+// â”€â”€ Cleanup Agent Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const CLEANUP_CAT_LABEL: Record<string, { label: string; icon: string; color: string }> = {
-  "debug-noise":    { label: "Debug Noise",    icon: "🔊", color: "text-amber-400" },
-  "tech-debt":      { label: "Tech Debt",      icon: "⏰", color: "text-orange-400" },
-  "dead-code":      { label: "Dead Code",      icon: "💀", color: "text-red-400" },
-  "type-safety":    { label: "Type Safety",    icon: "🔷", color: "text-blue-400" },
-  "env-hygiene":    { label: "Env Hygiene",    icon: "🌿", color: "text-green-400" },
-  "doc-clutter":    { label: "Doc Clutter",    icon: "📄", color: "text-white/40" },
-  "security-smell": { label: "Security Smell", icon: "🔥", color: "text-red-500" },
-  "file-hygiene":   { label: "File Hygiene",   icon: "🗑️", color: "text-white/35" },
+  "debug-noise":    { label: "Debug Noise",    icon: "ðŸ”Š", color: "text-amber-400" },
+  "tech-debt":      { label: "Tech Debt",      icon: "â°", color: "text-orange-400" },
+  "dead-code":      { label: "Dead Code",      icon: "ðŸ’€", color: "text-red-400" },
+  "type-safety":    { label: "Type Safety",    icon: "ðŸ”·", color: "text-blue-400" },
+  "env-hygiene":    { label: "Env Hygiene",    icon: "ðŸŒ¿", color: "text-green-400" },
+  "doc-clutter":    { label: "Doc Clutter",    icon: "ðŸ“„", color: "text-white/40" },
+  "security-smell": { label: "Security Smell", icon: "ðŸ”¥", color: "text-red-500" },
+  "file-hygiene":   { label: "File Hygiene",   icon: "ðŸ—‘ï¸", color: "text-white/35" },
 };
 
 const DEBT_COLOR = (score: number) =>
@@ -4901,13 +2655,13 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
       className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
       <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} flex items-start gap-3`}>
         <div className="w-8 h-8 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0 mt-0.5">
-          <span className="text-sm">🧹</span>
+          <span className="text-sm">ðŸ§¹</span>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}
           >Cleanup Agent</h2>
-            <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>·</span>
+            <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>Â·</span>
             <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>
             Tech Debt Score</span>
             <span className={`text-sm font-bold font-['Syne'] ${DEBT_COLOR(data.debtScore)}`}>{data.debtScore}/100</span>
@@ -4970,7 +2724,7 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
                   activeCategory === cat ? "bg-white/10 border-white/20 text-white" : `bg-white/[0.03] ${isLight ? "border-gray-200" : "border-white/[0.08]"} text-white/35 hover:text-white/60`
                 }`}
               >
-                {meta?.icon ?? "•"} {meta?.label ?? cat} ({categoryCounts[cat]})
+                {meta?.icon ?? "â€¢"} {meta?.label ?? cat} ({categoryCounts[cat]})
               </button>
             );
           })}
@@ -5001,7 +2755,7 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
                       <p className={`text-sm font-semibold ${isLight ? "text-gray-800" : "text-white/80"}`}>{finding.title}</p>
                       {meta && <span className={`text-[10px] ${meta.color}`}>{meta.icon} {meta.label}</span>}
                       {finding.autoFixable && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/15">⚡ auto-fixable</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/15">âš¡ auto-fixable</span>
                       )}
                     </div>
                     {finding.lineHint && (
@@ -5009,7 +2763,7 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
                     )}
                     <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/35"} leading-relaxed mb-1.5`}>{finding.detail}</p>
                     <div className={`bg-black/30 border rounded-lg px-3 py-2 text-[10px] font-mono leading-relaxed ${isLight ? "border-gray-200 text-gray-400" : "border-white/[0.06] text-white/30"}`}>
-                      💡 {finding.fixSuggestion}
+                      ðŸ’¡ {finding.fixSuggestion}
                     </div>
                   </div>
                 </div>
@@ -5038,7 +2792,7 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
   );
 }
 
-// ── Digital Twin Panel ───────────────────────────────────────────────────────
+// â”€â”€ Digital Twin Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCreator: boolean }) {
   const isLight = useIsLight();
   const [openSection, setOpenSection] = useState<"journeys" | "chaos" | "attacks">("journeys");
@@ -5203,7 +2957,7 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
   );
 }
 
-// ── Predictive Intelligence Panel ────────────────────────────────────────────
+// â”€â”€ Predictive Intelligence Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function PredictiveIntelPanel({ data, isCreator }: { data: PredictiveIntelResult; isCreator: boolean }) {
   const isLight = useIsLight();
   const colorMap: Record<string, string> = {
@@ -5257,7 +3011,7 @@ function PredictiveIntelPanel({ data, isCreator }: { data: PredictiveIntelResult
           <p className={`text-sm ${isLight ? "text-gray-500" : "text-white/55"} leading-relaxed`}>
             {isCreator ? data.narrative : data.narrative}
           </p>
-          {!isCreator && data.narrative.startsWith("🔒") && (
+          {!isCreator && data.narrative.startsWith("ðŸ”’") && (
             <Link href="/pricing" className="inline-flex items-center gap-1 mt-2 text-xs text-violet-400 hover:underline">
               <Zap className="w-3 h-3" />Upgrade to unlock full narrative
             </Link>
@@ -5282,7 +3036,7 @@ function PredictiveIntelPanel({ data, isCreator }: { data: PredictiveIntelResult
   );
 }
 
-// ── Root Cause Panel ──────────────────────────────────────────────────────────
+// â”€â”€ Root Cause Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator: boolean }) {
   const isLight = useIsLight();
   const [expandedChain, setExpandedChain] = useState<number | null>(0);
@@ -5329,7 +3083,7 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
               <div className="flex-1 min-w-0">
                 <span className={`text-sm font-medium ${isLight ? "text-gray-800" : "text-white/80"} truncate block`}>{chain.issueTitle}</span>
                 <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"}`}>
-                Origin: {chain.originLayer} · {chain.hops.filter((h: any) => h.status === "implicated").length} layers implicated</span>
+                Origin: {chain.originLayer} Â· {chain.hops.filter((h: any) => h.status === "implicated").length} layers implicated</span>
               </div>
               <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${chain.issueSeverity === "critical" ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400"}`}>
                 {chain.issueSeverity}
@@ -5382,7 +3136,7 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
                   <div className={`flex items-center gap-2 px-4 py-2 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} ${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"}`}>
                     <Terminal className="w-3 h-3 text-green-400" />
                     <span className={`text-[11px] font-bold ${isLight ? "text-gray-500" : "text-white/50"} flex-1`}>Auto-Generated Fix PR</span>
-                    {!chain.fixPR.startsWith("🔒") ? (
+                    {!chain.fixPR.startsWith("ðŸ”’") ? (
                       <button onClick={() => copyPR(chain.fixPR, ci)}
                         className={`flex items-center gap-1 text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors`}>
                         {copiedPR === ci ? <><CheckCheck className="w-2.5 h-2.5 text-green-400" />Copied!</> : <><Copy className="w-2.5 h-2.5" />Copy</>}
@@ -5404,7 +3158,7 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
   );
 }
 
-// ── Cleanup Radar Panel ───────────────────────────────────────────────────────
+// â”€â”€ Cleanup Radar Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function CleanupRadarPanel({ data }: { data: NonNullable<ScanDetail["cleanupReport"]> }) {
   const isLight = useIsLight();
   const [expanded, setExpanded] = useState(false);
@@ -5550,7 +3304,7 @@ function CleanupFindingRow({ finding: f }: { finding: NonNullable<ScanDetail["cl
             title={`Copy: ${rmCmd}`}
             className="text-[9px] font-mono text-amber-400/70 border border-amber-500/20 px-1.5 py-0.5 rounded hover:bg-amber-500/10 transition-colors"
           >
-            {rmCopied ? "✓ Copied" : "Copy rm"}
+            {rmCopied ? "âœ“ Copied" : "Copy rm"}
           </button>
         )}
         {f.autoFixable && <span className="text-[9px] text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded">Auto</span>}
@@ -5559,7 +3313,7 @@ function CleanupFindingRow({ finding: f }: { finding: NonNullable<ScanDetail["cl
   );
 }
 
-// ── Pre-Launch Checklist ─────────────────────────────────────────────────────
+// â”€â”€ Pre-Launch Checklist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
   const isLight = useIsLight();
   const storageKey = `checklist-${scan.id}`;
@@ -5593,7 +3347,7 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
     for (const g of groups) {
       lines.push(`## ${g.label}`);
       for (const item of g.items) {
-        lines.push(`- [${checked[item.id] ? "x" : " "}] **${item.title}** - ${item.description.slice(0, 120)}…`);
+        lines.push(`- [${checked[item.id] ? "x" : " "}] **${item.title}** - ${item.description.slice(0, 120)}â€¦`);
       }
       lines.push("");
     }
@@ -5628,7 +3382,7 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
             />
           </div>
           <span className={`text-xs font-bold ${pct === 100 ? "text-green-400" : isLight ? "text-gray-500" : "text-white/40"}`}>{pct}%</span>
-          {pct === 100 && <span className="text-xs text-green-400 font-semibold">Launch ready! 🚀</span>}
+          {pct === 100 && <span className="text-xs text-green-400 font-semibold">Launch ready! ðŸš€</span>}
         </div>
       </div>
 
@@ -5692,7 +3446,7 @@ function StickyLaunchAlertBanner({ scan }: { scan: ScanDetail }) {
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
         
-            {isRevAlert ? "⚠️ Revenue Alert" : "⚠️ Launch Security Alert"}
+            {isRevAlert ? "âš ï¸ Revenue Alert" : "âš ï¸ Launch Security Alert"}
           </p>
           <p className={`text-xs mt-0.5 truncate ${isRevAlert ? "text-amber-300/70" : "text-red-300/70"}`}>
             {isRevAlert
@@ -5741,7 +3495,7 @@ function LockedInsightsPanel({ scan, plan }: { scan: ScanDetail; plan: string })
     label: "Digital Twin Simulation",
     detail: scan.digitalTwin.simulatedUserCount > 0
       ? `${scan.digitalTwin.simulatedUserCount.toLocaleString()} simulated execution paths`
-      : `${scan.digitalTwin.journeys.length} journeys · ${scan.digitalTwin.attackSimulations.length} attack vectors`,
+      : `${scan.digitalTwin.journeys.length} journeys Â· ${scan.digitalTwin.attackSimulations.length} attack vectors`,
     IconCmp: Globe,
   });
   if (scan.predictiveIntel) items.push({
@@ -5786,7 +3540,7 @@ function LockedInsightsPanel({ scan, plan }: { scan: ScanDetail; plan: string })
           <div key={i} className={`flex items-start gap-2.5 p-3 ${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"} border ${isLight ? "border-gray-200" : "border-white/[0.06]"} rounded-xl`}>
             <item.IconCmp className="w-3.5 h-3.5 text-violet-400/50 shrink-0 mt-0.5" />
             <div className="min-w-0">
-              <p className={`text-xs font-semibold ${isLight ? "text-gray-600" : "text-white/60"} leading-tight`}>🔒 {item.label}</p>
+              <p className={`text-xs font-semibold ${isLight ? "text-gray-600" : "text-white/60"} leading-tight`}>ðŸ”’ {item.label}</p>
               <p className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} mt-0.5 truncate`}>{item.detail}</p>
             </div>
           </div>
@@ -5837,7 +3591,7 @@ function LaunchImpactPanel({ data }: { data: NonNullable<ScanDetail["launchImpac
       )}
       {data.founderWarning && (
         <div className="border border-red-500/20 bg-red-500/[0.05] rounded-xl p-4">
-          <div className="text-[10px] text-red-400/70 uppercase tracking-wide mb-1.5 font-medium">⚠️ Founder Warning</div>
+          <div className="text-[10px] text-red-400/70 uppercase tracking-wide mb-1.5 font-medium">âš ï¸ Founder Warning</div>
           <p className="text-sm text-red-300/80 leading-relaxed">{data.founderWarning}</p>
         </div>
       )}
@@ -5904,7 +3658,7 @@ function ProductHuntPanel({ data }: { data: NonNullable<ScanDetail["productHuntS
             ? "bg-green-500/15 text-green-400 border-green-500/25"
             : "bg-amber-500/10 text-amber-400 border-amber-500/20"
         }`}>
-          {data.readyToHunt ? "🚀 Ready to Hunt" : "⚠️ Not Yet Ready"}
+          {data.readyToHunt ? "ðŸš€ Ready to Hunt" : "âš ï¸ Not Yet Ready"}
         </span>
       </div>
       <div className="flex items-center gap-6">
@@ -5970,7 +3724,7 @@ function ProductHuntPanel({ data }: { data: NonNullable<ScanDetail["productHuntS
                   <div className={`px-4 pb-3 pt-2 border-t ${isLight ? "border-gray-200" : "border-white/[0.05]"} space-y-1`}>
                     {cat.findings.map((f: any, i: any) => (
                       <div key={i} className={`flex items-start gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/45"}`}>
-                        <span className={`${isLight ? "text-gray-400" : "text-white/20"} mt-0.5 shrink-0`}>·</span>
+                        <span className={`${isLight ? "text-gray-400" : "text-white/20"} mt-0.5 shrink-0`}>Â·</span>
                         {f}
                       </div>
                     ))}
@@ -6039,7 +3793,7 @@ function CofounderQAPanel({ scanId }: { scanId: number }) {
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && question.trim()) ask(question.trim()); }}
-          placeholder="Ask anything about your scan…"
+          placeholder="Ask anything about your scanâ€¦"
           className={`flex-1 ${isLight ? "bg-gray-50" : "bg-white/[0.04]"} border border-white/[0.10] rounded-xl px-4 py-2.5 text-sm ${isLight ? "text-gray-900" : "text-white"} placeholder-white/25 focus:outline-none focus:border-violet-500/50 transition-all`}
         />
         <button
@@ -6061,7 +3815,7 @@ function CofounderQAPanel({ scanId }: { scanId: number }) {
             <div className={`flex items-center gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>
         
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              Thinking…
+              Thinkingâ€¦
             </div>
           ) : (
             <p className={`text-sm ${isLight ? "text-gray-700" : "text-white/70"} leading-relaxed`}>{answer}</p>
@@ -6072,16 +3826,16 @@ function CofounderQAPanel({ scanId }: { scanId: number }) {
   );
 }
 
-/* ── Premium Animated Scan Loading Screen ─────────────────────────────── */
+/* â”€â”€ Premium Animated Scan Loading Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const ANALYSIS_STEPS = [
-  { label: "Security & Authentication", icon: "🔐", color: "#f87171" },
-  { label: "Compliance & Regulatory",   icon: "📋", color: "#60a5fa" },
-  { label: "Revenue Intelligence",      icon: "💰", color: "#34d399" },
-  { label: "Performance Analysis",      icon: "⚡", color: "#fbbf24" },
-  { label: "UX & Conversion",           icon: "👁️", color: "#a78bfa" },
-  { label: "Reliability & Errors",      icon: "🛡️", color: "#fb923c" },
-  { label: "Data & Architecture",       icon: "🗄️", color: "#22d3ee" },
-  { label: "Synthesizing Report",       icon: "✨", color: "#f472b6" },
+  { label: "Security & Authentication", icon: "ðŸ”", color: "#f87171" },
+  { label: "Compliance & Regulatory",   icon: "ðŸ“‹", color: "#60a5fa" },
+  { label: "Revenue Intelligence",      icon: "ðŸ’°", color: "#34d399" },
+  { label: "Performance Analysis",      icon: "âš¡", color: "#fbbf24" },
+  { label: "UX & Conversion",           icon: "ðŸ‘ï¸", color: "#a78bfa" },
+  { label: "Reliability & Errors",      icon: "ðŸ›¡ï¸", color: "#fb923c" },
+  { label: "Data & Architecture",       icon: "ðŸ—„ï¸", color: "#22d3ee" },
+  { label: "Synthesizing Report",       icon: "âœ¨", color: "#f472b6" },
 ];
 
 function ScanRunningScreen({
@@ -6116,7 +3870,7 @@ function ScanRunningScreen({
 
   return (
     <div className={`min-h-screen ${t.page} flex items-center justify-center px-6`}>
-      {/* ── Ambient glow ─── */}
+      {/* â”€â”€ Ambient glow â”€â”€â”€ */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
           animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.5, 0.3] }}
@@ -6127,7 +3881,7 @@ function ScanRunningScreen({
       </div>
 
       <div className="relative max-w-sm w-full space-y-8 z-10">
-        {/* ── Progress ring ─── */}
+        {/* â”€â”€ Progress ring â”€â”€â”€ */}
         <div className="flex flex-col items-center gap-5">
           <div className="relative">
             {/* Outer glow ring */}
@@ -6167,15 +3921,15 @@ function ScanRunningScreen({
               Reviewing your app
             </h2>
             <p className={`text-sm ${isLight ? "text-gray-400" : "text-white/35"}`}>
-              {elapsed}s elapsed · auto-refreshing every 3s
+              {elapsed}s elapsed Â· auto-refreshing every 3s
             </p>
             <p className={`text-xs ${isLight ? "text-gray-400/80" : "text-white/20"} italic mt-0.5`}>
-              Deep scan runs real browser agents & takes about 4–5 minutes
+              Deep scan runs real browser agents & takes about 4â€“5 minutes
             </p>
           </div>
         </div>
 
-        {/* ── Analysis step list ─── */}
+        {/* â”€â”€ Analysis step list â”€â”€â”€ */}
         <div className="space-y-2">
           {ANALYSIS_STEPS.map((step, i) => {
             const done = i < visibleStep;
@@ -6221,7 +3975,7 @@ function ScanRunningScreen({
           })}
         </div>
 
-        {/* ── Source chip ─── */}
+        {/* â”€â”€ Source chip â”€â”€â”€ */}
         {sourceInput && (
           <div className={`flex items-center justify-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>
             <Search className="w-3 h-3" />
@@ -6233,7 +3987,7 @@ function ScanRunningScreen({
   );
 }
 
-// ── Architecture Diagram Panel — React Flow ───────────────────────────────
+// â”€â”€ Architecture Diagram Panel â€” React Flow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // World-class interactive architecture map with glassmorphism nodes,
 // severity glow-rings, animated edges, and red issue-count badges.
 
@@ -6281,41 +4035,41 @@ function generateNodeSuggestions(nodeId: string, issues: ScanIssue[], _scan: Sca
   const worst = archWorstSev(issues);
   const out: string[] = [];
   if (nodeId === "auth") {
-    if (hay.includes("session") || hay.includes("token")) out.push("Replace custom sessions with Clerk or Auth.js — battle-tested RBAC out-of-the-box");
-    if (hay.includes("password") || hay.includes("hash")) out.push("Switch to Argon2id for password hashing — better GPU-attack resistance than bcrypt");
-    if (worst === "critical") out.push("Add MFA (TOTP or passkey) — critical auth issues require layered defence");
+    if (hay.includes("session") || hay.includes("token")) out.push("Replace custom sessions with Clerk or Auth.js â€” battle-tested RBAC out-of-the-box");
+    if (hay.includes("password") || hay.includes("hash")) out.push("Switch to Argon2id for password hashing â€” better GPU-attack resistance than bcrypt");
+    if (worst === "critical") out.push("Add MFA (TOTP or passkey) â€” critical auth issues require layered defence");
   }
   if (nodeId === "api") {
-    if (hay.includes("rate limit") || hay.includes("dos")) out.push("Add a WAF layer (Cloudflare, AWS API Gateway) — handles rate limiting at the edge");
-    if (hay.includes("cors") || hay.includes("header")) out.push("Use Helmet.js + strict CORS policy — one-line fix for most header vulnerabilities");
+    if (hay.includes("rate limit") || hay.includes("dos")) out.push("Add a WAF layer (Cloudflare, AWS API Gateway) â€” handles rate limiting at the edge");
+    if (hay.includes("cors") || hay.includes("header")) out.push("Use Helmet.js + strict CORS policy â€” one-line fix for most header vulnerabilities");
     if (hay.includes("injection") || hay.includes("sql")) out.push("Parameterised queries via Drizzle ORM or Prisma eliminate injection class entirely");
   }
   if (nodeId === "frontend") {
-    if (hay.includes("bundle") || hay.includes("performance")) out.push("Add code splitting + lazy loading — most bundle issues resolved in < 1 day");
-    if (hay.includes("xss")) out.push("Deploy a strict CSP header — blocks XSS even if sanitisation gaps remain");
-    out.push("Run Lighthouse CI in your pipeline — catches regressions before they ship");
+    if (hay.includes("bundle") || hay.includes("performance")) out.push("Add code splitting + lazy loading â€” most bundle issues resolved in < 1 day");
+    if (hay.includes("xss")) out.push("Deploy a strict CSP header â€” blocks XSS even if sanitisation gaps remain");
+    out.push("Run Lighthouse CI in your pipeline â€” catches regressions before they ship");
   }
   if (nodeId === "db") {
     if (hay.includes("backup")) out.push("Enable point-in-time recovery (Supabase, Neon, PlanetScale)");
-    if (hay.includes("exposure") || hay.includes("leak")) out.push("Add Row-Level Security (RLS) — prevents cross-user data leakage at the DB layer");
+    if (hay.includes("exposure") || hay.includes("leak")) out.push("Add Row-Level Security (RLS) â€” prevents cross-user data leakage at the DB layer");
     out.push("Run EXPLAIN ANALYZE on slow queries and add composite indexes on filter columns");
   }
   if (nodeId === "payments") {
-    if (worst === "critical" || worst === "high") out.push("Move to Stripe hosted checkout (Payment Links) — removes PCI scope from your codebase entirely");
-    out.push("Add idempotency keys to every payment API call — prevents double-charges on network retries");
+    if (worst === "critical" || worst === "high") out.push("Move to Stripe hosted checkout (Payment Links) â€” removes PCI scope from your codebase entirely");
+    out.push("Add idempotency keys to every payment API call â€” prevents double-charges on network retries");
   }
   if (nodeId === "compliance") {
-    if (hay.includes("gdpr") || hay.includes("consent")) out.push("Integrate CookieYes — generates compliant consent banners for GDPR/CCPA automatically");
-    out.push("Use Plausible or PostHog (self-hosted) instead of GA — privacy-first and GDPR-compliant");
+    if (hay.includes("gdpr") || hay.includes("consent")) out.push("Integrate CookieYes â€” generates compliant consent banners for GDPR/CCPA automatically");
+    out.push("Use Plausible or PostHog (self-hosted) instead of GA â€” privacy-first and GDPR-compliant");
   }
   if (nodeId === "observability") {
-    out.push("Add Sentry for error tracking + PostHog for product analytics — covers most gaps immediately");
-    if (hay.includes("log")) out.push("Emit structured JSON logs — enables Datadog / Grafana Cloud ingestion without code changes");
+    out.push("Add Sentry for error tracking + PostHog for product analytics â€” covers most gaps immediately");
+    if (hay.includes("log")) out.push("Emit structured JSON logs â€” enables Datadog / Grafana Cloud ingestion without code changes");
   }
   return out.slice(0, 3);
 }
 
-// ── Severity colour palette ────────────────────────────────────────────────
+// â”€â”€ Severity colour palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const SEV_COLORS: Record<string, { border: string; glow: string; badgeBg: string; badgeText: string; nodeBg: string; labelColor: string }> = {
   critical: { border: "#ef4444", glow: "rgba(239,68,68,0.45)", badgeBg: "#ef4444", badgeText: "#fff", nodeBg: "rgba(127,29,29,0.82)", labelColor: "#fca5a5" },
   high:     { border: "#f97316", glow: "rgba(249,115,22,0.35)", badgeBg: "#f97316", badgeText: "#fff", nodeBg: "rgba(120,53,15,0.82)", labelColor: "#fed7aa" },
@@ -6331,7 +4085,7 @@ const SEV_COLORS_LIGHT: Record<string, { border: string; glow: string; badgeBg: 
   clean:    { border: "#d1d5db", glow: "rgba(209,213,219,0.0)", badgeBg: "#9ca3af", badgeText: "#fff", nodeBg: "rgba(249,250,251,0.97)", labelColor: "#6b7280" },
 };
 
-// ── Custom React Flow node component ──────────────────────────────────────
+// â”€â”€ Custom React Flow node component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type ArchNodeData = {
   icon: string;
   label: string;
@@ -6418,16 +4172,16 @@ function buildFlowGraph(
   const hasCompliance = nodeMap.has("compliance");
   const hasObs = nodeMap.has("observability");
 
-  // ── node positions ────────────────────────────────────────────────────────
+  // â”€â”€ node positions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const nodes: RFNode[] = [
-    { id: "user",     type: "archNode", position: { x: 230, y: 0   }, data: { icon: "👤", label: "User",       isUser: true,  severity: "clean",        issueCount: 0 } },
-    { id: "frontend", type: "archNode", position: { x: 130, y: 110 }, data: { icon: "⚛️", label: "Frontend",   sublabel: scan.framework ?? "", severity: sev("frontend"), issueCount: cnt("frontend") } },
-    { id: "auth",     type: "archNode", position: { x: 390, y: 110 }, data: { icon: "🔐", label: "Auth Layer",  severity: sev("auth"),     issueCount: cnt("auth") } },
-    { id: "api",      type: "archNode", position: { x: 230, y: 240 }, data: { icon: "⚡", label: "API / Backend", sublabel: scan.vibeTool ?? "", severity: sev("api"),      issueCount: cnt("api") } },
-    { id: "db",       type: "archNode", position: { x: 230, y: 370 }, data: { icon: "💾", label: "Database",    severity: sev("db"),       issueCount: cnt("db") } },
-    ...(hasPayments  ? [{ id: "payments",    type: "archNode", position: { x: 430, y: 370 }, data: { icon: "💳", label: "Payments",    severity: sev("payments"),    issueCount: cnt("payments") } }] : []),
-    ...(hasCompliance? [{ id: "compliance",  type: "archNode", position: { x: 10,  y: 370 }, data: { icon: "📋", label: "Compliance",  severity: sev("compliance"),  issueCount: cnt("compliance") } }] : []),
-    ...(hasObs       ? [{ id: "observability",type: "archNode",position: { x: 430, y: 240 }, data: { icon: "📊", label: "Observability",severity: sev("observability"),issueCount: cnt("observability") } }] : []),
+    { id: "user",     type: "archNode", position: { x: 230, y: 0   }, data: { icon: "ðŸ‘¤", label: "User",       isUser: true,  severity: "clean",        issueCount: 0 } },
+    { id: "frontend", type: "archNode", position: { x: 130, y: 110 }, data: { icon: "âš›ï¸", label: "Frontend",   sublabel: scan.framework ?? "", severity: sev("frontend"), issueCount: cnt("frontend") } },
+    { id: "auth",     type: "archNode", position: { x: 390, y: 110 }, data: { icon: "ðŸ”", label: "Auth Layer",  severity: sev("auth"),     issueCount: cnt("auth") } },
+    { id: "api",      type: "archNode", position: { x: 230, y: 240 }, data: { icon: "âš¡", label: "API / Backend", sublabel: scan.vibeTool ?? "", severity: sev("api"),      issueCount: cnt("api") } },
+    { id: "db",       type: "archNode", position: { x: 230, y: 370 }, data: { icon: "ðŸ’¾", label: "Database",    severity: sev("db"),       issueCount: cnt("db") } },
+    ...(hasPayments  ? [{ id: "payments",    type: "archNode", position: { x: 430, y: 370 }, data: { icon: "ðŸ’³", label: "Payments",    severity: sev("payments"),    issueCount: cnt("payments") } }] : []),
+    ...(hasCompliance? [{ id: "compliance",  type: "archNode", position: { x: 10,  y: 370 }, data: { icon: "ðŸ“‹", label: "Compliance",  severity: sev("compliance"),  issueCount: cnt("compliance") } }] : []),
+    ...(hasObs       ? [{ id: "observability",type: "archNode",position: { x: 430, y: 240 }, data: { icon: "ðŸ“Š", label: "Observability",severity: sev("observability"),issueCount: cnt("observability") } }] : []),
   ];
 
   const mkEdge = (id: string, src: string, tgt: string, label?: string, dashed?: boolean): RFEdge => ({
@@ -6462,13 +4216,13 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
   const { nodes, edges } = useMemo(() => buildFlowGraph(scan, nodeMap), [scan, nodeMap]);
 
   const ARCH_NODE_META = [
-    { id: "frontend", label: "Frontend UI",     icon: "⚛️" },
-    { id: "auth",     label: "Auth Layer",       icon: "🔐" },
-    { id: "api",      label: "API / Backend",    icon: "⚡" },
-    { id: "db",       label: "Database",         icon: "💾" },
-    { id: "payments", label: "Payments",         icon: "💳" },
-    { id: "compliance","label": "Compliance",    icon: "📋" },
-    { id: "observability","label":"Observability",icon: "📊" },
+    { id: "frontend", label: "Frontend UI",     icon: "âš›ï¸" },
+    { id: "auth",     label: "Auth Layer",       icon: "ðŸ”" },
+    { id: "api",      label: "API / Backend",    icon: "âš¡" },
+    { id: "db",       label: "Database",         icon: "ðŸ’¾" },
+    { id: "payments", label: "Payments",         icon: "ðŸ’³" },
+    { id: "compliance","label": "Compliance",    icon: "ðŸ“‹" },
+    { id: "observability","label":"Observability",icon: "ðŸ“Š" },
   ];
   const affectedNodes = ARCH_NODE_META.filter((n) => nodeMap.has(n.id));
 
@@ -6477,7 +4231,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
 
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden aurora-card`}>
-      {/* ── Header ────────────────────────────────────────────────── */}
+      {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className={`flex items-center gap-2.5 px-6 py-4 border-b ${isLight ? "border-gray-100" : "border-white/[0.06]"}`}>
         <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isLight ? "bg-violet-50 border border-violet-200" : "bg-violet-500/15 border border-violet-500/25"}`}>
           <Network className="w-3.5 h-3.5 text-violet-500" />
@@ -6499,7 +4253,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
         </div>
       </div>
 
-      {/* ── React Flow canvas ─────────────────────────────────────── */}
+      {/* â”€â”€ React Flow canvas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div
         style={{ height: flowHeight }}
         className={`w-full relative ${isLight ? "bg-gray-50/80" : "bg-[#080c14]"}`}
@@ -6534,16 +4288,16 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
           />
         </ReactFlow>
         <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] px-3 py-1 rounded-full ${isLight ? "bg-white/80 text-gray-400 border border-gray-100" : "bg-black/40 text-white/20 border border-white/[0.04]"}`}>
-          Numbers on nodes = issue count · red glow = needs immediate fix · drag &amp; scroll to explore
+          Numbers on nodes = issue count Â· red glow = needs immediate fix Â· drag &amp; scroll to explore
         </div>
       </div>
 
-      {/* ── Per-node issue breakdown ───────────────────────────────── */}
+      {/* â”€â”€ Per-node issue breakdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {affectedNodes.length > 0 ? (
         <div className={`border-t ${isLight ? "border-gray-100" : "border-white/[0.05]"}`}>
           <div className={`px-6 py-2.5 ${isLight ? "bg-gray-50" : "bg-white/[0.01]"}`}>
             <p className={`text-[10px] font-semibold uppercase tracking-widest ${isLight ? "text-gray-400" : "text-white/25"}`}>
-              Affected Components — click to expand issues &amp; upgrade suggestions
+              Affected Components â€” click to expand issues &amp; upgrade suggestions
             </p>
           </div>
           <div className={`divide-y ${isLight ? "divide-gray-50" : "divide-white/[0.03]"}`}>
@@ -6563,7 +4317,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
                     <span className={`text-sm font-semibold flex-1 ${isLight ? "text-gray-800" : "text-white/85"}`}>{n.label}</span>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${sev.bg}`}>
-                        <span className="text-[8px]">●</span>
+                        <span className="text-[8px]">â—</span>
                         {issues.length} issue{issues.length !== 1 ? "s" : ""}
                       </span>
                       <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full capitalize border ${sev.bg}`}>{worst}</span>
@@ -6593,12 +4347,12 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
                           );
                         })}
                         {issues.length > 4 && (
-                          <p className={`text-xs px-1 ${isLight ? "text-gray-400" : "text-white/25"}`}>+{issues.length - 4} more · see Findings tab</p>
+                          <p className={`text-xs px-1 ${isLight ? "text-gray-400" : "text-white/25"}`}>+{issues.length - 4} more Â· see Findings tab</p>
                         )}
                       </div>
                       {suggestions.length > 0 && (
                         <div className={`rounded-xl border p-4 space-y-2 ${isLight ? "bg-violet-50/80 border-violet-100" : "bg-violet-500/[0.07] border-violet-500/20"}`}>
-                          <div className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isLight ? "text-violet-600" : "text-violet-400"}`}>💡 Upgrade Suggestions</div>
+                          <div className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isLight ? "text-violet-600" : "text-violet-400"}`}>ðŸ’¡ Upgrade Suggestions</div>
                           {suggestions.map((s, i) => (
                             <div key={i} className={`flex items-start gap-2 text-xs leading-relaxed ${isLight ? "text-violet-700" : "text-violet-300/80"}`}>
                               <ArrowRight className="w-3 h-3 shrink-0 mt-0.5 text-violet-400" />
@@ -6616,51 +4370,51 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
         </div>
       ) : (
         <div className="px-6 pb-5 pt-2 text-center">
-          <p className={`text-sm font-semibold ${isLight ? "text-green-600" : "text-green-400"}`}>✅ No architecture issues detected</p>
+          <p className={`text-sm font-semibold ${isLight ? "text-green-600" : "text-green-400"}`}>âœ… No architecture issues detected</p>
         </div>
       )}
     </div>
   );
 }
 
-// ── Report Tour ───────────────────────────────────────────────────────────
+// â”€â”€ Report Tour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Cloud-style tooltip tour. Auto-shows on first report view, re-triggerable
 // via the "?" button. Uses data-tour attributes to locate elements.
 
 const TOUR_STEPS = [
   {
     target: "score",
-    title: "🎯 Launch Readiness Score",
-    body: "Your 0–100 score across 10 dimensions. Below 70 = needs work before shipping.",
+    title: "ðŸŽ¯ Launch Readiness Score",
+    body: "Your 0â€“100 score across 10 dimensions. Below 70 = needs work before shipping.",
     placement: "bottom" as const,
   },
   {
     target: "summary",
-    title: "📋 Executive Summary",
-    body: "Board-memo style overview written for founders — tells you the big picture fast.",
+    title: "ðŸ“‹ Executive Summary",
+    body: "Board-memo style overview written for founders â€” tells you the big picture fast.",
     placement: "bottom" as const,
   },
   {
     target: "action-plan",
-    title: "⚡ Top 3 Action Plan",
+    title: "âš¡ Top 3 Action Plan",
     body: "Your three most urgent fixes ranked by business impact. Start here, ship faster.",
     placement: "top" as const,
   },
   {
     target: "tab-issues",
-    title: "🔍 Findings Tab",
-    body: "All issues by severity. Filter by evidence type — runtime proof, static analysis, or AI reasoning.",
+    title: "ðŸ” Findings Tab",
+    body: "All issues by severity. Filter by evidence type â€” runtime proof, static analysis, or AI reasoning.",
     placement: "bottom" as const,
   },
   {
     target: "tab-intelligence",
-    title: "🧠 Intelligence Tab",
+    title: "ðŸ§  Intelligence Tab",
     body: "Revenue forecasts, Launch DNA, and predictive risk signals beyond standard security.",
     placement: "bottom" as const,
   },
   {
     target: "sandbox-proofs",
-    title: "📸 Live Sandbox Proofs",
+    title: "ðŸ“¸ Live Sandbox Proofs",
     body: "Screenshot-backed exploit evidence from real sandbox execution. Actual proof, not guesses.",
     placement: "top" as const,
   },
@@ -6840,7 +4594,7 @@ function ReportTour({ onStartTour }: { onStartTour: (cb: () => void) => void }) 
               onClick={next}
               className="ml-auto flex items-center gap-1.5 text-xs bg-violet-600 hover:bg-violet-500 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors"
             >
-              {step === TOUR_STEPS.length - 1 ? "Done 🎉" : "Next"}
+              {step === TOUR_STEPS.length - 1 ? "Done ðŸŽ‰" : "Next"}
               {step < TOUR_STEPS.length - 1 && <ChevronRight className="w-3 h-3" />}
             </button>
           </div>
@@ -7087,7 +4841,7 @@ jobs:
   );
 }
 
-// ── Knowledge Graph Component ──────────────────────────────────────────────
+// â”€â”€ Knowledge Graph Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function KnowledgeGraphExplorer({ data, issues, isLight }: { data: any, issues?: any[], isLight: boolean }) {
   if (!data || !data.nodes || data.nodes.length === 0) {
     return <div className="text-center p-10 opacity-50">No Knowledge Graph Data Available for this Scan.</div>;
@@ -7096,7 +4850,7 @@ function KnowledgeGraphExplorer({ data, issues, isLight }: { data: any, issues?:
   const nodes: RFNode[] = data.nodes.map((n: any, i: number) => ({
     id: n.id,
     position: { x: (i % 6) * 180, y: Math.floor(i / 6) * 100 },
-    data: { label: `${n.type === 'table' ? '📦' : n.type === 'route' ? '🔗' : n.type === 'function' ? '⚡' : '📄'} ${n.id.split('/').pop()}` },
+    data: { label: `${n.type === 'table' ? 'ðŸ“¦' : n.type === 'route' ? 'ðŸ”—' : n.type === 'function' ? 'âš¡' : 'ðŸ“„'} ${n.id.split('/').pop()}` },
     style: {
       background: isLight ? "#fff" : "#111",
       color: isLight ? "#000" : "#fff",
@@ -7125,7 +4879,7 @@ function KnowledgeGraphExplorer({ data, issues, isLight }: { data: any, issues?:
         nodes.push({
           id: issue.findingId,
           position: { x: (issueNodeIdx % 6) * 180, y: Math.floor(issueNodeIdx / 6) * 100 + 150 },
-          data: { label: `🔴 ${issue.findingId}` },
+          data: { label: `ðŸ”´ ${issue.findingId}` },
           style: {
             background: isLight ? "rgba(239, 68, 68, 0.1)" : "rgba(239, 68, 68, 0.2)",
             color: isLight ? "#dc2626" : "#fca5a5",
@@ -7239,7 +4993,7 @@ export default function ScanResultsPage() {
       if (!active) return;
       if (result) {
         if (result.status === "failed") {
-          // Auto-retry silently — show running state while we restart
+          // Auto-retry silently â€” show running state while we restart
           try {
             await api.scans.rescan(id);
           } catch {
@@ -7274,7 +5028,7 @@ export default function ScanResultsPage() {
         <div className={`w-12 h-12 rounded-2xl ${isLight ? "bg-white border border-gray-200" : "glass"} flex items-center justify-center mx-auto`}>
           <Loader2 className={`w-5 h-5 ${isLight ? "text-gray-600" : "text-white/60"} animate-spin`} />
         </div>
-        <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-sm`}>Loading…</p>
+        <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-sm`}>Loadingâ€¦</p>
       </div>
     </div>
   );
@@ -7286,7 +5040,7 @@ export default function ScanResultsPage() {
           <Loader2 className={`w-5 h-5 ${isLight ? "text-gray-600" : "text-white/60"} animate-spin`} />
         </div>
         <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-sm`}
-          >Loading report…</p>
+          >Loading reportâ€¦</p>
       </div>
     </div>
   );
@@ -7321,7 +5075,7 @@ export default function ScanResultsPage() {
           </div>
           <div className="space-y-2">
             <h2 className={`${isLight ? "text-gray-800" : "text-white/80"} text-base font-semibold`}>Sorry for the trouble!</h2>
-            <p className={`${isLight ? "text-gray-500" : "text-white/40"} text-sm leading-relaxed`}>We ran into an issue during your review. Don't worry — this doesn't count against your quota. Hit the button below and we'll get your scan right back.</p>
+            <p className={`${isLight ? "text-gray-500" : "text-white/40"} text-sm leading-relaxed`}>We ran into an issue during your review. Don't worry â€” this doesn't count against your quota. Hit the button below and we'll get your scan right back.</p>
           </div>
           <div className="flex flex-col gap-2.5">
             <button
@@ -7329,7 +5083,7 @@ export default function ScanResultsPage() {
               disabled={rescanning}
               className={`flex items-center justify-center gap-2 font-bold text-sm px-5 py-2.5 rounded-xl transition-all disabled:opacity-50 ${isLight ? "bg-gray-900 hover:bg-gray-800 text-white" : "bg-white hover:bg-white/90 text-black"}`}
             >
-              {rescanning ? <><Loader2 className="w-4 h-4 animate-spin" />Getting your scan back…</> : <>Try Again — Get My Scan Back</>}
+              {rescanning ? <><Loader2 className="w-4 h-4 animate-spin" />Getting your scan backâ€¦</> : <>Try Again â€” Get My Scan Back</>}
             </button>
             <Link href="/scans/new">
               <button className={`text-sm ${isLight ? "text-gray-400 hover:text-gray-600" : "text-white/35 hover:text-white/55"} transition-colors`}>
@@ -7477,16 +5231,16 @@ export default function ScanResultsPage() {
       </nav>
 
       <main className="w-full max-w-full lg:max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-5 overflow-hidden">
-        {/* ── Sticky Launch Alert Banner ───────────────────── */}
+        {/* â”€â”€ Sticky Launch Alert Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <StickyLaunchAlertBanner scan={scan} />
 
-        {/* ── Launch Gate Banner ───────────────────────────────── */}
+        {/* â”€â”€ Launch Gate Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <LaunchGateBanner scan={scan} isLight={isLight} />
 
-        {/* ── Locked Premium Insights (free users) ─────────── */}
+        {/* â”€â”€ Locked Premium Insights (free users) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <LockedInsightsPanel scan={scan} plan={user.plan} />
 
-        {/* ── Section Tab Navigation ───────────────────────── */}
+        {/* â”€â”€ Section Tab Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div
           className={`sticky top-[57px] z-[9] -mx-6 px-6 py-2.5 ${t.tabBar}`}
         >
@@ -7507,7 +5261,7 @@ export default function ScanResultsPage() {
                 label: "Advanced",
                 icon: Zap,
                 tourId: undefined,
-                badge: user.plan === "creator" || user.plan === "enterprise" ? undefined : "🔒",
+                badge: user.plan === "creator" || user.plan === "enterprise" ? undefined : "ðŸ”’",
               },
               {
                 id: "deeptech",
@@ -7550,10 +5304,10 @@ export default function ScanResultsPage() {
           </div>
         </div>
 
-        {/* ── Overview Tab ─────────────────────────────────── */}
+        {/* â”€â”€ Overview Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {activeTab === "overview" && (
           <>
-            {/* ── Demo-to-Market-Ready Pipeline & Traffic Light Verdict ───────────────────── */}
+            {/* â”€â”€ Demo-to-Market-Ready Pipeline & Traffic Light Verdict â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.greenLightVerdict && (
               <div className={`${isLight ? "bg-white border-gray-200 shadow-sm" : "bg-[#111] border-white/10"} border rounded-2xl p-6 mb-4`}>
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -7606,7 +5360,7 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* ── Executive summary row ────────────────────────── */}
+            {/* â”€â”€ Executive summary row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div
                 data-tour="score"
@@ -7661,7 +5415,7 @@ export default function ScanResultsPage() {
                 <p
                   className={`${isLight ? "text-gray-500" : "text-white/55"} text-sm leading-relaxed`}
                 >
-                  {scan.summary ?? "Analysis in progress…"}
+                  {scan.summary ?? "Analysis in progressâ€¦"}
                 </p>
 
                 {scan.issueCounts && (
@@ -7709,7 +5463,7 @@ export default function ScanResultsPage() {
               </div>
             </div>
 
-            {/* ── Benchmark Network ────────────────────────────── */}
+            {/* â”€â”€ Benchmark Network â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.benchmarkData && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7746,7 +5500,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Architecture Audit ───────────────────────────── */}
+            {/* â”€â”€ Architecture Audit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <SectionLabel label="Architecture Audit" icon={Network} isLight={isLight} />
             <motion.div
               data-tour="architecture"
@@ -7757,12 +5511,12 @@ export default function ScanResultsPage() {
               <ArchitectureDiagramPanel scan={scan} />
             </motion.div>
 
-            {/* ── Section divider ──────────────────────────────── */}
+            {/* â”€â”€ Section divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.vibeTool && scan.vibeTool !== "unknown" && (
               <SectionLabel label="Detected Stack" icon={Cpu} isLight={isLight} />
             )}
 
-            {/* ── VibeCode Intelligence Network ─────────────────── */}
+            {/* â”€â”€ VibeCode Intelligence Network â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.vibeTool && scan.vibeTool !== "unknown" && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7779,10 +5533,10 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* ── Intelligence Tab ─────────────────────────────── */}
+        {/* â”€â”€ Intelligence Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {activeTab === "intelligence" && (
           <>
-            {/* ── Launch Impact Calculator - Creator only ──────── */}
+            {/* â”€â”€ Launch Impact Calculator - Creator only â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.launchImpact && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7800,7 +5554,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Live Sandbox Proofs ──────────────────────────── */}
+            {/* â”€â”€ Live Sandbox Proofs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <motion.div
               data-tour="sandbox-proofs"
               initial={{ opacity: 0, y: 10 }}
@@ -7816,7 +5570,7 @@ export default function ScanResultsPage() {
               />
             </motion.div>
 
-            {/* ── Launch DNA ────────────────────────────────────── */}
+            {/* â”€â”€ Launch DNA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.launchDNA && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7827,7 +5581,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Product Hunt Readiness - Creator only ─────────── */}
+            {/* â”€â”€ Product Hunt Readiness - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.productHuntScore && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7845,7 +5599,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Technical Co-Founder Narrative ───────────────── */}
+            {/* â”€â”€ Technical Co-Founder Narrative â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.cofounderNarrative && scan.cofounderNarrative.length > 20 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7856,7 +5610,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Launch Replay ─────────────────────────────────── */}
+            {/* â”€â”€ Launch Replay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.launchReplaySteps && scan.launchReplaySteps.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7867,7 +5621,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Regression Memory ────────────────────────────── */}
+            {/* â”€â”€ Regression Memory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.regressionDiff && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7878,7 +5632,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Benchmark Percentile ─────────────────────────── */}
+            {/* â”€â”€ Benchmark Percentile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.benchmarkPercentile && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7889,7 +5643,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Launch Risk Forecast - Creator only ──────────── */}
+            {/* â”€â”€ Launch Risk Forecast - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.riskForecast && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7909,10 +5663,10 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* ── Compliance Tab ───────────────────────────────── */}
+        {/* â”€â”€ Compliance Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {activeTab === "compliance" && (
           <>
-            {/* ── Compliance Audit - Creator only ──────────────── */}
+            {/* â”€â”€ Compliance Audit - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.complianceResults && scan.complianceResults.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7930,7 +5684,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Revenue Intelligence - Creator only ──────────── */}
+            {/* â”€â”€ Revenue Intelligence - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.revenueIntelligence && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7950,7 +5704,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Shadow API Radar - Creator only ──────────────── */}
+            {/* â”€â”€ Shadow API Radar - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.shadowApiFindings && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7968,7 +5722,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Secret & API Key Scanner ──────────────────────── */}
+            {/* â”€â”€ Secret & API Key Scanner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.secretScanResults && (
               <SecretScanPanel
                 data={scan.secretScanResults}
@@ -7978,7 +5732,7 @@ export default function ScanResultsPage() {
               />
             )}
 
-            {/* ── Dependency CVE Tracker ───────────────────────── */}
+            {/* â”€â”€ Dependency CVE Tracker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.packageVulns && (
               <PackageVulnsPanel
                 data={scan.packageVulns}
@@ -7990,10 +5744,10 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* ── Advanced Tab ─────────────────────────────────── */}
+        {/* â”€â”€ Advanced Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {activeTab === "advanced" && (
           <>
-            {/* ── Digital Twin Simulation - Creator only ────────── */}
+            {/* â”€â”€ Digital Twin Simulation - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.digitalTwin && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -8016,7 +5770,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Predictive Intelligence - Creator only ────────── */}
+            {/* â”€â”€ Predictive Intelligence - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.predictiveIntel && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -8039,7 +5793,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Root Cause Engine - Creator only ──────────────── */}
+            {/* â”€â”€ Root Cause Engine - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.rootCause && scan.rootCause.chains.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -8062,7 +5816,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── Cleanup Radar - Creator only ──────────────────── */}
+            {/* â”€â”€ Cleanup Radar - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {scan.cleanupReport && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -8080,7 +5834,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* ── GitHub Workflow Integration ─────────────────────── */}
+            {/* â”€â”€ GitHub Workflow Integration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -8091,10 +5845,10 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* ── Issues Tab ───────────────────────────────────── */}
+        {/* â”€â”€ Issues Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {activeTab === "issues" && (
           <>
-            {/* ── Top 3 Action Plan ────────────────────────────── */}
+            {/* â”€â”€ Top 3 Action Plan â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {topThree.length > 0 && (
               <div
                 data-tour="action-plan"
@@ -8129,12 +5883,12 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* ── Pre-Launch Checklist ─────────────────────────── */}
+            {/* â”€â”€ Pre-Launch Checklist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {!activeAgent && (scan.issues ?? []).length > 0 && (
               <PreLaunchChecklist scan={scan} />
             )}
 
-            {/* ── Confidence legend ────────────────────────────── */}
+            {/* â”€â”€ Confidence legend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <div
               className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-xl px-5 py-3`}
             >
@@ -8147,23 +5901,23 @@ export default function ScanResultsPage() {
                 {[
                   {
                     badge: "bg-green-500/15 text-green-400 border-green-500/25",
-                    label: "🟢 99% Browser Runtime Proof",
+                    label: "ðŸŸ¢ 99% Browser Runtime Proof",
                   },
                   {
                     badge: "bg-green-500/10 text-green-400 border-green-500/20",
-                    label: "🔵 90% HTTP Runtime Proof",
+                    label: "ðŸ”µ 90% HTTP Runtime Proof",
                   },
                   {
                     badge: "bg-sky-500/10 text-sky-400 border-sky-500/20",
-                    label: "🔵 75% Static Code Evidence",
+                    label: "ðŸ”µ 75% Static Code Evidence",
                   },
                   {
                     badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-                    label: "🟡 60% Pattern Match",
+                    label: "ðŸŸ¡ 60% Pattern Match",
                   },
                   {
                     badge: `bg-white/[0.05] text-white/35 ${isLight ? "border-gray-200" : "border-white/[0.08]"}`,
-                    label: "⚪ <60% AI Reasoning",
+                    label: "âšª <60% AI Reasoning",
                   },
                 ].map((item) => (
                   <span
@@ -8176,7 +5930,7 @@ export default function ScanResultsPage() {
               </div>
             </div>
 
-            {/* ── Agent filter ─────────────────────────────────── */}
+            {/* â”€â”€ Agent filter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {agents.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 <button
@@ -8224,7 +5978,7 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* ── Verified Findings (Evidence Gallery) ─────────────────────── */}
+            {/* â”€â”€ Verified Findings (Evidence Gallery) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {!activeAgent && (
               <div className={`${isLight ? "bg-white border border-gray-200" : "glass border border-white/[0.07]"} rounded-2xl p-6 space-y-5 shadow-2xl`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
@@ -8243,9 +5997,9 @@ export default function ScanResultsPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
-                    { id: "runtime", label: "🟢 Runtime Verified", count: runtimeCount, bg: "bg-green-500", border: "border-green-500", text: "text-green-400", desc: "Sandbox HTTP/browser proof" },
-                    { id: "static", label: "🔵 Static Verified", count: staticCount, bg: "bg-sky-500", border: "border-sky-500", text: "text-sky-400", desc: "Direct code scan match" },
-                    { id: "ai_reasoning", label: "⚪ AI Observation", count: aiCount, bg: "bg-white", border: "border-white", text: "text-white/60", desc: "Logical/architecture smell" }
+                    { id: "runtime", label: "ðŸŸ¢ Runtime Verified", count: runtimeCount, bg: "bg-green-500", border: "border-green-500", text: "text-green-400", desc: "Sandbox HTTP/browser proof" },
+                    { id: "static", label: "ðŸ”µ Static Verified", count: staticCount, bg: "bg-sky-500", border: "border-sky-500", text: "text-sky-400", desc: "Direct code scan match" },
+                    { id: "ai_reasoning", label: "âšª AI Observation", count: aiCount, bg: "bg-white", border: "border-white", text: "text-white/60", desc: "Logical/architecture smell" }
                   ].map((item) => (
                     <button
                       key={item.id}
@@ -8267,14 +6021,14 @@ export default function ScanResultsPage() {
 
                 {/* Sub-label description for the active filter */}
                 <div className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/40"} italic bg-black/20 p-3 rounded-lg border border-white/[0.03]`}>
-                  {evidenceFilter === "runtime" && "💡 Runtime Verified: Active exploit proofs generated by executing playwright browser automation and HTTP probes in our sandbox. Zero false positives."}
-                  {evidenceFilter === "static" && "💡 Static Verified: Direct syntax, AST, or pattern matches flagged in source files. Backed by specific file line numbers."}
-                  {evidenceFilter === "ai_reasoning" && "💡 AI Observation: Architectural observations, structural gaps, or potential compliance failures inferred through security LLMs."}
+                  {evidenceFilter === "runtime" && "ðŸ’¡ Runtime Verified: Active exploit proofs generated by executing playwright browser automation and HTTP probes in our sandbox. Zero false positives."}
+                  {evidenceFilter === "static" && "ðŸ’¡ Static Verified: Direct syntax, AST, or pattern matches flagged in source files. Backed by specific file line numbers."}
+                  {evidenceFilter === "ai_reasoning" && "ðŸ’¡ AI Observation: Architectural observations, structural gaps, or potential compliance failures inferred through security LLMs."}
                 </div>
               </div>
             )}
 
-            {/* ── All remaining findings ───────────────────────── */}
+            {/* â”€â”€ All remaining findings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {remaining.length > 0 && (
               <div className="space-y-2.5">
                 <p
@@ -8302,7 +6056,7 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* ── Upgrade banner for locked issues ─────────────── */}
+            {/* â”€â”€ Upgrade banner for locked issues â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {!activeAgent && (scan as any)._lockedIssueCount > 0 && (
               <UpgradeBanner
                 count={(scan as any)._lockedIssueCount as number}
@@ -8310,7 +6064,7 @@ export default function ScanResultsPage() {
               />
             )}
 
-            {/* ── Exploit Terminal for critical IDOR/auth issues ─ */}
+            {/* â”€â”€ Exploit Terminal for critical IDOR/auth issues â”€ */}
             {!activeAgent &&
               sortedIssues.some(
                 (i) =>
@@ -8371,7 +6125,7 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* ── Technical Co-Founder Q&A ─────────────────────── */}
+            {/* â”€â”€ Technical Co-Founder Q&A â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {!activeAgent && scan.status === "completed" && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -8384,7 +6138,7 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* ── Knowledge Graph Tab ──────────────────────────── */}
+        {/* â”€â”€ Knowledge Graph Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {activeTab === "graph" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
@@ -8395,7 +6149,7 @@ export default function ScanResultsPage() {
           </div>
         )}
 
-        {/* ── Deep Tech Tab ─────────────────────────────────── */}
+        {/* â”€â”€ Deep Tech Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {activeTab === "deeptech" && (
           <div className="space-y-6">
             <div className="flex flex-col gap-2">
@@ -8716,7 +6470,7 @@ export default function ScanResultsPage() {
                       </div>
                         <div className={`mb-3 flex justify-center items-center py-4 rounded border ${isLight ? "bg-slate-50 border-slate-200" : "bg-black/50 border-white/10"}`}>
                           <span className="font-serif italic text-3xl text-orange-500 opacity-90 drop-shadow-md">
-                            {scan.bigOProfiler.worstCaseTimeComplexity.replace('O', '𝒪')}
+                            {scan.bigOProfiler.worstCaseTimeComplexity.replace('O', 'ð’ª')}
                           </span>
                         </div>
                         <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
@@ -9270,27 +7024,27 @@ export default function ScanResultsPage() {
                     </div>
                   )}
 
-                  {/* DeploySafe — Infrastructure Verifier */}
+                  {/* DeploySafe â€” Infrastructure Verifier */}
                   {scan.deploySafe && (
                     <DeploySafeVisualizer data={scan.deploySafe as any} />
                   )}
 
-                  {/* FailSafe — Resilience Topology */}
+                  {/* FailSafe â€” Resilience Topology */}
                   {scan.failSafe && (
                     <FailSafeVisualizer data={scan.failSafe as any} />
                   )}
 
-                  {/* ObsCover — Observability Matrix */}
+                  {/* ObsCover â€” Observability Matrix */}
                   {scan.obsCover && (
                     <ObsCoverVisualizer data={scan.obsCover as any} />
                   )}
 
-                  {/* CogFlow — Cognitive Load */}
+                  {/* CogFlow â€” Cognitive Load */}
                   {scan.cogFlow && (
                     <CogFlowVisualizer data={scan.cogFlow as any} />
                   )}
 
-                  {/* ArchScan — Architectural Smells */}
+                  {/* ArchScan â€” Architectural Smells */}
                   {scan.archScan && (
                     <ArchScanVisualizer data={scan.archScan as any} />
                   )}
@@ -9344,7 +7098,7 @@ export default function ScanResultsPage() {
           </div>
         )}
 
-        {/* ── Privacy footer ───────────────────────────────── */}
+        {/* â”€â”€ Privacy footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div className="flex items-center gap-2 justify-center py-4">
           <ShieldCheck className="w-3.5 h-3.5 text-green-400/60" />
           <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}
@@ -9354,7 +7108,7 @@ export default function ScanResultsPage() {
         </div>
       </main>
 
-      {/* ── Guided Report Tour ──────────────────────────── */}
+      {/* â”€â”€ Guided Report Tour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <ReportTour onStartTour={(cb) => { tourStartRef.current = cb; }} />
     </div>
   );

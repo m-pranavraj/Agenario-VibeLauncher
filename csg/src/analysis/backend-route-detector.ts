@@ -122,7 +122,7 @@ function analyzeHandlerBody(body: string): RouteHandler {
   };
 }
 
-function detectRoutePatterns(content: string): BackendRoute[] {
+function detectRoutePatterns(content: string, language: BackendLanguage): BackendRoute[] {
   const routes: BackendRoute[] = [];
   const allPatterns = [
     ...EXPRESS_PATTERNS,
@@ -178,13 +178,13 @@ export function detectBackendRoutes(files: FileInput[]): BackendRoute[] {
           errorRecovery: true,
         });
       } catch {
-        const detected = detectRoutePatterns(file.content);
+        const detected = detectRoutePatterns(file.content, language);
         for (const r of detected) { r.filePath = file.path; r.language = language; }
         routes.push(...detected);
         continue;
       }
 
-      const detected = detectRoutePatterns(file.content);
+      const detected = detectRoutePatterns(file.content, language);
       for (const r of detected) {
         r.filePath = file.path;
         r.language = language;
@@ -228,8 +228,230 @@ export function detectBackendRoutes(files: FileInput[]): BackendRoute[] {
           }
         },
       });
+    } else if (language === 'python') {
+      const pythonRoutes = extractPythonRoutes(file.content, file.path);
+      if (pythonRoutes.length > 0) routes.push(...pythonRoutes);
+    } else if (language === 'go') {
+      const goRoutes = extractGoRoutes(file.content, file.path);
+      if (goRoutes.length > 0) routes.push(...goRoutes);
     }
   }
 
   return routes;
+}
+
+function extractPythonRoutes(content: string, filePath: string): BackendRoute[] {
+  const routes: BackendRoute[] = [];
+  const lines = content.split('\n');
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line.startsWith('@')) continue;
+
+    // Match decorators: @app.route, @router.get, @bp.post, etc.
+    const routeMatch = line.match(/@(?:\w+)\.(route|get|post|put|patch|delete)\s*\(\s*['"]([^'"]+)['"]\s*(?:,\s*\w+\s*=\s*[^)]+)?\s*\)/);
+    if (!routeMatch) continue;
+
+    const methodRaw = routeMatch[1].toUpperCase();
+    const method = methodRaw === 'ROUTE' ? 'GET' : methodRaw as HTTPMethod;
+    const path = routeMatch[2];
+    const decoratorLine = i + 1;
+
+    // Find the function definition following the decorator
+    let handlerBody = '';
+    let handlerLineStart = i + 1;
+    let handlerLineEnd = i + 20;
+    for (let j = i + 1; j < Math.min(i + 15, lines.length); j++) {
+      if (lines[j].trim().startsWith('def ') || lines[j].trim().startsWith('async def ')) {
+        handlerLineStart = j + 1;
+        handlerLineEnd = Math.min(j + 20, lines.length);
+        handlerBody = lines.slice(j, handlerLineEnd).join('\n');
+        break;
+      }
+    }
+
+    const handler = analyzePythonHandler(handlerBody);
+
+    routes.push({
+      id: `be-route:python:${method}:${path}:${decoratorLine}`,
+      method,
+      path,
+      pathTemplate: extractRouteTemplate(path),
+      framework: detectPythonFramework(content),
+      language: 'python',
+      filePath,
+      lineStart: decoratorLine,
+      lineEnd: handlerLineEnd,
+      handler,
+      paramPatterns: [...path.matchAll(/:(\w+)/g)].map(m2 => m2[1]),
+    });
+  }
+
+  return routes;
+}
+
+function extractGoRoutes(content: string, filePath: string): BackendRoute[] {
+  const routes: BackendRoute[] = [];
+  const routeRe = /(?:router|r|e|mux|http|srv|app|server)\.(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|Handle|HandleFunc)\s*\(\s*['"]([^'"]+)['"]\s*,\s*(\w+)\s*\)/g;
+
+  let m: RegExpExecArray | null;
+  while ((m = routeRe.exec(content)) !== null) {
+    const methodRaw = m[1].toUpperCase();
+    const method = ['HANDLE', 'HANDLEFUNC'].includes(methodRaw) ? 'GET' : methodRaw as HTTPMethod;
+    const path = m[2];
+    const handlerName = m[3];
+    const lineNum = content.substring(0, m.index).split('\n').length;
+
+    const handlerSnippet = content.slice(m.index, m.index + 1000);
+    const handler = analyzeGoHandler(handlerSnippet, handlerName);
+
+    routes.push({
+      id: `be-route:go:${method}:${path}:${lineNum}`,
+      method,
+      path,
+      pathTemplate: extractRouteTemplate(path),
+      framework: detectGoFramework(content),
+      language: 'go',
+      filePath,
+      lineStart: lineNum,
+      lineEnd: lineNum + 20,
+      handler,
+      paramPatterns: [...path.matchAll(/\{(\w+)\}/g)].map(m2 => m2[1]),
+    });
+  }
+
+  return routes;
+}
+
+function detectPythonFramework(content: string): string {
+  if (/fastapi|pydantic|from fastapi import/.test(content)) return 'fastapi';
+  if (/from flask import|import flask|Flask\(/.test(content)) return 'flask';
+  if (/from django|import django/.test(content)) return 'django';
+  if (/aiohttp|from aiohttp import/.test(content)) return 'aiohttp';
+  if (/bottle|from bottle import/.test(content)) return 'bottle';
+  return 'flask';
+}
+
+function detectGoFramework(content: string): string {
+  if (/gin-gonic|gin\.Default|gin\.New/.test(content)) return 'gin';
+  if (/echo\.New|echo\.Default/.test(content)) return 'echo';
+  if (/gorilla\/mux|mux\.NewRouter/.test(content)) return 'gorilla';
+  if (/net\/http|http\.Handle/.test(content)) return 'net/http';
+  return 'gin';
+}
+
+function analyzePythonHandler(body: string): RouteHandler {
+  const parameterNames: string[] = [];
+  const bodyReferences: string[] = [];
+  const queryReferences: string[] = [];
+  const paramReferences: string[] = [];
+  const dbQueries: string[] = [];
+  const sinkCalls: string[] = [];
+  const middleware: string[] = [];
+
+  const bodyMatch = body.match(/(?:request\.form|request\.get_json|request\.data|request\.args|request\.params|request\.files|req\.body|req\.query|req\.params)\b/g);
+  if (bodyMatch) {
+    for (const m of bodyMatch) {
+      if (m.includes('body') || m.includes('form') || m.includes('data')) bodyReferences.push(m);
+      else if (m.includes('query') || m.includes('args')) queryReferences.push(m);
+      else if (m.includes('params')) paramReferences.push(m);
+    }
+  }
+
+  const dbMatch = body.match(/(?:db|session|query|execute|raw)\.\w+\.\w+/g);
+  if (dbMatch) {
+    for (const m of dbMatch) {
+      if (!dbQueries.includes(m)) dbQueries.push(m);
+    }
+  }
+
+  const sinkMatch = body.match(/(?:eval|exec|render_template|redirect|jsonify|send_file|subprocess|os\.system|\.query\s*\()/g);
+  if (sinkMatch) {
+    for (const m of sinkMatch) {
+      if (!sinkCalls.includes(m)) sinkCalls.push(m);
+    }
+  }
+
+  const middlewareMatch = body.match(/(?:login_required|jwt_required|require_auth|authenticate|verify_token|auth\.|current_user|require_role|permission_required)/g);
+  if (middlewareMatch) {
+    for (const m of middlewareMatch) {
+      if (!middleware.includes(m)) middleware.push(m);
+    }
+  }
+
+  const hasAuthCheck = /\b(?:current_user|g\.user|request\.user|is_authenticated|user_id|authenticate)\b/.test(body);
+
+  return {
+    handlerName: null,
+    handlerBody: body,
+    filePath: '',
+    lineStart: 0,
+    lineEnd: 0,
+    parameterNames,
+    bodyReferences,
+    queryReferences,
+    paramReferences,
+    dbQueries,
+    sinkCalls,
+    middleware,
+    hasAuthCheck,
+  };
+}
+
+function analyzeGoHandler(body: string, handlerName: string): RouteHandler {
+  const parameterNames = [handlerName];
+  const bodyReferences: string[] = [];
+  const queryReferences: string[] = [];
+  const paramReferences: string[] = [];
+  const dbQueries: string[] = [];
+  const sinkCalls: string[] = [];
+  const middleware: string[] = [];
+
+  const bodyMatch = body.match(/(?:c\.(?:Request\.Body|Params|Query|Form|Bind|ShouldBind)|r\.(?:Param|Query|Form)|mux\.Vars)\b/g);
+  if (bodyMatch) {
+    for (const m of bodyMatch) {
+      if (m.includes('Body') || m.includes('Bind') || m.includes('Form')) bodyReferences.push(m);
+      else if (m.includes('Query') || m.includes('Form')) queryReferences.push(m);
+      else if (m.includes('Param') || m.includes('Vars')) paramReferences.push(m);
+    }
+  }
+
+  const dbMatch = body.match(/(?:db|gorm|sqlx|sql|squirrel)\.\w+\.\w+/g);
+  if (dbMatch) {
+    for (const m of dbMatch) {
+      if (!dbQueries.includes(m)) dbQueries.push(m);
+    }
+  }
+
+  const sinkMatch = body.match(/(?:exec|spawn|http\.Get|http\.Post|json|redirect|write|os\.Open|ioutil\.ReadFile)\s*\(/g);
+  if (sinkMatch) {
+    for (const m of sinkMatch) {
+      if (!sinkCalls.includes(m)) sinkCalls.push(m);
+    }
+  }
+
+  const middlewareMatch = body.match(/(?:auth|Auth|middleware|Middleware|requireAuth|authenticate|token|JWT)\b/g);
+  if (middlewareMatch) {
+    for (const m of middlewareMatch) {
+      if (!middleware.includes(m)) middleware.push(m);
+    }
+  }
+
+  const hasAuthCheck = /\b(?:auth|Auth|middleware|Middleware|token|JWT|authenticate|user\.ID)\b/.test(body);
+
+  return {
+    handlerName,
+    handlerBody: body,
+    filePath: '',
+    lineStart: 0,
+    lineEnd: 0,
+    parameterNames: [handlerName],
+    bodyReferences,
+    queryReferences,
+    paramReferences,
+    dbQueries,
+    sinkCalls,
+    middleware,
+    hasAuthCheck,
+  };
 }

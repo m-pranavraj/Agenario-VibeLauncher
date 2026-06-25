@@ -47,7 +47,7 @@ import { runFlowValue } from "../lib/flow-value.js";
 import { runPromptTrace } from "../lib/prompt-trace.js";
 import { runStructuralAnalysis } from "../lib/structural-analysis.js";
 import { runAIVerifier } from "../lib/ai-verifier.js";
-import { analyzeTimeAwareDependencies } from "../lib/time-aware-deps.js";
+import { analyzeTimeAwareDependencies, type TimeAwareDepsData } from "../lib/time-aware-deps.js";
 import { inferCrossLanguageBoundaries } from "../lib/cross-language-taint.js";
 import { applySoundUnderApproximation } from "../lib/under-approximation.js";
 import { computeAbstractInterpretationConfidence } from "../lib/probabilistic-confidence.js";
@@ -58,6 +58,26 @@ import { runGraphQLScanner } from "../lib/graphql-scanner.js";
 import { runPackageHallucinationScanner, scanFilesForSupplyChainRisks } from "../lib/package-hallucination.js";
 import { runAdvancedInjectionScanner, runAuthHardeningScanner } from "../lib/advanced-injection-scanner.js";
 import { analyzeScanFindings, fuseEvidence, type FusionResult, type EvidenceSource } from "../lib/dempster-shafer.js";
+import { runDeepTechAnalysis, type DeepTechReport } from "../lib/deep-tech-orchestrator.js";
+import { runRealityCheckWithCSG } from "../lib/reality-check/csg-reality.js";
+import type { ProductRealityReport } from "../lib/reality-check/index.js";
+import { computeMarketReadiness, computeTrafficLightVerdict, type MarketReadinessTracker, type GreenLightVerdict } from "../lib/market-readiness.js";
+import type { UnderApproximationResult } from "../lib/under-approximation.js";
+import type { AIContextMetrics } from "../lib/probabilistic-confidence.js";
+import type { VerifiedFinding } from "../lib/ai-verifier.js";
+import { runBabelEngine } from "../lib/babel-engine.js";
+import { runMultiVerseDse } from "../lib/multi-verse-dse.js";
+import { runZkSnarkAttestation } from "../lib/zk-attestation.js";
+import { runBigOProfiler } from "../lib/big-o-profiler.js";
+import { runFheReadiness } from "../lib/fhe-readiness.js";
+import { runNeuromorphicDrift } from "../lib/neuromorphic-drift.js";
+import { runGpuTensorBridge } from "../lib/gpu-tensor-bridge.js";
+import { runPostQuantumReadiness } from "../lib/post-quantum-readiness.js";
+import { runDnaStorageCompiler } from "../lib/dna-storage-compiler.js";
+import { runBftConsensusGraph } from "../lib/bft-consensus.js";
+import { runKardashevLatency } from "../lib/kardashev-latency.js";
+import { runAgiAlignmentProver } from "../lib/agi-alignment.js";
+import { runThermodynamicEntropy } from "../lib/thermodynamic-entropy.js";
 
 const router: IRouter = Router();
 
@@ -340,6 +360,26 @@ async function runAnalysisPipeline(opts: {
   let businessType = opts.businessType ?? "unknown";
   let staticIssueRows: (typeof scanIssuesTable.$inferInsert)[] = [];
   let deepScanIssueRows: (typeof scanIssuesTable.$inferInsert)[] = [];
+  let underApproximation: any = null;
+  let abstractConfidence: any = null;
+  let aiConsensus: any[] = [];
+  let productReality: ProductRealityReport | null = null;
+  let marketReadiness: MarketReadinessTracker | null = null;
+  let greenLightVerdict: GreenLightVerdict | null = null;
+  let csg: ReturnType<typeof buildCSG> | null = null;
+  let babelEngine: any = null;
+  let multiVerseDse: any = null;
+  let zkSnarkProof: any = null;
+  let bigOProfiler: any = null;
+  let fheAnalyzer: any = null;
+  let neuromorphicDrift: any = null;
+  let tensorPayloadSignature: any = null;
+  let postQuantumReadiness: any = null;
+  let dnaStorageCompiler: any = null;
+  let bftConsensusGraph: any = null;
+  let kardashevLatency: any = null;
+  let agiAlignment: any = null;
+  let thermodynamicEntropy: any = null;
 
   if (dir) {
     emit("detection", "Detecting framework and business type...", 3);
@@ -375,9 +415,18 @@ async function runAnalysisPipeline(opts: {
     // ── Deep Tech 10 Pillars (CSG, Taint, RegGraph, SymCost, etc.) ───
     emit("deep-tech", "Running Deep Tech 10 Pillars (CSG, Taint, RegGraph, SymCost)...", 10);
     try {
-      const csg = buildCSG(keyFiles ?? []);
-      const cltResult = inferCrossLanguageBoundaries(keyFiles ?? []);
-      const timeAwareFindings = analyzeTimeAwareDependencies(keyFiles ?? [], (pkg.dependencies || {}) as Record<string, string>);
+      csg = buildCSG(keyFiles ?? []);
+      const cltResult = await inferCrossLanguageBoundaries(keyFiles ?? []);
+      const timeAwareDepsData = analyzeTimeAwareDependencies(keyFiles ?? [], (pkg.dependencies || {}) as Record<string, string>);
+      const timeAwareFindings = timeAwareDepsData.packages
+        .filter(p => p.severity !== "none")
+        .map(p => ({
+          id: `time-aware-${p.name}`,
+          severity: p.severity === "critical" ? "critical" : p.severity === "high" ? "high" : "medium",
+          filePath: p.name,
+          category: "supply_chain",
+          title: `${p.severity.toUpperCase()} risk in ${p.name}${p.openVulnerabilities > 0 ? ` (${p.openVulnerabilities} vuln(s))` : p.deprecated ? " (deprecated)" : ` (${p.daysSinceLastPublish}d stale)`}`,
+        }));
 
       const vibeTaint = runVibeTaint(keyFiles ?? [], pkg);
       try {
@@ -394,6 +443,15 @@ async function runAnalysisPipeline(opts: {
       } catch (err) {
         logger.warn({ err, scanId }, "Failed to persist VibeTaint results to DB");
       }
+
+      try {
+        await db.update(scansTable).set({
+          timeAwareDeps: timeAwareDepsData,
+        }).where(eq(scansTable.id, scanId));
+      } catch (err) {
+        logger.warn({ err, scanId }, "Failed to persist time-aware deps to DB");
+      }
+
       const regGraph = runRegGraph(csg, keyFiles ?? []);
       const symCost = runSymCost(keyFiles ?? [], pkg);
       const cogFlow = runCogFlow(csg, keyFiles ?? []);
@@ -411,6 +469,47 @@ async function runAnalysisPipeline(opts: {
       } catch (err) {
         logger.warn({ err, scanId }, "Failed to persist structural analysis to DB");
       }
+
+      let deepTechReport: DeepTechReport | null = null;
+      try {
+        emit("deep-tech-orchestrator", "Running Deep Tech 7-Pillar Orchestrator...", 11);
+        deepTechReport = await runDeepTechAnalysis(keyFiles ?? [], csg, pkg);
+        logger.info({ scanId, pillars: deepTechReport.summary.totalFindings }, "Deep Tech Orchestrator complete");
+      } catch (err) {
+        logger.warn({ err, scanId }, "Deep Tech Orchestrator failed — continuing");
+      }
+
+      const underApproximationResult = deepTechReport?.underApproximation ?? null;
+      const abstractConfidenceResult = deepTechReport?.confidence ?? null;
+      const aiConsensusResult = deepTechReport?.aiConsensus ?? [];
+      if (underApproximationResult) underApproximation = underApproximationResult;
+      if (abstractConfidenceResult) abstractConfidence = abstractConfidenceResult;
+      if (aiConsensusResult.length > 0) aiConsensus = aiConsensusResult;
+
+      try {
+        emit("reality-check", "Running Product Reality Check (CSG-powered)...", 13);
+        productReality = runRealityCheckWithCSG(keyFiles ?? [], pkg);
+        logger.info({ scanId, realityScore: productReality.score, mockups: productReality.mockupFindings.length, features: productReality.featureTruths.length }, "Reality Check complete");
+      } catch (err) {
+        logger.warn({ err, scanId }, "Reality Check failed — continuing");
+      }
+
+      // ── 13 Deep Tech Engines ──────────────────────────────────────────
+      emit("deep-tech-13", "Running 13 Deep Tech Engines...", 14);
+
+      babelEngine = runBabelEngine(keyFiles ?? [], csg);
+      multiVerseDse = runMultiVerseDse(keyFiles ?? [], csg);
+      zkSnarkProof = runZkSnarkAttestation(keyFiles ?? [], csg);
+      bigOProfiler = runBigOProfiler(keyFiles ?? [], csg);
+      fheAnalyzer = runFheReadiness(keyFiles ?? [], csg);
+      neuromorphicDrift = runNeuromorphicDrift(keyFiles ?? [], codeContext ?? undefined);
+      tensorPayloadSignature = runGpuTensorBridge(keyFiles ?? [], csg);
+      postQuantumReadiness = runPostQuantumReadiness(keyFiles ?? []);
+      dnaStorageCompiler = runDnaStorageCompiler(keyFiles ?? []);
+      bftConsensusGraph = runBftConsensusGraph(csg);
+      kardashevLatency = runKardashevLatency(keyFiles ?? []);
+      agiAlignment = runAgiAlignmentProver(keyFiles ?? []);
+      thermodynamicEntropy = runThermodynamicEntropy(keyFiles ?? []);
       
       const allPillarFindings = [
         ...vibeTaint.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "security" })),
@@ -424,6 +523,7 @@ async function runAnalysisPipeline(opts: {
         ...promptTrace.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "security" })),
         ...(structuralAnalysis?.vulnerabilities ?? []).map(f => ({ id: `struct-${f.patternId}`, severity: f.severity, filePath: "", category: "security" })),
         ...cltResult.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: "security" })),
+        ...timeAwareFindings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category })),
       ];
       
       const flowValue = runFlowValue(csg, keyFiles ?? [], allPillarFindings);
@@ -1003,9 +1103,18 @@ async function runAnalysisPipeline(opts: {
     }),
   ]);
 
-  emit("finalizing", "Generating certificate and knowledge graph...", 92);
+   emit("finalizing", "Generating certificate and knowledge graph...", 92);
 
-  const knowledgeGraph = buildKnowledgeGraph(
+   try {
+     emit("market-readiness", "Computing Market Readiness Pipeline + Traffic-Light Verdict...", 95);
+     marketReadiness = computeMarketReadiness(keyFiles ?? [], csg!, finalScore, issueCounts, (deploySafe ?? null) ? (deploySafe as any).blockersCount ?? 0 : 0);
+     greenLightVerdict = computeTrafficLightVerdict(finalScore, issueCounts, (deploySafe ?? null) ? (deploySafe as any).blockersCount ?? 0 : 0, marketReadiness, productReality?.score ?? 100);
+     logger.info({ scanId, stage: marketReadiness.stage, verdict: greenLightVerdict.color }, "Market Readiness + Traffic-Light complete");
+   } catch (err) {
+     logger.warn({ err, scanId }, "Market Readiness / Traffic-Light failed — continuing");
+   }
+
+   const knowledgeGraph = buildKnowledgeGraph(
     dir,
     packageJson,
     codeContext?.routes,
@@ -1051,17 +1160,42 @@ async function runAnalysisPipeline(opts: {
       launchImpact: launchImpact ?? null,
       productHuntScore: productHuntScore ?? null,
       knowledgeGraph: knowledgeGraph ?? null,
-      dempsterShafer: dempsterShaferResult ?? null,
-      cleanupFindings: cleanupReport ? {
-        totalFindings: cleanupReport.totalFindings,
-        debtScore: cleanupReport.debtScore,
-        autoFixableCount: cleanupReport.autoFixableCount,
-        estimatedCleanupMinutes: cleanupReport.estimatedCleanupMinutes,
-        hasCritical: cleanupReport.hasCritical,
-        summary: cleanupReport.summary,
-        categories: cleanupReport.categories,
-        topFiles: cleanupReport.topFiles,
-      } : null,
+       dempsterShafer: dempsterShaferResult ?? null,
+       underApproximation: underApproximation ?? null,
+       abstractConfidence: abstractConfidence ?? null,
+       aiConsensus: aiConsensus.length > 0 ? aiConsensus : null,
+       promptTrace: promptTrace ?? null,
+       flowValue: flowValue ?? null,
+       failSafe: failSafe ?? null,
+       deploySafe: deploySafe ?? null,
+       archScan: archScan ?? null,
+       uxCognitiveFlow: cogFlow ?? null,
+       productReality: productReality ?? null,
+       marketReadinessTracker: marketReadiness ?? null,
+       greenLightVerdict: greenLightVerdict ?? null,
+       cleanupFindings: cleanupReport ? {
+         totalFindings: cleanupReport.totalFindings,
+         debtScore: cleanupReport.debtScore,
+         autoFixableCount: cleanupReport.autoFixableCount,
+         estimatedCleanupMinutes: cleanupReport.estimatedCleanupMinutes,
+         hasCritical: cleanupReport.hasCritical,
+         summary: cleanupReport.summary,
+         categories: cleanupReport.categories,
+         topFiles: cleanupReport.topFiles,
+       } : null,
+       babelEngine: babelEngine ?? null,
+       multiVerseDse: multiVerseDse ?? null,
+       zkSnarkProof: zkSnarkProof ?? null,
+       bigOProfiler: bigOProfiler ?? null,
+       fheAnalyzer: fheAnalyzer ?? null,
+       neuromorphicDrift: neuromorphicDrift ?? null,
+       tensorPayloadSignature: tensorPayloadSignature ?? null,
+       postQuantumReadiness: postQuantumReadiness ?? null,
+       dnaStorageCompiler: dnaStorageCompiler ?? null,
+       bftConsensusGraph: bftConsensusGraph ?? null,
+       kardashevLatency: kardashevLatency ?? null,
+       agiAlignment: agiAlignment ?? null,
+       thermodynamicEntropy: thermodynamicEntropy ?? null,
       framework: framework !== "unknown" ? framework : undefined,
       vibeTool: vibeTool !== "unknown" ? vibeTool : undefined,
       businessType: businessType !== "unknown" ? businessType : undefined,

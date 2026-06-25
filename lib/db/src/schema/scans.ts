@@ -164,6 +164,11 @@ export const scansTable = pgTable("scans", {
   dempsterShafer: jsonb("dempster_shafer").$type<any>(),
   constraintSolver: jsonb("constraint_solver").$type<any>(),
   crossLanguageTaint: jsonb("cross_language_taint").$type<any>(),
+  underApproximation: jsonb("under_approximation").$type<any>(),
+  abstractConfidence: jsonb("abstract_confidence").$type<any>(),
+  aiConsensus: jsonb("ai_consensus").$type<any>(),
+  timeAwareDeps: jsonb("time_aware_deps").$type<any>(),
+  productReality: jsonb("product_reality").$type<any>(),
 });
 
 export const insertScanSchema = createInsertSchema(scansTable).omit({ id: true, createdAt: true });

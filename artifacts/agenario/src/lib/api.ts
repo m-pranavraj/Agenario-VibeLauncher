@@ -443,6 +443,34 @@ export interface Scan {
   kardashevLatency?: any | null;
   agiAlignment?: any | null;
   thermodynamicEntropy?: any | null;
+  crossLanguageTaint?: {
+    findings: Array<{
+      id: string;
+      type: string;
+      severity: string;
+      title: string;
+      description: string;
+      evidence: string;
+      filePath: string;
+      lineNumber: number;
+      codeSnippet: string;
+      fixPrompt: string;
+      confidence: number;
+      taintChain?: string[];
+      sanitized?: boolean;
+      frontendFile?: string;
+      backendFile?: string;
+      routePair?: string;
+    }>;
+    stats: {
+      totalBoundaries: number;
+      activeTaintPaths: number;
+      sanitizedPaths: number;
+      structuralIssues: number;
+      integrityScore: number;
+    };
+    scanDate: string;
+  } | null;
   vibeTaint?: any | null;
   symCost?: any | null;
   regGraph?: any | null;
@@ -451,11 +479,152 @@ export interface Scan {
   archScan?: any | null;
   deploySafe?: any | null;
   cogFlow?: any | null;
-  timeAwareDeps?: any | null;
+  timeAwareDeps?: {
+    score: number;
+    totalDeps: number;
+    deprecatedCount: number;
+    staleCount: number;
+    vulnerableCount: number;
+    meanDecayDays: number;
+    meanMaintainers: number;
+    packages: Array<{
+      name: string;
+      currentVersion: string;
+      daysSinceLastPublish: number;
+      deprecated: boolean;
+      openVulnerabilities: number;
+      maintainers: number;
+      hasTypes: boolean;
+      severity: string;
+      decayScore: number;
+      reachability: string;
+    }>;
+    criticalCount: number;
+    highCount: number;
+    meanTimeToPatch: number;
+    supplyChainRisk: string;
+    graphDepth: number;
+    transitiveVulnCount: number;
+    licenseRisk: number;
+    freshnessScore: number;
+    maintainerRisk: number;
+    analysisDate: string;
+  } | null;
+  productReality?: {
+    score: number;
+    verifiedLiveCount: number;
+    partiallyConnectedCount: number;
+    mockedCount: number;
+    brokenCount: number;
+    unverifiedCount: number;
+    cleanupCandidatesCount: number;
+    deploymentBlockersCount: number;
+    mockupFindings: Array<{
+      id: string;
+      category: string;
+      severity: string;
+      title: string;
+      description: string;
+      filePath: string;
+      lineNumber: number;
+      evidence: string;
+      codeSnippet: string;
+      fixPrompt: string;
+      confidence: number;
+      impact: string;
+    }>;
+    featureTruths: Array<{
+      id: string;
+      featureName: string;
+      uiEntryPoint: string;
+      eventHandler?: string;
+      apiCall?: string;
+      backendRoute?: string;
+      databaseWrite?: string;
+      persistenceVerified: boolean;
+      status: string;
+      description: string;
+      filePath: string;
+      confidence: number;
+    }>;
+    cleanupCandidates: Array<{
+      id: string;
+      type: string;
+      severity: string;
+      title: string;
+      description: string;
+      filePath: string;
+      confidence: number;
+      reason: string[];
+      suggestedAction: string;
+      estimatedCleanup: string;
+      sizeImpact?: string;
+    }>;
+    deploymentChecks: Array<{
+      id: string;
+      category: string;
+      check: string;
+      passed: boolean;
+      severity: string;
+      detail: string;
+      filePath?: string;
+      fixPrompt: string;
+    }>;
+    summary: string;
+    launchCompletenessScore: number;
+  } | null;
   promptTrace?: any | null;
   flowValue?: any | null;
   dempsterShafer?: DempsterShaferResult | null;
   constraintSolver?: any | null;
+  underApproximation?: {
+    reachableStates: Array<{
+      nodeId: string;
+      filePath: string;
+      line: number;
+      abstractValues: Record<string, any>;
+      pathConstraint: string[];
+      isReachable: boolean;
+      proofSteps: string[];
+    }>;
+    unreachablePaths: number;
+    totalPaths: number;
+    coverage: number;
+    confidenceDecay: number;
+    eliminatedPathIds: string[];
+  } | null;
+  abstractConfidence?: {
+    confidence: number;
+    typedVariableDensity: number;
+    astDepth: number;
+    externalLibraryInterfaces: number;
+    cyclomaticComplexity: number;
+    functionCount: number;
+    fileCount: number;
+    avgFunctionLength: number;
+    hasTypeScript: boolean;
+    strictMode: boolean;
+    metricContributions: Record<string, number>;
+  } | null;
+  aiConsensus?: Array<{
+    id: string;
+    category: string;
+    severity: string;
+    title: string;
+    description: string;
+    filePath: string;
+    lineNumber?: number;
+    confidence: number;
+    aiVerified: boolean;
+    aiContext?: string;
+    agentConsensus?: {
+      securityScore: number;
+      complianceScore: number;
+      revenueScore: number;
+      totalVotes: number;
+      passed: boolean;
+    };
+  }> | null;
   launchImpact: {
     totalRevenueAtRisk: string;
     supportCostPerMonth: string;
