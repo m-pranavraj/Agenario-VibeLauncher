@@ -163,6 +163,7 @@ export const scansTable = pgTable("scans", {
   flowValue: jsonb("flow_value").$type<any>(),
   dempsterShafer: jsonb("dempster_shafer").$type<any>(),
   constraintSolver: jsonb("constraint_solver").$type<any>(),
+  crossLanguageTaint: jsonb("cross_language_taint").$type<any>(),
 });
 
 export const insertScanSchema = createInsertSchema(scansTable).omit({ id: true, createdAt: true });

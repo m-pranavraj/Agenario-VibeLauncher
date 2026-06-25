@@ -1,238 +1,279 @@
-/**
- * Pillar 10: PromptTrace — AI Quality Engine
- * ─────────────────────────────────────────────────────────────────────────────
- * PATENT CLAIM: A deterministic engine that detects AI-generated code artifacts
- * (hallucinated functions, boilerplate, prompt boundaries) by computing stylistic 
- * consistency across function pairs and identifying context-loss boundaries.
- *
- * Core algorithms:
- *   - Hallucination detection: Identify calls to functions not defined or imported.
- *   - AI Fingerprinting: Over-verbose JSDoc, generic naming (data, result, response).
- *   - Prompt Boundary Detection: Identify style shifts (e.g., camelCase to snake_case, 
- *     sudden introduction of different error handling patterns) indicating disjointed 
- *     LLM context windows.
- */
-
-import { CSG } from "./csg-builder.js";
+import { parse } from "@babel/parser";
+import _traverse from "@babel/traverse";
+import type { CSG } from "./csg-builder.js";
 import { logger } from "./logger.js";
 
-export interface AIQualityFinding {
+const traverse = typeof _traverse === 'function' ? _traverse : (_traverse as any).default;
+
+export interface PromptTraceFinding {
   id: string;
-  category: "hallucination" | "ai_boilerplate" | "context_boundary" | "auth_inconsistency";
+  category: "unsanitized_input_to_llm" | "missing_prompt_sanitizer" | "user_data_in_system_prompt" | "llm_sink_detected";
   severity: "critical" | "high" | "medium" | "low";
   title: string;
   description: string;
   evidence: string;
   filePath: string;
   lineNumber: number;
-  fixPrompt: string;
+  codeSnippet: string;
   confidence: number;
+  sourceVariable: string;
+  sinkType: string;
+  fixPrompt: string;
 }
 
-export interface AIQualityReport {
-  findings: AIQualityFinding[];
+export interface PromptTraceReport {
+  findings: PromptTraceFinding[];
   scores: {
-    cohesionScore: number;
-    hallucinationScore: number;
-    aiQualityScore: number;
+    llmSecurityScore: number;
+    sanitizationCoverage: number;
   };
   stats: {
-    functionsAnalyzed: number;
-    hallucinationsFound: number;
-    promptBoundariesDetected: number;
-    boilerplatePatterns: number;
+    llmEndpoints: number;
+    userInputSources: number;
+    unsanitizedPaths: number;
+    sanitizedPaths: number;
   };
+  taintPaths: Array<{
+    source: string;
+    sink: string;
+    filePath: string;
+    sanitized: boolean;
+  }>;
 }
 
+interface LLMEndpoint {
+  provider: "openai" | "anthropic" | "groq" | "cerebras" | "generic";
+  functionName: string;
+  filePath: string;
+  lineNumber: number;
+  variableName: string;
+  isUserControlled: boolean;
+  hasSanitizer: boolean;
+}
+
+interface UserInputSource {
+  variableName: string;
+  sourceType: "req.body" | "req.query" | "req.params" | "form_input" | "url_param" | "file_upload";
+  filePath: string;
+  lineNumber: number;
+}
+
+const LLM_API_PATTERNS = [
+  { provider: "openai" as const, pattern: /openai\.chat\.completions\.create|new OpenAI|\bopenai\./i },
+  { provider: "anthropic" as const, pattern: /anthropic\.messages\.create|new Anthropic|@anthropic-ai/i },
+  { provider: "groq" as const, pattern: /groq-sdk|new Groq|\bgroq\./i },
+  { provider: "cerebras" as const, pattern: /cerebras|api\.cerebras\.ai/i },
+  { provider: "generic" as const, pattern: /chat\.completions\.create|messages\.create|completion|llm|ai\.(complete|chat)/i },
+];
+
+const USER_INPUT_PATTERNS = [
+  { sourceType: "req.body" as const, pattern: /\breq\.body\b/ },
+  { sourceType: "req.query" as const, pattern: /\breq\.query\b/ },
+  { sourceType: "req.params" as const, pattern: /\breq\.params\b/ },
+  { sourceType: "req.query" as const, pattern: /\breq\.query\.\w+/ },
+  { sourceType: "req.params" as const, pattern: /\breq\.params\.\w+/ },
+  { sourceType: "form_input" as const, pattern: /\bform\.(get|data|entries)\b|\bnew FormData\b/ },
+  { sourceType: "url_param" as const, pattern: /\bsearchParams\b|\bURLSearchParams\b|\bwindow\.location\.search/ },
+  { sourceType: "file_upload" as const, pattern: /\bmulter\b|\bupload\.single\b|\bupload\.array\b|\b(req\.file|req\.files)\b/ },
+];
+
+const SANITIZER_PATTERNS = [
+  /\bDOMPurify\b/,
+  /\bsanitize\b/,
+  /\bescape\b/,
+  /\bencodeURIComponent\b/,
+  /\bvalidate\b/,
+  /\bparse\s*\(/,
+  /\bz\.object\b/,
+  /\bjoi\b/,
+  /\byup\b/,
+  /\bvalidator\b/,
+  /\b.strip\b/,
+  /\bHtmlSanitizer\b/,
+  /\bpurify\b/,
+  /\bfilter\s*\(/,
+  /\binput\s*:\s*string\b/,
+];
+
 export function runPromptTrace(
-  csg: CSG,
-  keyFiles: Array<{ path: string; content: string }>
-): AIQualityReport {
-  const findings: AIQualityFinding[] = [];
-  const stats = {
-    functionsAnalyzed: 0,
-    hallucinationsFound: 0,
-    promptBoundariesDetected: 0,
-    boilerplatePatterns: 0,
-  };
+  keyFiles: Array<{ path: string; content: string }>,
+  csg?: CSG,
+): PromptTraceReport {
+  const findings: PromptTraceFinding[] = [];
+  const llmEndpoints: LLMEndpoint[] = [];
+  const userInputSources: UserInputSource[] = [];
+  const taintPaths: PromptTraceReport["taintPaths"] = [];
 
-  const functionNodes = csg.nodesByType.get("function") || [];
-  
-  // Map to store style fingerprints per function
-  const functionStyles = new Map<string, {
-    usesAsyncAwait: boolean;
-    usesPromises: boolean;
-    hasVerboseJSDoc: boolean;
-    usesGenericNames: boolean;
-    errorHandlingStyle: "tryCatch" | "returnsError" | "none";
-    validatesInput: boolean;
-  }>();
+  const allContent = keyFiles.map(f => f.content).join("\n");
 
-  // 1. Analyze Functions for AI fingerprints and style
-  for (const nodeId of functionNodes) {
-    const node = csg.nodes.get(nodeId);
-    if (!node) continue;
-    
-    stats.functionsAnalyzed++;
-    
-    const file = keyFiles.find(f => f.path === node.filePath);
-    if (!file) continue;
-
-    const content = file.content;
-    const lines = content.split("\n");
-    const lineIndex = node.lineStart - 1;
-    
-    // Extract function body roughly
-    const startIdx = content.indexOf(node.label, lines.slice(0, lineIndex).join("\n").length);
-    let bodyStart = content.indexOf("{", startIdx);
-    let bodyEnd = bodyStart;
-    let depth = 0;
-    
-    if (bodyStart !== -1) {
-      for (let i = bodyStart; i < content.length; i++) {
-        if (content[i] === "{") depth++;
-        else if (content[i] === "}") {
-          depth--;
-          if (depth === 0) { bodyEnd = i; break; }
-        }
-      }
-    }
-    const body = bodyStart !== -1 ? content.substring(bodyStart, bodyEnd + 1) : "";
-    
-    // JSDoc check (AI often generates overly verbose JSDoc for simple functions)
-    const contextBefore = lines.slice(Math.max(0, lineIndex - 10), lineIndex).join("\n");
-    const hasVerboseJSDoc = /\/\*\*[\s\S]*?\*\//.test(contextBefore) && contextBefore.split("\n").length > 5;
-    
-    // Generic Naming
-    const usesGenericNames = /\b(?:data|result|response|temp|obj|arr|item)\b/.test(body) && (body.match(/\b(?:data|result|response|temp|obj|arr|item)\b/g) || []).length > 5;
-    
-    if (hasVerboseJSDoc || usesGenericNames || body.includes("// TODO: implement") || body.includes("// Replace with actual")) {
-      stats.boilerplatePatterns++;
-      findings.push({
-        id: `ai-boiler-${node.id}`,
-        category: "ai_boilerplate",
-        severity: "low",
-        title: `AI Boilerplate Pattern Detected (${node.label})`,
-        description: "Function exhibits traits of raw LLM generation (generic variable names, overly verbose JSDoc for simple logic, or placeholder comments).",
-        evidence: `Generic names: ${usesGenericNames}, Verbose JSDoc: ${hasVerboseJSDoc}`,
-        filePath: node.filePath,
-        lineNumber: node.lineStart,
-        fixPrompt: "Refactor variable names to be domain-specific. Remove unnecessary JSDoc comments that don't add value over reading the code.",
-        confidence: 80,
-      });
-    }
-
-    // Determine style
-    const usesAsyncAwait = body.includes("await ");
-    const usesPromises = body.includes(".then(") || body.includes("Promise.all");
-    const errorHandlingStyle = body.includes("try") ? "tryCatch" : (body.includes("return new Error") || body.includes("return { error")) ? "returnsError" : "none";
-    const validatesInput = body.includes("z.object") || body.includes("validate") || body.includes("typeof ") || body.includes("!req.body");
-
-    functionStyles.set(nodeId, {
-      usesAsyncAwait,
-      usesPromises,
-      hasVerboseJSDoc,
-      usesGenericNames,
-      errorHandlingStyle,
-      validatesInput,
-    });
-  }
-
-  // 2. Detect Prompt Boundaries (Style Inconsistencies within the same file)
-  // Group functions by file
-  const functionsByFile = new Map<string, string[]>();
-  for (const nodeId of functionNodes) {
-    const node = csg.nodes.get(nodeId);
-    if (node) {
-      const list = functionsByFile.get(node.filePath) || [];
-      list.push(nodeId);
-      functionsByFile.set(node.filePath, list);
-    }
-  }
-
-  for (const [filePath, fileFunctionIds] of functionsByFile.entries()) {
-    if (fileFunctionIds.length < 2) continue;
-    
-    // Compare consecutive functions
-    for (let i = 0; i < fileFunctionIds.length - 1; i++) {
-      const style1 = functionStyles.get(fileFunctionIds[i]);
-      const style2 = functionStyles.get(fileFunctionIds[i+1]);
-      
-      if (style1 && style2) {
-        let differences = 0;
-        if (style1.usesAsyncAwait !== style2.usesAsyncAwait && (style1.usesPromises || style2.usesPromises)) differences++;
-        if (style1.errorHandlingStyle !== style2.errorHandlingStyle && style1.errorHandlingStyle !== "none" && style2.errorHandlingStyle !== "none") differences++;
-        
-        if (differences >= 2) {
-          stats.promptBoundariesDetected++;
-          const node2 = csg.nodes.get(fileFunctionIds[i+1])!;
-          findings.push({
-            id: `ai-boundary-${node2.id}`,
-            category: "context_boundary",
-            severity: "medium",
-            title: `Prompt Boundary Detected (${node2.label})`,
-            description: "Abrupt change in coding style detected between consecutive functions (e.g., switching from async/await to .then, or changing error handling strategies). This usually indicates code generated in disjointed AI chat sessions.",
-            evidence: `Style shifted. Func1: ${style1.errorHandlingStyle}, Func2: ${style2.errorHandlingStyle}`,
-            filePath,
-            lineNumber: node2.lineStart,
-            fixPrompt: "Refactor to maintain consistent asynchronous and error handling patterns throughout the file.",
-            confidence: 85,
-          });
-        }
-      }
-    }
-  }
-
-  // 3. Hallucination Detection (Calling non-existent functions)
-  // Since TS compiler catches most of this, we look for dynamic/any calls or missing imports
   for (const file of keyFiles) {
-    // A simple heuristic: calling a function on an object that is typically hallucinated
-    // like `db.queryAll()` when the ORM is Prisma (`prisma.findMany`)
-    const hallucinationPatterns = [
-      { pattern: /prisma\.\w+\.query\(/g, name: "prisma.query" },
-      { pattern: /db\.findMany\(/g, name: "db.findMany" }, // Assuming Drizzle uses select()
-      { pattern: /React\.use\(/g, name: "React.use (experimental)" },
-    ];
+    if (!file.content) continue;
+    const lines = file.content.split("\n");
 
-    for (const hp of hallucinationPatterns) {
-      let m: RegExpExecArray | null;
-      while ((m = hp.pattern.exec(file.content)) !== null) {
-        const lineNum = file.content.substring(0, m.index).split("\n").length;
-        stats.hallucinationsFound++;
-        findings.push({
-          id: `ai-hallucination-${file.path}-${lineNum}`,
-          category: "hallucination",
-          severity: "critical",
-          title: `Potential AI Hallucination: ${hp.name}`,
-          description: `The method \`${hp.name}\` appears to be a hallucinated API call that does not exist in the standard library or framework being used.`,
-          evidence: `${file.path}:${lineNum} — ${hp.name} call detected`,
+    const ast = (() => {
+      try {
+        return parse(file.content, {
+          sourceType: "module",
+          plugins: ["jsx", "typescript", "decorators-legacy"],
+          errorRecovery: true,
+        });
+      } catch { return null; }
+    })();
+
+    for (const up of USER_INPUT_PATTERNS) {
+      let match: RegExpExecArray | null;
+      const re = new RegExp(up.pattern.source, "gi");
+      while ((match = re.exec(file.content)) !== null) {
+        const lineNum = file.content.substring(0, match.index).split("\n").length;
+        const line = lines[lineNum - 1] || "";
+        const varName = extractVariableName(line);
+
+        userInputSources.push({
+          variableName: varName || match[0],
+          sourceType: up.sourceType,
           filePath: file.path,
           lineNumber: lineNum,
-          fixPrompt: "Verify the API documentation. Replace with the correct framework method.",
-          confidence: 95,
+        });
+      }
+    }
+
+    for (const lp of LLM_API_PATTERNS) {
+      let match: RegExpExecArray | null;
+      const re = new RegExp(lp.pattern.source, "gi");
+      while ((match = re.exec(file.content)) !== null) {
+        const lineNum = file.content.substring(0, match.index).split("\n").length;
+        const line = lines[lineNum - 1] || "";
+        const varName = extractVariableName(line);
+
+        const contextBefore = file.content.substring(Math.max(0, match.index - 500), match.index);
+        const contextAfter = file.content.substring(match.index, match.index + 500);
+        const nearContext = contextBefore + contextAfter;
+
+        const sanitizersNearby = SANITIZER_PATTERNS.some(sp => sp.test(nearContext));
+
+        const isUserControlled = userInputSources.some(u =>
+          u.filePath === file.path &&
+          (sanitizersNearby ? false : true)
+        );
+
+        llmEndpoints.push({
+          provider: lp.provider,
+          functionName: varName,
+          filePath: file.path,
+          lineNumber: lineNum,
+          variableName: varName,
+          isUserControlled: isUserControlled,
+          hasSanitizer: sanitizersNearby,
         });
       }
     }
   }
 
-  // Calculate Scores
-  const hallucinationScore = Math.max(0, 100 - (stats.hallucinationsFound * 25));
-  const cohesionScore = Math.max(0, 100 - (stats.promptBoundariesDetected * 10) - (stats.boilerplatePatterns * 2));
-  const aiQualityScore = Math.round((hallucinationScore * 0.7) + (cohesionScore * 0.3));
+  for (const ep of llmEndpoints) {
+    if (!ep.hasSanitizer) {
+      const id = `PT-${ep.provider}-${ep.filePath.split("/").pop()}-${ep.lineNumber}-${Math.random().toString(36).slice(2, 6)}`;
+
+      const finding: PromptTraceFinding = {
+        id,
+        category: "unsanitized_input_to_llm",
+        severity: ep.provider === "openai" || ep.provider === "anthropic" ? "critical" : "high",
+        title: `Unsanitized input flows to ${ep.provider} LLM API`,
+        description: `User-controlled input reaches the ${ep.provider} API call at ${ep.filePath}:${ep.lineNumber} without input sanitization. This enables prompt injection — an attacker can override the system prompt, extract conversation history, or make the LLM execute unauthorized actions.`,
+        evidence: `${ep.filePath}:${ep.lineNumber} — ${ep.provider} API call`,
+        filePath: ep.filePath,
+        lineNumber: ep.lineNumber,
+        codeSnippet: extractLine(keyFiles, ep.filePath, ep.lineNumber),
+        confidence: ep.hasSanitizer ? 50 : 94,
+        sourceVariable: ep.variableName,
+        sinkType: `${ep.provider}_completion`,
+        fixPrompt: `Add input sanitization before the LLM call at ${ep.filePath}:${ep.lineNumber}. Use a Zod schema to validate all user inputs: \`const schema = z.object({ prompt: z.string().max(2000).strip() })\`. Apply DOMPurify for HTML inputs. Never interpolate user input directly into system prompts. Use a separate messages array for user content vs system content.`,
+      };
+
+      findings.push(finding);
+
+      taintPaths.push({
+        source: ep.variableName || "unknown",
+        sink: `${ep.provider}_api`,
+        filePath: ep.filePath,
+        sanitized: false,
+      });
+    }
+  }
+
+  for (const ep of llmEndpoints) {
+    if (ep.hasSanitizer) {
+      taintPaths.push({
+        source: ep.variableName || "unknown",
+        sink: `${ep.provider}_api`,
+        filePath: ep.filePath,
+        sanitized: true,
+      });
+    }
+  }
+
+  const userInputTotal = userInputSources.length;
+  const unsanitizedPaths = llmEndpoints.filter(e => !e.hasSanitizer).length;
+  const sanitizedPaths = llmEndpoints.filter(e => e.hasSanitizer).length;
+
+  const sanitizationCoverage = llmEndpoints.length > 0
+    ? Math.round((sanitizedPaths / llmEndpoints.length) * 100)
+    : 100;
+
+  const llmSecurityScore = Math.max(0, 100 - findings.reduce((s, f) => {
+    switch (f.severity) {
+      case "critical": return s + 40;
+      case "high": return s + 20;
+      case "medium": return s + 10;
+      default: return s + 5;
+    }
+  }, 0));
 
   logger.info({
     totalFindings: findings.length,
-    aiQualityScore,
-    promptBoundaries: stats.promptBoundariesDetected
-  }, "PromptTrace AI quality analysis complete");
+    llmEndpoints: llmEndpoints.length,
+    userInputSources: userInputSources.length,
+    sanitizationCoverage,
+    llmSecurityScore,
+  }, "PromptTrace LLM boundary guard complete");
 
   return {
     findings,
     scores: {
-      cohesionScore,
-      hallucinationScore,
-      aiQualityScore,
+      llmSecurityScore,
+      sanitizationCoverage,
     },
-    stats,
+    stats: {
+      llmEndpoints: llmEndpoints.length,
+      userInputSources: userInputSources.length,
+      unsanitizedPaths,
+      sanitizedPaths,
+    },
+    taintPaths,
   };
+}
+
+function extractVariableName(line: string): string {
+  const asgn = line.match(/(?:const|let|var)\s+(\w+)\s*=\s*/);
+  if (asgn) return asgn[1];
+
+  const param = line.match(/(?:async\s+)?function\s+(\w+)/);
+  if (param) return param[1];
+
+  const arrow = line.match(/(\w+)\s*[:=]\s*(?:async\s*)?\(/);
+  if (arrow) return arrow[1];
+
+  return "unnamed";
+}
+
+function extractLine(
+  keyFiles: Array<{ path: string; content: string }>,
+  filePath: string,
+  lineNum: number,
+): string {
+  const file = keyFiles.find(f => f.path === filePath);
+  if (!file) return "";
+  const lines = file.content.split("\n");
+  const start = Math.max(0, lineNum - 2);
+  const end = Math.min(lines.length, lineNum + 1);
+  return lines.slice(start, end).join("\n").substring(0, 300);
 }

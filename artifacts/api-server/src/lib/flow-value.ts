@@ -15,9 +15,20 @@
 import { CSG } from "./csg-builder.js";
 import { logger } from "./logger.js";
 
+export type FunnelStage = "Acquisition" | "Activation" | "Revenue" | "Retention" | "Referral";
+
+export interface PaymentProcessor {
+  name: string;
+  type: "stripe" | "razorpay" | "paypal" | "lemon_squeezy" | "generic";
+  filePath: string;
+  lineNumber: number;
+  hasWebhookHandler: boolean;
+  webhookFile?: string;
+}
+
 export interface BusinessFinding {
   id: string;
-  category: "revenue_blocker" | "checkout_friction" | "activation_dropoff";
+  category: "revenue_blocker" | "checkout_friction" | "activation_dropoff" | "retention_leak" | "payment_failure" | "subscription_risk";
   severity: "critical" | "high" | "medium" | "low";
   title: string;
   description: string;
@@ -26,8 +37,9 @@ export interface BusinessFinding {
   lineNumber: number;
   fixPrompt: string;
   confidence: number;
-  funnelStage: string;
-  estimatedRevenueImpactUSD?: number; // Estimated dollar value at risk per month
+  funnelStage: FunnelStage;
+  estimatedRevenueImpactUSD?: number;
+  conversionDropPercent?: number;
 }
 
 export interface FunnelReport {
@@ -35,27 +47,65 @@ export interface FunnelReport {
   scores: {
     funnelHealthScore: number;
     checkoutReliabilityScore: number;
+    retentionScore: number;
     businessScore: number;
   };
   metrics: {
-    paymentProcessors: string[];
-    criticalRevenueRoutes: string[];
+    paymentProcessors: PaymentProcessor[];
+    criticalRevenueRoutes: Array<{ path: string; file: string; stage: FunnelStage }>;
     totalRevenueAtRiskUSD: number;
+    monthlyTrafficEstimate: number;
+    avgOrderValueUSD: number;
+    customerLTV: number;
   };
+  funnelAnalysis: Array<{
+    stage: FunnelStage;
+    routeCount: number;
+    issuesCount: number;
+    conversionDropPercent: number;
+    revenueAtRiskUSD: number;
+  }>;
 }
 
-// Very rough heuristic constants for calculation
 const MONTHLY_TRAFFIC_ESTIMATE = 10000;
 const AVG_ORDER_VALUE_USD = 50;
+const CUSTOMER_LTV_USD = 500;
+
+const FUNNEL_WEIGHTS: Record<FunnelStage, { multiplier: number; baseConversion: number }> = {
+  "Acquisition": { multiplier: 0.1, baseConversion: 0.05 },
+  "Activation": { multiplier: 0.4, baseConversion: 0.20 },
+  "Revenue": { multiplier: 0.9, baseConversion: 0.50 },
+  "Retention": { multiplier: 0.3, baseConversion: 0.15 },
+  "Referral": { multiplier: 0.2, baseConversion: 0.10 },
+};
+
+const ROUTE_FUNNEL_MAP: Array<{ pattern: RegExp; stage: FunnelStage; conversionWeight: number }> = [
+  { pattern: /checkout|cart|purchase|buy-now|order|pay|payment|billing|subscribe/i, stage: "Revenue", conversionWeight: 0.9 },
+  { pattern: /signup|register|onboard|sign-up|create-account|join|start-free/i, stage: "Activation", conversionWeight: 0.4 },
+  { pattern: /login|sign-in|auth|authenticate|logout|session/i, stage: "Retention", conversionWeight: 0.3 },
+  { pattern: /\/$|landing|hero|home|index|welcome/i, stage: "Acquisition", conversionWeight: 0.1 },
+  { pattern: /refer|invite|share|friend|social/i, stage: "Referral", conversionWeight: 0.2 },
+  { pattern: /upgrade|plan|pricing|pro|premium/i, stage: "Revenue", conversionWeight: 0.6 },
+  { pattern: /forgot-password|reset-password|verify-email/i, stage: "Retention", conversionWeight: 0.15 },
+];
+
+const PAYMENT_PROCESSOR_PATTERNS: Array<{ name: string; type: PaymentProcessor["type"]; pattern: RegExp; webhookPattern: RegExp }> = [
+  { name: "Stripe", type: "stripe", pattern: /stripe|stripe\/stripe-js|@stripe\//i, webhookPattern: /stripe.*webhook|webhook.*stripe|constructEvent|stripe-signature/i },
+  { name: "Razorpay", type: "razorpay", pattern: /razorpay|@razorpay\//i, webhookPattern: /razorpay.*webhook|webhook.*razorpay|razorpay.*signature|x-razorpay-signature/i },
+  { name: "PayPal", type: "paypal", pattern: /paypal|@paypal\//i, webhookPattern: /paypal.*webhook|webhook.*paypal|verifyWebhookSignature|paypal-transmission/i },
+  { name: "Lemon Squeezy", type: "lemon_squeezy", pattern: /lemonsqueezy|lemon-squeezy|lmsqueezy/i, webhookPattern: /lemon.*squeezy.*webhook|lemon.*webhook|x-signature.*lemon/i },
+];
 
 export function runFlowValue(
   csg: CSG,
   keyFiles: Array<{ path: string; content: string }>,
-  existingFindings: { id: string, severity: string, filePath: string, category: string }[] = []
+  existingFindings: { id: string; severity: string; filePath: string; category: string }[] = [],
 ): FunnelReport {
   const findings: BusinessFinding[] = [];
-  const paymentProcessors = new Set<string>();
-  const criticalRevenueRoutes = new Set<string>();
+  const paymentProcessors: PaymentProcessor[] = [];
+  const criticalRevenueRoutes: Array<{ path: string; file: string; stage: FunnelStage }> = [];
+  const funnelRouteCounts: Record<FunnelStage, number> = { Acquisition: 0, Activation: 0, Revenue: 0, Retention: 0, Referral: 0 };
+  const funnelIssueCounts: Record<FunnelStage, number> = { Acquisition: 0, Activation: 0, Revenue: 0, Retention: 0, Referral: 0 };
   
   let totalRevenueAtRiskUSD = 0;
 
@@ -65,111 +115,149 @@ export function runFlowValue(
     const node = csg.nodes.get(nodeId);
     if (!node) continue;
     
-    const routePath = node.meta.routePath || "";
-    let funnelStage = "Awareness";
-    let conversionMultiplier = 0.01; // Base conversion impact
+    const routePath = (node.meta.routePath as string) || "";
 
-    // Classify Funnel Stage
-    if (routePath.includes("checkout") || routePath.includes("pay") || routePath.includes("billing") || routePath.includes("subscribe")) {
-      funnelStage = "Revenue";
-      conversionMultiplier = 0.8; // Huge impact if checkout breaks
-      criticalRevenueRoutes.add(routePath);
-    } else if (routePath.includes("signup") || routePath.includes("register") || routePath.includes("onboard")) {
-      funnelStage = "Activation";
-      conversionMultiplier = 0.4;
-    } else if (routePath.includes("login") || routePath.includes("auth")) {
-      funnelStage = "Retention";
-      conversionMultiplier = 0.3;
-    } else if (routePath === "/" || routePath.includes("landing")) {
-      funnelStage = "Acquisition";
-      conversionMultiplier = 0.1;
+    let matchedStage: FunnelStage = "Acquisition";
+    let conversionWeight = 0.05;
+
+    for (const mapping of ROUTE_FUNNEL_MAP) {
+      if (mapping.pattern.test(routePath)) {
+        matchedStage = mapping.stage;
+        conversionWeight = mapping.conversionWeight;
+        break;
+      }
     }
 
-    // Detect Payment Processors in the same file
+    funnelRouteCounts[matchedStage]++;
+
+    if (matchedStage === "Revenue") {
+      criticalRevenueRoutes.push({ path: routePath, file: node.filePath, stage: "Revenue" });
+    }
+
     const file = keyFiles.find(f => f.path === node.filePath);
     if (file) {
-      if (/stripe/i.test(file.content)) paymentProcessors.add("Stripe");
-      if (/razorpay/i.test(file.content)) paymentProcessors.add("Razorpay");
-      if (/paypal/i.test(file.content)) paymentProcessors.add("PayPal");
+      for (const pp of PAYMENT_PROCESSOR_PATTERNS) {
+        if (pp.pattern.test(file.content) && !paymentProcessors.find(p => p.name === pp.name)) {
+          const hasWebhook = pp.webhookPattern.test(file.content);
+          paymentProcessors.push({
+            name: pp.name,
+            type: pp.type,
+            filePath: node.filePath,
+            lineNumber: node.lineStart,
+            hasWebhookHandler: hasWebhook,
+            webhookFile: hasWebhook ? node.filePath : undefined,
+          });
+        }
+      }
     }
 
-    // Analyze existing findings (from other pillars) on this route's file to calculate business impact
-    const issuesInFile = existingFindings.filter(f => f.filePath === node.filePath);
-    
+    const issuesInFile = existingFindings.filter(f => f.filePath === node.file);
+    funnelIssueCounts[matchedStage] += issuesInFile.length;
+
     for (const issue of issuesInFile) {
-      // Calculate revenue at risk based on issue severity and funnel stage
       let severityWeight = 0;
       switch (issue.severity) {
         case "critical": severityWeight = 1.0; break;
         case "high": severityWeight = 0.5; break;
-        case "medium": severityWeight = 0.1; break;
-        case "low": severityWeight = 0.01; break;
+        case "medium": severityWeight = 0.15; break;
+        case "low": severityWeight = 0.03; break;
       }
 
-      // If performance issue (e.g., SymCost N+1 or UX high cognitive load)
-      let dropoffRate = severityWeight * conversionMultiplier * 0.2; // Max 20% dropoff per issue
-      
-      const impactUSD = Math.round(MONTHLY_TRAFFIC_ESTIMATE * dropoffRate * AVG_ORDER_VALUE_USD);
-      totalRevenueAtRiskUSD += impactUSD;
+      const dropPercent = severityWeight * conversionWeight * 100;
+      const revenueImpact = Math.round(MONTHLY_TRAFFIC_ESTIMATE * conversionWeight * severityWeight * AVG_ORDER_VALUE_USD * 12 / 12);
+      totalRevenueAtRiskUSD += revenueImpact;
 
-      if (impactUSD > 1000) { // Only report significant business impacts
-        let category: BusinessFinding["category"] = "revenue_blocker";
-        if (funnelStage === "Revenue") category = "checkout_friction";
-        if (funnelStage === "Activation") category = "activation_dropoff";
+      let category: BusinessFinding["category"] = "revenue_blocker";
+      if (matchedStage === "Revenue") category = "checkout_friction";
+      else if (matchedStage === "Activation") category = "activation_dropoff";
+      else if (matchedStage === "Retention") category = "retention_leak";
 
+      if (Math.round(dropPercent) > 0 && revenueImpact > 100) {
         findings.push({
-          id: `biz-${issue.id}`,
+          id: `flow-${issue.id}`,
           category,
           severity: issue.severity as "critical" | "high" | "medium" | "low",
-          title: `Revenue Risk: ${impactUSD.toLocaleString()} USD/mo via ${issue.category}`,
-          description: `A ${issue.severity} issue in the ${funnelStage} stage (route: ${routePath}) is estimated to cause a ${Math.round(dropoffRate * 100)}% drop in conversion, risking approximately $${impactUSD.toLocaleString()}/month.`,
-          evidence: `Linked to issue ${issue.id} in ${node.filePath}`,
+          title: `$${revenueImpact.toLocaleString()}/mo @ risk via ${issue.category} on ${routePath}`,
+          description: `A ${issue.severity} issue (${issue.category}) on ${routePath} (${matchedStage} stage) causes ~${Math.round(dropPercent)}% conversion drop. Estimated revenue at risk: $${revenueImpact.toLocaleString()}/mo. With customer LTV of $${CUSTOMER_LTV_USD}, this represents ${Math.round(revenueImpact / CUSTOMER_LTV_USD)} lost customers/month.`,
+          evidence: `Linked to ${issue.id} in ${node.filePath}, route=${routePath}, stage=${matchedStage}`,
           filePath: node.filePath,
           lineNumber: node.lineStart,
-          fixPrompt: "Prioritize fixing this issue to protect funnel conversion rates.",
-          confidence: 70,
-          funnelStage,
-          estimatedRevenueImpactUSD: impactUSD,
+          fixPrompt: matchedStage === "Revenue"
+            ? `Fix this ${issue.category} issue on revenue-critical route ${routePath} immediately. Each day this persists costs ~$${Math.round(revenueImpact / 30)}. Apply fixes in order: 1) validate all inputs at this route, 2) add monitoring, 3) implement retry logic with idempotency keys.`
+            : `Address this ${issue.category} in the ${matchedStage} funnel stage (${routePath}). Estimated ${Math.round(dropPercent)}% conversion impact.`,
+          confidence: 72,
+          funnelStage: matchedStage,
+          estimatedRevenueImpactUSD: revenueImpact,
+          conversionDropPercent: Math.round(dropPercent),
         });
       }
     }
   }
 
-  // Calculate Scores
-  // Penalize health score heavily for checkout/revenue stage issues
-  const checkoutIssues = findings.filter(f => f.funnelStage === "Revenue").length;
-  const activationIssues = findings.filter(f => f.funnelStage === "Activation").length;
+  const funnelAnalysis: FunnelReport["funnelAnalysis"] = [];
+  let funnelHealthScore = 100;
+  let checkoutReliabilityScore = 100;
+  let retentionScore = 100;
 
-  const checkoutReliabilityScore = Math.max(0, 100 - (checkoutIssues * 25));
-  const funnelHealthScore = Math.max(0, 100 - (activationIssues * 15) - (checkoutIssues * 10));
-  
-  const businessScore = Math.round((checkoutReliabilityScore * 0.7) + (funnelHealthScore * 0.3));
+  for (const stage of ["Acquisition", "Activation", "Revenue", "Retention", "Referral"] as FunnelStage[]) {
+    const stageFindings = findings.filter(f => f.funnelStage === stage);
+    const totalDrop = stageFindings.reduce((s, f) => s + (f.conversionDropPercent || 0), 0);
+    const stageRevenue = stageFindings.reduce((s, f) => s + (f.estimatedRevenueImpactUSD || 0), 0);
+    const stageWeight = FUNNEL_WEIGHTS[stage].multiplier;
+
+    funnelAnalysis.push({
+      stage,
+      routeCount: funnelRouteCounts[stage],
+      issuesCount: funnelIssueCounts[stage],
+      conversionDropPercent: Math.min(totalDrop, 100),
+      revenueAtRiskUSD: stageRevenue,
+    });
+
+    const penalty = Math.min(funnelIssueCounts[stage] * stageWeight * 15, 40);
+    funnelHealthScore -= penalty;
+
+    if (stage === "Revenue") {
+      checkoutReliabilityScore -= Math.min(funnelIssueCounts[stage] * 20, 60);
+    }
+    if (stage === "Retention") {
+      retentionScore -= Math.min(funnelIssueCounts[stage] * 10, 40);
+    }
+  }
+
+  checkoutReliabilityScore = Math.max(0, Math.round(checkoutReliabilityScore));
+  funnelHealthScore = Math.max(0, Math.round(funnelHealthScore));
+  retentionScore = Math.max(0, Math.round(retentionScore));
+  const businessScore = Math.round((checkoutReliabilityScore * 0.5) + (funnelHealthScore * 0.3) + (retentionScore * 0.2));
 
   logger.info({
     totalRevenueAtRiskUSD,
     businessScore,
-    paymentProcessors: Array.from(paymentProcessors)
-  }, "FlowValue business analysis complete");
+    paymentProcessors: paymentProcessors.map(p => p.name),
+  }, "FlowValue revenue analysis complete");
 
   return {
     findings: deduplicateFindings(findings),
     scores: {
-      checkoutReliabilityScore,
       funnelHealthScore,
+      checkoutReliabilityScore,
+      retentionScore,
       businessScore,
     },
     metrics: {
-      paymentProcessors: Array.from(paymentProcessors),
-      criticalRevenueRoutes: Array.from(criticalRevenueRoutes),
+      paymentProcessors,
+      criticalRevenueRoutes,
       totalRevenueAtRiskUSD,
+      monthlyTrafficEstimate: MONTHLY_TRAFFIC_ESTIMATE,
+      avgOrderValueUSD: AVG_ORDER_VALUE_USD,
+      customerLTV: CUSTOMER_LTV_USD,
     },
+    funnelAnalysis,
   };
 }
 
 function deduplicateFindings(findings: BusinessFinding[]): BusinessFinding[] {
   const seen = new Set<string>();
   return findings.filter((f) => {
-    // Only keep the highest impact finding per file+funnelStage combo to reduce noise
     const key = `${f.filePath}:${f.funnelStage}`;
     if (seen.has(key)) return false;
     seen.add(key);

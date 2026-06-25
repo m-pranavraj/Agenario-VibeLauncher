@@ -1,0 +1,30 @@
+{
+  "name": "combined-semantic-graph",
+  "version": "2.0.0",
+  "description": "10-Dimension Code Analysis: CFG, modules, routes, calls, infra security, resilience, observability, cognitive complexity, architecture smells, dependency decay",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "csg": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --loader ts-node/esm test/test-csg.ts",
+    "demo": "node --loader ts-node/esm test/demo.ts",
+    "demo:analysis": "node --loader ts-node/esm test/demo-analysis.ts",
+    "cli": "node --loader ts-node/esm src/cli.ts"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.24.0",
+    "@babel/traverse": "^7.24.0",
+    "@babel/types": "^7.24.0",
+    "@babel/generator": "^7.24.0"
+  },
+  "devDependencies": {
+    "@types/babel__traverse": "^7.20.0",
+    "@types/babel__generator": "^7.6.0",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.0"
+  }
+}

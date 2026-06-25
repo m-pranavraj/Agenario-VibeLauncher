@@ -161,17 +161,6 @@ export interface ScanIssue {
   category?: string;
 }
 
-export interface EngineScorecard {
-  engineName: string;
-  version: string;
-  supportedFrameworks: string[];
-  testCases: number;
-  confirmedDetections: number;
-  falsePositives: number;
-  runtimeEvidenceAvailable: string;
-  unsupported: string;
-}
-
 export interface IssueCounts {
   critical: number;
   high: number;
@@ -330,7 +319,6 @@ export interface Scan {
   riskForecast: RiskForecast | null;
   revenueIntelligence: RevenueIntelligence | null;
   complianceResults: ComplianceResult[] | null;
-  engineScorecards?: EngineScorecard[] | null;
   urlAuditScore?: number | null;
   authTestingPayload?: any | null;
   proofEvidence: ProofEvidence[] | null;
@@ -462,9 +450,11 @@ export interface Scan {
   obsCover?: any | null;
   archScan?: any | null;
   deploySafe?: any | null;
+  cogFlow?: any | null;
+  timeAwareDeps?: any | null;
   promptTrace?: any | null;
   flowValue?: any | null;
-  dempsterShafer?: any | null;
+  dempsterShafer?: DempsterShaferResult | null;
   constraintSolver?: any | null;
   launchImpact: {
     totalRevenueAtRisk: string;
@@ -573,6 +563,47 @@ export interface RootCauseChain {
 export interface RootCauseResult {
   chains: RootCauseChain[];
   summary: string;
+}
+
+export interface DempsterShaferSourceContribution {
+  name: string;
+  layer: string;
+  originalConfidence: number;
+  reliabilityWeighted: number;
+  beliefContribution: number;
+}
+
+export interface DempsterShaferFinding {
+  title: string;
+  dsResult: {
+    belief: number;
+    plausibility: number;
+    conflictK: number;
+    uncertainty: number;
+    confidence: number;
+    interval: [number, number];
+    sourceContributions: DempsterShaferSourceContribution[];
+    verdict: "vulnerable" | "likely_vulnerable" | "inconclusive" | "likely_safe" | "safe";
+  };
+}
+
+export interface DempsterShaferAggregate {
+  overallBelief: number;
+  overallPlausibility: number;
+  overallConfidence: number;
+  overallConflict: number;
+  vulnerableCount: number;
+  likelyVulnerableCount: number;
+  inconclusiveCount: number;
+  likelySafeCount: number;
+  safeCount: number;
+  avgConfidence: number;
+  weightedConfidence: number;
+}
+
+export interface DempsterShaferResult {
+  perFinding: DempsterShaferFinding[];
+  aggregate: DempsterShaferAggregate;
 }
 
 export interface ScanDetail extends Scan {

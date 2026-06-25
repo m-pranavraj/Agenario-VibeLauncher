@@ -1,432 +1,394 @@
-/**
- * Pillar 2: RegGraph — Regulation-as-Graph-Constraint Compliance Verification
- * ─────────────────────────────────────────────────────────────────────────────
- * PATENT CLAIM: Method for verifying regulatory compliance by compiling legal
- * regulations into graph traversal constraints and checking them against the
- * application's code patterns, producing clause-level violation reports.
- *
- * Supports: GDPR, PCI-DSS, HIPAA, SOC 2 Type II
- * Cross-regulation conflict detection included.
- */
-import { type CodeContext } from "./agents.js";
-import { type CSGNode, type CSG } from "./csg-builder.js";
-import { COMPLIANCE_RULES, type ComplianceRule } from "./rules/compliance-rules.js";
+import { parse } from "@babel/parser";
+import _traverse from "@babel/traverse";
+import type { CSG } from "./csg-builder.js";
 import { logger } from "./logger.js";
 
-export interface ComplianceFinding {
+const traverse = typeof _traverse === 'function' ? _traverse : (_traverse as any).default;
+
+export type RegulationFramework = "gdpr" | "pci_dss" | "hipaa" | "soc2" | "ccpa";
+export type ComplianceCheckType = "ast_pattern" | "data_flow" | "missing_endpoint" | "config" | "encryption_check";
+
+export interface RegGraphRule {
   id: string;
-  regulation: "GDPR" | "PCI-DSS" | "HIPAA" | "SOC2";
-  clause: string;         // e.g., "GDPR Art.17(1)"
-  category?: string;
-  severity: "critical" | "high" | "medium" | "low";
+  framework: RegulationFramework;
+  clause: string;
   title: string;
   description: string;
-  evidence: string;
+  severity: "critical" | "high" | "medium" | "low";
+  checkType: ComplianceCheckType;
+  astPattern?: RegExp;
+  searchPattern?: RegExp;
+  requirePresence?: RegExp;
+  penaltyMaxEur?: number;
+  fixPrompt: string;
+}
+
+export interface RegGraphFinding {
+  id: string;
+  ruleId: string;
+  framework: RegulationFramework;
+  clause: string;
+  title: string;
+  description: string;
+  severity: "critical" | "high" | "medium" | "low";
   filePath: string;
   lineNumber: number;
   codeSnippet: string;
-  fixPrompt: string;
+  evidence: string;
   confidence: number;
-  conflictsWith?: string; // Cross-regulation conflict (e.g., "HIPAA §164.530(j)")
+  penaltyEstimateEur?: number;
+  fixPrompt: string;
 }
 
-export interface ComplianceReport {
-  findings: ComplianceFinding[];
+export interface RegGraphReport {
+  findings: RegGraphFinding[];
   scores: {
-    gdpr: number;       // % clauses satisfied
-    pciDss: number;
-    hipaa: number;
-    soc2: number;
-    overall: number;
+    gdprCompliance: number;
+    pciDssCompliance: number;
+    hipaaCompliance: number;
+    overallCompliance: number;
   };
-  applicableRegulations: string[];
-  crossRegulationConflicts: Array<{
-    reg1: string; clause1: string;
-    reg2: string; clause2: string;
-    conflict: string;
-    recommendation: string;
-  }>;
-  stats: {
-    totalClausesChecked: number;
-    clausesPassed: number;
-    clausesFailed: number;
-    criticalViolations: number;
+  penalties: {
+    totalMaxEur: number;
+    byFramework: Record<string, number>;
   };
 }
 
-export enum RegulatoryType {
-  GDPR_PII = "GDPR_PII",
-  PCI_PAN = "PCI_PAN",
-  Consent_Pending = "Consent_Pending",
-  Consent_Revoked = "Consent_Revoked",
-  PHI = "PHI"
-}
-
-// ── Regulatory Constraint Database ────────────────────────────────────────
-// Each entry = one enforceable clause with its detection logic
-interface RegulatoryConstraint {
-  id: string;
-  regulation: "GDPR" | "PCI-DSS" | "HIPAA" | "SOC2";
-  clause: string;
-  title: string;
-  severity: "critical" | "high" | "medium" | "low";
-  description: string;
-  requiredPatterns?: RegExp[];
-  requiredPatternDesc?: string;
-  violationPatterns?: Array<{ pattern: RegExp; desc: string; evidence?: string }>;
-  requiresContext?: RegExp;  
-  fixPrompt: string;
-  conflictsWith?: string;    
-  confidence: number;
-}
-
-const REGULATORY_CONSTRAINTS: RegulatoryConstraint[] = [
-  // ══ GDPR ════════════════════════════════════════════════════════════════
+const REGULATION_RULES: RegGraphRule[] = [
   {
-    id: "gdpr-art5-minimization",
-    regulation: "GDPR",
-    clause: "Art.5(1)(c) - Data Minimization",
-    title: "API response may expose excessive PII fields",
+    id: "REGG-001",
+    framework: "gdpr",
+    clause: "Art. 17 — Right to Erasure",
+    title: "Missing user deletion endpoint",
+    description: "GDPR Art. 17 requires a mechanism for users to request data erasure. No DELETE /users/:id or account deletion route detected.",
+    severity: "critical",
+    checkType: "missing_endpoint",
+    searchPattern: /router\.delete\(.*user|app\.delete\(.*user|deleteUser|deleteAccount|destroyUser|prisma\.\w+\.delete\(/i,
+    requirePresence: /delete.*user|delete.*account|deleteAccount|removeUser|deactivateAccount/i,
+    penaltyMaxEur: 20000000,
+    fixPrompt: "Implement DELETE /users/:id with cascading deletion of all PII. Use a soft-delete pattern for referential integrity: `await prisma.user.update({ where: { id }, data: { deletedAt: new Date() } })` then hard-delete after 30-day retention period.",
+  },
+  {
+    id: "REGG-002",
+    framework: "gdpr",
+    clause: "Art. 32 — Security of Processing",
+    title: "Sensitive data stored without encryption",
+    description: "GDPR Art. 32 requires encryption for personal data at rest. Code stores PII (email, phone, address) in plaintext fields.",
+    severity: "critical",
+    checkType: "encryption_check",
+    astPattern: /prisma\.\w+\.create\s*\([^)]*email|db\.\w+\.insert\s*\([^)]*phone|\.save\s*\([^)]*address|INSERT INTO.*users.*VALUES[^)]*email/i,
+    penaltyMaxEur: 10000000,
+    fixPrompt: "Encrypt PII at rest: use database-level TDE (Transparent Data Encryption). For column-level, use `crypto.createCipheriv('aes-256-gcm', key, iv)` before storage, or use Supabase Vault / AWS KMS integration for field-level encryption.",
+  },
+  {
+    id: "REGG-003",
+    framework: "gdpr",
+    clause: "Art. 20 — Data Portability",
+    title: "Missing data export endpoint",
+    description: "GDPR Art. 20 requires users to receive their data in a machine-readable format. No export/download endpoint detected.",
+    severity: "medium",
+    checkType: "missing_endpoint",
+    searchPattern: /export.*user|download.*data|user.*export|generateCSV|generateJSON/i,
+    requirePresence: /export|portability|download.*data|user.*data/i,
+    penaltyMaxEur: 10000000,
+    fixPrompt: "Implement GET /users/:id/export returning JSON with all user data. Include profile, orders, messages, activity logs. Use `Content-Disposition: attachment` for download.",
+  },
+  {
+    id: "REGG-004",
+    framework: "gdpr",
+    clause: "Art. 7 — Consent",
+    title: "Pre-checked consent implies invalid consent",
+    description: "GDPR Art. 7 requires consent to be freely given. Pre-ticked checkboxes or opt-out defaults violate explicit consent requirements.",
     severity: "high",
-    description: "GDPR Article 5(1)(c) requires that only data adequate, relevant and limited to what is necessary is processed.",
-    violationPatterns: [
-      { pattern: /res\.json\(\s*(?:user|account|member|customer|patient)\s*\)/g, desc: "Returning full user object" },
-      { pattern: /res\.json\(\s*\{\s*\.\.\.(?:user|account|member|record)\s*\}\s*\)/g, desc: "Spreading full entity into response" },
-      { pattern: /\.toJSON\(\)\s*\)|\.serialize\(\)\s*\)/g, desc: "Serializing full model" },
-    ],
-    fixPrompt: "Use explicit field selection: `const { id, name, email } = user; res.json({ id, name, email })`.",
-    confidence: 80,
+    checkType: "ast_pattern",
+    searchPattern: /defaultChecked.*true|checked\s*=\s*true[^)]*consent|prechecked|pre-checked|opt.*out.*default/i,
+    penaltyMaxEur: 20000000,
+    fixPrompt: "Replace pre-ticked consent boxes with unticked opt-in. Make consent granular per purpose. Implement consent withdrawal as easy as giving it (same click count).",
   },
   {
-    id: "gdpr-art17-erasure",
-    regulation: "GDPR",
-    clause: "Art.17(1) - Right to Erasure",
-    title: "No user data deletion endpoint detected",
+    id: "REGG-005",
+    framework: "gdpr",
+    clause: "Art. 5(1)(c) — Data Minimization",
+    title: "Excessive PII collection — special category data",
+    description: "GDPR Art. 5 requires data limited to what is necessary. Special category data (race, religion, biometrics) requires explicit Art. 9 legal basis.",
     severity: "high",
-    description: "GDPR Article 17 grants users the right to erasure ('right to be forgotten').",
-    requiredPatterns: [
-      /router\.(delete|post)\s*\(\s*['"](.*)(delete.account|gdpr|erasure|forget|purge|remove.user|close.account)['"]/gi,
-      /DELETE FROM\s+users|prisma\.user\.delete|db\.delete.*users/gi,
-    ],
-    requiredPatternDesc: "A DELETE endpoint or data erasure function for user account data",
-    fixPrompt: "Implement a data erasure endpoint: `DELETE /api/user/account`.",
-    conflictsWith: "HIPAA §164.530(j) - Retain medical records 6 years",
-    confidence: 75,
+    checkType: "ast_pattern",
+    searchPattern: /req\.body\.(ssn|ethnicity|race|political|religion|sexual|biometric|genetic)|body\.(ssn|ethnicity|race)/i,
+    penaltyMaxEur: 20000000,
+    fixPrompt: "Remove collection of special category data without explicit Art. 9 legal basis. Conduct a DPIA. Store only fields essential for the service.",
   },
   {
-    id: "gdpr-art32-encryption",
-    regulation: "GDPR",
-    clause: "Art.32 - Security of Processing (Encryption)",
-    title: "PII stored without encryption",
-    severity: "critical",
-    description: "GDPR Article 32 requires appropriate technical measures including encryption of personal data.",
-    violationPatterns: [
-      { pattern: /\b(email|phone|address|dateOfBirth|dob|ssn|nationalId)\s+String\s*$/gm, desc: "PII field stored as plaintext String in Prisma schema" },
-      { pattern: /\b(email|phone|address|dob)\s*:\s*\{\s*type\s*:\s*String/gm, desc: "PII field stored as plaintext String in Mongoose schema" },
-      { pattern: /console\.(log|info|debug)\([^)]*\b(email|password|ssn|dob|card)/gi, desc: "PII logged to console" },
-    ],
-    requiredPatterns: [
-      /crypto\.createCipheriv|bcrypt\.(hash|compare)|argon2\.(hash|verify)/g,
-    ],
-    fixPrompt: "Encrypt sensitive fields at rest using AES-256-GCM.",
-    confidence: 82,
-  },
-  // ══ PCI-DSS ══════════════════════════════════════════════════════════════
-  {
-    id: "pci-req3-cardholder-data",
-    regulation: "PCI-DSS",
-    clause: "Req.3 - Protect Stored Cardholder Data",
-    title: "Card number pattern detected in source code",
-    severity: "critical",
-    description: "PCI-DSS Requirement 3 prohibits storing Primary Account Numbers (PANs) unless absolutely necessary.",
-    violationPatterns: [
-      { pattern: /cardNumber\s*[:=]\s*req\.(body|params|query)/gi, desc: "Card number from request stored in variable" },
-      { pattern: /INSERT INTO.*card_number|prisma\.\w+\.create.*card_number/gi, desc: "Card number being inserted into database directly" },
-      { pattern: /localStorage\.setItem\(['"` ].*card/gi, desc: "Card data stored in localStorage" },
-    ],
-    fixPrompt: "Never handle raw card numbers. Use Stripe.js/Elements.",
-    confidence: 95,
+    id: "REGG-006",
+    framework: "gdpr",
+    clause: "Art. 44 — International Data Transfers",
+    title: "PII sent to third-party without safeguards",
+    description: "GDPR Art. 44 restricts PII transfers to third countries without SCCs, BCRs, or adequacy decisions.",
+    severity: "high",
+    checkType: "data_flow",
+    astPattern: /(stripe|mixpanel|amplitude|intercom|google-analytics|gtag|facebook-pixel|hubspot|sendgrid|twilio|mailchimp)\b/i,
+    penaltyMaxEur: 20000000,
+    fixPrompt: "Ensure all third-party processors have DPAs with Standard Contractual Clauses (2021 SCCs). Conduct Transfer Impact Assessments. Document transfer mechanisms.",
   },
   {
-    id: "pci-req2-stripe-keys",
-    regulation: "PCI-DSS",
-    clause: "Req.2 - Vendor Supplied Defaults",
-    title: "Stripe secret key exposed in code",
+    id: "REGG-007",
+    framework: "pci_dss",
+    clause: "Req 3.2.1 — No CVV storage",
+    title: "CVV/PAN stored after authorization",
+    description: "PCI-DSS v4.0 Req 3.2.1 prohibits storing CVV, full PAN, or track data post-authorization.",
     severity: "critical",
-    description: "PCI-DSS Requirement 2 requires strong protection of authentication credentials.",
-    violationPatterns: [
-      { pattern: /sk_live_[a-zA-Z0-9]{24,}/g, desc: "Hardcoded Stripe LIVE secret key in source code" },
-      { pattern: /sk_test_[a-zA-Z0-9]{24,}/g, desc: "Hardcoded Stripe TEST secret key in source code" },
-    ],
-    fixPrompt: "Move to environment variables.",
-    confidence: 99,
+    checkType: "ast_pattern",
+    searchPattern: /(cvv|cvc|ccv|cardCode|cardCode|creditCardNumber|cardNumber|fullPan|track.*data)\s*[:=]/i,
+    penaltyMaxEur: 0,
+    fixPrompt: "Never store CVV. Use tokenization (Stripe Elements, Braintree Drop-in) that sends card data directly to gateway without touching your server. Store only last 4 digits and expiry date if needed.",
   },
-  // ══ HIPAA ════════════════════════════════════════════════════════════════
   {
-    id: "hipaa-phi-logging",
-    regulation: "HIPAA",
-    clause: "§164.312(b) - Audit Controls",
-    title: "PHI (Protected Health Information) logged to console",
+    id: "REGG-008",
+    framework: "pci_dss",
+    clause: "Req 4.2.1 — Encrypted Transmission",
+    title: "Card data transmitted without TLS",
+    description: "PCI-DSS v4.0 Req 4.2.1 requires strong cryptography (TLS 1.2+) for all cardholder data transmission.",
     severity: "critical",
-    description: "HIPAA §164.312(b) requires audit controls for PHI access. Logging PHI violates this requirement.",
-    violationPatterns: [
-      { pattern: /console\.(log|info|debug|warn|error)\([^)]*\b(ssn|dob|patientId|mrn|diagn|medic|healthRecord|phi)\b/gi, desc: "PHI logged to console" },
-      { pattern: /logger\.(info|debug)\([^)]*\b(ssn|dob|patientId|diagnosis|prescription)\b/gi, desc: "PHI logged at info/debug level" },
-    ],
-    fixPrompt: "Never log PHI. Implement audit logging separately.",
-    conflictsWith: "GDPR Art.17 - Right to Erasure",
-    confidence: 90,
+    checkType: "config",
+    searchPattern: /http:\/\/.*(payment|checkout|billing|card|charge)/i,
+    penaltyMaxEur: 0,
+    fixPrompt: "Enforce HTTPS across all pages handling card data. Use HSTS with `max-age=31536000; includeSubDomains`. Disable HTTP entirely. Configure TLS 1.2+ only.",
   },
-  // ══ SOC 2 ════════════════════════════════════════════════════════════════
   {
-    id: "soc2-cc6-encryption-transit",
-    regulation: "SOC2",
-    clause: "CC6.7 - Encryption in Transit",
-    title: "Hardcoded credentials or secrets in source code",
+    id: "REGG-009",
+    framework: "pci_dss",
+    clause: "Req 10.2.1 — Audit Logging",
+    title: "Missing audit logs for payment operations",
+    description: "PCI-DSS v4.0 Req 10.2.1 requires audit logging for all actions on cardholder data environments.",
+    severity: "high",
+    checkType: "missing_endpoint",
+    searchPattern: /logger\.info\(.*(payment|charge|transaction|billing)\b|audit.*log|access.*log/i,
+    requirePresence: /logger\.(info|warn|error)\s*\(/i,
+    penaltyMaxEur: 0,
+    fixPrompt: "Implement structured audit logging for payment operations: transaction ID, amount, timestamp, user ID, IP address, and action type. Use append-only logs. Integrate with SIEM.",
+  },
+  {
+    id: "REGG-010",
+    framework: "hipaa",
+    clause: "164.312(a)(2)(iv) — Encryption",
+    title: "ePHI stored without encryption at rest",
+    description: "HIPAA 164.312(a)(2)(iv) requires encryption for electronic Protected Health Information at rest.",
     severity: "critical",
-    description: "SOC 2 CC6.7 requires that credentials are protected.",
-    violationPatterns: [
-      { pattern: /(?:apiKey|secret|password|token|jwt_secret)\s*[:=]\s*['"`][^'"`$\{]{8,}['"`]/gi, desc: "Hardcoded credential in source code" },
-      { pattern: /jwt\.sign\([^,]+,\s*['"`][^'"`]{8,}['"`]\s*\)/g, desc: "Hardcoded JWT secret in jwt.sign() call" },
-    ],
-    fixPrompt: "Move all secrets to environment variables.",
-    confidence: 95,
-  }
-];
-
-const CROSS_REGULATION_CONFLICTS = [
+    checkType: "encryption_check",
+    astPattern: /INSERT INTO.*(patients|health|medical|records|phi|ePHI)|prisma\.\w+\.create\s*\([^)]*(health|patient|medical)/i,
+    penaltyMaxEur: 50000,
+    fixPrompt: "Encrypt all ePHI at rest using AES-256. Use database TDE for health-related tables. Encrypt backups. Implement key rotation every 12 months per HIPAA requirement.",
+  },
   {
-    reg1: "GDPR",
-    clause1: "Art.17(1) - Right to Erasure",
-    reg2: "HIPAA",
-    clause2: "§164.530(j) - Documentation Retention",
-    conflict: "GDPR requires deleting user data on request. HIPAA requires retaining medical records for 6 years.",
-    recommendation: "Implement conditional erasure: anonymize PHI while retaining anonymized medical data.",
+    id: "REGG-011",
+    framework: "hipaa",
+    clause: "164.312(a)(1) — Access Control",
+    title: "Missing unique user ID or emergency access",
+    description: "HIPAA 164.312(a)(1) requires unique user IDs and emergency access procedures for ePHI systems.",
+    severity: "high",
+    checkType: "config",
+    searchPattern: /(emergency.*access|break.*glass|auto.*logoff|session.*timeout|uniqueUserID|unique.*user)/i,
+    requirePresence: /(authMiddleware|requireAuth|authenticate|verifyToken)\b/i,
+    penaltyMaxEur: 50000,
+    fixPrompt: "Implement unique user IDs for all ePHI access. Create emergency access (break-glass) procedure. Enforce automatic logoff after 15min inactivity. Log all access.",
+  },
+  {
+    id: "REGG-012",
+    framework: "hipaa",
+    clause: "164.312(b) — Audit Controls",
+    title: "Missing audit trail for ePHI access",
+    description: "HIPAA 164.312(b) requires recording and examining activity in systems containing ePHI.",
+    severity: "high",
+    checkType: "missing_endpoint",
+    searchPattern: /audit|phi.*log|health.*audit|patient.*audit|logger\.info\(.*(phi|health|patient|medical)/i,
+    requirePresence: /logger\.(info|warn|error)\s*\(/i,
+    penaltyMaxEur: 50000,
+    fixPrompt: "Implement audit logging for every ePHI access: who, when, what record, and action (read/write/delete). Retain logs 6+ years. Review logs for anomalous patterns.",
+  },
+  {
+    id: "REGG-013",
+    framework: "hipaa",
+    clause: "164.308(a)(1)(ii)(A) — Risk Analysis",
+    title: "No HIPAA security risk assessment",
+    description: "HIPAA 164.308(a)(1)(ii)(A) requires an accurate risk assessment of ePHI confidentiality, integrity, and availability.",
+    severity: "critical",
+    checkType: "config",
+    searchPattern: /(risk.*assessment|risk.*analysis|security.*assessment|hipaa.*risk)/i,
+    requirePresence: /(risk.*assessment|risk.*analysis)\b/i,
+    penaltyMaxEur: 50000,
+    fixPrompt: "Conduct a formal HIPAA Security Risk Assessment following NIST SP 800-30. Identify threats to ePHI. Document mitigation measures. Reassess annually.",
+  },
+  {
+    id: "REGG-014",
+    framework: "soc2",
+    clause: "CC6.1 — Logical Access",
+    title: "Missing authentication middleware on sensitive routes",
+    description: "SOC 2 CC6.1 requires logical access security. Routes handling user data lack authentication middleware.",
+    severity: "critical",
+    checkType: "ast_pattern",
+    searchPattern: /router\.(get|post|put|delete)\(.*(users|admin|data|settings|profile)/i,
+    requirePresence: /(authMiddleware|requireAuth|authenticate|verifyToken|isAuthenticated)\b/i,
+    penaltyMaxEur: 0,
+    fixPrompt: "Add authentication middleware to all protected routes: `router.get('/users/:id', requireAuth, handler)`. Use RBAC for granular access. Validate auth on every request.",
+  },
+  {
+    id: "REGG-015",
+    framework: "ccpa",
+    clause: "1798.100 — Right to Know",
+    title: "Missing consumer data disclosure mechanism",
+    description: "CCPA requires businesses to disclose collected personal information categories and purposes within 45 days of a verifiable request.",
+    severity: "high",
+    checkType: "missing_endpoint",
+    searchPattern: /(consumer.*data|disclosure.*info|data.*categories|ccpa.*request)/i,
+    requirePresence: /(disclosure|data.*categories|ccpa)\b/i,
+    penaltyMaxEur: 7500,
+    fixPrompt: "Implement an endpoint for consumers to request data disclosure. Return categories of PI collected, sources, business purpose, and third parties with whom it is shared. Respond within 45 days.",
   },
 ];
 
 export function runRegGraph(
-  csg: CSG,
-  keyFiles: Array<{path: string; content: string}>,
-  detectRegulations?: ("GDPR" | "PCI-DSS" | "HIPAA" | "SOC2")[]
-): ComplianceReport {
-  logger.info({ nodeCount: csg.nodes.size }, "Starting RT-IFC and Static Compliance Traversal");
-  
-  const findings: ComplianceFinding[] = [];
-  const applicableRegulations = new Set<string>();
-  const fullContent = keyFiles.map((f) => f.content).join("\n");
+  keyFiles: Array<{ path: string; content: string }>,
+  csg?: CSG,
+): RegGraphReport {
+  const findings: RegGraphFinding[] = [];
+  const fileMap = new Map<string, string>();
+  for (const f of keyFiles) fileMap.set(f.path, f.content);
+  const allContent = keyFiles.map(f => f.content).join("\n");
 
-  // Auto-detect applicable regulations
-  if (detectRegulations?.includes("PCI-DSS") || /stripe\.|razorpay\.|payment/i.test(fullContent)) {
-    applicableRegulations.add("PCI-DSS");
-  }
-  if (detectRegulations?.includes("GDPR") || /gdpr|consent|erasure|europe/i.test(fullContent) || true) {
-    applicableRegulations.add("GDPR");
-  }
-  if (detectRegulations?.includes("HIPAA") || /hipaa|phi|patient/i.test(fullContent)) {
-    applicableRegulations.add("HIPAA");
-  }
-  if (detectRegulations?.includes("SOC2") || /soc2|audit|compliance/i.test(fullContent) || true) {
-    applicableRegulations.add("SOC2");
-  }
+  for (const rule of REGULATION_RULES) {
+    let foundInFiles: Array<{ filePath: string; lineNumber: number; snippet: string }> = [];
 
-  const activeRegs = [...applicableRegulations] as ("GDPR" | "PCI-DSS" | "HIPAA" | "SOC2")[];
-  const activeConstraints = REGULATORY_CONSTRAINTS.filter((c) => activeRegs.includes(c.regulation));
-  
-  const clauseResults = {
-    GDPR: { passed: 0, total: 0 },
-    "PCI-DSS": { passed: 0, total: 0 },
-    HIPAA: { passed: 0, total: 0 },
-    SOC2: { passed: 0, total: 0 },
-  };
-
-  // 1. Run Static Constraints
-  for (const constraint of activeConstraints) {
-    clauseResults[constraint.regulation].total++;
-    let constraintViolated = false;
-
-    if (constraint.violationPatterns) {
-      for (const vp of constraint.violationPatterns) {
-        for (const file of keyFiles) {
-          const re = new RegExp(vp.pattern.source, "gi");
-          let m: RegExpExecArray | null;
-          while ((m = re.exec(file.content)) !== null) {
-            const lineNum = file.content.substring(0, m.index).split("\n").length;
-            constraintViolated = true;
-            findings.push({
-              id: `${constraint.id}-${file.path.split("/").pop()}-${lineNum}`,
-              regulation: constraint.regulation,
-              clause: constraint.clause,
-              title: constraint.title,
-              severity: constraint.severity,
-              description: constraint.description,
-              evidence: `${vp.desc} — ${file.path}:${lineNum}`,
+    if (rule.checkType === "missing_endpoint") {
+      const hasImplementation = rule.requirePresence
+        ? rule.requirePresence.test(allContent)
+        : true;
+      if (!hasImplementation) {
+        foundInFiles.push({
+          filePath: "project_root",
+          lineNumber: 0,
+          snippet: "No matching implementation found in project",
+        });
+      } else {
+        continue;
+      }
+    } else if (rule.checkType === "ast_pattern" || rule.checkType === "encryption_check") {
+      for (const file of keyFiles) {
+        if (!file.content) continue;
+        const lines = file.content.split("\n");
+        if (rule.searchPattern) {
+          let match: RegExpExecArray | null;
+          const re = new RegExp(rule.searchPattern.source, rule.searchPattern.flags.includes('g') ? rule.searchPattern.flags : rule.searchPattern.flags + 'g');
+          while ((match = re.exec(file.content)) !== null) {
+            const lineNum = file.content.substring(0, match.index).split("\n").length;
+            if (rule.requirePresence) {
+              const nearContext = file.content.substring(Math.max(0, match.index - 300), match.index + match[0].length + 300);
+              if (rule.requirePresence.test(nearContext)) continue;
+            }
+            foundInFiles.push({
               filePath: file.path,
               lineNumber: lineNum,
-              codeSnippet: extractSnippet(file.content, lineNum),
-              fixPrompt: constraint.fixPrompt,
-              confidence: constraint.confidence,
-              conflictsWith: constraint.conflictsWith,
+              snippet: match[0].substring(0, 120),
             });
           }
         }
       }
-    }
-
-    if (constraint.requiredPatterns && !constraintViolated) {
-      const requiredExists = constraint.requiredPatterns.some((rp) => {
-        const re = new RegExp(rp.source, "gi");
-        return re.test(fullContent);
-      });
-      if (!requiredExists) {
-        constraintViolated = true;
-        findings.push({
-          id: `${constraint.id}-missing`,
-          regulation: constraint.regulation,
-          clause: constraint.clause,
-          title: `${constraint.title} — Required control not found`,
-          severity: constraint.severity,
-          description: `${constraint.description}`,
-          evidence: `Required pattern not found in codebase: ${constraint.requiredPatternDesc}`,
-          filePath: "Project Configuration",
+    } else if (rule.checkType === "config") {
+      const hasSafeguard = rule.requirePresence
+        ? rule.requirePresence.test(allContent)
+        : true;
+      if (!hasSafeguard) {
+        foundInFiles.push({
+          filePath: "project_root",
           lineNumber: 0,
-          codeSnippet: "",
-          fixPrompt: constraint.fixPrompt,
-          confidence: constraint.confidence,
-          conflictsWith: constraint.conflictsWith,
+          snippet: `Missing required controls for ${rule.title}`,
         });
       }
-    }
-
-    if (!constraintViolated) {
-      clauseResults[constraint.regulation].passed++;
-    }
-  }
-
-  // 2. Run Deep-Tech RT-IFC
-  const typeStateMap = new Map<string, RegulatoryType>();
-  for (const [nodeId, node] of csg.nodes.entries()) {
-    const text = (node.label || "").toLowerCase();
-    if (text.includes("ssn") || text.includes("medical") || text.includes("patient")) {
-      typeStateMap.set(nodeId, RegulatoryType.PHI);
-    } else if (text.includes("pan") || text.includes("card_number") || text.includes("cvv")) {
-      typeStateMap.set(nodeId, RegulatoryType.PCI_PAN);
-    } else if (text.includes("email") || text.includes("password") || text.includes("dob")) {
-      typeStateMap.set(nodeId, RegulatoryType.GDPR_PII);
-    } else if (text.includes("consent") && text.includes("pending")) {
-      typeStateMap.set(nodeId, RegulatoryType.Consent_Pending);
-    }
-  }
-
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const edge of csg.edges) {
-      if (edge.type === "data_flow" || edge.type === "control_flow") {
-        const sourceType = typeStateMap.get(edge.from);
-        if (sourceType && !typeStateMap.has(edge.to)) {
-          typeStateMap.set(edge.to, sourceType);
-          changed = true;
+      if (rule.searchPattern) {
+        let match: RegExpExecArray | null;
+        const re = new RegExp(rule.searchPattern.source, rule.searchPattern.flags.includes('g') ? rule.searchPattern.flags : rule.searchPattern.flags + 'g');
+        while ((match = re.exec(allContent)) !== null) {
+          const lineNum = 0;
+          foundInFiles.push({
+            filePath: "project_root",
+            lineNumber: lineNum,
+            snippet: match[0].substring(0, 120),
+          });
         }
       }
     }
-  }
 
-  for (const [nodeId, regType] of typeStateMap.entries()) {
-    const node = csg.nodes.get(nodeId);
-    if (!node) continue;
-    const text = (node.label || "").toLowerCase();
-    const isExternalSink = text.includes("console.") || text.includes("logger.") || text.includes("fetch(") || text.includes("axios.");
-    
-    if (isExternalSink) {
-      const isSanitized = text.includes("encrypt") || text.includes("hash") || text.includes("mask");
-      if (!isSanitized) {
-        let title = "Regulatory Data Exfiltration";
-        let desc = "Data flowed into an external sink without encryption.";
-        let reg: "GDPR" | "PCI-DSS" | "HIPAA" | "SOC2" = "GDPR";
-        
-        if (regType === RegulatoryType.GDPR_PII) {
-          title = "GDPR Art. 32 Violation: Unencrypted PII Flow";
-          desc = "PII flows directly into an external sink/log without encryption.";
-          reg = "GDPR";
-        } else if (regType === RegulatoryType.PCI_PAN) {
-          title = "PCI-DSS Requirement 4 Violation";
-          desc = "Cardholder data flows directly into an external sink without strong cryptography.";
-          reg = "PCI-DSS";
-        } else if (regType === RegulatoryType.PHI) {
-          title = "HIPAA Violation: PHI Audit Trail Missing";
-          desc = "Protected Health Information transmitted without secure audit boundary.";
-          reg = "HIPAA";
-        }
+    for (const hit of foundInFiles) {
+      const confidence = rule.checkType === "ast_pattern" ? 92
+        : rule.checkType === "encryption_check" ? 88
+        : rule.checkType === "missing_endpoint" ? 95
+        : rule.checkType === "config" ? 80
+        : 75;
 
-        findings.push({
-          id: `rt-ifc-${regType.toLowerCase()}-${nodeId}`,
-          regulation: reg,
-          clause: "RT-IFC Boundary Control",
-          category: "compliance",
-          severity: "critical",
-          title,
-          description: desc,
-          evidence: "Graph propagation indicates unencrypted flow.",
-          filePath: node.filePath,
-          lineNumber: node.lineStart,
-          codeSnippet: text.substring(0, 100),
-          fixPrompt: "Ensure data is passed through a sanitization or encryption boundary.",
-          confidence: 95,
-        });
-      }
+      const id = `REGG-${rule.id.split('-')[1]}-${Math.random().toString(36).slice(2, 6)}`;
+
+      findings.push({
+        id,
+        ruleId: rule.id,
+        framework: rule.framework,
+        clause: rule.clause,
+        title: rule.title,
+        description: rule.description,
+        severity: rule.severity,
+        filePath: hit.filePath,
+        lineNumber: hit.lineNumber,
+        codeSnippet: hit.snippet,
+        evidence: `${rule.framework.toUpperCase()} ${rule.clause} — ${hit.filePath}:${hit.lineNumber}`,
+        confidence,
+        penaltyEstimateEur: rule.penaltyMaxEur,
+        fixPrompt: rule.fixPrompt,
+      });
     }
   }
 
-  const deduped = deduplicateFindings(findings);
+  const gdprFindings = findings.filter(f => f.framework === "gdpr");
+  const pciFindings = findings.filter(f => f.framework === "pci_dss");
+  const hipaaFindings = findings.filter(f => f.framework === "hipaa");
 
-  const scores = {
-    gdpr: computeScore(clauseResults.GDPR),
-    pciDss: computeScore(clauseResults["PCI-DSS"]),
-    hipaa: computeScore(clauseResults.HIPAA),
-    soc2: computeScore(clauseResults.SOC2),
-    overall: 0,
-  };
-  const activeScores = activeRegs.map((r) =>
-    r === "GDPR" ? scores.gdpr : r === "PCI-DSS" ? scores.pciDss : r === "HIPAA" ? scores.hipaa : scores.soc2
-  );
-  scores.overall = activeScores.length > 0 ? Math.round(activeScores.reduce((a, b) => a + b, 0) / activeScores.length) : 100;
+  const gdprScore = Math.max(0, 100 - gdprFindings.reduce((s, f) => s + severityWeight(f.severity) * 25, 0));
+  const pciScore = Math.max(0, 100 - pciFindings.reduce((s, f) => s + severityWeight(f.severity) * 20, 0));
+  const hipaaScore = Math.max(0, 100 - hipaaFindings.reduce((s, f) => s + severityWeight(f.severity) * 20, 0));
+  const overallCompliance = Math.round((gdprScore + pciScore + hipaaScore) / 3);
 
-  const crossRegulationConflicts = activeRegs.length > 1
-    ? CROSS_REGULATION_CONFLICTS.filter((c) => activeRegs.includes(c.reg1 as never) && activeRegs.includes(c.reg2 as never))
-    : [];
+  const penalties: Record<string, number> = {};
+  for (const f of findings) {
+    if (f.penaltyEstimateEur) {
+      penalties[f.framework] = (penalties[f.framework] || 0) + f.penaltyEstimateEur;
+    }
+  }
+  const totalMaxEur = Object.values(penalties).reduce((a, b) => a + b, 0);
+
+  logger.info({
+    totalFindings: findings.length,
+    overallCompliance,
+    totalPenaltyEur: totalMaxEur,
+  }, "RegGraph compliance analysis complete");
 
   return {
-    findings: deduped,
-    scores,
-    applicableRegulations: [...applicableRegulations],
-    crossRegulationConflicts,
-    stats: {
-      totalClausesChecked: activeConstraints.length,
-      clausesPassed: Object.values(clauseResults).reduce((s, r) => s + r.passed, 0),
-      clausesFailed: deduped.length,
-      criticalViolations: deduped.filter((f) => f.severity === "critical").length,
+    findings,
+    scores: {
+      gdprCompliance: gdprScore,
+      pciDssCompliance: pciScore,
+      hipaaCompliance: hipaaScore,
+      overallCompliance,
+    },
+    penalties: {
+      totalMaxEur,
+      byFramework: penalties,
     },
   };
 }
 
-function computeScore(result: { passed: number; total: number }): number {
-  if (result.total === 0) return 100;
-  return Math.round((result.passed / result.total) * 100);
+function severityWeight(s: string): number {
+  switch (s) {
+    case "critical": return 1.0;
+    case "high": return 0.5;
+    case "medium": return 0.25;
+    default: return 0.1;
+  }
 }
 
-function extractSnippet(content: string, lineNum: number, context = 1): string {
-  const lines = content.split("\n");
-  const start = Math.max(0, lineNum - 1 - context);
-  const end = Math.min(lines.length, lineNum + context);
-  return lines.slice(start, end).join("\n").substring(0, 200);
-}
-
-function deduplicateFindings(findings: ComplianceFinding[]): ComplianceFinding[] {
-  const seen = new Set<string>();
-  return findings.filter((f) => {
-    if (seen.has(f.id)) return false;
-    seen.add(f.id);
-    return true;
-  });
-}
+export { REGULATION_RULES };

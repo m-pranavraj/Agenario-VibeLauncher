@@ -23,7 +23,6 @@ import { scanFilesForSecrets, scanForSecrets } from "../lib/secret-scanner-v2.js
 import { checkPackageVulns } from "../lib/package-vulns.js";
 import { runCleanupAgent } from "../lib/cleanup-agent.js";
 import { runDeepScan } from "../lib/deep-scan/index.js";
-import { runAstAnalysis } from "../lib/ast-engine.js";
 import type { SecurityFinding } from "../lib/deep-scan/security-rules.js";
 import type { ComplianceFinding } from "../lib/deep-scan/compliance-rules.js";
 import type { PerformanceFinding } from "../lib/deep-scan/performance-rules.js";
@@ -46,6 +45,7 @@ import { runDeploySafe } from "../lib/deploy-safe.js";
 import { runArchScan } from "../lib/arch-scan.js";
 import { runFlowValue } from "../lib/flow-value.js";
 import { runPromptTrace } from "../lib/prompt-trace.js";
+import { runStructuralAnalysis } from "../lib/structural-analysis.js";
 import { runAIVerifier } from "../lib/ai-verifier.js";
 import { analyzeTimeAwareDependencies } from "../lib/time-aware-deps.js";
 import { inferCrossLanguageBoundaries } from "../lib/cross-language-taint.js";
@@ -57,6 +57,7 @@ import { runSecurityHeadersAnalyzer } from "../lib/security-headers.js";
 import { runGraphQLScanner } from "../lib/graphql-scanner.js";
 import { runPackageHallucinationScanner, scanFilesForSupplyChainRisks } from "../lib/package-hallucination.js";
 import { runAdvancedInjectionScanner, runAuthHardeningScanner } from "../lib/advanced-injection-scanner.js";
+import { analyzeScanFindings, fuseEvidence, type FusionResult, type EvidenceSource } from "../lib/dempster-shafer.js";
 
 const router: IRouter = Router();
 
@@ -375,10 +376,24 @@ async function runAnalysisPipeline(opts: {
     emit("deep-tech", "Running Deep Tech 10 Pillars (CSG, Taint, RegGraph, SymCost)...", 10);
     try {
       const csg = buildCSG(keyFiles ?? []);
-      inferCrossLanguageBoundaries(keyFiles ?? []);
+      const cltResult = inferCrossLanguageBoundaries(keyFiles ?? []);
       const timeAwareFindings = analyzeTimeAwareDependencies(keyFiles ?? [], (pkg.dependencies || {}) as Record<string, string>);
 
       const vibeTaint = runVibeTaint(keyFiles ?? [], pkg);
+      try {
+        await db.update(scansTable).set({
+          vibeTaint: {
+            dfgNodesConstructed: vibeTaint.stats.sourceNodes + vibeTaint.stats.sinkNodes,
+            taintPathsDetected: vibeTaint.stats.taintedPaths,
+            sanitizedPaths: vibeTaint.stats.sanitizedPaths,
+            implicitFlows: vibeTaint.stats.implicitFlowsDetected,
+            taintScore: vibeTaint.taintScore,
+            insight: `VibeTaint tracked ${vibeTaint.stats.sourceNodes} source → sink paths across the CSG. Found ${vibeTaint.stats.taintedPaths} unsanitized taint paths (${vibeTaint.stats.sanitizedPaths} sanitized). ${vibeTaint.stats.implicitFlowsDetected} implicit control-dependence flows detected. Overall taint score: ${vibeTaint.taintScore}/100.`,
+          },
+        }).where(eq(scansTable.id, scanId));
+      } catch (err) {
+        logger.warn({ err, scanId }, "Failed to persist VibeTaint results to DB");
+      }
       const regGraph = runRegGraph(csg, keyFiles ?? []);
       const symCost = runSymCost(keyFiles ?? [], pkg);
       const cogFlow = runCogFlow(csg, keyFiles ?? []);
@@ -387,6 +402,15 @@ async function runAnalysisPipeline(opts: {
       const deploySafe = runDeploySafe(keyFiles ?? []);
       const archScan = runArchScan(csg, keyFiles ?? []);
       const promptTrace = runPromptTrace(csg, keyFiles ?? []);
+      emit("structural-analysis", "Structural AST fingerprinting + LTL state-space checking...", 10.5);
+      const structuralAnalysis = runStructuralAnalysis(keyFiles ?? []);
+      try {
+        await db.update(scansTable).set({
+          topologicalAnalysis: structuralAnalysis,
+        }).where(eq(scansTable.id, scanId));
+      } catch (err) {
+        logger.warn({ err, scanId }, "Failed to persist structural analysis to DB");
+      }
       
       const allPillarFindings = [
         ...vibeTaint.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "security" })),
@@ -398,6 +422,8 @@ async function runAnalysisPipeline(opts: {
         ...deploySafe.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "deployment" })),
         ...archScan.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "architecture" })),
         ...promptTrace.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "security" })),
+        ...(structuralAnalysis?.vulnerabilities ?? []).map(f => ({ id: `struct-${f.patternId}`, severity: f.severity, filePath: "", category: "security" })),
+        ...cltResult.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: "security" })),
       ];
       
       const flowValue = runFlowValue(csg, keyFiles ?? [], allPillarFindings);
@@ -421,19 +447,105 @@ async function runAnalysisPipeline(opts: {
         ...vibeTaint.findings, ...regGraph.findings, ...symCost.findings,
         ...cogFlow.findings, ...failSafe.findings, ...obsCover.findings,
         ...deploySafe.findings, ...archScan.findings, ...promptTrace.findings,
-        ...flowValue.findings, ...timeAwareFindings,
+        ...flowValue.findings, ...timeAwareFindings, ...cltResult.findings,
         ...rlsFindings, ...headersFindings, ...graphqlFindings,
         ...pkgHallucinationFindings, ...advancedInjectionFindings, ...authHardeningFindings,
+        ...(structuralAnalysis?.vulnerabilities ?? []).map(v => ({
+          id: `struct-${v.patternId}`,
+          severity: v.severity,
+          title: `${v.patternName} (${v.verdict})`,
+          filePath: "",
+          category: "security",
+          description: `Class: ${v.class}, CWE: ${v.cwe}, Similarity: ${(v.structuralSimilarity * 100).toFixed(1)}%, Zero-day prob: ${(v.zeroDayProbability * 100).toFixed(1)}%`,
+          confidence: v.zeroDayProbability > 0.5 ? 90 : 75,
+          evidence: v.evidence,
+        })),
       ];
 
       const mathResult = await runAdvancedMathEngines(codeContext, 
         csg.nodes instanceof Map ? Array.from(csg.nodes.values()) : (csg.nodes as any));
+
+      // Persist to thermodynamicEntropy & constraintSolver columns
+      try {
+        await db.update(scansTable).set({
+          thermodynamicEntropy: {
+            entropyLeaks: mathResult.entropyLeaks,
+            totalLeaks: mathResult.entropyLeaks.length,
+            scanDate: new Date().toISOString(),
+            avgEntropy: mathResult.entropyLeaks.length > 0
+              ? mathResult.entropyLeaks.reduce((s: number, l: any) => s + l.entropy, 0) / mathResult.entropyLeaks.length
+              : 0,
+            patternDistribution: mathResult.entropyLeaks.reduce((acc: Record<string, number>, l: any) => {
+              acc[l.patternType] = (acc[l.patternType] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>),
+          },
+          constraintSolver: {
+            constraintBypasses: mathResult.smtViolations,
+            totalBypasses: mathResult.smtViolations.length,
+            scanDate: new Date().toISOString(),
+            byConditionType: mathResult.smtViolations.reduce((acc: Record<string, number>, s: any) => {
+              acc[s.conditionType] = (acc[s.conditionType] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>),
+            byBypassType: mathResult.smtViolations.reduce((acc: Record<string, number>, s: any) => {
+              acc[s.bypassType] = (acc[s.bypassType] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>),
+          },
+        }).where(eq(scansTable.id, scanId));
+      } catch (err) {
+        logger.warn({ err, scanId }, "Failed to persist math engine results to DB");
+      }
+
+      // Persist cross-language taint boundary findings
+      try {
+        if (cltResult.stats.activeTaintPaths > 0 || cltResult.stats.structuralIssues > 0) {
+          await db.update(scansTable).set({
+            crossLanguageTaint: {
+              stats: cltResult.stats,
+              findings: cltResult.findings.map(f => ({
+                id: f.id, type: f.type, severity: f.severity, title: f.title,
+                routePair: f.routePair, frontendFile: f.frontendFile,
+                backendFile: f.backendFile, sanitized: f.sanitized,
+                taintChain: f.taintChain,
+              })),
+              scanDate: new Date().toISOString(),
+            },
+          }).where(eq(scansTable.id, scanId));
+        }
+      } catch (err) {
+        logger.warn({ err, scanId }, "Failed to persist CLT results to DB");
+      }
+
       const mathFindings: any[] = [
-        ...(mathResult.entropyLeaks ?? []).map((f: any, i: number) => ({ id: `math-entropy-${i}`, severity: "critical", title: "Shannon-Entropy Leak", description: f.issue, codeSnippet: f.snippet, filePath: f.file, lineNumber: f.line, category: "security", confidence: 99 })),
-        ...(mathResult.smtViolations ?? []).map((f: any, i: number) => ({ id: `math-smt-${i}`, severity: "critical", title: "SMT Solver Found Bypass", description: f.constraint, codeSnippet: f.payload, filePath: f.file, lineNumber: f.line, category: "security", confidence: 99 })),
-        ...(mathResult.homomorphicMatches ?? []).map((f: any, i: number) => ({ id: `math-homo-${i}`, severity: "high", title: "Zero-Day Topological Match", description: f.predictedCve, codeSnippet: `Hash: ${f.topologyHash}`, filePath: f.file, category: "security", confidence: 90 })),
-        ...(mathResult.temporalViolations ?? []).map((f: any, i: number) => ({ id: `math-ltl-${i}`, severity: "high", title: "LTL Temporal State Violation", description: `Missing state: ${f.missingState}`, codeSnippet: `Sequence: ${(f.sequence ?? []).join(' -> ')}`, filePath: f.file, category: "reliability", confidence: 95 })),
+        ...(mathResult.entropyLeaks ?? []).map((f: any, i: number) => ({
+          id: `math-entropy-${i}`, severity: "critical", title: "Shannon-Entropy Data Leak",
+          description: f.issue, codeSnippet: f.snippet, filePath: f.file, lineNumber: f.line,
+          category: "security", confidence: 99, patternType: f.patternType,
+        })),
+        ...(mathResult.smtViolations ?? []).map((f: any, i: number) => ({
+          id: `math-smt-${i}`, severity: "critical", title: "Constraint Exploit: " + f.conditionType.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase()),
+          description: `Constraint: ${f.constraint} — Payload: ${f.payload}`,
+          codeSnippet: f.payload, filePath: f.file, lineNumber: f.line,
+          category: "security", confidence: 99, bypassType: f.bypassType,
+        })),
+        ...(mathResult.homomorphicMatches ?? []).map((f: any, i: number) => ({
+          id: `math-homo-${i}`, severity: "high", title: "Zero-Day Topological Match",
+          description: f.predictedCve, codeSnippet: `Hash: ${f.topologyHash}`,
+          filePath: f.file, category: "security", confidence: 90,
+        })),
+        ...(mathResult.temporalViolations ?? []).map((f: any, i: number) => ({
+          id: `math-ltl-${i}`, severity: "high", title: "LTL Temporal State Violation",
+          description: `Missing state: ${f.missingState}`,
+          codeSnippet: `Sequence: ${(f.sequence ?? []).join(' -> ')}`,
+          filePath: f.file, category: "reliability", confidence: 95,
+        })),
       ];
+      logger.info({
+        scanId, entropyLeaks: mathResult.entropyLeaks.length,
+        constraintBypasses: mathResult.smtViolations.length,
+      }, "Enhanced math engines complete");
 
       const allFindings: any[] = [...rawDeepFindings, ...mathFindings];
 
@@ -655,6 +767,26 @@ async function runAnalysisPipeline(opts: {
     low: allIssues.filter((i) => i.severity === "low").length,
   };
 
+  // ── Dempster-Shafer Evidence Fusion ────────────────────────────────
+  let dempsterShaferResult: ReturnType<typeof analyzeScanFindings> | null = null;
+  try {
+    const dsFindings = allIssues.map(i => ({
+      title: i.title,
+      severity: i.severity as "critical" | "high" | "medium" | "low",
+      sourceEvidence: i.sourceEvidence ?? "ai_reasoning",
+      confidence: i.confidence ?? 50,
+      evidenceCount: 1,
+      hasReproductionSteps: !!(i.reproductionSteps as any)?.length,
+      hasScreenshot: !!(i.videoUrl || ((i.reproductionSteps as any)?.screenshotUrl)),
+      filePath: i.filePath,
+      lineNumber: i.lineNumber,
+      agentName: i.agentName,
+    }));
+    dempsterShaferResult = analyzeScanFindings(dsFindings);
+  } catch (err) {
+    logger.warn({ err, scanId }, "Dempster-Shafer fusion failed — continuing");
+  }
+
   // Recalculate score including proof findings
   const penalty =
     Math.min(issueCounts.critical * 12, 55) +
@@ -769,126 +901,7 @@ async function runAnalysisPipeline(opts: {
     logger.warn({ err }, "Cleanup agent failed");
   }
 
-  // ── DEEP TECH ENGINES ───────────────────────────────────────────
-  let genomeFingerprint = null;
-  let causalInference = null;
-  let quantitativeRisk = null;
-  let geneticDrift = null;
-  let agentDebateResults = null;
-  let shadowTrafficInsight = null;
-  let developerTwinProfile = null;
-  let topologicalAnalysis = null;
-  let quantumVerification = null;
-  let predictiveSmt = null;
-  let zeroTrustEnclave = null;
-  let marketReadinessTracker = null;
-  let uxCognitiveFlow = null;
-  let greenLightVerdict = null;
-  let babelEngine = null;
-  let multiVerseDse = null;
-  let zkSnarkProof = null;
-  let bigOProfiler = null;
-  let fheAnalyzer = null;
-  let neuromorphicDrift = null;
-  let tensorPayloadSignature = null;
-  let postQuantumReadiness = null;
-  let dnaStorageCompiler = null;
-  let bftConsensusGraph = null;
-  let kardashevLatency = null;
-  let agiAlignment = null;
-  let thermodynamicEntropy = null;
-  let vibeTaint = null;
-  let symCost = null;
-  let regGraph = null;
-  let failSafe = null;
-  let obsCover = null;
-  let archScan = null;
-  let deploySafe = null;
-  let promptTrace = null;
-  let flowValue = null;
-  let dempsterShafer = null;
-  let constraintSolver = null;
-
-  try {
-    const { compileAstToTensorPayload } = await import("../lib/enclave-tensor-bridge.js");
-    const { sequenceCodeGenome } = await import("../lib/genome-sequencing.js");
-    const { runCausalDoCalculus } = await import("../lib/causal-do-calculus.js");
-    const { computeFinancialRisk } = await import("../lib/quantitative-finance-risk.js");
-    const { computeGeneticDrift } = await import("../lib/genetic-drift.js");
-    const { runMultiAgentDebate } = await import("../lib/multi-agent-debate.js");
-    const { buildDeveloperTwin } = await import("../lib/developer-twin.js");
-    const { simulateTopologicalAnalysis, simulateQuantumVerification, simulatePredictiveSmt, simulateZeroTrustEnclave, simulateMarketReadinessTracker, simulateUxCognitiveFlow, simulateGreenLightVerdict, simulateBabelEngine, simulateMultiVerseDse, simulateZkSnarkProof, simulateBigOProfiler, simulateFheAnalyzer, simulateNeuromorphicDrift, simulatePostQuantumReadiness, simulateDnaStorageCompiler, simulateBftConsensusGraph, simulateKardashevLatency, simulateAgiAlignment, simulateThermodynamicEntropy, simulateVibeTaint, simulateSymCost, simulateRegGraph, simulateFailSafe, simulateObsCover, simulateArchScan, simulateDeploySafe, simulatePromptTrace, simulateFlowValue, simulateDempsterShafer, simulateConstraintSolver } = await import("../lib/deep-tech-simulators.js");
-
-    if (codeContext && codeContext.keyFiles.length > 0) {
-      const globalCsgNodes: any[] = [];
-      genomeFingerprint = sequenceCodeGenome(globalCsgNodes, codeContext.keyFiles);
-      causalInference = runCausalDoCalculus(globalCsgNodes, [
-        ...(allIssues as any[]),
-        ...(licenseFindings as any[]),
-      ]);
-      quantitativeRisk = computeFinancialRisk(
-        allIssues.length,
-        allIssues.filter(f => f.severity === "critical").length,
-        allIssues.filter(f => f.severity === "high").length
-      );
-      
-      // Mock historical scans for drift calculation
-      geneticDrift = computeGeneticDrift(globalCsgNodes, [
-        { csgTopologyHash: "old_hash", vibeTool: "Cursor", createdAt: new Date(Date.now() - 86400000 * 5), complexity: globalCsgNodes.length * 0.8 }
-      ]);
-
-      const rawDebateResults = runMultiAgentDebate(allIssues as any);
-      agentDebateResults = {
-        verdict: rawDebateResults.some(r => r.escalatedSeverity === "critical") ? "High Risk Identified" : "Consensus Reached",
-        summary: rawDebateResults.length > 0 ? rawDebateResults[0].debateTranscript.join(" ") : "Attacker agent argued XSS was possible via param, but Defender agent successfully proved that Zod validation sanitizes the input before AST injection."
-      };
-
-      // Mock developer twin using current findings
-      developerTwinProfile = buildDeveloperTwin(userId ? userId.toString() : "anonymous", allIssues.map(f => ({
-        category: f.title,
-        fixed: Math.random() > 0.5,
-        timeToFixMs: Math.random() * 86400000,
-      })));
-      
-      const astMetrics = runAstAnalysis(codeContext?.keyFiles || []);
-      
-      topologicalAnalysis = simulateTopologicalAnalysis(allIssues);
-      quantumVerification = simulateQuantumVerification(allIssues);
-      predictiveSmt = simulatePredictiveSmt(allIssues);
-      zeroTrustEnclave = simulateZeroTrustEnclave(codeContext, allIssues);
-      marketReadinessTracker = simulateMarketReadinessTracker(allIssues, finalScore);
-      uxCognitiveFlow = simulateUxCognitiveFlow(codeContext, allIssues, astMetrics);
-      greenLightVerdict = simulateGreenLightVerdict(allIssues, finalScore);
-      babelEngine = simulateBabelEngine(codeContext, allIssues);
-      multiVerseDse = simulateMultiVerseDse(codeContext, allIssues);
-      zkSnarkProof = simulateZkSnarkProof(codeContext, allIssues);
-      bigOProfiler = simulateBigOProfiler(codeContext, allIssues);
-      fheAnalyzer = simulateFheAnalyzer(codeContext, allIssues);
-      neuromorphicDrift = simulateNeuromorphicDrift(codeContext, allIssues);
-      tensorPayloadSignature = compileAstToTensorPayload(codeContext, allIssues);
-      postQuantumReadiness = simulatePostQuantumReadiness(codeContext, allIssues);
-      dnaStorageCompiler = simulateDnaStorageCompiler(codeContext, allIssues);
-      bftConsensusGraph = simulateBftConsensusGraph(codeContext, allIssues);
-      kardashevLatency = simulateKardashevLatency(codeContext, allIssues);
-      agiAlignment = simulateAgiAlignment(codeContext, allIssues);
-      thermodynamicEntropy = simulateThermodynamicEntropy(codeContext, allIssues);
-      vibeTaint = simulateVibeTaint(codeContext, allIssues, astMetrics);
-      symCost = simulateSymCost(codeContext, allIssues, astMetrics);
-      regGraph = simulateRegGraph(codeContext, allIssues, astMetrics);
-      failSafe = simulateFailSafe(codeContext, allIssues, astMetrics);
-      obsCover = simulateObsCover(codeContext, allIssues, astMetrics);
-      archScan = simulateArchScan(codeContext, allIssues, astMetrics);
-      deploySafe = simulateDeploySafe(codeContext, allIssues, astMetrics);
-      promptTrace = simulatePromptTrace(codeContext, allIssues, astMetrics);
-      flowValue = simulateFlowValue(codeContext, allIssues, astMetrics);
-      dempsterShafer = simulateDempsterShafer(codeContext, allIssues, astMetrics);
-      constraintSolver = simulateConstraintSolver(codeContext, allIssues, astMetrics);
-      
-      logger.info({ scanId }, "Deep Tech Engines execution complete");
-    }
-  } catch (err) {
-    logger.warn({ err }, "Deep Tech Engines execution failed");
-  }
+  // ── DEEP TECH ENGINES REMOVED (all simulators deleted) ──────────
 
   // ── OWASP & Revenue enrichment (in-memory) ────────────────────
   const owaspEnrichedIssues = enrichIssuesWithOwasp(allIssues);
@@ -1007,39 +1020,6 @@ async function runAnalysisPipeline(opts: {
     ...(launchReplaySteps ?? []),
   ];
 
-  const engineScorecards = [
-    {
-      engineName: "VibeTaint v1.2",
-      version: "1.2.4",
-      supportedFrameworks: ["Express", "Next.js API routes", "Hono"],
-      testCases: 184,
-      confirmedDetections: 161,
-      falsePositives: 8,
-      runtimeEvidenceAvailable: "62%",
-      unsupported: "dynamic eval-heavy code, compiled bundles"
-    },
-    {
-      engineName: "SymCost Analytics",
-      version: "2.0.1",
-      supportedFrameworks: ["React", "Prisma", "Drizzle"],
-      testCases: 210,
-      confirmedDetections: 198,
-      falsePositives: 1,
-      runtimeEvidenceAvailable: "94%",
-      unsupported: "WebAssembly, external RPCs"
-    },
-    {
-      engineName: "RegGraph Compliance",
-      version: "1.0.8",
-      supportedFrameworks: ["Node.js", "Django", "Spring"],
-      testCases: 89,
-      confirmedDetections: 88,
-      falsePositives: 4,
-      runtimeEvidenceAvailable: "100%",
-      unsupported: "legacy SOAP APIs"
-    }
-  ];
-
   const [updated] = await db
     .update(scansTable)
     .set({
@@ -1052,7 +1032,6 @@ async function runAnalysisPipeline(opts: {
       riskForecast: result.riskForecast ?? null,
       revenueIntelligence: result.revenueIntelligence ?? null,
       complianceResults: result.complianceResults ?? null,
-      engineScorecards,
       proofEvidence: proofEvidence.length > 0 ? proofEvidence : null,
       sandboxMeta: sandboxResult?.meta ?? null,
       regressionDiff: regressionDiff ?? null,
@@ -1064,44 +1043,7 @@ async function runAnalysisPipeline(opts: {
       secretScanResults: secretScanResults ?? null,
       packageVulns: packageVulns ?? null,
       sbomData: sbomData ?? null,
-      genomeFingerprint: genomeFingerprint ?? null,
-      causalInference: causalInference ?? null,
-      quantitativeRisk: quantitativeRisk ?? null,
-      geneticDrift: geneticDrift ?? null,
-      agentDebateResults: agentDebateResults ?? null,
-      shadowTrafficInsight: shadowTrafficInsight ?? null,
-      developerTwinProfile: developerTwinProfile ?? null,
-      topologicalAnalysis: topologicalAnalysis ?? null,
-      quantumVerification: quantumVerification ?? null,
-      predictiveSmt: predictiveSmt ?? null,
-      zeroTrustEnclave: zeroTrustEnclave ?? null,
-      marketReadinessTracker: marketReadinessTracker ?? null,
-      uxCognitiveFlow: uxCognitiveFlow ?? null,
-      greenLightVerdict: greenLightVerdict ?? null,
-      babelEngine: babelEngine ?? null,
-      multiVerseDse: multiVerseDse ?? null,
-      zkSnarkProof: zkSnarkProof ?? null,
-      bigOProfiler: bigOProfiler ?? null,
-      fheAnalyzer: fheAnalyzer ?? null,
-      neuromorphicDrift: neuromorphicDrift ?? null,
-      tensorPayloadSignature: tensorPayloadSignature ?? null,
-      postQuantumReadiness: postQuantumReadiness ?? null,
-      dnaStorageCompiler: dnaStorageCompiler ?? null,
-      bftConsensusGraph: bftConsensusGraph ?? null,
-      kardashevLatency: kardashevLatency ?? null,
-      agiAlignment: agiAlignment ?? null,
-      thermodynamicEntropy: thermodynamicEntropy ?? null,
-      vibeTaint: vibeTaint ?? null,
-      symCost: symCost ?? null,
-      regGraph: regGraph ?? null,
-      failSafe: failSafe ?? null,
-      obsCover: obsCover ?? null,
-      archScan: archScan ?? null,
-      deploySafe: deploySafe ?? null,
-      promptTrace: promptTrace ?? null,
-      flowValue: flowValue ?? null,
-      dempsterShafer: dempsterShafer ?? null,
-      constraintSolver: constraintSolver ?? null,
+
       cleanupReport: cleanupReport ?? null,
       digitalTwin: digitalTwin ?? null,
       predictiveIntel: predictiveIntel ?? null,
@@ -1109,6 +1051,7 @@ async function runAnalysisPipeline(opts: {
       launchImpact: launchImpact ?? null,
       productHuntScore: productHuntScore ?? null,
       knowledgeGraph: knowledgeGraph ?? null,
+      dempsterShafer: dempsterShaferResult ?? null,
       cleanupFindings: cleanupReport ? {
         totalFindings: cleanupReport.totalFindings,
         debtScore: cleanupReport.debtScore,
@@ -1534,6 +1477,56 @@ router.post("/scans/:id/digital-twin", async (req, res): Promise<void> => {
   res.json(digitalTwin);
 });
 
+// ── Dempster-Shafer Evidence Fusion — on-demand / re-run (Creator only) ──────
+router.get("/scans/:id/dempster-shafer", async (req, res): Promise<void> => {
+  if (!requireAuth(req, res)) return;
+
+  const [viewingUser] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId!));
+  if (viewingUser?.plan === "free") {
+    res.status(403).json({ error: "Dempster-Shafer Evidence Fusion requires Creator plan" });
+    return;
+  }
+
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid scan id" }); return; }
+
+  const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
+  if (!scan || scan.userId !== req.session.userId) {
+    res.status(404).json({ error: "Scan not found" }); return;
+  }
+
+  // Return stored result if available
+  if (scan.dempsterShafer) {
+    res.json(scan.dempsterShafer);
+    return;
+  }
+
+  // Recompute on-demand
+  const issues = await db.select().from(scanIssuesTable).where(eq(scanIssuesTable.scanId, id));
+  if (issues.length === 0) {
+    res.status(404).json({ error: "No issues found for this scan" });
+    return;
+  }
+
+  const dsFindings = issues.map(i => ({
+    title: i.title,
+    severity: i.severity as "critical" | "high" | "medium" | "low",
+    sourceEvidence: i.sourceEvidence ?? "ai_reasoning",
+    confidence: i.confidence ?? 50,
+    evidenceCount: 1,
+    hasReproductionSteps: !!(i.reproductionSteps as any)?.length,
+    hasScreenshot: !!(i.videoUrl || ((i.reproductionSteps as any)?.screenshotUrl)),
+    filePath: i.filePath,
+    lineNumber: i.lineNumber,
+    agentName: i.agentName,
+  }));
+
+  const result = analyzeScanFindings(dsFindings);
+  await db.update(scansTable).set({ dempsterShafer: result }).where(eq(scansTable.id, id));
+  res.json(result);
+});
+
 // ── Root Cause Engine (Creator only) ─────────────────────────────────────────
 router.get("/scans/:id/root-cause", async (req, res): Promise<void> => {
   if (!requireAuth(req, res)) return;
@@ -1903,30 +1896,6 @@ router.get("/scans/:id/export", async (req, res): Promise<void> => {
         <div class="certificate">
           <div class="header">
             ${customHeader}
-          </div>
-
-          <h2>Deep Tech Master Analysis</h2>
-          <div class="deep-tech-section">
-            <div class="deep-tech-card">
-              <h3>Topological Vulnerability Discovery (TDA-VD)</h3>
-              <p><strong>Persistence Score:</strong> ${(scan as any).topologicalAnalysis?.persistenceScore || "N/A"}</p>
-              <p>${(scan as any).topologicalAnalysis?.analysis || "Topological map mathematically verified."}</p>
-            </div>
-            <div class="deep-tech-card">
-              <h3>Quantum-Inspired Formal Verification</h3>
-              <p><strong>QUBO Variables:</strong> ${(scan as any).quantumVerification?.quboVariables || "N/A"}</p>
-              <p>${(scan as any).quantumVerification?.verdict || "N/A"}</p>
-            </div>
-            <div class="deep-tech-card">
-              <h3>Predictive Meta-Symbolic SMT</h3>
-              <p><strong>Timeouts Prevented:</strong> ${(scan as any).predictiveSmt?.solverTimeoutsPrevented || "N/A"}</p>
-              <p>${(scan as any).predictiveSmt?.insight || "N/A"}</p>
-            </div>
-            <div class="deep-tech-card">
-              <h3>Zero-Trust Enclave Processing</h3>
-              <p><strong>Status:</strong> ${(scan as any).zeroTrustEnclave?.status || "N/A"}</p>
-              <p style="font-size: 11px; color: #888;">Hash: ${(scan as any).zeroTrustEnclave?.attestationHash || "N/A"}</p>
-            </div>
           </div>
 
           <h2>Codebase Architecture & Flaw Topology</h2>

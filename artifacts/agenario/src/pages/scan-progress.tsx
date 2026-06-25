@@ -32,6 +32,7 @@ const PHASE_LABELS: Record<string, string> = {
   "cleanup": "Cleanup Agent",
   "benchmark": "Benchmarking",
   "deep-tech": "Deep Tech Engines",
+  "structural-analysis": "Structural AST Fingerprinting",
   "finalizing": "Finalizing",
   "complete": "Complete",
 };

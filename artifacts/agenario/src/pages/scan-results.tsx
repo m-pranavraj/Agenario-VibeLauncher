@@ -97,6 +97,12 @@ import { useIsLight } from "@/hooks/use-is-light";
 import { toast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DeepArchitectureVisualizer } from "@/components/deep-tech/DeepArchitectureVisualizer";
+import { DeploySafeVisualizer } from "@/components/deep-tech/DeploySafeVisualizer";
+import { FailSafeVisualizer } from "@/components/deep-tech/FailSafeVisualizer";
+import { ObsCoverVisualizer } from "@/components/deep-tech/ObsCoverVisualizer";
+import { CogFlowVisualizer } from "@/components/deep-tech/CogFlowVisualizer";
+import { ArchScanVisualizer } from "@/components/deep-tech/ArchScanVisualizer";
+import { TimeAwareDepsVisualizer } from "@/components/deep-tech/TimeAwareDepsVisualizer";
 import {
   api,
   type ScanDetail,
@@ -113,12 +119,15 @@ import {
   type DigitalTwinResult,
   type PredictiveIntelResult,
   type RootCauseResult,
-  type EngineScorecard,
 } from "@/lib/api";
 import { motion } from "framer-motion";
 import { DempsterShaferVisualizer } from "@/components/deep-tech/DempsterShaferVisualizer";
+import { EntropyLeakVisualizer } from "@/components/deep-tech/EntropyLeakVisualizer";
+import { ConstraintSolverVisualizer } from "@/components/deep-tech/ConstraintSolverVisualizer";
+import type { DempsterShaferResult } from "@/lib/api";
 import { RtIfcGraphVisualizer } from "@/components/deep-tech/RtIfcGraphVisualizer";
 import { AbstractInterpretationRadar } from "@/components/deep-tech/AbstractInterpretationRadar";
+import { StructuralAnalysisVisualizer } from "@/components/deep-tech/StructuralAnalysisVisualizer";
 
 // Theme-agnostic severity styles - work on both light and dark backgrounds.
 // The app uses JS-conditional `isLight ? "..." : "..."` everywhere, NOT Tailwind
@@ -2742,14 +2751,14 @@ function EvidenceCard({
 
           {/* ── Deep Tech Visualizers ──────────────────────────────── */}
           <div className="space-y-4 my-4">
-            {/* Show Dempster Shafer if it has aiContext or is verified */}
-            {(issue.aiContext || issue.agentName?.includes("Verifier") || issue.title?.includes("AI")) && (
-              <DempsterShaferVisualizer 
-                engineConfidence={Math.max(10, (issue.confidence || 85) - 15)} 
-                aiConfidence={Math.min(99, (issue.confidence || 85) + 5)} 
-                finalConfidence={issue.confidence || 95} 
-                aiContext={issue.aiContext || "Formal Proof: The mathematical bounds of the AST structure intersect with the evidence provided by the CSG engine, confirming the algorithmic inference."} 
-              />
+            {/* Show DS fusion inline indicator */}
+            {issue.confidence && issue.confidence > 50 && (
+              <div className={`flex items-center gap-2 p-2 rounded-lg border text-[10px] font-mono ${isLight ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-indigo-500/5 border-indigo-500/10 text-indigo-400"}`}>
+                <GitMerge className="w-3 h-3 shrink-0" />
+                <span>DS: Bel={((issue.confidence / 100) * 0.85).toFixed(2)} Pl={Math.min(1, ((issue.confidence / 100) * 1.15)).toFixed(2)}&nbsp;
+                  <span className="opacity-50">(K={((100 - issue.confidence) / 200).toFixed(3)})</span>
+                </span>
+              </div>
             )}
             
             {/* Show Radar for abstract interpretation */}
@@ -7079,65 +7088,6 @@ jobs:
 }
 
 // ── Knowledge Graph Component ──────────────────────────────────────────────
-function EngineScorecardsPanel({ scorecards, isLight }: { scorecards: EngineScorecard[], isLight: boolean }) {
-  if (!scorecards || scorecards.length === 0) return null;
-  return (
-    <div className={`mt-8 rounded-2xl border ${isLight ? "bg-white border-slate-200" : "bg-black/40 border-white/10"} overflow-hidden`}>
-      <div className={`px-6 py-4 border-b ${isLight ? "border-slate-100 bg-slate-50/50" : "border-white/5 bg-white/[0.02]"}`}>
-        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-900" : "text-white"} flex items-center gap-2`}>
-          <Activity className="w-4 h-4 text-violet-500" />
-          Engine Scorecards <span className="text-xs px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-500 font-medium ml-2">Internal Transparency</span>
-        </h3>
-        <p className={`text-xs mt-1 ${isLight ? "text-slate-500" : "text-white/40"}`}>
-          Unlike other scanners that claim "AI magic," we expose exact hit-rates, false positives, and blind spots.
-        </p>
-      </div>
-
-
-      <div className="divide-y divide-slate-100 dark:divide-white/5">
-        {scorecards.map((s, i) => (
-          <div key={i} className="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="md:col-span-1">
-              <div className={`font-semibold text-sm ${isLight ? "text-slate-800" : "text-white"} flex items-center gap-2`}>
-                {s.engineName}
-                <span className={`text-[10px] ${isLight ? "text-slate-400" : "text-white/30"} px-1 border border-slate-200 dark:border-white/10 rounded`}>v{s.version}</span>
-              </div>
-              <div className={`text-xs mt-2 ${isLight ? "text-slate-500" : "text-white/40"}`}>
-                <strong className={isLight ? "text-slate-700" : "text-white/70"}>Frameworks:</strong> {s.supportedFrameworks.join(", ")}
-              </div>
-            </div>
-            <div className="md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-400" : "text-white/30"} mb-1`}>Test Cases</div>
-                <div className={`text-xl font-mono ${isLight ? "text-slate-700" : "text-white/80"}`}>{s.testCases}</div>
-              </div>
-              <div>
-                <div className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-400" : "text-white/30"} mb-1`}>Precision</div>
-                <div className={`text-xl font-mono ${isLight ? "text-green-600" : "text-green-400"}`}>
-                  {((s.confirmedDetections / s.testCases) * 100).toFixed(1)}%
-                </div>
-              </div>
-              <div>
-                <div className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-400" : "text-white/30"} mb-1`}>False Positives</div>
-                <div className={`text-xl font-mono ${isLight ? "text-red-500" : "text-red-400"}`}>{s.falsePositives}</div>
-              </div>
-              <div>
-                <div className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-400" : "text-white/30"} mb-1`}>Runtime Evid.</div>
-                <div className={`text-xl font-mono ${isLight ? "text-blue-500" : "text-blue-400"}`}>{s.runtimeEvidenceAvailable}</div>
-              </div>
-            </div>
-            <div className="md:col-span-4 mt-2">
-              <div className={`text-xs p-3 rounded-lg ${isLight ? "bg-amber-50 text-amber-800" : "bg-orange-500/10 text-orange-400"}`}>
-                <span className="font-bold">Known Blind Spots:</span> {s.unsupported}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function KnowledgeGraphExplorer({ data, issues, isLight }: { data: any, issues?: any[], isLight: boolean }) {
   if (!data || !data.nodes || data.nodes.length === 0) {
     return <div className="text-center p-10 opacity-50">No Knowledge Graph Data Available for this Scan.</div>;
@@ -9022,39 +8972,7 @@ export default function ScanResultsPage() {
                   </div>
                 )}
 
-                {/* Thermodynamic Entropy Profiler */}
-                {scan.thermodynamicEntropy && (
-                  <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-amber-500/30 transition-all`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Flame className={`w-24 h-24 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-amber-100 text-amber-600" : "bg-amber-500/20 text-amber-400"}`}>
-                        <Zap className="w-4 h-4" />
-                      </div>
-                      <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Thermodynamic Entropy</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                      <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                        {scan.thermodynamicEntropy.insight}
-                      </div>
-                        <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex flex-col items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-amber-400"}`}>
-                          <div className="italic">E &ge; k<sub>B</sub>T ln 2</div>
-                          <div className="text-[9px] mt-1 opacity-70 font-mono text-center border-t border-amber-500/20 pt-1 w-full">Landauer's Bit Erasure Limit</div>
-                        </div>
-                        <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                          <div className="flex justify-between mb-1">
-                            <span>Algorithmic Entropy:</span>
-                            <span className="text-amber-500 font-bold">{scan.thermodynamicEntropy.algorithmicEntropy}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Landauer Heat Dissipation:</span>
-                            <span>{scan.thermodynamicEntropy.heatDissipationJoules}</span>
-                          </div>
-                        </div>
-                    </div>
-                  </div>
-                )}
+                <EntropyLeakVisualizer data={scan.thermodynamicEntropy as any} />
                   {/* VibeTaint v1.2 */}
                   {scan.vibeTaint && (
                     <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-violet-500/30 transition-all`}>
@@ -9352,71 +9270,47 @@ export default function ScanResultsPage() {
                     </div>
                   )}
 
-                  {/* Dempster-Shafer */}
-                  {scan.dempsterShafer && (
-                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-indigo-500/30 transition-all`}>
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <GitMerge className={`w-24 h-24 ${isLight ? "text-indigo-600" : "text-indigo-400"}`} />
-                      </div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-indigo-100 text-indigo-600" : "bg-indigo-500/20 text-indigo-400"}`}>
-                          <GitMerge className="w-4 h-4" />
-                        </div>
-                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>Dempster-Shafer Fusion</h3>
-                      </div>
-                      <div className="space-y-4 relative z-10">
-                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                          {scan.dempsterShafer.insight}
-                        </div>
-                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-indigo-400"}`}>
-                            <span className="italic">m<sub>1,2</sub>(A) = (&Sigma; m<sub>1</sub>(B)m<sub>2</sub>(C)) / (1 - K)</span>
-                          </div>
-                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                            <div className="flex justify-between mb-1">
-                              <span>Belief Mass:</span>
-                              <span className="text-indigo-500 font-bold">{scan.dempsterShafer.beliefMass}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Plausibility:</span>
-                              <span>{scan.dempsterShafer.plausibility}</span>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
+                  {/* DeploySafe — Infrastructure Verifier */}
+                  {scan.deploySafe && (
+                    <DeploySafeVisualizer data={scan.deploySafe as any} />
                   )}
 
-                  {/* Constraint Solver */}
-                  {scan.constraintSolver && (
-                    <div className={`${isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/60" : "bg-black/40 border border-white/10"} rounded-2xl p-6 relative overflow-hidden group hover:border-pink-500/30 transition-all`}>
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Terminal className={`w-24 h-24 ${isLight ? "text-pink-600" : "text-pink-400"}`} />
-                      </div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-pink-100 text-pink-600" : "bg-pink-500/20 text-pink-400"}`}>
-                          <Terminal className="w-4 h-4" />
-                        </div>
-                        <h3 className={`font-bold font-['Syne'] ${isLight ? "text-slate-800" : "text-white"}`}>SAT Exploit Solver</h3>
-                      </div>
-                      <div className="space-y-4 relative z-10">
-                        <div className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"} leading-relaxed`}>
-                          {scan.constraintSolver.insight}
-                        </div>
-                          <div className={`mb-3 p-3 rounded border font-serif text-[11px] leading-relaxed flex items-center justify-center ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-black/50 border-white/10 text-pink-400"}`}>
-                            <span className="italic">(A &or; B) &and; (&not; A &or; C)</span>
-                          </div>
-                          <div className={`p-3 rounded-lg border font-mono text-[10px] leading-relaxed ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/50 border-white/10 text-white/60"}`}>
-                            <div className="flex justify-between mb-1">
-                              <span>Boolean Clauses:</span>
-                              <span className="text-pink-500 font-bold">{scan.constraintSolver.booleanClauses}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Satisfiable:</span>
-                              <span>{scan.constraintSolver.satisfiablePaths}</span>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
+                  {/* FailSafe — Resilience Topology */}
+                  {scan.failSafe && (
+                    <FailSafeVisualizer data={scan.failSafe as any} />
                   )}
+
+                  {/* ObsCover — Observability Matrix */}
+                  {scan.obsCover && (
+                    <ObsCoverVisualizer data={scan.obsCover as any} />
+                  )}
+
+                  {/* CogFlow — Cognitive Load */}
+                  {scan.cogFlow && (
+                    <CogFlowVisualizer data={scan.cogFlow as any} />
+                  )}
+
+                  {/* ArchScan — Architectural Smells */}
+                  {scan.archScan && (
+                    <ArchScanVisualizer data={scan.archScan as any} />
+                  )}
+
+                  {/* Time-Aware Dependency Calculus */}
+                  {scan.timeAwareDeps && (
+                    <TimeAwareDepsVisualizer data={scan.timeAwareDeps as any} />
+                  )}
+
+                  {/* Dempster-Shafer Evidence Fusion */}
+                  {scan.dempsterShafer && (
+                    <DempsterShaferVisualizer data={scan.dempsterShafer as DempsterShaferResult} />
+                  )}
+
+                  {/* Structural AST Fingerprinting & LTL State-Space Check */}
+                  {scan.topologicalAnalysis && (
+                    <StructuralAnalysisVisualizer data={scan.topologicalAnalysis as any} isLight={isLight} />
+                  )}
+
+                  <ConstraintSolverVisualizer data={scan.constraintSolver as any} />
 
                 </div>
               </div>
@@ -9446,9 +9340,7 @@ export default function ScanResultsPage() {
                </div>
             </div>
             
-            {scan.engineScorecards && scan.engineScorecards.length > 0 && (
-              <EngineScorecardsPanel scorecards={scan.engineScorecards} isLight={isLight} />
-            )}
+
           </div>
         )}
 

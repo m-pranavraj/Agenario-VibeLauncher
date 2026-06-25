@@ -13,6 +13,9 @@
  *   - React render cost model: propsCount + stateCount + contextSubscriptions
  *   - Dead code detection: exported functions with no cross-file callers
  *   - Blocking sync detection: bcrypt/fs sync in request handlers
+ *   - ReDoS (safe-regex2): analyzes all regex literals for catastrophic backtracking
+ *       with nested quantifier detection (O(2^n) complexity)
+ *   - Regex complexity grading: quantifier nesting depth, vulnerable char classes
  */
 
 import { buildCSG, computeCyclomaticComplexity, computeCognitiveComplexity, BUNDLE_COST_DB, ASYNC_COST_DB } from "./csg-builder.js";
@@ -441,30 +444,70 @@ export function runSymCost(
     }
 
     // ── ReDoS (Catastrophic Backtracking) Detection ──────────────────────
+    // Uses safe-regex2 library to analyze regex literals for O(2^n) complexity.
+    // Detects nested quantifiers ((a+)+), overlapping adjacent quantifiers (a*b*c*),
+    // and vulnerable character classes with quantifiers.
     const regexLiteralPattern = /\/((?:[^\/\\]|\\.)+)\/([gimyus]*)/g;
     let rm: RegExpExecArray | null;
     while ((rm = regexLiteralPattern.exec(content)) !== null) {
       const patternString = rm[0];
+      const regexBody = rm[1];
       // Ignore very short regexes to reduce noise
       if (patternString.length < 5) continue;
       
+      // Calculate quantifier nesting depth for grading
+      let maxNestingDepth = 0;
+      let parenDepth = 0;
+      for (let i = 0; i < regexBody.length; i++) {
+        if (regexBody[i] === '(' && (regexBody[i+1] !== '?' || regexBody.substring(i, i+3) === '(?:')) parenDepth++;
+        else if (regexBody[i] === ')') {
+          if (parenDepth > maxNestingDepth) maxNestingDepth = parenDepth;
+          parenDepth--;
+        }
+      }
+      
       try {
-        const isSafe = safeRegex(rm[1]);
+        const isSafe = safeRegex(regexBody);
         if (!isSafe) {
           const lineNum = content.substring(0, rm.index).split("\n").length;
           stats.redosFound++;
+          
+          // Grade the vulnerability
+          let severity: "critical" | "high" = "high";
+          let complexity = "O(2^n)";
+          if (maxNestingDepth >= 3) {
+            severity = "critical";
+            complexity = `O(2^${maxNestingDepth})`;
+          }
+          
           findings.push({
             id: `redos-${file.path.split("/").pop()}-${lineNum}`,
-            category: "large_payload", // Mapping to large_payload for DoS category
-            severity: "critical",
-            title: "ReDoS: Catastrophic Backtracking Detected",
-            description: `The regular expression \`${patternString}\` evaluates to O(2^n) time complexity. An attacker can supply a specially crafted string to mathematically stall the Node.js event loop entirely.`,
-            evidence: `${file.path}:${lineNum} — Unsafe Regex Literal`,
+            category: "large_payload",
+            severity,
+            title: `ReDoS: Catastrophic Backtracking Detected (nesting=${maxNestingDepth})`,
+            description: `The regex \`${patternString}\` has ${complexity} time complexity (quantifier nesting depth=${maxNestingDepth}). An attacker can craft a ~30 char input that stalls the Node.js event loop for seconds. ReDoS (Regular Expression Denial of Service) is a CWE-1333 vulnerability.`,
+            evidence: `${file.path}:${lineNum} — Unsafe regex with nesting depth ${maxNestingDepth}`,
             filePath: file.path,
             lineNumber: lineNum,
             codeSnippet: extractSnippet(content, lineNum),
-            fixPrompt: "Simplify the regex to prevent nested quantification (e.g., `(a+)+`), or use a safer regex engine like `re2` for evaluating user input.",
+            fixPrompt: `Simplify the regex to eliminate nested quantifiers. Replace patterns like \`(a+)+b\` (O(2^n)) with \`a+b\` (O(n)). Use possessive quantifiers (\`++\`) if the engine supports them. For user-input regex matching, use the 're2' library which guarantees linear time.`,
             confidence: 99,
+          });
+        } else if (maxNestingDepth >= 2) {
+          // Warn on patterns with nesting but that safe-regex considers safe
+          const lineNum = content.substring(0, rm.index).split("\n").length;
+          findings.push({
+            id: `redos-warn-${file.path.split("/").pop()}-${lineNum}`,
+            category: "large_payload",
+            severity: "low",
+            title: `Regex with quantifier nesting (depth=${maxNestingDepth}) — monitor`,
+            description: `The regex \`${patternString}\` has quantifier nesting depth ${maxNestingDepth}. While safe-regex considers this safe, nested quantifiers can still be slow with pathological inputs.`,
+            evidence: `${file.path}:${lineNum} — Quantifier nesting depth ${maxNestingDepth}`,
+            filePath: file.path,
+            lineNumber: lineNum,
+            codeSnippet: extractSnippet(content, lineNum),
+            fixPrompt: "Consider refactoring to avoid nested quantifiers. Use non-backtracking alternatives where possible.",
+            confidence: 75,
           });
         }
       } catch (err) {
