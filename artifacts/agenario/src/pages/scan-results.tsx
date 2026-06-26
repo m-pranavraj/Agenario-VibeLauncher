@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback, createElement, type ElementType, type ReactNode } from "react";
+﻿import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback, createElement, type ElementType, type ReactNode } from "react";
 import {
   ReactFlow,
   Background,
@@ -348,6 +348,8 @@ interface FeatureEngineCardProps {
   codeRef?: string;
   actionItems?: string[] | null | undefined;
   children?: ReactNode;
+  evidenceTier?: 1 | 2 | 3 | 4 | 5;
+  proofRef?: string;
 }
 
 function FeatureEngineCard({
@@ -364,18 +366,26 @@ function FeatureEngineCard({
   codeRef,
   actionItems,
   children,
+  evidenceTier = 4,
+  proofRef,
 }: FeatureEngineCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   const scoreBg = scoreToColor(score);
+  const scoreGlow = score !== null && score >= 70 ? "shadow-[0_0_12px_rgba(34,197,94,0.3)]" : score !== null && score >= 40 ? "shadow-[0_0_12px_rgba(245,158,11,0.3)]" : "shadow-[0_0_12px_rgba(239,68,68,0.3)]";
 
   const showActions = status !== "verified" && status !== "missing" && actionItems && actionItems.length > 0;
   const showMissingActions = status === "missing" && actionItems && actionItems.length > 0;
   const lineColor = getLineColor(color);
 
+  const evidenceLabels = ["", "Browser Verified", "Runtime Verified", "Code Proven", "Static Signal", "AI Advisory"];
+  const evidenceColors = ["", "bg-green-500 text-white", "bg-blue-500 text-white", "bg-violet-500 text-white", "bg-amber-500 text-white", "bg-slate-500 text-white"];
+
   return (
     <div
-      className={`rounded-2xl border ${isLight ? "bg-white border-slate-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)]" : "bg-[#0a0a0f] border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.3)]"} overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5`}
+      className={`rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${
+        isLight ? "bg-white border-slate-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)]" : "bg-[#0a0a0f] border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+      }`}
     >
       <div className="h-[2px] w-full" style={{ backgroundColor: lineColor }} />
       <div className="p-5">
@@ -384,18 +394,23 @@ function FeatureEngineCard({
             <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isLight ? "bg-slate-100" : "bg-white/5"}`}>
               <Icon className="w-5 h-5" style={{ color: lineColor }} />
             </div>
-            <h3 className={`font-bold font-['Syne'] text-[15px] ${isLight ? "text-slate-800" : "text-white"}`}>{title}</h3>
+            <div>
+              <h3 className={`font-bold font-['Syne'] text-[15px] ${isLight ? "text-slate-800" : "text-white"}`}>{title}</h3>
+              {proofRef && (
+                <span className={`text-[9px] font-mono ${isLight ? "text-slate-400" : "text-white/25"}`}>{proofRef}</span>
+              )}
+            </div>
           </div>
-          {score !== null && (
-            <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold font-mono ${scoreBg} text-white shadow-sm`}>
-              {score}
+          <div className="flex items-center gap-2">
+            {score !== null && (
+              <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold font-mono ${scoreBg} text-white ${scoreGlow}`}>
+                {score}
+              </span>
+            )}
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${evidenceColors[evidenceTier]}`}>
+              T{evidenceTier} {evidenceLabels[evidenceTier]}
             </span>
-          )}
-          {codeRef && (
-            <span className={`text-[10px] font-mono ${isLight ? "text-slate-400" : "text-white/25"}`}>
-              {codeRef}
-            </span>
-          )}
+          </div>
         </div>
 
         <p className={`text-xs leading-relaxed mb-4 ${isLight ? "text-slate-600" : "text-white/50"}`}>
@@ -403,8 +418,8 @@ function FeatureEngineCard({
         </p>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className={`rounded-lg border p-2.5 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/[0.03] border-white/5"}`}>
-            <div className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${isLight ? "text-slate-400" : "text-white/25"}`}>Expected</div>
+          <div className={`rounded-lg border p-2.5 ${isLight ? "bg-emerald-50 border-emerald-200" : "bg-emerald-500/[0.05] border-emerald-500/15"}`}>
+            <div className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${isLight ? "text-emerald-700" : "text-emerald-400"}`}>Expected</div>
             <p className={`text-[11px] leading-relaxed ${isLight ? "text-slate-700" : "text-white/70"}`}>{expected}</p>
           </div>
           <div className={`rounded-lg border p-2.5 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/[0.03] border-white/5"}`}>
@@ -431,7 +446,7 @@ function FeatureEngineCard({
               className={`flex items-center gap-1.5 text-[11px] font-medium mt-3 w-full ${isLight ? "text-slate-500 hover:text-slate-700" : "text-white/35 hover:text-white/70"} transition-colors`}
             >
               {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              {expanded ? 'Hide Details' : 'Show Raw Data'}
+              {expanded ? 'Hide Proof Data' : 'View Proof Data'}
             </button>
             {expanded && (
               <div className={`mt-2 rounded-lg border p-3 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/[0.02] border-white/5"}`}>
@@ -498,7 +513,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Maps cross-language data flows to ensure taint cannot bypass language boundaries undetected by single-language analyzers.",
     expected: "Every cross-language boundary verified with zero blind spots",
     dataKey: "crossLanguageTaint",
-    scoreExtractor: (scan: ScanDetail) => (scan && Object.values(scan).some(v => v && typeof v === 'object')) ? 95 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const s = scan.vibeTaint?.dfgNodesConstructed ?? 0; const b = scan.crossLanguageTaint?.stats?.totalBoundaries ?? 0; const p = scan.babelEngine?.polyglotScore ?? 0; return Math.min(Math.round((Math.min(s/500,1)*40 + Math.min(b/50,1)*30 + Math.min(p/100,1)*30)), 100); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus((scan && Object.values(scan).some(v => v && typeof v === 'object')) ? 95 : 0, !!scan),
     detailsExtractor: () => [],
     actionItems: () => null,
@@ -512,7 +527,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Intra-language taint analysis tracking sensitive data from source to sink within a single runtime.",
     expected: "All taint paths traced end-to-end with full DFG coverage",
     dataKey: "vibeTaint",
-    scoreExtractor: (scan: ScanDetail) => scan.vibeTaint?.dfgNodesConstructed > 0 ? 90 : scan.vibeTaint ? 60 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const t = scan.vibeTaint?.taintPathsDetected ?? 0; const san = scan.vibeTaint?.sanitizedPaths ?? 0; const nodes = scan.vibeTaint?.dfgNodesConstructed ?? 0; const score = nodes > 0 ? Math.min(50 + Math.min(san/Math.max(t,1),1)*50, 100) : scan.vibeTaint ? 30 : 0; return score; },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.vibeTaint?.dfgNodesConstructed > 0 ? 90 : scan.vibeTaint ? 60 : 0, !!scan.vibeTaint),
     detailsExtractor: (scan: ScanDetail) => scan.vibeTaint ? [
       { label: "DFG Nodes", value: scan.vibeTaint.dfgNodesConstructed?.toLocaleString() ?? 0 },
@@ -533,7 +548,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Detects data flows that cross language boundaries, preventing undetected taint leaks between frontend, backend, and infrastructure.",
     expected: "All cross-boundary taint chains traced and sanitized",
     dataKey: "crossLanguageTaint",
-    scoreExtractor: (scan: ScanDetail) => scan.crossLanguageTaint?.findings?.length ?? 0 > 0 ? 85 : scan.crossLanguageTaint ? 70 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const total = scan.crossLanguageTaint?.stats?.totalBoundaries ?? 0; const san = scan.crossLanguageTaint?.stats?.sanitizedPaths ?? 0; const active = scan.crossLanguageTaint?.stats?.activeTaintPaths ?? 0; const coverage = total > 0 ? (san/total)*100 : scan.crossLanguageTaint ? 60 : 0; return Math.round(Math.min(100 - active*3, coverage)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.crossLanguageTaint?.findings?.length ?? 0 > 0 ? 85 : scan.crossLanguageTaint ? 70 : 0, !!scan.crossLanguageTaint),
     detailsExtractor: (scan: ScanDetail) => scan.crossLanguageTaint ? [
       { label: "Total Boundaries", value: scan.crossLanguageTaint.stats?.totalBoundaries ?? 0 },
@@ -555,7 +570,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Measures information leakage through statistical entropy analysis to detect secrets, keys, and sensitive data exfiltration.",
     expected: "Zero entropy leaks across all output channels",
     dataKey: "thermodynamicEntropy",
-    scoreExtractor: (scan: ScanDetail) => scan.thermodynamicEntropy?.entropyLeaks > 0 ? 88 : scan.thermodynamicEntropy ? 75 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const leaks = scan.thermodynamicEntropy?.entropyLeaks ?? 0; const channels = scan.thermodynamicEntropy?.channelsAnalyzed ?? 0; return Math.max(0, Math.min(100 - leaks*15 + Math.min(channels/10,10), 100)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.thermodynamicEntropy?.entropyLeaks > 0 ? 88 : scan.thermodynamicEntropy ? 75 : 0, !!scan.thermodynamicEntropy),
     detailsExtractor: (scan: ScanDetail) => scan.thermodynamicEntropy ? [
       { label: "Entropy Leaks", value: scan.thermodynamicEntropy.entropyLeaks ?? 0 },
@@ -576,7 +591,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Solves path constraints to find bypass conditions and logic holes that static pattern matching would miss.",
     expected: "All constraint bypasses identified and remediated",
     dataKey: "constraintSolver",
-    scoreExtractor: (scan: ScanDetail) => scan.constraintSolver?.bypasses ? 85 : scan.constraintSolver ? 70 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const bypasses = scan.constraintSolver?.bypasses ?? 0; const solved = scan.constraintSolver?.constraintsSolved ?? 0; return Math.max(0, Math.min(solved*3 - bypasses*10, 100)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.constraintSolver?.bypasses ? 85 : scan.constraintSolver ? 70 : 0, !!scan.constraintSolver),
     detailsExtractor: (scan: ScanDetail) => scan.constraintSolver ? [
       { label: "Bypasses", value: scan.constraintSolver.bypasses ?? 0 },
@@ -597,7 +612,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Creates a deterministic fuzzy hash of the AST to detect obfuscation, code injection, and structural tampering.",
     expected: "Every file fingerprint verified against a clean baseline",
     dataKey: "topologicalAnalysis",
-    scoreExtractor: (scan: ScanDetail) => scan.topologicalAnalysis?.fuzzyHash ? 92 : scan.topologicalAnalysis ? 80 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const hasHash = scan.topologicalAnalysis?.fuzzyHash ? 1 : 0; const ltl = Array.isArray(scan.topologicalAnalysis?.ltlVerifications) ? scan.topologicalAnalysis.ltlVerifications.length : 0; return Math.round(hasHash * 70 + Math.min(ltl * 5, 30)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.topologicalAnalysis?.fuzzyHash ? 92 : scan.topologicalAnalysis ? 80 : 0, !!scan.topologicalAnalysis),
     detailsExtractor: (scan: ScanDetail) => scan.topologicalAnalysis ? [
       { label: "Fuzzy Hash", value: scan.topologicalAnalysis.fuzzyHash ? "Computed" : "Missing" },
@@ -649,7 +664,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Combines multi-source evidence using belief functions to produce mathematically rigorous vulnerability assessments.",
     expected: "Aggregate belief > 0.8 with low conflict coefficient",
     dataKey: "dempsterShafer",
-    scoreExtractor: (scan: ScanDetail) => (scan.dempsterShafer?.aggregate?.overallBelief ?? 0) > 0 ? 90 : scan.dempsterShafer ? 75 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const belief = (scan.dempsterShafer?.aggregate?.overallBelief ?? 0) * 100; return Math.round(belief > 0 ? Math.min(belief + 10, 100) : 0); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus((scan.dempsterShafer?.aggregate?.overallBelief ?? 0) > 0 ? 90 : scan.dempsterShafer ? 75 : 0, !!scan.dempsterShafer),
     detailsExtractor: (scan: ScanDetail) => scan.dempsterShafer ? [
       { label: "Overall Belief", value: `${((scan.dempsterShafer.aggregate?.overallBelief ?? 0) * 100).toFixed(1)}%` },
@@ -671,7 +686,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Cryptographically verifies that the deployed artifact hash matches the source build, preventing silent deployment drift.",
     expected: "Dev and prod manifest hashes are byte-identical",
     dataKey: "deploySafe",
-    scoreExtractor: (scan: ScanDetail) => scan.deploySafe ? 85 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const m = scan.deploySafe?.manifestsScanned ?? 0; const drift = scan.deploySafe?.driftProbability ?? 1; return Math.round(Math.min(m * 15, 100) * (1 - drift)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.deploySafe ? 85 : 0, !!scan.deploySafe),
     detailsExtractor: (scan: ScanDetail) => scan.deploySafe ? [
       { label: "Manifests", value: scan.deploySafe.manifestsScanned ?? 0 },
@@ -730,7 +745,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Analyzes cognitive load across user journeys to identify friction points and usability bottlenecks.",
     expected: "All critical user journeys have cognitive load < 3 steps",
     dataKey: "uxCognitiveFlow",
-    scoreExtractor: (scan: ScanDetail) => (scan.uxCognitiveFlow || scan.cogFlow) ? 80 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const hick = (scan.uxCognitiveFlow || scan.cogFlow)?.hicksLawDecisionTime ?? 2; return Math.max(0, Math.round(100 - (hick - 0.5) * 40)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus((scan.uxCognitiveFlow || scan.cogFlow) ? 80 : 0, !!(scan.uxCognitiveFlow || scan.cogFlow)),
     detailsExtractor: (scan: ScanDetail) => (scan.uxCognitiveFlow || scan.cogFlow) ? [
       { label: "Source", value: scan.uxCognitiveFlow ? "UX Flow" : "CogFlow" },
@@ -749,7 +764,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Detects architectural smells including circular imports, unstable dependencies, and component cohesion violations.",
     expected: "Zero circular imports and instability metric < 0.2",
     dataKey: "archScan",
-    scoreExtractor: (scan: ScanDetail) => scan.archScan ? 85 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const inst = scan.archScan?.instabilityMetric ?? 1; const circ = scan.archScan?.circularImports ?? 0; return Math.max(0, Math.round(100 - inst*200 - circ*20)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.archScan ? 85 : 0, !!scan.archScan),
     detailsExtractor: (scan: ScanDetail) => scan.archScan ? [
       { label: "Instability", value: scan.archScan.instabilityMetric ?? 0 },
@@ -766,7 +781,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Tracks dependency freshness, maintainer activity, and supply-chain decay over time to predict future breakage.",
     expected: "All critical dependencies maintained with zero decay risk",
     dataKey: "timeAwareDeps",
-    scoreExtractor: (scan: ScanDetail) => scan.timeAwareDeps ? 80 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const fresh = scan.timeAwareDeps?.freshnessScore ?? 0; const vulns = scan.timeAwareDeps?.vulnerableCount ?? 0; return Math.max(0, Math.round(fresh - vulns*15)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.timeAwareDeps ? 80 : 0, !!scan.timeAwareDeps),
     detailsExtractor: (scan: ScanDetail) => scan.timeAwareDeps ? [
       { label: "Total Deps", value: scan.timeAwareDeps.totalDeps ?? 0 },
@@ -784,7 +799,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Models regulatory requirements as a constraint graph to verify every data handling path meets compliance obligations.",
     expected: "All data paths satisfy GDPR, PCI-DSS, and HIPAA constraints",
     dataKey: "regGraph",
-    scoreExtractor: (scan: ScanDetail) => scan.regGraph ? 85 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const pci = scan.regGraph?.pciDssCoverage ?? 0; const gdpr = scan.regGraph?.gdprArticle17 ?? 0; return Math.round((pci + gdpr) / 2); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.regGraph ? 85 : 0, !!scan.regGraph),
     detailsExtractor: (scan: ScanDetail) => scan.regGraph ? [
       { label: "PCI-DSS", value: scan.regGraph.pciDssCoverage ?? "N/A" },
@@ -801,7 +816,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Uses symbolic execution to compute exact worst-case cost bounds for every code path, preventing ReDoS and cost bombs.",
     expected: "No catastrophic backtracking paths remain",
     dataKey: "symCost",
-    scoreExtractor: (scan: ScanDetail) => scan.symCost ? 85 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const nodes = scan.symCost?.astNodesAnalyzed ?? 0; const nPlus1 = scan.symCost?.nPlusOnePatterns ?? 0; return Math.min(Math.round(nodes/50 - nPlus1*5), 100); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.symCost ? 85 : 0, !!scan.symCost),
     detailsExtractor: (scan: ScanDetail) => scan.symCost ? [
       { label: "AST Nodes", value: scan.symCost.astNodesAnalyzed?.toLocaleString() ?? 0 },
@@ -818,7 +833,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Formally proves reachability by under-approximating state spaces, guaranteeing that verified paths are truly safe.",
     expected: "All reachable states proven with coverage > 95%",
     dataKey: "underApproximation",
-    scoreExtractor: (scan: ScanDetail) => scan.underApproximation ? 70 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const cov = scan.underApproximation?.coverage ?? 0; return Math.round(cov); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.underApproximation ? 70 : 0, !!scan.underApproximation),
     detailsExtractor: (scan: ScanDetail) => {
       if (!scan.underApproximation) return [];
@@ -858,7 +873,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Enforces strict boundaries on LLM prompts to prevent injection attacks, jailbreaks, and unintended tool access.",
     expected: "Zero jailbreak probability with all boundaries enforced",
     dataKey: "promptTrace",
-    scoreExtractor: (scan: ScanDetail) => scan.promptTrace ? 85 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const boundaries = scan.promptTrace?.llmBoundaries ?? 0; const jailbreak = scan.promptTrace?.jailbreakProbability ?? 1; return Math.round(Math.min(boundaries * 12, 100) * (1 - jailbreak)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.promptTrace ? 85 : 0, !!scan.promptTrace),
     detailsExtractor: (scan: ScanDetail) => scan.promptTrace ? [
       { label: "Boundaries", value: scan.promptTrace.llmBoundaries ?? 0 },
@@ -875,7 +890,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Aggregates multi-agent AI verdicts to reduce individual model bias and hallucination in security assessments.",
     expected: "All findings verified by multiple independent agents",
     dataKey: "aiConsensus",
-    scoreExtractor: (scan: ScanDetail) => (scan.aiConsensus?.length ?? 0) > 0 ? 80 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const total = scan.aiConsensus?.length ?? 0; const verified = scan.aiConsensus?.filter((f: any) => f.aiVerified).length ?? 0; return total > 0 ? Math.round((verified/total)*100) : 0; },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus((scan.aiConsensus?.length ?? 0) > 0 ? 80 : 0, !!scan.aiConsensus),
     detailsExtractor: (scan: ScanDetail) => scan.aiConsensus ? [
       { label: "Findings", value: scan.aiConsensus.length },
@@ -892,7 +907,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Maps revenue-critical code paths and computes Value-at-Risk for each attack surface exposed in the application.",
     expected: "All critical paths have mitigations with quantified risk reduction",
     dataKey: "flowValue",
-    scoreExtractor: (scan: ScanDetail) => scan.flowValue ? 80 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const paths = scan.flowValue?.criticalPaths ?? 0; const webhook = scan.flowValue?.webhookCoverage ?? 0; return Math.max(0, Math.round(webhook - paths*8)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.flowValue ? 80 : 0, !!scan.flowValue),
     detailsExtractor: (scan: ScanDetail) => scan.flowValue ? [
       { label: "Critical Paths", value: scan.flowValue.criticalPaths ?? 0 },
@@ -909,7 +924,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Validates that every claimed feature has a real, reachable code path — eliminating mockups, stubs, and broken integrations.",
     expected: "100% of deployed features have verified live implementations",
     dataKey: "productReality",
-    scoreExtractor: (scan: ScanDetail) => scan.productReality ? 85 : 0,
+    scoreExtractor: (scan: ScanDetail) => scan.productReality?.score ?? 0,
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.productReality ? 85 : 0, !!scan.productReality),
     detailsExtractor: (scan: ScanDetail) => scan.productReality ? [
       { label: "Live", value: scan.productReality.verifiedLiveCount ?? 0 },
@@ -928,7 +943,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Statically computes worst-case time and space complexity for every hot path, preventing scalability surprises in production.",
     expected: "All hot paths bounded by O(n log n) or better",
     dataKey: "bigOProfiler",
-    scoreExtractor: (scan: ScanDetail) => scan.bigOProfiler ? 85 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const complexity = scan.bigOProfiler?.worstCaseTimeComplexity ?? "O(n^2"; const map: Record<string,number> = {"O(1)":100,"O(log n)":90,"O(n)":75,"O(n log n)":60,"O(n^2)":35,"O(n^3)":15}; return map[complexity] ?? 50; },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.bigOProfiler ? 85 : 0, !!scan.bigOProfiler),
     detailsExtractor: (scan: ScanDetail) => scan.bigOProfiler ? [
       { label: "Time", value: scan.bigOProfiler.worstCaseTimeComplexity ?? "N/A" },
@@ -945,7 +960,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Assesses code readiness for Fully Homomorphic Encryption by identifying operations that can execute on encrypted data.",
     expected: "All sensitive operations compatible with FHE schemes",
     dataKey: "fheAnalyzer",
-    scoreExtractor: (scan: ScanDetail) => scan.fheAnalyzer ? 75 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const compat = scan.fheAnalyzer?.fullyHomomorphicCompatible ? 1 : 0; const bottlenecks = scan.fheAnalyzer?.encryptionBottlenecks ?? 10; return Math.round(compat * 100 - bottlenecks * 8); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.fheAnalyzer ? 75 : 0, !!scan.fheAnalyzer),
     detailsExtractor: (scan: ScanDetail) => scan.fheAnalyzer ? [
       { label: "FHE Compatible", value: scan.fheAnalyzer.fullyHomomorphicCompatible ? "Yes" : "No" },
@@ -962,7 +977,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Models spiking neural network behavior to predict cognitive fatigue and drift in AI-assisted code generation over time.",
     expected: "SNN spike rate stable with declining fatigue index",
     dataKey: "neuromorphicDrift",
-    scoreExtractor: (scan: ScanDetail) => scan.neuromorphicDrift ? 70 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const spike = scan.neuromorphicDrift?.snnSpikeRate ?? 0; const fatigue = scan.neuromorphicDrift?.cognitiveFatigueIndex ?? 1; return Math.max(0, Math.round(100 - fatigue*100 - spike*2)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.neuromorphicDrift ? 70 : 0, !!scan.neuromorphicDrift),
     detailsExtractor: (scan: ScanDetail) => scan.neuromorphicDrift ? [
       { label: "SNN Spike Rate", value: scan.neuromorphicDrift.snnSpikeRate ?? 0 },
@@ -980,7 +995,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Evaluates cryptographic primitives against quantum attack vectors to ensure the codebase survives Q-Day.",
     expected: "Zero vulnerable legacy primitives with >99% Q-Day survival",
     dataKey: "postQuantumReadiness",
-    scoreExtractor: (scan: ScanDetail) => scan.postQuantumReadiness ? 80 : 0,
+    scoreExtractor: (scan: ScanDetail) => scan.postQuantumReadiness?.qDaySurvivalProbability ?? 0,
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.postQuantumReadiness ? 80 : 0, !!scan.postQuantumReadiness),
     detailsExtractor: (scan: ScanDetail) => scan.postQuantumReadiness ? [
       { label: "Q-Day Survival", value: scan.postQuantumReadiness.qDaySurvivalProbability ?? 0 },
@@ -997,7 +1012,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Evaluates data archival strategies using synthetic DNA encoding for 10,000-year data preservation and integrity verification.",
     expected: "All critical data encoded with base-pair redundancy checks",
     dataKey: "dnaStorageCompiler",
-    scoreExtractor: (scan: ScanDetail) => scan.dnaStorageCompiler ? 75 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const nucleotides = scan.dnaStorageCompiler?.atcgNucleotidesRequired ?? 0; const readiness = scan.dnaStorageCompiler?.archivalReadiness === "Production" ? 100 : scan.dnaStorageCompiler?.archivalReadiness === "Ready" ? 60 : 0; return Math.round((Math.min(nucleotides/10000, 1) * 50 + readiness/2)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.dnaStorageCompiler ? 75 : 0, !!scan.dnaStorageCompiler),
     detailsExtractor: (scan: ScanDetail) => scan.dnaStorageCompiler ? [
       { label: "ATCG Nucleotides", value: scan.dnaStorageCompiler.atcgNucleotidesRequired?.toLocaleString() ?? 0 },
@@ -1014,7 +1029,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Models Byzantine fault tolerance to ensure the consensus layer can withstand malicious or faulty nodes.",
     expected: "Consensus survivability limit > 3f with verified graph invariants",
     dataKey: "bftConsensusGraph",
-    scoreExtractor: (scan: ScanDetail) => scan.bftConsensusGraph ? 80 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const limit = scan.bftConsensusGraph?.bftSurvivabilityLimit ?? 0; return Math.min(limit, 100); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.bftConsensusGraph ? 80 : 0, !!scan.bftConsensusGraph),
     detailsExtractor: (scan: ScanDetail) => scan.bftConsensusGraph ? [
       { label: "Graph Edges", value: scan.bftConsensusGraph.graphEdgesCalculated ?? 0 },
@@ -1031,7 +1046,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Computes light-speed latency bounds for interplanetary-scale distributed systems to design truly global infrastructure.",
     expected: "Packet resilience verified against light-speed delay limits",
     dataKey: "kardashevLatency",
-    scoreExtractor: (scan: ScanDetail) => scan.kardashevLatency ? 75 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const resilience = scan.kardashevLatency?.resilienceScore ?? 0; return Math.round(resilience); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.kardashevLatency ? 75 : 0, !!scan.kardashevLatency),
     detailsExtractor: (scan: ScanDetail) => scan.kardashevLatency ? [
       { label: "Dyson Threshold", value: scan.kardashevLatency.dysonSwarmLatencyThreshold ?? 0 },
@@ -1048,7 +1063,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Proves alignment stability of autonomous AI systems using policy gradient reward bounds to prevent emergent misalignment.",
     expected: "Alignment stability > 0.99 with near-zero containment breach probability",
     dataKey: "agiAlignment",
-    scoreExtractor: (scan: ScanDetail) => scan.agiAlignment ? 70 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const score = (scan.agiAlignment?.alignmentStabilityScore ?? 0) * 100; return Math.round(Math.min(score, 100)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.agiAlignment ? 70 : 0, !!scan.agiAlignment),
     detailsExtractor: (scan: ScanDetail) => scan.agiAlignment ? [
       { label: "Alignment Score", value: scan.agiAlignment.alignmentStabilityScore ?? 0 },
@@ -1065,7 +1080,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Compiles AST to signed tensor payloads for secure AWS Nitro Enclave execution with hardware attestation.",
     expected: "All compute-intensive paths verified with enclave attestation",
     dataKey: "tensorPayloadSignature",
-    scoreExtractor: (scan: ScanDetail) => scan.tensorPayloadSignature ? 90 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const enclave = scan.tensorPayloadSignature?.enclaveJobId ? 1 : 0; const gpu = scan.tensorPayloadSignature?.gpuClusterRouted ? 1 : 0; return Math.round((enclave * 60 + gpu * 40)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.tensorPayloadSignature ? 90 : 0, !!scan.tensorPayloadSignature),
     detailsExtractor: (scan: ScanDetail) => scan.tensorPayloadSignature ? [
       { label: "Enclave Job", value: scan.tensorPayloadSignature.enclaveJobId ?? "N/A" },
@@ -1082,7 +1097,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Generates zero-knowledge proofs for compliance verification without exposing sensitive source code or secrets.",
     expected: "Proof status VALID with verifiable circuit constraints",
     dataKey: "zkSnarkProof",
-    scoreExtractor: (scan: ScanDetail) => scan.zkSnarkProof?.status?.includes("VALID") ? 95 : scan.zkSnarkProof ? 60 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const valid = scan.zkSnarkProof?.status?.includes("VALID") ? 1 : 0; const gates = scan.zkSnarkProof?.circuitSize ?? 0; return Math.round(valid * 90 + Math.min(gates/1000, 1) * 10); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.zkSnarkProof?.status?.includes("VALID") ? 95 : scan.zkSnarkProof ? 60 : 0, !!scan.zkSnarkProof),
     detailsExtractor: (scan: ScanDetail) => scan.zkSnarkProof ? [
       { label: "Circuit Size", value: `${((scan.zkSnarkProof.circuitSize as number) ?? 0).toLocaleString()} gates` },
@@ -1103,7 +1118,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Quantum-inspired bounded model checking that simulates parallel universes of execution to find corner-case vulnerabilities.",
     expected: "All state-space corners explored with quantum collapse verification",
     dataKey: "multiVerseDse",
-    scoreExtractor: (scan: ScanDetail) => scan.multiVerseDse ? 80 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const dead = scan.multiVerseDse?.deadCodePaths ?? 100; return Math.max(0, Math.round(100 - dead*5)); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.multiVerseDse ? 80 : 0, !!scan.multiVerseDse),
     detailsExtractor: (scan: ScanDetail) => scan.multiVerseDse ? [
       { label: "Universes", value: (scan.multiVerseDse.parallelUniversesSimulated ?? 0).toLocaleString() },
@@ -1120,7 +1135,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Polyglot cross-boundary taint stitching that builds a deterministic IR topology hash of the entire call graph.",
     expected: "Every cross-language seam verified with deterministic IR topology hash",
     dataKey: "babelEngine",
-    scoreExtractor: (scan: ScanDetail) => scan.babelEngine ? 85 : 0,
+    scoreExtractor: (scan: ScanDetail) => { const score = scan.babelEngine?.polyglotScore ?? 0; return Math.round(score); },
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.babelEngine ? 85 : 0, !!scan.babelEngine),
     detailsExtractor: (scan: ScanDetail) => scan.babelEngine ? [
       { label: "Polyglot Score", value: `${scan.babelEngine.polyglotScore ?? 0}%` },

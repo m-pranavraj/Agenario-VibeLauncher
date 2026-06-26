@@ -403,7 +403,7 @@ export default function Home() {
               </motion.div>
 
               <motion.h1 variants={FADE_UP} className={`text-3xl sm:text-5xl lg:text-6xl font-heading font-extrabold leading-[1.05] tracking-tight break-words ${t.h1}`}>
-                A supreme blend of<br />
+                Supreme Blend of<br />
                 <span className={isLight
                   ? "text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500"
                   : "text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40"
@@ -413,7 +413,7 @@ export default function Home() {
               </motion.h1>
 
               <motion.p variants={FADE_UP} className={`text-lg leading-relaxed max-w-lg ${t.body}`}>
-                Agenario is a supreme blend of deep tech and formal verification compilers. It is a production-grade code review engine built for enterprise, iOS, Android, and web scale. It doesn't guess—it proves.
+                Review your vibecoded codebase like never before. A supreme blend of deep tech and formal verification compilers — a production-grade code review engine built for enterprise, iOS, Android, and web scale. It doesn't guess—it proves.
               </motion.p>
 
               <motion.div variants={FADE_UP} className={`inline-flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${isLight ? "bg-fuchsia-50 border border-fuchsia-200/60 text-fuchsia-700" : "bg-fuchsia-500/[0.08] border border-fuchsia-500/20 text-fuchsia-400"}`}>
@@ -428,7 +428,7 @@ export default function Home() {
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                   <CheckCircle className="w-4 h-4 text-fuchsia-400 shrink-0" />
-                  <span className={`text-sm ${t.body}`}>Deep Tech Engines → <strong className={t.h2}>Mathematical Proofs</strong> → Real Grounded Truth</span>
+                  <span className={`text-sm ${t.body}`}>40 Deep Tech Engines → <strong className={t.h2}>Mathematical Proofs</strong> → Real Grounded Truth → Vibecoded Codebase Review</span>
                 </div>
               </motion.div>
 

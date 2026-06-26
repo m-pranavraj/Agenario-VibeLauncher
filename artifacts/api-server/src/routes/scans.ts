@@ -1196,19 +1196,21 @@ async function runAnalysisPipeline(opts: {
        kardashevLatency: kardashevLatency ?? null,
        agiAlignment: agiAlignment ?? null,
        thermodynamicEntropy: thermodynamicEntropy ?? null,
-      framework: framework !== "unknown" ? framework : undefined,
-      vibeTool: vibeTool !== "unknown" ? vibeTool : undefined,
-      businessType: businessType !== "unknown" ? businessType : undefined,
-      completedAt: new Date(),
-    })
-    .where(eq(scansTable.id, scanId))
-    .returning();
+       framework: framework !== "unknown" ? framework : undefined,
+       vibeTool: vibeTool !== "unknown" ? vibeTool : undefined,
+       businessType: businessType !== "unknown" ? businessType : undefined,
+       completedAt: new Date(),
+     })
+     .where(eq(scansTable.id, scanId))
+     .returning();
 
-
-
-  const totalIssues = issueCounts.critical + issueCounts.high + issueCounts.medium + issueCounts.low;
-  emit("complete", `Analysis complete: ${totalIssues} issues found, score: ${finalScore}/100`, 100);
-  emitProgress(scanId, { scanId, phase: "complete", status: "complete", message: "All done", progress: 100 });
+  // Emit final progress events to ensure the frontend reaches 100%
+  emit("finalizing", "Finalizing report and persisting results...", 95);
+   emitProgress(scanId, { scanId, phase: "finalizing", status: "running", message: "Finalizing report...", progress: 95 });
+   
+   const totalIssues = issueCounts.critical + issueCounts.high + issueCounts.medium + issueCounts.low;
+   emit("complete", `Analysis complete: ${totalIssues} issues found, score: ${finalScore}/100`, 100);
+   emitProgress(scanId, { scanId, phase: "complete", status: "complete", message: "All done", progress: 100 });
 
   logger.info({ scanId }, "Analysis pipeline complete");
 }
@@ -1233,6 +1235,9 @@ router.get("/scans/:id/progress", async (req, res): Promise<void> => {
     "X-Accel-Buffering": "no",
   });
 
+  // Send initial comment to establish the SSE connection
+  res.write(`: connected\n\n`);
+
   const emitter = getEmitter(id);
   const onProgress = (event: any) => {
     res.write(`data: ${JSON.stringify(event)}\n\n`);
@@ -1240,12 +1245,18 @@ router.get("/scans/:id/progress", async (req, res): Promise<void> => {
 
   emitter.on("progress", onProgress);
 
+  // Heartbeat to keep connection alive and detect stale progress
+  const heartbeat = setInterval(() => {
+    res.write(`: heartbeat ${Date.now()}\n\n`);
+  }, 5000);
+
   // If scan already completed, send a final event
   if (scan.status === "completed" || scan.status === "failed") {
     res.write(`data: ${JSON.stringify({ scanId: id, phase: "complete", status: scan.status, message: "Scan finished", progress: 100, timestamp: Date.now() })}\n\n`);
   }
 
   req.on("close", () => {
+    clearInterval(heartbeat);
     emitter.off("progress", onProgress);
     removeEmitter(id);
   });
