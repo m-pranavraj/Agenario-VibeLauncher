@@ -2,7 +2,7 @@ import { logger } from "./logger.js";
 import type { CSG } from "./csg-builder.js";
 import { runRegGraph, type RegGraphReport } from "./reg-graph.js";
 import { runSymCost, type PerformanceReport } from "./sym-cost.js";
-import { analyzeReachableStates, applySoundUnderApproximation, type UnderApproximationResult } from "./under-approximation.js";
+import { applySoundUnderApproximation, type UnderApproximationResult } from "./under-approximation.js";
 import { computeAbstractInterpretationConfidence, type AIContextMetrics } from "./probabilistic-confidence.js";
 import { runPromptTrace, type PromptTraceReport } from "./prompt-trace.js";
 import { runAIVerifier, type VerifiedFinding } from "./ai-verifier.js";
@@ -69,8 +69,8 @@ export async function runDeepTechAnalysis(
     }),
     Promise.resolve().then(() => {
       logger.info("Pillar 3: Sound Under-Approximation — Abstract Interpretation starting...");
-      const result = analyzeReachableStates(keyFiles, csg);
-      logger.info(`Pillar 3: ${result.totalPaths} paths analyzed, ${result.unreachablePaths} unreachable`);
+      const result = applySoundUnderApproximation(keyFiles, csg);
+      logger.info(`Pillar 3: ${result.totalPaths} paths analyzed, ${result.unreachablePaths.length} unreachable`);
       return result;
     }),
     Promise.resolve().then(() => {
