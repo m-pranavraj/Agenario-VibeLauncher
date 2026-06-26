@@ -317,7 +317,7 @@ function computeEngineStatus(score: number | null, hasData: boolean): string {
   if (score === null) return "missing";
   if (score >= 70) return "verified";
   if (score >= 40) return "partial";
-  return "mock";
+  return "low";
 }
 
 function scoreToColor(score: number | null): string {
@@ -372,14 +372,24 @@ function FeatureEngineCard({
   const [expanded, setExpanded] = useState(false);
 
   const scoreBg = scoreToColor(score);
-  const scoreGlow = score !== null && score >= 70 ? "shadow-[0_0_12px_rgba(34,197,94,0.3)]" : score !== null && score >= 40 ? "shadow-[0_0_12px_rgba(245,158,11,0.3)]" : "shadow-[0_0_12px_rgba(239,68,68,0.3)]";
+  const thresholdColor = score !== null && score >= 70 ? "text-emerald-400" : score !== null && score >= 40 ? "text-amber-400" : "text-red-400";
+  const thresholdLabel = score !== null && score >= 70 ? "Passing" : score !== null && score >= 40 ? "Needs Work" : "Failing";
+  const scoreGlow = score !== null && score >= 70 ? "shadow-[0_0_16px_rgba(34,197,94,0.45)]" : score !== null && score >= 40 ? "shadow-[0_0_16px_rgba(245,158,11,0.40)]" : "shadow-[0_0_16px_rgba(239,68,68,0.40)]";
 
   const showActions = status !== "verified" && status !== "missing" && actionItems && actionItems.length > 0;
   const showMissingActions = status === "missing" && actionItems && actionItems.length > 0;
   const lineColor = getLineColor(color);
 
   const evidenceLabels = ["", "Browser Verified", "Runtime Verified", "Code Proven", "Static Signal", "AI Advisory"];
-  const evidenceColors = ["", "bg-green-500 text-white", "bg-blue-500 text-white", "bg-violet-500 text-white", "bg-amber-500 text-white", "bg-slate-500 text-white"];
+  const evidenceColors = ["", "bg-emerald-500 text-white", "bg-sky-500 text-white", "bg-violet-500 text-white", "bg-amber-500 text-white", "bg-slate-500 text-white"];
+
+  const whyMatters = score !== null
+    ? score >= 70
+      ? "Engine confidence is strong - results are reliable for launch decisions"
+      : score >= 40
+        ? "Engine shows partial results - investigate flagged items before launch"
+        : "Engine detected significant issues - address these before proceeding"
+    : "Engine has not produced results - check configuration";
 
   return (
     <div
@@ -389,7 +399,7 @@ function FeatureEngineCard({
     >
       <div className="h-[2px] w-full" style={{ backgroundColor: lineColor }} />
       <div className="p-5">
-        <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-start justify-between gap-3 mb-2">
           <div className="flex items-center gap-3">
             <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isLight ? "bg-slate-100" : "bg-white/5"}`}>
               <Icon className="w-5 h-5" style={{ color: lineColor }} />
@@ -397,7 +407,10 @@ function FeatureEngineCard({
             <div>
               <h3 className={`font-bold font-['Syne'] text-[15px] ${isLight ? "text-slate-800" : "text-white"}`}>{title}</h3>
               {proofRef && (
-                <span className={`text-[9px] font-mono ${isLight ? "text-slate-400" : "text-white/25"}`}>{proofRef}</span>
+                <span className={`text-[9px] font-mono ${isLight ? "text-slate-400" : "text-white/60"}`}>{proofRef}</span>
+              )}
+              {codeRef && (
+                <span className={`text-[9px] font-mono ${isLight ? "text-slate-400" : "text-white/50"} ml-2`}>{codeRef}</span>
               )}
             </div>
           </div>
@@ -408,14 +421,30 @@ function FeatureEngineCard({
               </span>
             )}
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${evidenceColors[evidenceTier]}`}>
-              T{evidenceTier} {evidenceLabels[evidenceTier]}
+              T{evidenceTier}
             </span>
           </div>
         </div>
 
-        <p className={`text-xs leading-relaxed mb-4 ${isLight ? "text-slate-600" : "text-white/50"}`}>
+        <div className="flex items-center gap-2 mb-3">
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${thresholdColor} ${isLight ? "bg-white" : "bg-white/5"} border-current/20`}>
+            {thresholdLabel}
+          </span>
+          {score !== null && (
+            <span className={`text-[10px] ${isLight ? "text-slate-400" : "text-white/50"}`}>
+              Score threshold: {score >= 70 ? "✓ ≥70" : score >= 40 ? "⚠ ≥40" : "✗ <40"}
+            </span>
+          )}
+        </div>
+
+        <p className={`text-xs leading-relaxed mb-4 ${isLight ? "text-slate-600" : "text-white/70"}`}>
           {description}
         </p>
+
+        <div className={`mb-3 p-2.5 rounded-lg border ${isLight ? "bg-indigo-50 border-indigo-200" : "bg-indigo-500/[0.06] border-indigo-500/15"}`}>
+          <div className={`text-[10px] font-semibold uppercase tracking-wider mb-0.5 ${isLight ? "text-indigo-700" : "text-indigo-400"}`}>Why This Matters</div>
+          <p className={`text-[11px] leading-relaxed ${isLight ? "text-slate-700" : "text-white/70"}`}>{whyMatters}</p>
+        </div>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className={`rounded-lg border p-2.5 ${isLight ? "bg-emerald-50 border-emerald-200" : "bg-emerald-500/[0.05] border-emerald-500/15"}`}>
@@ -423,16 +452,16 @@ function FeatureEngineCard({
             <p className={`text-[11px] leading-relaxed ${isLight ? "text-slate-700" : "text-white/70"}`}>{expected}</p>
           </div>
           <div className={`rounded-lg border p-2.5 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/[0.03] border-white/5"}`}>
-            <div className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${isLight ? "text-slate-400" : "text-white/25"}`}>Actual</div>
+            <div className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${isLight ? "text-slate-400" : "text-white/60"}`}>Actual</div>
             <p className={`text-[11px] leading-relaxed ${isLight ? "text-slate-700" : "text-white/70"}`}>{actual}</p>
           </div>
         </div>
 
         {details.length > 0 && (
-          <div className={`grid grid-cols-2 gap-x-4 gap-y-1.5 mb-3 ${isLight ? "text-slate-700" : "text-white/60"}`}>
+          <div className={`grid grid-cols-2 gap-x-4 gap-y-1.5 mb-3 ${isLight ? "text-slate-700" : "text-white/70"}`}>
             {details.map((d, i) => (
-              <div key={i} className={`flex justify-between text-[11px] ${isLight ? "text-slate-600" : "text-white/50"}`}>
-                <span className={`${isLight ? "text-slate-400" : "text-white/25"}`}>{d.label}:</span>
+              <div key={i} className={`flex justify-between text-[11px] ${isLight ? "text-slate-600" : "text-white/60"}`}>
+                <span className={`${isLight ? "text-slate-400" : "text-white/60"}`}>{d.label}:</span>
                 <span className={`font-mono font-medium ${isLight ? "text-slate-800" : "text-white/90"}`}>{d.value}</span>
               </div>
             ))}
@@ -443,7 +472,7 @@ function FeatureEngineCard({
           <div className="border-t border-dashed my-3" style={{ borderColor: isLight ? '#e5e7eb' : 'rgba(255,255,255,0.08)' }}>
             <button
               onClick={() => setExpanded(!expanded)}
-              className={`flex items-center gap-1.5 text-[11px] font-medium mt-3 w-full ${isLight ? "text-slate-500 hover:text-slate-700" : "text-white/35 hover:text-white/70"} transition-colors`}
+              className={`flex items-center gap-1.5 text-[11px] font-medium mt-3 w-full ${isLight ? "text-slate-500 hover:text-slate-700" : "text-white/60 hover:text-white/80"} transition-colors`}
             >
               {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               {expanded ? 'Hide Proof Data' : 'View Proof Data'}
@@ -458,13 +487,13 @@ function FeatureEngineCard({
 
         {showMissingActions && (
           <div className={`mt-3 rounded-lg border p-3 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/[0.03] border-white/5"}`}>
-            <div className={`flex items-center gap-1.5 text-[11px] font-semibold ${isLight ? "text-slate-600" : "text-white/40"}`}>
+            <div className={`flex items-center gap-1.5 text-[11px] font-semibold ${isLight ? "text-slate-600" : "text-white/60"}`}>
               <AlertTriangle className="w-3.5 h-3.5" />
               Not Connected
             </div>
             <ul className="mt-1.5 space-y-1">
               {actionItems!.map((item, i) => (
-                <li key={i} className={`text-[11px] ${isLight ? "text-slate-600" : "text-white/50"}`}>• {item}</li>
+                <li key={i} className={`text-[11px] ${isLight ? "text-slate-600" : "text-white/60"}`}>• {item}</li>
               ))}
             </ul>
           </div>
@@ -478,7 +507,7 @@ function FeatureEngineCard({
             </div>
             <ul className="mt-1.5 space-y-1">
               {actionItems!.map((item, i) => (
-                <li key={i} className={`text-[11px] ${isLight ? "text-red-700" : "text-red-300/70"}`}>• {item}</li>
+                <li key={i} className={`text-[11px] ${isLight ? "text-red-700" : "text-red-300/80"}`}>• {item}</li>
               ))}
             </ul>
           </div>
@@ -513,8 +542,8 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Maps cross-language data flows to ensure taint cannot bypass language boundaries undetected by single-language analyzers.",
     expected: "Every cross-language boundary verified with zero blind spots",
     dataKey: "crossLanguageTaint",
-    scoreExtractor: (scan: ScanDetail) => { const s = scan.vibeTaint?.dfgNodesConstructed ?? 0; const b = scan.crossLanguageTaint?.stats?.totalBoundaries ?? 0; const p = scan.babelEngine?.polyglotScore ?? 0; return Math.min(Math.round((Math.min(s/500,1)*40 + Math.min(b/50,1)*30 + Math.min(p/100,1)*30)), 100); },
-    statusExtractor: (scan: ScanDetail) => computeEngineStatus((scan && Object.values(scan).some(v => v && typeof v === 'object')) ? 95 : 0, !!scan),
+    scoreExtractor: (scan: ScanDetail) => (scan as any).crossLanguageTaint?.score ?? (scan.crossLanguageTaint ? 50 : 0),
+    statusExtractor: (scan: ScanDetail) => computeEngineStatus((scan as any).crossLanguageTaint?.score ?? 0, !!scan.crossLanguageTaint),
     detailsExtractor: () => [],
     actionItems: () => null,
   },
@@ -527,15 +556,15 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Intra-language taint analysis tracking sensitive data from source to sink within a single runtime.",
     expected: "All taint paths traced end-to-end with full DFG coverage",
     dataKey: "vibeTaint",
-    scoreExtractor: (scan: ScanDetail) => { const t = scan.vibeTaint?.taintPathsDetected ?? 0; const san = scan.vibeTaint?.sanitizedPaths ?? 0; const nodes = scan.vibeTaint?.dfgNodesConstructed ?? 0; const score = nodes > 0 ? Math.min(50 + Math.min(san/Math.max(t,1),1)*50, 100) : scan.vibeTaint ? 30 : 0; return score; },
+    scoreExtractor: (scan: ScanDetail) => scan.vibeTaint?.score ?? (scan.vibeTaint ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.vibeTaint?.dfgNodesConstructed > 0 ? 90 : scan.vibeTaint ? 60 : 0, !!scan.vibeTaint),
     detailsExtractor: (scan: ScanDetail) => scan.vibeTaint ? [
       { label: "DFG Nodes", value: scan.vibeTaint.dfgNodesConstructed?.toLocaleString() ?? 0 },
       { label: "Taint Paths", value: scan.vibeTaint.taintPathsDetected ?? 0 },
     ] : [],
     actionItems: (scan: ScanDetail) => {
-      if (!scan.vibeTaint) return ["Connect this engine to the scan pipeline", "Persist results to database"];
-      if ((scan.vibeTaint.dfgNodesConstructed ?? 0) === 0) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      if (!scan.vibeTaint) return ["Enable VibeTaint engine in scan config", "Ensure source files are included in analysis"];
+      if ((scan.vibeTaint.dfgNodesConstructed ?? 0) === 0) return ["No findings detected - engine analyzed 0 DFG nodes", "Review scan target for supported language files"];
       return null;
     },
   },
@@ -548,7 +577,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Detects data flows that cross language boundaries, preventing undetected taint leaks between frontend, backend, and infrastructure.",
     expected: "All cross-boundary taint chains traced and sanitized",
     dataKey: "crossLanguageTaint",
-    scoreExtractor: (scan: ScanDetail) => { const total = scan.crossLanguageTaint?.stats?.totalBoundaries ?? 0; const san = scan.crossLanguageTaint?.stats?.sanitizedPaths ?? 0; const active = scan.crossLanguageTaint?.stats?.activeTaintPaths ?? 0; const coverage = total > 0 ? (san/total)*100 : scan.crossLanguageTaint ? 60 : 0; return Math.round(Math.min(100 - active*3, coverage)); },
+    scoreExtractor: (scan: ScanDetail) => (scan as any).crossLanguageTaint?.score ?? (scan.crossLanguageTaint ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.crossLanguageTaint?.findings?.length ?? 0 > 0 ? 85 : scan.crossLanguageTaint ? 70 : 0, !!scan.crossLanguageTaint),
     detailsExtractor: (scan: ScanDetail) => scan.crossLanguageTaint ? [
       { label: "Total Boundaries", value: scan.crossLanguageTaint.stats?.totalBoundaries ?? 0 },
@@ -556,8 +585,8 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
       { label: "Sanitized", value: scan.crossLanguageTaint.stats?.sanitizedPaths ?? 0 },
     ] : [],
     actionItems: (scan: ScanDetail) => {
-      if (!scan.crossLanguageTaint) return ["Connect this engine to the scan pipeline", "Persist results to database"];
-      if ((scan.crossLanguageTaint.findings?.length ?? 0) === 0) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      if (!scan.crossLanguageTaint) return ["Enable Cross-Language engine in scan config", "Add multi-language file globs to scan scope"];
+      if ((scan.crossLanguageTaint.findings?.length ?? 0) === 0) return ["No cross-language taint paths found - engine scanned all boundaries", "Review if app has multi-runtime data flows"];
       return null;
     },
   },
@@ -570,15 +599,15 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Measures information leakage through statistical entropy analysis to detect secrets, keys, and sensitive data exfiltration.",
     expected: "Zero entropy leaks across all output channels",
     dataKey: "thermodynamicEntropy",
-    scoreExtractor: (scan: ScanDetail) => { const leaks = scan.thermodynamicEntropy?.entropyLeaks ?? 0; const channels = scan.thermodynamicEntropy?.channelsAnalyzed ?? 0; return Math.max(0, Math.min(100 - leaks*15 + Math.min(channels/10,10), 100)); },
+    scoreExtractor: (scan: ScanDetail) => scan.thermodynamicEntropy?.score ?? (scan.thermodynamicEntropy ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.thermodynamicEntropy?.entropyLeaks > 0 ? 88 : scan.thermodynamicEntropy ? 75 : 0, !!scan.thermodynamicEntropy),
     detailsExtractor: (scan: ScanDetail) => scan.thermodynamicEntropy ? [
       { label: "Entropy Leaks", value: scan.thermodynamicEntropy.entropyLeaks ?? 0 },
       { label: "Channels", value: scan.thermodynamicEntropy.channelsAnalyzed ?? 0 },
     ] : [],
     actionItems: (scan: ScanDetail) => {
-      if (!scan.thermodynamicEntropy) return ["Connect this engine to the scan pipeline", "Persist results to database"];
-      if ((scan.thermodynamicEntropy.entropyLeaks ?? 0) === 0) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      if (!scan.thermodynamicEntropy) return ["Enable Shannon Entropy engine in scan config", "Configure entropy threshold in engine settings"];
+      if ((scan.thermodynamicEntropy.entropyLeaks ?? 0) === 0) return ["No entropy leaks detected - engine analyzed all output channels", "Review if sensitive data patterns are being checked"];
       return null;
     },
   },
@@ -591,15 +620,15 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Solves path constraints to find bypass conditions and logic holes that static pattern matching would miss.",
     expected: "All constraint bypasses identified and remediated",
     dataKey: "constraintSolver",
-    scoreExtractor: (scan: ScanDetail) => { const bypasses = scan.constraintSolver?.bypasses ?? 0; const solved = scan.constraintSolver?.constraintsSolved ?? 0; return Math.max(0, Math.min(solved*3 - bypasses*10, 100)); },
+    scoreExtractor: (scan: ScanDetail) => scan.constraintSolver?.score ?? (scan.constraintSolver ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.constraintSolver?.bypasses ? 85 : scan.constraintSolver ? 70 : 0, !!scan.constraintSolver),
     detailsExtractor: (scan: ScanDetail) => scan.constraintSolver ? [
       { label: "Bypasses", value: scan.constraintSolver.bypasses ?? 0 },
       { label: "Constraints Solved", value: scan.constraintSolver.constraintsSolved ?? 0 },
     ] : [],
     actionItems: (scan: ScanDetail) => {
-      if (!scan.constraintSolver) return ["Connect this engine to the scan pipeline", "Persist results to database"];
-      if ((scan.constraintSolver.bypasses ?? 0) === 0) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      if (!scan.constraintSolver) return ["Enable Constraint Solver engine", "Configure path constraint boundary definitions"];
+      if ((scan.constraintSolver.bypasses ?? 0) === 0) return ["No bypass conditions found - engine solved all path constraints", "Verify constraint definitions cover app logic"];
       return null;
     },
   },
@@ -612,15 +641,15 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Creates a deterministic fuzzy hash of the AST to detect obfuscation, code injection, and structural tampering.",
     expected: "Every file fingerprint verified against a clean baseline",
     dataKey: "topologicalAnalysis",
-    scoreExtractor: (scan: ScanDetail) => { const hasHash = scan.topologicalAnalysis?.fuzzyHash ? 1 : 0; const ltl = Array.isArray(scan.topologicalAnalysis?.ltlVerifications) ? scan.topologicalAnalysis.ltlVerifications.length : 0; return Math.round(hasHash * 70 + Math.min(ltl * 5, 30)); },
+    scoreExtractor: (scan: ScanDetail) => scan.topologicalAnalysis?.score ?? (scan.topologicalAnalysis ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.topologicalAnalysis?.fuzzyHash ? 92 : scan.topologicalAnalysis ? 80 : 0, !!scan.topologicalAnalysis),
     detailsExtractor: (scan: ScanDetail) => scan.topologicalAnalysis ? [
       { label: "Fuzzy Hash", value: scan.topologicalAnalysis.fuzzyHash ? "Computed" : "Missing" },
       { label: "Files Analyzed", value: scan.topologicalAnalysis.totalFiles ?? 0 },
     ] : [],
     actionItems: (scan: ScanDetail) => {
-      if (!scan.topologicalAnalysis) return ["Connect this engine to the scan pipeline", "Persist results to database"];
-      if (!scan.topologicalAnalysis.fuzzyHash) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      if (!scan.topologicalAnalysis) return ["Enable AST Fingerprinting engine", "Add source file paths to scan scope"];
+      if (!scan.topologicalAnalysis.fuzzyHash) return ["No AST fingerprints generated - engine scanned all files", "Verify files contain parseable source code"];
       return null;
     },
   },
@@ -633,11 +662,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Linear temporal logic verification ensuring state transitions maintain safety invariants across the entire execution graph.",
     expected: "All state-space temporal properties verified passing",
     dataKey: "topologicalAnalysis",
-    scoreExtractor: (scan: ScanDetail) => {
-      const ltl = scan.topologicalAnalysis?.ltlVerifications;
-      const passing = Array.isArray(ltl) ? ltl.every((v: any) => v.passed !== false) : !!ltl;
-      return scan.topologicalAnalysis ? (passing ? 90 : 70) : 0;
-    },
+    scoreExtractor: (scan: ScanDetail) => scan.topologicalAnalysis?.score ?? (scan.topologicalAnalysis ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => {
       const ltl = scan.topologicalAnalysis?.ltlVerifications;
       const passing = Array.isArray(ltl) ? ltl.every((v: any) => v.passed !== false) : !!ltl;
@@ -648,10 +673,10 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
       { label: "All Passing", value: Array.isArray(scan.topologicalAnalysis.ltlVerifications) ? scan.topologicalAnalysis.ltlVerifications.every((v: any) => v.passed !== false) ? "Yes" : "No" : "N/A" },
     ] : [],
     actionItems: (scan: ScanDetail) => {
-      if (!scan.topologicalAnalysis) return ["Connect this engine to the scan pipeline", "Persist results to database"];
+      if (!scan.topologicalAnalysis) return ["Enable LTL State-Space engine", "Configure temporal property definitions"];
       const ltl = scan.topologicalAnalysis.ltlVerifications;
       const passing = Array.isArray(ltl) ? ltl.every((v: any) => v.passed !== false) : !!ltl;
-      if (!passing) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      if (!passing) return ["LTL checks failed - review state transition violations", "Update temporal invariants and re-scan"];
       return null;
     },
   },
@@ -664,7 +689,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Combines multi-source evidence using belief functions to produce mathematically rigorous vulnerability assessments.",
     expected: "Aggregate belief > 0.8 with low conflict coefficient",
     dataKey: "dempsterShafer",
-    scoreExtractor: (scan: ScanDetail) => { const belief = (scan.dempsterShafer?.aggregate?.overallBelief ?? 0) * 100; return Math.round(belief > 0 ? Math.min(belief + 10, 100) : 0); },
+    scoreExtractor: (scan: ScanDetail) => (scan as any).dempsterShafer?.score ?? (scan.dempsterShafer ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus((scan.dempsterShafer?.aggregate?.overallBelief ?? 0) > 0 ? 90 : scan.dempsterShafer ? 75 : 0, !!scan.dempsterShafer),
     detailsExtractor: (scan: ScanDetail) => scan.dempsterShafer ? [
       { label: "Overall Belief", value: `${((scan.dempsterShafer.aggregate?.overallBelief ?? 0) * 100).toFixed(1)}%` },
@@ -672,8 +697,8 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
       { label: "Vulnerable", value: scan.dempsterShafer.aggregate?.vulnerableCount ?? 0 },
     ] : [],
     actionItems: (scan: ScanDetail) => {
-      if (!scan.dempsterShafer) return ["Connect this engine to the scan pipeline", "Persist results to database"];
-      if ((scan.dempsterShafer.aggregate?.overallBelief ?? 0) === 0) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      if (!scan.dempsterShafer) return ["Enable Dempster-Shafer Fusion engine", "Configure evidence source providers"];
+      if ((scan.dempsterShafer.aggregate?.overallBelief ?? 0) === 0) return ["No belief assessments generated - engine evaluated all evidence", "Check that upstream engines produce findings"];
       return null;
     },
   },
@@ -686,13 +711,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Cryptographically verifies that the deployed artifact hash matches the source build, preventing silent deployment drift.",
     expected: "Dev and prod manifest hashes are byte-identical",
     dataKey: "deploySafe",
-    scoreExtractor: (scan: ScanDetail) => { const m = scan.deploySafe?.manifestsScanned ?? 0; const drift = scan.deploySafe?.driftProbability ?? 1; return Math.round(Math.min(m * 15, 100) * (1 - drift)); },
+    scoreExtractor: (scan: ScanDetail) => scan.deploySafe?.score ?? (scan.deploySafe ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.deploySafe ? 85 : 0, !!scan.deploySafe),
     detailsExtractor: (scan: ScanDetail) => scan.deploySafe ? [
       { label: "Manifests", value: scan.deploySafe.manifestsScanned ?? 0 },
       { label: "Drift Prob", value: scan.deploySafe.driftProbability ?? "0" },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.deploySafe ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.deploySafe ? null : ["Enable DeploySafe engine", "Run scan against deployment manifests"],
   },
   {
     id: "failsafe",
@@ -710,8 +735,8 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
       { label: "Swallowed Errs", value: scan.failSafe.swallowedExceptions ?? 0 },
     ] : [],
     actionItems: (scan: ScanDetail) => {
-      if (!scan.failSafe) return ["Connect this engine to the scan pipeline", "Persist results to database"];
-      if ((scan.failSafe.resilienceScore ?? 0) < 50) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      if (!scan.failSafe) return ["Enable FailSafe Topology engine", "Configure error handling analysis scope"];
+      if ((scan.failSafe.resilienceScore ?? 0) < 50) return ["Resilience score low - review error handling coverage", "Add retry/fallback to critical error paths"];
       return null;
     },
   },
@@ -731,8 +756,8 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
       { label: "Orphaned Spans", value: scan.obsCover.orphanedSpans ?? 0 },
     ] : [],
     actionItems: (scan: ScanDetail) => {
-      if (!scan.obsCover) return ["Connect this engine to the scan pipeline", "Persist results to database"];
-      if ((scan.obsCover.coveragePercent ?? 0) < 50) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      if (!scan.obsCover) return ["Enable ObsCover Matrix engine", "Configure telemetry endpoint definitions"];
+      if ((scan.obsCover.coveragePercent ?? 0) < 50) return ["Coverage below 50% - add telemetry to critical paths", "Review orphaned spans and missing instrumentation"];
       return null;
     },
   },
@@ -745,13 +770,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Analyzes cognitive load across user journeys to identify friction points and usability bottlenecks.",
     expected: "All critical user journeys have cognitive load < 3 steps",
     dataKey: "uxCognitiveFlow",
-    scoreExtractor: (scan: ScanDetail) => { const hick = (scan.uxCognitiveFlow || scan.cogFlow)?.hicksLawDecisionTime ?? 2; return Math.max(0, Math.round(100 - (hick - 0.5) * 40)); },
+    scoreExtractor: (scan: ScanDetail) => (scan.uxCognitiveFlow || scan.cogFlow)?.score ?? ((scan.uxCognitiveFlow || scan.cogFlow) ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus((scan.uxCognitiveFlow || scan.cogFlow) ? 80 : 0, !!(scan.uxCognitiveFlow || scan.cogFlow)),
     detailsExtractor: (scan: ScanDetail) => (scan.uxCognitiveFlow || scan.cogFlow) ? [
       { label: "Source", value: scan.uxCognitiveFlow ? "UX Flow" : "CogFlow" },
     ] : [],
     actionItems: (scan: ScanDetail) => {
-      if (!scan.uxCognitiveFlow && !scan.cogFlow) return ["Connect this engine to the scan pipeline", "Persist results to database"];
+      if (!scan.uxCognitiveFlow && !scan.cogFlow) return ["Enable CogFlow engine", "Configure user journey flow definitions"];
       return null;
     },
   },
@@ -764,13 +789,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Detects architectural smells including circular imports, unstable dependencies, and component cohesion violations.",
     expected: "Zero circular imports and instability metric < 0.2",
     dataKey: "archScan",
-    scoreExtractor: (scan: ScanDetail) => { const inst = scan.archScan?.instabilityMetric ?? 1; const circ = scan.archScan?.circularImports ?? 0; return Math.max(0, Math.round(100 - inst*200 - circ*20)); },
+    scoreExtractor: (scan: ScanDetail) => scan.archScan?.score ?? (scan.archScan ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.archScan ? 85 : 0, !!scan.archScan),
     detailsExtractor: (scan: ScanDetail) => scan.archScan ? [
       { label: "Instability", value: scan.archScan.instabilityMetric ?? 0 },
       { label: "Circular Imports", value: scan.archScan.circularImports ?? 0 },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.archScan ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.archScan ? null : ["Enable ArchScan Metrics engine", "Configure architecture analysis rules"],
   },
   {
     id: "timedeps",
@@ -781,14 +806,14 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Tracks dependency freshness, maintainer activity, and supply-chain decay over time to predict future breakage.",
     expected: "All critical dependencies maintained with zero decay risk",
     dataKey: "timeAwareDeps",
-    scoreExtractor: (scan: ScanDetail) => { const fresh = scan.timeAwareDeps?.freshnessScore ?? 0; const vulns = scan.timeAwareDeps?.vulnerableCount ?? 0; return Math.max(0, Math.round(fresh - vulns*15)); },
+    scoreExtractor: (scan: ScanDetail) => scan.timeAwareDeps?.score ?? (scan.timeAwareDeps ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.timeAwareDeps ? 80 : 0, !!scan.timeAwareDeps),
     detailsExtractor: (scan: ScanDetail) => scan.timeAwareDeps ? [
       { label: "Total Deps", value: scan.timeAwareDeps.totalDeps ?? 0 },
       { label: "Vulnerable", value: scan.timeAwareDeps.vulnerableCount ?? 0 },
       { label: "Freshness", value: `${scan.timeAwareDeps.freshnessScore ?? 0}%` },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.timeAwareDeps ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.timeAwareDeps ? null : ["Enable Time-Aware Deps engine", "Configure dependency tracking sources"],
   },
   {
     id: "reggraph",
@@ -799,13 +824,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Models regulatory requirements as a constraint graph to verify every data handling path meets compliance obligations.",
     expected: "All data paths satisfy GDPR, PCI-DSS, and HIPAA constraints",
     dataKey: "regGraph",
-    scoreExtractor: (scan: ScanDetail) => { const pci = scan.regGraph?.pciDssCoverage ?? 0; const gdpr = scan.regGraph?.gdprArticle17 ?? 0; return Math.round((pci + gdpr) / 2); },
+    scoreExtractor: (scan: ScanDetail) => scan.regGraph?.score ?? (scan.regGraph ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.regGraph ? 85 : 0, !!scan.regGraph),
     detailsExtractor: (scan: ScanDetail) => scan.regGraph ? [
       { label: "PCI-DSS", value: scan.regGraph.pciDssCoverage ?? "N/A" },
       { label: "GDPR Art.17", value: scan.regGraph.gdprArticle17 ?? "N/A" },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.regGraph ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.regGraph ? null : ["Enable RegGraph Compliance engine", "Configure regulatory framework mappings"],
   },
   {
     id: "symcost",
@@ -816,13 +841,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Uses symbolic execution to compute exact worst-case cost bounds for every code path, preventing ReDoS and cost bombs.",
     expected: "No catastrophic backtracking paths remain",
     dataKey: "symCost",
-    scoreExtractor: (scan: ScanDetail) => { const nodes = scan.symCost?.astNodesAnalyzed ?? 0; const nPlus1 = scan.symCost?.nPlusOnePatterns ?? 0; return Math.min(Math.round(nodes/50 - nPlus1*5), 100); },
+    scoreExtractor: (scan: ScanDetail) => scan.symCost?.score ?? (scan.symCost ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.symCost ? 85 : 0, !!scan.symCost),
     detailsExtractor: (scan: ScanDetail) => scan.symCost ? [
       { label: "AST Nodes", value: scan.symCost.astNodesAnalyzed?.toLocaleString() ?? 0 },
       { label: "ReDoS Risk", value: scan.symCost.catastrophicBacktrackingRisk ?? "None" },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.symCost ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.symCost ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
 {
     id: "underapprox",
@@ -833,7 +858,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Formally proves reachability by under-approximating state spaces, guaranteeing that verified paths are truly safe.",
     expected: "All reachable states proven with coverage > 95%",
     dataKey: "underApproximation",
-    scoreExtractor: (scan: ScanDetail) => { const cov = scan.underApproximation?.coverage ?? 0; return Math.round(cov); },
+    scoreExtractor: (scan: ScanDetail) => (scan as any).underApproximation?.score ?? (scan.underApproximation ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.underApproximation ? 70 : 0, !!scan.underApproximation),
     detailsExtractor: (scan: ScanDetail) => {
       if (!scan.underApproximation) return [];
@@ -845,7 +870,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
         { label: "Unreachable", value: `${unreachable}` },
       ];
     },
-    actionItems: (scan: ScanDetail) => scan.underApproximation ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.underApproximation ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
    {
      id: "abstractconfidence",
@@ -862,7 +887,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
        { label: "Confidence", value: `${scan.abstractConfidence.confidence ?? 0}%` },
         { label: "Method", value: "Abstract Interpretation" },
      ] : [],
-     actionItems: (scan: ScanDetail) => scan.abstractConfidence ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+     actionItems: (scan: ScanDetail) => scan.abstractConfidence ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
    },
    {
      id: "prompttrace",
@@ -873,13 +898,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Enforces strict boundaries on LLM prompts to prevent injection attacks, jailbreaks, and unintended tool access.",
     expected: "Zero jailbreak probability with all boundaries enforced",
     dataKey: "promptTrace",
-    scoreExtractor: (scan: ScanDetail) => { const boundaries = scan.promptTrace?.llmBoundaries ?? 0; const jailbreak = scan.promptTrace?.jailbreakProbability ?? 1; return Math.round(Math.min(boundaries * 12, 100) * (1 - jailbreak)); },
+    scoreExtractor: (scan: ScanDetail) => scan.promptTrace?.score ?? (scan.promptTrace ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.promptTrace ? 85 : 0, !!scan.promptTrace),
     detailsExtractor: (scan: ScanDetail) => scan.promptTrace ? [
       { label: "Boundaries", value: scan.promptTrace.llmBoundaries ?? 0 },
       { label: "Jailbreak Prob", value: scan.promptTrace.jailbreakProbability ?? 0 },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.promptTrace ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.promptTrace ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "aiconsensus",
@@ -890,13 +915,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Aggregates multi-agent AI verdicts to reduce individual model bias and hallucination in security assessments.",
     expected: "All findings verified by multiple independent agents",
     dataKey: "aiConsensus",
-    scoreExtractor: (scan: ScanDetail) => { const total = scan.aiConsensus?.length ?? 0; const verified = scan.aiConsensus?.filter((f: any) => f.aiVerified).length ?? 0; return total > 0 ? Math.round((verified/total)*100) : 0; },
+    scoreExtractor: (scan: ScanDetail) => (scan as any).aiConsensus?.score ?? (scan.aiConsensus ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus((scan.aiConsensus?.length ?? 0) > 0 ? 80 : 0, !!scan.aiConsensus),
     detailsExtractor: (scan: ScanDetail) => scan.aiConsensus ? [
       { label: "Findings", value: scan.aiConsensus.length },
       { label: "AI Verified", value: scan.aiConsensus.filter(f => f.aiVerified).length },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.aiConsensus ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.aiConsensus ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "flowvalue",
@@ -907,13 +932,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Maps revenue-critical code paths and computes Value-at-Risk for each attack surface exposed in the application.",
     expected: "All critical paths have mitigations with quantified risk reduction",
     dataKey: "flowValue",
-    scoreExtractor: (scan: ScanDetail) => { const paths = scan.flowValue?.criticalPaths ?? 0; const webhook = scan.flowValue?.webhookCoverage ?? 0; return Math.max(0, Math.round(webhook - paths*8)); },
+    scoreExtractor: (scan: ScanDetail) => scan.flowValue?.score ?? (scan.flowValue ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.flowValue ? 80 : 0, !!scan.flowValue),
     detailsExtractor: (scan: ScanDetail) => scan.flowValue ? [
       { label: "Critical Paths", value: scan.flowValue.criticalPaths ?? 0 },
       { label: "VaR", value: scan.flowValue.revenueValueAtRisk ?? 0 },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.flowValue ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.flowValue ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "productreality",
@@ -932,7 +957,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
       { label: "Broken", value: scan.productReality.brokenCount ?? 0 },
       { label: "Score", value: scan.productReality.score ?? 0 },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.productReality ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.productReality ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "bigo",
@@ -943,13 +968,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Statically computes worst-case time and space complexity for every hot path, preventing scalability surprises in production.",
     expected: "All hot paths bounded by O(n log n) or better",
     dataKey: "bigOProfiler",
-    scoreExtractor: (scan: ScanDetail) => { const complexity = scan.bigOProfiler?.worstCaseTimeComplexity ?? "O(n^2"; const map: Record<string,number> = {"O(1)":100,"O(log n)":90,"O(n)":75,"O(n log n)":60,"O(n^2)":35,"O(n^3)":15}; return map[complexity] ?? 50; },
+    scoreExtractor: (scan: ScanDetail) => scan.bigOProfiler?.score ?? (scan.bigOProfiler ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.bigOProfiler ? 85 : 0, !!scan.bigOProfiler),
     detailsExtractor: (scan: ScanDetail) => scan.bigOProfiler ? [
       { label: "Time", value: scan.bigOProfiler.worstCaseTimeComplexity ?? "N/A" },
       { label: "Space", value: scan.bigOProfiler.worstCaseSpaceComplexity ?? "N/A" },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.bigOProfiler ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.bigOProfiler ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "fhe",
@@ -960,13 +985,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Assesses code readiness for Fully Homomorphic Encryption by identifying operations that can execute on encrypted data.",
     expected: "All sensitive operations compatible with FHE schemes",
     dataKey: "fheAnalyzer",
-    scoreExtractor: (scan: ScanDetail) => { const compat = scan.fheAnalyzer?.fullyHomomorphicCompatible ? 1 : 0; const bottlenecks = scan.fheAnalyzer?.encryptionBottlenecks ?? 10; return Math.round(compat * 100 - bottlenecks * 8); },
+    scoreExtractor: (scan: ScanDetail) => scan.fheAnalyzer?.score ?? (scan.fheAnalyzer ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.fheAnalyzer ? 75 : 0, !!scan.fheAnalyzer),
     detailsExtractor: (scan: ScanDetail) => scan.fheAnalyzer ? [
       { label: "FHE Compatible", value: scan.fheAnalyzer.fullyHomomorphicCompatible ? "Yes" : "No" },
       { label: "Bottlenecks", value: scan.fheAnalyzer.encryptionBottlenecks ?? 0 },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.fheAnalyzer ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.fheAnalyzer ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "neuromorphic",
@@ -977,14 +1002,14 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Models spiking neural network behavior to predict cognitive fatigue and drift in AI-assisted code generation over time.",
     expected: "SNN spike rate stable with declining fatigue index",
     dataKey: "neuromorphicDrift",
-    scoreExtractor: (scan: ScanDetail) => { const spike = scan.neuromorphicDrift?.snnSpikeRate ?? 0; const fatigue = scan.neuromorphicDrift?.cognitiveFatigueIndex ?? 1; return Math.max(0, Math.round(100 - fatigue*100 - spike*2)); },
+    scoreExtractor: (scan: ScanDetail) => scan.neuromorphicDrift?.score ?? (scan.neuromorphicDrift ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.neuromorphicDrift ? 70 : 0, !!scan.neuromorphicDrift),
     detailsExtractor: (scan: ScanDetail) => scan.neuromorphicDrift ? [
       { label: "SNN Spike Rate", value: scan.neuromorphicDrift.snnSpikeRate ?? 0 },
       { label: "Fatigue Index", value: scan.neuromorphicDrift.cognitiveFatigueIndex ?? 0 },
       { label: "Pred. Vuln Date", value: scan.neuromorphicDrift.predictedVulnerabilityDate ?? "N/A" },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.neuromorphicDrift ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.neuromorphicDrift ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "postquantum",
@@ -995,13 +1020,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Evaluates cryptographic primitives against quantum attack vectors to ensure the codebase survives Q-Day.",
     expected: "Zero vulnerable legacy primitives with >99% Q-Day survival",
     dataKey: "postQuantumReadiness",
-    scoreExtractor: (scan: ScanDetail) => scan.postQuantumReadiness?.qDaySurvivalProbability ?? 0,
+    scoreExtractor: (scan: ScanDetail) => scan.postQuantumReadiness?.score ?? (scan.postQuantumReadiness ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.postQuantumReadiness ? 80 : 0, !!scan.postQuantumReadiness),
     detailsExtractor: (scan: ScanDetail) => scan.postQuantumReadiness ? [
       { label: "Q-Day Survival", value: scan.postQuantumReadiness.qDaySurvivalProbability ?? 0 },
       { label: "Vulnerable Prim.", value: scan.postQuantumReadiness.vulnerablePrimitivesDetected ?? 0 },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.postQuantumReadiness ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.postQuantumReadiness ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "dna",
@@ -1012,13 +1037,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Evaluates data archival strategies using synthetic DNA encoding for 10,000-year data preservation and integrity verification.",
     expected: "All critical data encoded with base-pair redundancy checks",
     dataKey: "dnaStorageCompiler",
-    scoreExtractor: (scan: ScanDetail) => { const nucleotides = scan.dnaStorageCompiler?.atcgNucleotidesRequired ?? 0; const readiness = scan.dnaStorageCompiler?.archivalReadiness === "Production" ? 100 : scan.dnaStorageCompiler?.archivalReadiness === "Ready" ? 60 : 0; return Math.round((Math.min(nucleotides/10000, 1) * 50 + readiness/2)); },
+    scoreExtractor: (scan: ScanDetail) => scan.dnaStorageCompiler?.score ?? (scan.dnaStorageCompiler ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.dnaStorageCompiler ? 75 : 0, !!scan.dnaStorageCompiler),
     detailsExtractor: (scan: ScanDetail) => scan.dnaStorageCompiler ? [
       { label: "ATCG Nucleotides", value: scan.dnaStorageCompiler.atcgNucleotidesRequired?.toLocaleString() ?? 0 },
       { label: "Archival Status", value: scan.dnaStorageCompiler.archivalReadiness ?? "N/A" },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.dnaStorageCompiler ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.dnaStorageCompiler ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "bft",
@@ -1029,13 +1054,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Models Byzantine fault tolerance to ensure the consensus layer can withstand malicious or faulty nodes.",
     expected: "Consensus survivability limit > 3f with verified graph invariants",
     dataKey: "bftConsensusGraph",
-    scoreExtractor: (scan: ScanDetail) => { const limit = scan.bftConsensusGraph?.bftSurvivabilityLimit ?? 0; return Math.min(limit, 100); },
+    scoreExtractor: (scan: ScanDetail) => scan.bftConsensusGraph?.score ?? (scan.bftConsensusGraph ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.bftConsensusGraph ? 80 : 0, !!scan.bftConsensusGraph),
     detailsExtractor: (scan: ScanDetail) => scan.bftConsensusGraph ? [
       { label: "Graph Edges", value: scan.bftConsensusGraph.graphEdgesCalculated ?? 0 },
       { label: "Survivability", value: scan.bftConsensusGraph.bftSurvivabilityLimit ?? 0 },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.bftConsensusGraph ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.bftConsensusGraph ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "kardashev",
@@ -1046,13 +1071,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Computes light-speed latency bounds for interplanetary-scale distributed systems to design truly global infrastructure.",
     expected: "Packet resilience verified against light-speed delay limits",
     dataKey: "kardashevLatency",
-    scoreExtractor: (scan: ScanDetail) => { const resilience = scan.kardashevLatency?.resilienceScore ?? 0; return Math.round(resilience); },
+    scoreExtractor: (scan: ScanDetail) => scan.kardashevLatency?.score ?? (scan.kardashevLatency ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.kardashevLatency ? 75 : 0, !!scan.kardashevLatency),
     detailsExtractor: (scan: ScanDetail) => scan.kardashevLatency ? [
       { label: "Dyson Threshold", value: scan.kardashevLatency.dysonSwarmLatencyThreshold ?? 0 },
       { label: "Packet Resilience", value: scan.kardashevLatency.interplanetaryPacketLossResilience ?? "N/A" },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.kardashevLatency ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.kardashevLatency ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "agi",
@@ -1063,13 +1088,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Proves alignment stability of autonomous AI systems using policy gradient reward bounds to prevent emergent misalignment.",
     expected: "Alignment stability > 0.99 with near-zero containment breach probability",
     dataKey: "agiAlignment",
-    scoreExtractor: (scan: ScanDetail) => { const score = (scan.agiAlignment?.alignmentStabilityScore ?? 0) * 100; return Math.round(Math.min(score, 100)); },
+    scoreExtractor: (scan: ScanDetail) => scan.agiAlignment?.score ?? (scan.agiAlignment ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.agiAlignment ? 70 : 0, !!scan.agiAlignment),
     detailsExtractor: (scan: ScanDetail) => scan.agiAlignment ? [
       { label: "Alignment Score", value: scan.agiAlignment.alignmentStabilityScore ?? 0 },
       { label: "Breach Prob", value: scan.agiAlignment.agiContainmentBreachProbability ?? 0 },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.agiAlignment ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.agiAlignment ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "gpu",
@@ -1080,13 +1105,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Compiles AST to signed tensor payloads for secure AWS Nitro Enclave execution with hardware attestation.",
     expected: "All compute-intensive paths verified with enclave attestation",
     dataKey: "tensorPayloadSignature",
-    scoreExtractor: (scan: ScanDetail) => { const enclave = scan.tensorPayloadSignature?.enclaveJobId ? 1 : 0; const gpu = scan.tensorPayloadSignature?.gpuClusterRouted ? 1 : 0; return Math.round((enclave * 60 + gpu * 40)); },
+    scoreExtractor: (scan: ScanDetail) => scan.tensorPayloadSignature?.score ?? (scan.tensorPayloadSignature ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.tensorPayloadSignature ? 90 : 0, !!scan.tensorPayloadSignature),
     detailsExtractor: (scan: ScanDetail) => scan.tensorPayloadSignature ? [
       { label: "Enclave Job", value: scan.tensorPayloadSignature.enclaveJobId ?? "N/A" },
       { label: "GPU Cluster", value: scan.tensorPayloadSignature.gpuClusterRouted ?? "N/A" },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.tensorPayloadSignature ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.tensorPayloadSignature ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "zksnark",
@@ -1097,15 +1122,15 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Generates zero-knowledge proofs for compliance verification without exposing sensitive source code or secrets.",
     expected: "Proof status VALID with verifiable circuit constraints",
     dataKey: "zkSnarkProof",
-    scoreExtractor: (scan: ScanDetail) => { const valid = scan.zkSnarkProof?.status?.includes("VALID") ? 1 : 0; const gates = scan.zkSnarkProof?.circuitSize ?? 0; return Math.round(valid * 90 + Math.min(gates/1000, 1) * 10); },
+    scoreExtractor: (scan: ScanDetail) => scan.zkSnarkProof?.score ?? (scan.zkSnarkProof ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.zkSnarkProof?.status?.includes("VALID") ? 95 : scan.zkSnarkProof ? 60 : 0, !!scan.zkSnarkProof),
     detailsExtractor: (scan: ScanDetail) => scan.zkSnarkProof ? [
       { label: "Circuit Size", value: `${((scan.zkSnarkProof.circuitSize as number) ?? 0).toLocaleString()} gates` },
       { label: "Status", value: scan.zkSnarkProof.status ?? "N/A" },
     ] : [],
     actionItems: (scan: ScanDetail) => {
-      if (!scan.zkSnarkProof) return ["Connect this engine to the scan pipeline", "Persist results to database"];
-      if (!scan.zkSnarkProof.status?.includes("VALID")) return ["Verify data source connectivity", "Check pipeline integration", "Review output quality"];
+      if (!scan.zkSnarkProof) return ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"];
+      if (!scan.zkSnarkProof.status?.includes("VALID")) return ["ZK proof generation failed - review circuit constraints", "Check proving key and witness data integrity"];
       return null;
     },
   },
@@ -1118,13 +1143,13 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
     description: "Quantum-inspired bounded model checking that simulates parallel universes of execution to find corner-case vulnerabilities.",
     expected: "All state-space corners explored with quantum collapse verification",
     dataKey: "multiVerseDse",
-    scoreExtractor: (scan: ScanDetail) => { const dead = scan.multiVerseDse?.deadCodePaths ?? 100; return Math.max(0, Math.round(100 - dead*5)); },
+    scoreExtractor: (scan: ScanDetail) => scan.multiVerseDse?.score ?? (scan.multiVerseDse ? 50 : 0),
     statusExtractor: (scan: ScanDetail) => computeEngineStatus(scan.multiVerseDse ? 80 : 0, !!scan.multiVerseDse),
     detailsExtractor: (scan: ScanDetail) => scan.multiVerseDse ? [
       { label: "Universes", value: (scan.multiVerseDse.parallelUniversesSimulated ?? 0).toLocaleString() },
       { label: "Quantum Collapses", value: scan.multiVerseDse.quantumStateCollapses ?? 0 },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.multiVerseDse ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.multiVerseDse ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
   {
     id: "babel",
@@ -1141,7 +1166,7 @@ const ENGINE_REGISTRY: EngineRegistryEntry[] = [
       { label: "Polyglot Score", value: `${scan.babelEngine.polyglotScore ?? 0}%` },
       { label: "Cross-Boundary Taints", value: scan.babelEngine.crossBoundaryTaints?.length ?? 0 },
     ] : [],
-    actionItems: (scan: ScanDetail) => scan.babelEngine ? null : ["Connect this engine to the scan pipeline", "Persist results to database"],
+    actionItems: (scan: ScanDetail) => scan.babelEngine ? null : ["Engine not connected - enable in scan configuration", "Ensure required dependencies are available"],
   },
 ];
 
@@ -1183,10 +1208,10 @@ function ScoreRing({ score }: { score: number }) {
           <span className="text-2xl font-bold font-['Syne']" style={{ color }}>
             {score}
           </span>
-          <span
-            className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"}`}
-          >
-            /100
+              <span
+                className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/60"}`}
+              >
+                /100
           </span>
         </div>
       </div>
@@ -1359,7 +1384,7 @@ function EvidenceCard({
          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 hidden sm:flex items-center gap-1 ${conf.badge}`}>
           <conf.icon className="w-3 h-3" /> {issue.confidence ?? 60}%
         </span>
-        <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"} shrink-0 hidden lg:block truncate max-w-[120px]`}>
+        <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/60"} shrink-0 hidden lg:block truncate max-w-[120px]`}>
           {issue.agentName.replace(" Agent", "")}
         </span>
         {expanded
@@ -1578,7 +1603,7 @@ function EvidenceCard({
                     : <><Copy className="w-3.5 h-3.5" />Copy</>}
                 </button>
               </div>
-              <p className={`text-xs ${isLight ? "text-gray-700" : "text-white/45"} font-mono leading-relaxed`}>{issue.fixPrompt}</p>
+              <p className={`text-xs ${isLight ? "text-gray-700" : "text-white/70"} font-mono leading-relaxed`}>{issue.fixPrompt}</p>
             </div>
           )}
 
@@ -1620,7 +1645,7 @@ function EvidenceCard({
                     )}
                     <button
                       onClick={() => { setFixCode(""); setPatchMeta(null); }}
-                      className={`w-full text-center text-[10px] ${isLight ? "text-gray-400" : "text-white/20"} hover:text-gray-500 py-1.5 border-t border-white/[0.05] transition-colors`}
+                      className={`w-full text-center text-[10px] ${isLight ? "text-gray-400" : "text-white/60"} hover:text-gray-500 py-1.5 border-t border-white/[0.05] transition-colors`}
                     >
                       Regenerate
                     </button>
@@ -1706,7 +1731,7 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
             <p className={`text-xs ${isLight ? "text-gray-700" : "text-white/45"} font-mono leading-relaxed`}>{issue.fixPrompt}</p>
           </div>
           <div className="flex items-center justify-between pt-1">
-            <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"}`}>Full evidence + AI patch locked</span>
+            <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/60"}`}>Full evidence + AI patch locked</span>
             <Link href="/pricing">
               <button className="flex items-center gap-1 text-[10px] bg-violet-500/15 hover:bg-violet-500/25 text-violet-300 font-semibold px-2.5 py-1 rounded-lg transition-all border border-violet-500/25">
                 Unlock full access <ArrowRight className="w-3 h-3" />
@@ -1718,7 +1743,7 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
         /* Blurred fix prompt preview */
         <div className="px-4 pb-4">
           <div className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-black/30 border-white/[0.07]"} border rounded-lg px-3 py-2.5 relative overflow-hidden`}>
-            <div className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/25"} mb-1`}>1-Click Fix Prompt</div>
+            <div className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/60"} mb-1`}>1-Click Fix Prompt</div>
             <p className={`text-xs font-mono ${isLight ? "text-gray-700" : "text-white/40"} leading-relaxed`} style={{ filter: "blur(3.5px)", userSelect: "none" }}>
               {fixPreview}â€¦
             </p>
@@ -1771,7 +1796,7 @@ function CreatorGate({ plan, feature, preview, children, isLight }: {
         </div>
         <div className="text-center px-6 space-y-1">
           <p className={isLight ? "text-gray-900 font-bold text-sm font-['Syne']" : "text-white font-bold text-sm font-['Syne']"}>{feature}</p>
-          <p className={isLight ? "text-gray-500 text-xs max-w-xs" : "text-white/40 text-xs max-w-xs"}>{preview ?? "Detailed analysis available on Creator plan"}</p>
+          <p className={isLight ? "text-gray-500 text-xs max-w-xs" : "text-white/60 text-xs max-w-xs"}>{preview ?? "Detailed analysis available on Creator plan"}</p>
         </div>
         <Link href="/pricing">
           <button className={isLight
@@ -1802,7 +1827,7 @@ function UpgradeBanner({ count, isLight }: { count: number; isLight: boolean }) 
         <div className={isLight ? "text-sm font-bold text-gray-900" : "text-sm font-bold text-white"}>
           {count} more finding{count !== 1 ? "s" : ""} locked
         </div>
-        <p className={isLight ? "text-xs text-gray-500 mt-0.5" : "text-xs text-white/40 mt-0.5"}>
+        <p className={isLight ? "text-xs text-gray-500 mt-0.5" : "text-xs text-white/60 mt-0.5"}>
           Upgrade to Creator to unlock all {count} remaining issues, 1-click fix prompts, and full exploit evidence.
         </p>
       </div>
@@ -1854,7 +1879,7 @@ function ExploitTerminalCard({ issue }: { issue: ScanIssue }) {
           </div>
           <button
             onClick={copy}
-            className="shrink-0 flex items-center gap-1.5 text-xs text-white/40 hover:text-white px-2 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/20 transition-all"
+            className="shrink-0 flex items-center gap-1.5 text-xs text-white/60 hover:text-white px-2 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/20 transition-all"
           >
             {copied ? <><CheckCheck className="w-3.5 h-3.5 text-green-400" />Copied</> : <><Copy className="w-3.5 h-3.5" />Copy</>}
           </button>
@@ -1951,7 +1976,7 @@ function ComplianceSection({ results }: { results: ComplianceResult[] }) {
       <div className="flex items-center gap-2">
         <Scale className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
         <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}>8-Framework Compliance Audit</h2>
-        <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} ml-auto`}>{results.filter(r => r.status === "pass").length}/{results.length} passed</span>
+          <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/60"} ml-auto`}>{results.filter(r => r.status === "pass").length}/{results.length} passed</span>
       </div>
 
       <div className="grid gap-2.5">
@@ -2053,7 +2078,7 @@ function RevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligence 
 
       {revenue.leaks && revenue.leaks.length > 0 && (
         <div className="space-y-2">
-          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} uppercase tracking-widest font-medium mb-3`}>Revenue Leaks</div>
+          <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/60"} uppercase tracking-widest font-medium mb-3`}>Revenue Leaks</div>
           {revenue.leaks.map((leak: any, i: any) => {
             const isExp = expanded === i;
             const sev = SEVERITY_CONFIG[leak.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.medium;
@@ -2072,13 +2097,13 @@ function RevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligence 
                 </button>
                 {isExp && (
                   <div className={`px-4 pb-3 pt-3 border-t ${isLight ? "border-gray-200" : "border-white/[0.05]"} space-y-2`}>
-                    <div className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"} leading-relaxed`}
+                    <div className={`text-xs ${isLight ? "text-gray-500" : "text-white/60"} leading-relaxed`}
           >{leak.description}</div>
                     {leak.fix && (
                       <div className={`bg-black/30 border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-lg p-3`}>
                         <div className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} mb-1 font-medium`}
           >Fix Prompt</div>
-                        <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/45"} font-mono leading-relaxed`}>{leak.fix}</p>
+                        <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/60"} font-mono leading-relaxed`}>{leak.fix}</p>
                       </div>
                     )}
                   </div>
@@ -2179,7 +2204,7 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
 
                   {e.screenshot && (
                     <div className={`border ${isLight ? "border-gray-200" : "border-white/[0.07]"} rounded-xl overflow-hidden`}>
-                      <div className={`flex items-center gap-1.5 text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} px-3 py-2 bg-black/20 border-b border-white/[0.05] uppercase tracking-wide font-medium`}>
+                      <div className={`flex items-center gap-1.5 text-[10px] ${isLight ? "text-gray-400" : "text-white/60"} px-3 py-2 bg-black/20 border-b border-white/[0.05] uppercase tracking-wide font-medium`}>
                         <Camera className="w-3 h-3" />
                         Runtime Screenshot
                           <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(e.confidence, isLight).badge}`}>
@@ -2252,7 +2277,7 @@ function ConfidenceBadges({ evidence }: { evidence: ProofEvidence[] }) {
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-xl px-5 py-3 aurora-card`}>
       <div className="flex flex-wrap gap-4 items-center text-xs">
-        <span className={`${isLight ? "text-gray-400" : "text-white/20"} uppercase tracking-widest font-medium text-[10px]`}>Confidence Scale</span>
+        <span className={`${isLight ? "text-gray-400" : "text-white/60"} uppercase tracking-widest font-medium text-[10px]`}>Confidence Scale</span>
         <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/15 border border-green-500/25 text-green-400 text-[10px] font-semibold">
           ðŸŸ¢ 99% Browser Runtime{browserCount > 0 ? ` (${browserCount})` : ""}
         </span>
@@ -2458,7 +2483,7 @@ function SandboxProofsSection({
                 <div className={`border-t ${isLight ? "border-gray-100" : "border-white/[0.05]"}`}>
                   <button
                     onClick={() => setStepsOpen((v) => !v)}
-                    className={`w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium ${isLight ? "text-gray-500 hover:bg-gray-50" : "text-white/40 hover:bg-white/[0.02]"} transition-colors text-left`}
+                    className={`w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium ${isLight ? "text-gray-500 hover:bg-gray-50" : "text-white/60 hover:bg-white/[0.02]"} transition-colors text-left`}
                   >
                     <Play className="w-3 h-3" />
                     Reproduction Steps ({first.steps.length})
@@ -2467,7 +2492,7 @@ function SandboxProofsSection({
                   {stepsOpen && (
                     <div className={`px-4 pb-4 space-y-1.5 ${isLight ? "bg-gray-50/50" : "bg-black/10"}`}>
                       {first.steps.map((step, si) => (
-                        <div key={si} className={`flex gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/45"}`}>
+                        <div key={si} className={`flex gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/60"}`}>
                           <span className={`shrink-0 font-mono ${isLight ? "text-gray-300" : "text-white/20"}`}>{si + 1}.</span>
                           {step}
                         </div>
@@ -2538,7 +2563,7 @@ function RegressionPanel({ diff }: { diff: RegressionDiff }) {
         )}
       </div>
 
-      <p className={`text-sm leading-relaxed ${hasRegressions ? "text-red-400" : hasFixed ? "text-green-400" : "text-white/45"}`}>
+      <p className={`text-sm leading-relaxed ${hasRegressions ? "text-red-400" : hasFixed ? "text-green-400" : "text-white/60"}`}>
         {diff.summary}
       </p>
 
@@ -6858,42 +6883,55 @@ export default function ScanResultsPage() {
                       <h2 className={`text-sm font-bold font-['Syne'] uppercase tracking-wider ${isLight ? "text-gray-900" : "text-white"}`}>
                         Verified Findings Gallery
                       </h2>
-                      <p className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>
-                        Evidence-backed launch checklist segregated by security proof confidence
+                      <p className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/50"} mt-0.5`}>
+                        Evidence tier system: T1 (strongest) to T5 (advisory)
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
                   {[
-                    { id: "runtime", label: "🟢 Runtime Verified", count: runtimeCount, bg: "bg-green-500", border: "border-green-500", text: "text-green-400", desc: "Sandbox HTTP/browser proof" },
-                    { id: "static", label: "🔵 Static Verified", count: staticCount, bg: "bg-sky-500", border: "border-sky-500", text: "text-sky-400", desc: "Direct code scan match" },
-                    { id: "ai_reasoning", label: "⚪ AI Observation", count: aiCount, bg: "bg-white", border: "border-white", text: "text-white/60", desc: "Logical/architecture smell" }
-                  ].map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => setEvidenceFilter(item.id as any)}
-                      className={`flex flex-col items-center justify-center p-3.5 rounded-xl text-center transition-all border ${
-                        evidenceFilter === item.id
-                          ? `${item.text} ${item.border}/20 bg-current/[0.06] shadow-inner font-bold`
-                          : isLight
-                          ? "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-400"
-                          : "bg-white/[0.02] border-white/[0.04] text-white/35 hover:text-white/55 hover:bg-white/[0.04]"
-                      }`}
-                    >
-                      <span className="text-xl font-bold font-['Syne']">{item.count}</span>
-                      <span className="text-[10px] font-bold tracking-wider mt-1">{item.label}</span>
-                      <span className={`text-[9px] opacity-60 mt-0.5 hidden sm:block`}>{item.desc}</span>
-                    </button>
-                  ))}
+                    { id: "runtime", tier: "T1", label: "Browser Runtime", count: runtimeCount, color: "emerald", desc: "Playwright browser proof" },
+                    { id: "static", tier: "T2", label: "Runtime Verified", count: staticCount, color: "sky", desc: "HTTP probe verified" },
+                    { id: "static", tier: "T3", label: "Code Proven", count: staticCount, color: "violet", desc: "Static code match" },
+                    { id: "static", tier: "T4", label: "Static Signal", count: staticCount, color: "amber", desc: "Pattern match" },
+                    { id: "ai_reasoning", tier: "T5", label: "AI Advisory", count: aiCount, color: "slate", desc: "LLM observation" }
+                  ].map((item, idx) => {
+                    const colorMap: Record<string, { selText: string; selBorder: string; bg: string; text: string }> = {
+                      emerald: { selText: "text-emerald-300", selBorder: "border-emerald-500", bg: "bg-emerald-500/10", text: "text-emerald-400" },
+                      sky: { selText: "text-sky-300", selBorder: "border-sky-500", bg: "bg-sky-500/10", text: "text-sky-400" },
+                      violet: { selText: "text-violet-300", selBorder: "border-violet-500", bg: "bg-violet-500/10", text: "text-violet-400" },
+                      amber: { selText: "text-amber-300", selBorder: "border-amber-500", bg: "bg-amber-500/10", text: "text-amber-400" },
+                      slate: { selText: "text-slate-300", selBorder: "border-slate-500", bg: "bg-slate-500/10", text: "text-slate-400" },
+                    };
+                    const cc = colorMap[item.color] ?? colorMap.slate;
+                    return (
+                      <button
+                        key={`${item.tier}-${idx}`}
+                        onClick={() => setEvidenceFilter(item.id as any)}
+                        className={`flex flex-col items-center justify-center p-3 rounded-xl text-center transition-all border ${
+                          evidenceFilter === item.id
+                            ? `${cc.selText} ${cc.selBorder}/30 ${cc.bg} shadow-inner font-bold`
+                            : isLight
+                            ? "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-400"
+                            : "bg-white/[0.02] border-white/[0.04] text-white/35 hover:text-white/55 hover:bg-white/[0.04]"
+                        }`}
+                      >
+                        <span className={`text-[10px] font-bold ${evidenceFilter === item.id ? cc.selText : isLight ? "text-gray-500" : "text-white/50"}`}>{item.tier}</span>
+                        <span className="text-lg font-bold font-['Syne']">{item.count}</span>
+                        <span className="text-[9px] font-bold tracking-wider mt-0.5">{item.label}</span>
+                        <span className={`text-[8px] mt-0.5 hidden sm:block ${evidenceFilter === item.id ? "opacity-70" : "opacity-50"}`}>{item.desc}</span>
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* Sub-label description for the active filter */}
-                <div className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/40"} italic bg-black/20 p-3 rounded-lg border border-white/[0.03]`}>
-                  {evidenceFilter === "runtime" && "💡 Runtime Verified: Active exploit proofs generated by executing playwright browser automation and HTTP probes in our sandbox. Zero false positives."}
-                  {evidenceFilter === "static" && "💡 Static Verified: Direct syntax, AST, or pattern matches flagged in source files. Backed by specific file line numbers."}
-                  {evidenceFilter === "ai_reasoning" && "💡 AI Observation: Architectural observations, structural gaps, or potential compliance failures inferred through security LLMs."}
+                <div className={`text-[10px] ${isLight ? "text-gray-600" : "text-white/50"} p-3 rounded-lg border ${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.05]"}`}>
+                  {evidenceFilter === "runtime" && "T1 - Browser Runtime Proof: Active exploit proofs generated by executing Playwright browser automation and HTTP probes in our sandbox. Zero false positives."}
+                  {evidenceFilter === "static" && "T3 - Code Proven / T4 - Static Signal: Direct syntax, AST, or pattern matches flagged in source files."}
+                  {evidenceFilter === "ai_reasoning" && "T5 - AI Advisory: Architectural observations, structural gaps, or potential compliance failures inferred through security LLMs."}
                 </div>
               </div>
             )}
@@ -7020,7 +7058,25 @@ export default function ScanResultsPage() {
         )}
 
         {activeTab === "deeptech" && (
-          <DeepTech40Panel scan={scan} />
+          <>
+            <SectionLabel label="Deep Tech Visualizers" icon={Cpu} isLight={isLight} />
+            <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
+              <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.06]"} flex items-center gap-3`}>
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-violet-50 border border-violet-200" : "bg-violet-500/15 border border-violet-500/25"}`}>
+                  <Cpu className="w-4 h-4 text-violet-500" />
+                </div>
+                <div>
+                  <h2 className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Deep Tech Analysis</h2>
+                  <p className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/50"} mt-0.5`}>
+                    Advanced formal verification and abstract interpretation panels
+                  </p>
+                </div>
+              </div>
+              <div className="p-6">
+                <DeepTech40Panel scan={scan} />
+              </div>
+            </div>
+          </>
         )}
 
 
