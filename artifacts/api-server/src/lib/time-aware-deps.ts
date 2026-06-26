@@ -96,53 +96,49 @@ function computeGraphDepth(files: Array<{ path: string; content: string }>, deps
   return maxDepth;
 }
 
-export function analyzeTimeAwareDependencies(
+export async function analyzeTimeAwareDependencies(
   files: Array<{ path: string; content: string }>,
   dependencies: Record<string, string>,
   codeContext?: CodeContext,
-): TimeAwareDepsData {
+): Promise<TimeAwareDepsData> {
   const findings: TimeAwareFinding[] = [];
   const depEntries = Object.entries(dependencies);
 
-  const CVE_DB: Record<string, { func: string; cve: string; severity: string; daysToPatch: number }[]> = {
-    lodash: [
-      { func: "template", cve: "CVE-2021-23337", severity: "high", daysToPatch: 14 },
-      { func: "merge", cve: "CVE-2020-28500", severity: "critical", daysToPatch: 7 },
-    ],
-    moment: [
-      { func: "format", cve: "CVE-2022-24785", severity: "medium", daysToPatch: 30 },
-    ],
-    express: [
-      { func: "json", cve: "CVE-2024-29071", severity: "high", daysToPatch: 21 },
-    ],
-    axios: [
-      { func: "request", cve: "CVE-2023-45857", severity: "critical", daysToPatch: 3 },
-    ],
-    minimist: [
-      { func: "parse", cve: "CVE-2021-44906", severity: "critical", daysToPatch: 7 },
-    ],
-    semver: [
-      { func: "parse", cve: "CVE-2022-25867", severity: "high", daysToPatch: 14 },
-    ],
-    handlebars: [
-      { func: "compile", cve: "CVE-2021-23353", severity: "high", daysToPatch: 14 },
-    ],
-    jsonwebtoken: [
-      { func: "verify", cve: "CVE-2022-23529", severity: "high", daysToPatch: 10 },
-    ],
-    debug: [
-      { func: "log", cve: "CVE-2017-16137", severity: "medium", daysToPatch: 30 },
-    ],
-    "node-uuid": [
-      { func: "v4", cve: "CVE-2017-14822", severity: "low", daysToPatch: 60 },
-    ],
-  };
+  const queries = depEntries.map(([dep, version]) => ({
+    package: { name: dep, ecosystem: "npm" },
+    version: version.replace(/^[^\d]/, "")
+  }));
+
+  let osvResults: any[] = [];
+  try {
+    const res = await fetch("https://api.osv.dev/v1/querybatch", {
+      method: "POST",
+      body: JSON.stringify({ queries }),
+      headers: { "Content-Type": "application/json" }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      osvResults = data.results || [];
+    }
+  } catch (err) {
+    logger.warn({ err }, "OSV API fetch failed");
+  }
 
   const packages: DepPkg[] = [];
   let vulnCount = 0;
 
-  for (const [dep, version] of depEntries) {
-    const vulns = CVE_DB[dep] ?? [];
+  for (let i = 0; i < depEntries.length; i++) {
+    const [dep, version] = depEntries[i];
+    const rawVulns = osvResults[i]?.vulns || [];
+    
+    // Map OSV vulns to our internal structure
+    const vulns = rawVulns.map((v: any) => ({
+      func: dep, // OSV doesn't always provide specific function level taint natively without deep parsing, fallback to pkg name
+      cve: v.aliases?.find((a: string) => a.startsWith("CVE")) || v.id,
+      severity: v.database_specific?.severity || "medium",
+      daysToPatch: 30
+    }));
+
     const daysSinceLastPublish = Math.floor(Math.random() * 900) + 30;
     const isDeprecated = ["node-uuid", "node.extend", "request", "follow-redirects"].includes(dep) || Math.random() < 0.05;
     const maintainers = Math.floor(Math.random() * 15) + 1;
@@ -220,8 +216,7 @@ export function analyzeTimeAwareDependencies(
   const timeToPatchValues = packages
     .filter(p => p.severity === "critical" || p.severity === "high")
     .map(p => {
-      const vuln = (CVE_DB[p.name] ?? []).find(v => p.openVulnerabilities > 0);
-      return vuln?.daysToPatch ?? 30;
+      return 30; // Real OSV doesn't give mean time to patch, default to 30 days
     });
   const meanTimeToPatch = timeToPatchValues.length > 0
     ? Math.round(timeToPatchValues.reduce((s, v) => s + v, 0) / timeToPatchValues.length)

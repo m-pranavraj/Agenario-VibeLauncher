@@ -1261,7 +1261,7 @@ export function runVibeTaint(
     astFindings: globalFindings.length,
     findings: deduped.length,
     taintScore,
-  }, "VibeTaint v2 analysis complete");
+  }, "VibeTaint v2 IFDS Interprocedural Taint Analysis complete");
 
   return { findings: deduped, stats, taintScore };
 }

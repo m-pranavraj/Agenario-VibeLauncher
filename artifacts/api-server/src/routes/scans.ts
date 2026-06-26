@@ -417,7 +417,7 @@ async function runAnalysisPipeline(opts: {
     try {
       csg = buildCSG(keyFiles ?? []);
       const cltResult = await inferCrossLanguageBoundaries(keyFiles ?? []);
-      const timeAwareDepsData = analyzeTimeAwareDependencies(keyFiles ?? [], (pkg.dependencies || {}) as Record<string, string>);
+      const timeAwareDepsData = await analyzeTimeAwareDependencies(keyFiles ?? [], (pkg.dependencies || {}) as Record<string, string>);
       const timeAwareFindings = timeAwareDepsData.packages
         .filter(p => p.severity !== "none")
         .map(p => ({

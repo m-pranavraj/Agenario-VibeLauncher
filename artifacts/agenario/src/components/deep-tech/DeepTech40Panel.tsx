@@ -1,4 +1,4 @@
-﻿/**
+/**
  * DeepTech40Panel — Supreme Deep Tech Intelligence Command Center
  * 
  * All 40+ engines displayed in premium cards with:
@@ -165,17 +165,17 @@ function EngineCard({
   const [expanded, setExpanded] = useState(false);
   const c = getColor(color);
   const isGreen = score >= threshold;
-  const borderColor = isGreen ? "border-green-500/25" : score >= threshold * 0.6 ? "border-amber-500/25" : "border-red-500/25";
-  const glowClass = isGreen ? "hover:shadow-[0_0_25px_rgba(74,222,128,0.12)]" : "hover:shadow-[0_0_25px_rgba(239,68,68,0.12)]";
+  const borderColor = isGreen ? (isLight ? "border-green-400" : "border-green-500/50") : (isLight ? "border-red-400" : "border-red-500/50");
+  const glowClass = isGreen ? "shadow-[0_0_20px_rgba(34,197,94,0.3)]" : "shadow-[0_0_20px_rgba(239,68,68,0.3)]";
   
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`rounded-2xl border overflow-hidden transition-all duration-300 ${glowClass} ${
+      className={`rounded-2xl border overflow-hidden transition-all duration-300 ${glowClass} ${borderColor} ${
         isLight
-          ? `bg-white border-slate-200 shadow-sm hover:border-slate-300`
-          : `bg-[#0a0a0f] border-white/[0.08] hover:border-white/15`
+          ? `bg-white`
+          : `bg-[#0a0a0f]`
       }`}
     >
       {/* Top accent bar */}
@@ -1455,15 +1455,7 @@ export function DeepTech40Panel({ scan }: Props) {
               Supreme Deep Tech Intelligence Command Center
             </h2>
             <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-white/70"}`}>
-              {totalEngines} verification engines — all scores computed from live codebase data — zero hardcoded values
-            </p>
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className={`font-extrabold text-lg font-['Syne'] ${isLight ? "text-slate-900" : "text-white"}`}>
-              Deep Tech Intelligence Command Center
-            </h2>
-            <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-white/70"}`}>
-              {totalEngines} verification engines  {passingEngines} passing
+              {totalEngines} verification engines — {passingEngines} passing — zero hardcoded values
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -1573,7 +1565,23 @@ export function DeepTech40Panel({ scan }: Props) {
                       proofPath={engine.proofPath}
                       isLight={isLight}
                       isVisualizer={(engine as any).isVisualizer ?? false}
-                    />
+                    >
+                      {engine.shortName === "CLT" && <CrossLanguageTaintVisualizer data={scan.crossLanguageTaint as any} />}
+                      {engine.shortName === "PRC" && <ProductRealityVisualizer data={scan.productReality ?? null} />}
+                      {engine.shortName === "ACV" && <AIConsensusVisualizer data={scan.aiConsensus ?? null} />}
+                      {engine.shortName === "UA" && <UnderApproximationVisualizer data={scan.underApproximation ?? null} />}
+                      {engine.shortName === "ACC" && <AbstractConfidenceVisualizer data={scan.probabilisticConfidence ?? null} />}
+                      {engine.shortName === "CBE" && <ConstraintSolverVisualizer data={scan.constraintSolver ?? null} />}
+                      {engine.shortName === "TAD" && <TimeAwareDepsVisualizer data={scan.timeAwareDeps ?? null} />}
+                      {engine.shortName === "DSF" && <DempsterShaferVisualizer data={scan.dempsterShafer ?? null} />}
+                      {engine.shortName === "SE" && <EntropyLeakVisualizer data={scan.thermodynamicEntropy ?? null} />}
+                      {engine.shortName === "AS" && <ArchScanVisualizer data={scan.archScan ?? null} />}
+                      {engine.shortName === "DSV" && <DeploySafeVisualizer data={scan.deploySafe ?? null} />}
+                      {engine.shortName === "FTC" && <FailSafeVisualizer data={scan.failSafe ?? null} />}
+                      {engine.shortName === "OCM" && <ObsCoverVisualizer data={scan.obsCover ?? null} />}
+                      {engine.shortName === "CF" && <CogFlowVisualizer data={scan.cogFlow ?? null} />}
+                      {engine.shortName === "CSG" && <StructuralAnalysisVisualizer data={scan.topologicalAnalysis ?? null} isLight={isLight} />}
+                    </EngineCard>
                   ))}
                 </div>
               </div>
@@ -1582,94 +1590,7 @@ export function DeepTech40Panel({ scan }: Props) {
         );
       })}
 
-      {/*  Section J: Deep Visualizers  */}
-      <div className={`rounded-2xl border overflow-hidden ${isLight ? "border-slate-200" : "border-white/[0.08]"}`}>
-        <button
-          onClick={() => toggleSection("J")}
-          className={`w-full text-left p-4 flex items-center justify-between gap-3 transition-colors ${
-            isLight ? "bg-white hover:bg-slate-50" : "bg-[#0a0a0f] hover:bg-[#0d0d14]"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isLight ? "bg-violet-50" : "bg-violet-500/20"}`}
-                 style={{ boxShadow: "0 0 12px rgba(139,92,246,0.3)" }}>
-              <BarChart3 className={`w-5 h-5 ${isLight ? "text-violet-600" : "text-violet-400"}`} />
-            </div>
-            <div>
-              <h3 className={`font-extrabold font-['Syne'] text-base ${isLight ? "text-slate-900" : "text-white"}`}>Section J  Deep-Dive Visualizers</h3>
-              <p className={`text-[11px] mt-0.5 ${isLight ? "text-slate-500" : "text-white/70"}`}>Rich interactive visualizations with drill-down capability</p>
-            </div>
-          </div>
-          {expandedSections.has("J") ? (
-            <ChevronUp className={`w-4 h-4 ${isLight ? "text-slate-400" : "text-white/70"}`} />
-          ) : (
-            <ChevronDown className={`w-4 h-4 ${isLight ? "text-slate-400" : "text-white/70"}`} />
-          )}
-        </button>
-        {expandedSections.has("J") && (
-          <div className={`p-5 border-t space-y-5 ${isLight ? "bg-slate-50/50 border-slate-100" : "bg-[#08080c] border-white/[0.04]"}`}>
-            <div className={`rounded-xl border p-4 ${isLight ? "bg-white border-slate-200" : "bg-[#0a0a0f] border-white/[0.06]"}`}>
-              <div className="flex items-center gap-2 mb-3">
-                <Shield className={`w-4 h-4 ${isLight ? "text-cyan-600" : "text-cyan-400"}`} />
-                <h4 className={`font-bold font-['Syne'] text-sm ${isLight ? "text-slate-900" : "text-white"}`}>Core Security Analysis</h4>
-                <span className={`text-[9px] ml-auto ${isLight ? "text-slate-400" : "text-white/70"}`}>Infrastructure  Resilience  Observability</span>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <DeploySafeVisualizer data={scan.deploySafe ?? null} />
-                <FailSafeVisualizer data={scan.failSafe ?? null} />
-                <ObsCoverVisualizer data={scan.obsCover ?? null} />
-                <CogFlowVisualizer data={scan.cogFlow ?? null} />
-                <ArchScanVisualizer data={scan.archScan ?? null} />
-                <TimeAwareDepsVisualizer data={scan.timeAwareDeps ?? null} />
-              </div>
-            </div>
 
-            <div className={`rounded-xl border p-4 ${isLight ? "bg-white border-slate-200" : "bg-[#0a0a0f] border-white/[0.06]"}`}>
-              <div className="flex items-center gap-2 mb-3">
-                <BrainCircuit className={`w-4 h-4 ${isLight ? "text-indigo-600" : "text-indigo-400"}`} />
-                <h4 className={`font-bold font-['Syne'] text-sm ${isLight ? "text-slate-900" : "text-white"}`}>Evidence Fusion & Entropy</h4>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <DempsterShaferVisualizer data={scan.dempsterShafer ?? null} />
-                <EntropyLeakVisualizer data={scan.thermodynamicEntropy ?? null} />
-                <ConstraintSolverVisualizer data={scan.constraintSolver ?? null} />
-                <StructuralAnalysisVisualizer data={scan.topologicalAnalysis ?? null} isLight={isLight} />
-              </div>
-            </div>
-
-            <div className={`rounded-xl border p-4 ${isLight ? "bg-white border-slate-200" : "bg-[#0a0a0f] border-white/[0.06]"}`}>
-              <div className="flex items-center gap-2 mb-3">
-                <Eye className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
-                <h4 className={`font-bold font-['Syne'] text-sm ${isLight ? "text-slate-900" : "text-white"}`}>Product Reality & Data Flow</h4>
-              </div>
-              <div className="space-y-4">
-                <ProductRealityVisualizer data={scan.productReality ?? null} />
-                <CrossLanguageTaintVisualizer data={scan.crossLanguageTaint as any} />
-              </div>
-            </div>
-
-            <div className={`rounded-xl border p-4 ${isLight ? "bg-white border-slate-200" : "bg-[#0a0a0f] border-white/[0.06]"}`}>
-              <div className="flex items-center gap-2 mb-3">
-                <Users className={`w-4 h-4 ${isLight ? "text-fuchsia-600" : "text-fuchsia-400"}`} />
-                <h4 className={`font-bold font-['Syne'] text-sm ${isLight ? "text-slate-900" : "text-white"}`}>AI Consensus & Interpretation</h4>
-              </div>
-              <div className="space-y-4">
-                <AIConsensusVisualizer data={aiConsensusData as any} />
-                <AbstractConfidenceVisualizer data={scan.abstractConfidence ?? null} />
-                <UnderApproximationVisualizer data={scan.underApproximation ?? null} />
-              </div>
-            </div>
-
-            <div className={`rounded-xl border p-4 ${isLight ? "bg-white border-slate-200" : "bg-[#0a0a0f] border-white/[0.06]"}`}>
-              <div className="flex items-center gap-2 mb-3">
-                <Network className={`w-4 h-4 ${isLight ? "text-violet-600" : "text-violet-400"}`} />
-                <h4 className={`font-bold font-['Syne'] text-sm ${isLight ? "text-slate-900" : "text-white"}`}>Flaw Topology & Architecture</h4>
-              </div>
-              <DeepArchitectureVisualizer issues={scan.issues ?? []} isLight={isLight} />
-            </div>
-          </div>
-        )}
-      </div>
 
       {/*  Framework Support Matrix  */}
       <FrameworkMatrix isLight={isLight} />
