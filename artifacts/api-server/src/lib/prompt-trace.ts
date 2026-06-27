@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { parse } from "@babel/parser";
 import _traverse from "@babel/traverse";
 import type { CSG } from "./csg-builder.js";
@@ -171,7 +172,7 @@ export function runPromptTrace(
 
   for (const ep of llmEndpoints) {
     if (!ep.hasSanitizer) {
-      const id = `PT-${ep.provider}-${ep.filePath.split("/").pop()}-${ep.lineNumber}-${Math.random().toString(36).slice(2, 6)}`;
+      const id = `PT-${ep.provider}-${ep.filePath.split("/").pop()}-${ep.lineNumber}-${crypto.randomUUID().slice(0, 8)}`;
 
       const finding: PromptTraceFinding = {
         id,

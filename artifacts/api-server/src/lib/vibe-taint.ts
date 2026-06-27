@@ -1,3 +1,4 @@
+import crypto from "crypto";
 /**
  * VibeTaint v2 — Babel AST Deep Taint Analysis Engine
  * ─────────────────────────────────────────────────────────────────────────────
@@ -327,7 +328,7 @@ function lookupVar(scope: TaintScope, name: string): TaintProvenance[] | null {
 }
 
 function exprKey(node: any): string {
-  if (!node || !node.loc) return `anon:${Math.random().toString(36).slice(2, 8)}`;
+  if (!node || !node.loc) return `anon:${crypto.randomUUID().slice(0, 8)}`;
   return `${node.loc.start.line}:${node.loc.start.column}-${node.type}`;
 }
 
@@ -1081,7 +1082,7 @@ export function runVibeTaint(
   for (const f of globalFindings) {
     const vulnType = f.sink.vulnType;
     const severity = (f.sink.severity as "critical" | "high" | "medium" | "low") || inferSeverity(vulnType);
-    const findingId = `vt-ast-${vulnType}-${f.sink.file.split("/").pop()}-${f.sink.line}-${Math.random().toString(36).slice(2, 6)}`;
+    const findingId = `vt-ast-${vulnType}-${f.sink.file.split("/").pop()}-${f.sink.line}-${crypto.randomUUID().slice(0, 8)}`;
 
     finalFindings.push({
       id: findingId,

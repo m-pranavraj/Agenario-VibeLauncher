@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import type { CombinedSemanticGraph, CsgNode, CsgEdge } from "./types.js";
 import { REGULATION_RULES, type ComplianceRule, type ComplianceFinding, type DataClassification, type RegulationFramework } from "./compliance-rules.js";
 
@@ -298,7 +299,7 @@ function checkRuleAgainstPath(
   const provenanceFiles = [...new Set(path.nodes.map((n) => n.file))];
 
   return {
-    id: `COMP-${rule.id}-${Math.random().toString(36).slice(2, 7)}`,
+    id: `COMP-${rule.id}-${crypto.randomUUID().slice(0, 8)}`,
     ruleId: rule.id,
     framework: rule.framework,
     clause: rule.clause,
@@ -329,7 +330,7 @@ function checkRuleByPattern(
     if (hasImplementation) return null;
 
     return {
-      id: `COMP-${rule.id}-${Math.random().toString(36).slice(2, 7)}`,
+      id: `COMP-${rule.id}-${crypto.randomUUID().slice(0, 8)}`,
       ruleId: rule.id,
       framework: rule.framework,
       clause: rule.clause,
@@ -394,7 +395,7 @@ function checkPatternInContent(
         const lineContent = file.lines[lineNum - 1]?.trim() ?? "";
 
         return {
-          id: `COMP-${rule.id}-${Math.random().toString(36).slice(2, 7)}`,
+          id: `COMP-${rule.id}-${crypto.randomUUID().slice(0, 8)}`,
           ruleId: rule.id,
           framework: rule.framework,
           clause: rule.clause,

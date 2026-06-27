@@ -124,27 +124,62 @@ export async function analyzeTimeAwareDependencies(
     logger.warn({ err }, "OSV API fetch failed");
   }
 
-  const packages: DepPkg[] = [];
-  let vulnCount = 0;
+    let npmMetaResults: any[] = [];
+    try {
+      // Fetch NPM metadata for all packages in parallel to get real maintenance data
+      npmMetaResults = await Promise.all(
+        depEntries.map(async ([dep]) => {
+          try {
+            const res = await fetch(`https://registry.npmjs.org/${dep}`);
+            if (res.ok) return await res.json();
+          } catch (err) {}
+          return null;
+        })
+      );
+    } catch (err) {
+      logger.warn({ err }, "NPM API fetch failed");
+    }
 
-  for (let i = 0; i < depEntries.length; i++) {
-    const [dep, version] = depEntries[i];
-    const rawVulns = osvResults[i]?.vulns || [];
-    
-    // Map OSV vulns to our internal structure
-    const vulns = rawVulns.map((v: any) => ({
-      func: dep, // OSV doesn't always provide specific function level taint natively without deep parsing, fallback to pkg name
-      cve: v.aliases?.find((a: string) => a.startsWith("CVE")) || v.id,
-      severity: v.database_specific?.severity || "medium",
-      daysToPatch: 30
-    }));
+    const packages: DepPkg[] = [];
+    let vulnCount = 0;
 
-    const daysSinceLastPublish = Math.floor(Math.random() * 900) + 30;
-    const isDeprecated = ["node-uuid", "node.extend", "request", "follow-redirects"].includes(dep) || Math.random() < 0.05;
-    const maintainers = Math.floor(Math.random() * 15) + 1;
-    const hasTypes = Math.random() > 0.3;
-    const openVulns = vulns.length;
-    const decayScore = computeDecayScore(daysSinceLastPublish, isDeprecated);
+    for (let i = 0; i < depEntries.length; i++) {
+      const [dep, version] = depEntries[i];
+      const rawVulns = osvResults[i]?.vulns || [];
+      const npmMeta = npmMetaResults[i];
+      
+      // Map OSV vulns to our internal structure
+      const vulns = rawVulns.map((v: any) => ({
+        func: dep, // OSV doesn't always provide specific function level taint natively without deep parsing, fallback to pkg name
+        cve: v.aliases?.find((a: string) => a.startsWith("CVE")) || v.id,
+        severity: v.database_specific?.severity || "medium",
+        daysToPatch: 30
+      }));
+
+      // Extract real data from NPM registry
+      let daysSinceLastPublish = 900;
+      let isDeprecated = ["node-uuid", "node.extend", "request", "follow-redirects"].includes(dep);
+      let maintainers = 1;
+      let hasTypes = false;
+
+      if (npmMeta) {
+        const timeObj = npmMeta.time || {};
+        const latestVersion = npmMeta["dist-tags"]?.latest;
+        if (latestVersion && timeObj[latestVersion]) {
+          const lastPublishDate = new Date(timeObj[latestVersion]);
+          daysSinceLastPublish = Math.floor((Date.now() - lastPublishDate.getTime()) / (1000 * 60 * 60 * 24));
+        }
+        
+        if (latestVersion && npmMeta.versions?.[latestVersion]?.deprecated) {
+          isDeprecated = true;
+        }
+        
+        maintainers = npmMeta.maintainers?.length || 1;
+        hasTypes = !!npmMeta.types || !!npmMeta.typings || dep.startsWith("@types/");
+      }
+
+      const openVulns = vulns.length;
+      const decayScore = computeDecayScore(daysSinceLastPublish, isDeprecated);
 
     let reachability: "reachable" | "unreachable" | "unknown" = "unknown";
     for (const file of files) {

@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import fs from "node:fs";
 import path from "node:path";
 import type { CombinedSemanticGraph } from "./types.js";
@@ -84,7 +85,7 @@ export async function runComplianceScan(
 
       if (!hasImplementation) {
         findings.push({
-          id: `COMP-${rule.id}-${Math.random().toString(36).slice(2, 7)}`,
+          id: `COMP-${rule.id}-${crypto.randomUUID().slice(0, 8)}`,
           ruleId: rule.id,
           framework: rule.framework,
           clause: rule.clause,

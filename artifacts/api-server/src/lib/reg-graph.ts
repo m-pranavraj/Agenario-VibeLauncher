@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { parse } from "@babel/parser";
 import _traverse from "@babel/traverse";
 import type { CSG } from "./csg-builder.js";
@@ -323,7 +324,7 @@ export function runRegGraph(
         : rule.checkType === "config" ? 80
         : 75;
 
-      const id = `REGG-${rule.id.split('-')[1]}-${Math.random().toString(36).slice(2, 6)}`;
+      const id = `REGG-${rule.id.split('-')[1]}-${crypto.randomUUID().slice(0, 8)}`;
 
       findings.push({
         id,

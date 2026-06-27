@@ -1,3 +1,4 @@
+import crypto from "crypto";
 /**
  * SBOM Generator (Software Bill of Materials)
  * ─────────────────────────────────────────────────────────────────────────
@@ -150,7 +151,7 @@ export function generateSBOM(
     bomFormat: "CycloneDX",
     specVersion: "1.4",
     version: 1,
-    serialNumber: `urn:uuid:agenario-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    serialNumber: `urn:uuid:agenario-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
     metadata: {
       timestamp: new Date().toISOString(),
       tools: [

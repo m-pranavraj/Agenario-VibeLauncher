@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import type {
   CombinedSemanticGraph,
   CsgNode,
@@ -67,7 +68,7 @@ export async function runTaintAnalysis(
           if (sanitized) sanitizerCount++;
 
           findings.push({
-            id: `taint-${Math.random().toString(36).slice(2, 9)}`,
+            id: `taint-${crypto.randomUUID().slice(0, 8)}`,
             severity: sanitized ? "medium" : "high",
             title: `Unsanitized data flow from ${srcNode.name} to ${sinkNode.name}`,
             description: buildDescription(srcNode, sinkNode, path, sanitized),
@@ -113,7 +114,7 @@ export async function runTaintAnalysis(
         const sanitized = checkSanitization(graph, path);
 
         findings.push({
-          id: `implicit-${Math.random().toString(36).slice(2, 9)}`,
+          id: `implicit-${crypto.randomUUID().slice(0, 8)}`,
           severity: sanitized ? "medium" : "critical",
           title: `Implicit flow controls ${sinkNode.name} at line ${sinkNode.line}`,
           description: `Sink '${sinkNode.name}' on line ${sinkNode.line} is implicitly controlled by a condition on line ${path.nodes[0]?.line ?? "unknown"} that depends on untrusted data.`,

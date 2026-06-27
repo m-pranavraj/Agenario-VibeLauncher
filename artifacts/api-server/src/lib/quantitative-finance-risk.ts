@@ -70,18 +70,27 @@ export function computeFinancialRisk(
   const potentialBreachCost = userBaseEstimate * PARAMS.costPerBreachRecord;
   const expectedLoss = potentialBreachCost * breachProbability;
 
-  // 2. Monte Carlo Simulation (Simplified)
+  // 2. Monte Carlo Simulation (Deterministic)
+  // Seed the PRNG with the input parameters so the scan is fully deterministic
+  let seed = 0x12345678 + totalVulnerabilities + (criticalCount * 100) + (highCount * 10);
+  const random = function() {
+    let t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+
   // Simulate 10,000 scenarios of varying exploit success and user growth
   const ITERATIONS = 10000;
   const losses: number[] = new Array(ITERATIONS);
   
   for (let i = 0; i < ITERATIONS; i++) {
     // Randomize user growth (-20% to +200%)
-    const userGrowth = 0.8 + (Math.random() * 2.2);
+    const userGrowth = 0.8 + (random() * 2.2);
     // Randomize exploit success based on base probability
-    const exploitOccurs = Math.random() < breachProbability;
+    const exploitOccurs = random() < breachProbability;
     // Randomize severity if exploit occurs (log-normal distribution approximation)
-    const severityFactor = exploitOccurs ? Math.exp(Math.random() * 2) : 0;
+    const severityFactor = exploitOccurs ? Math.exp(random() * 2) : 0;
     
     losses[i] = (userBaseEstimate * userGrowth) * PARAMS.costPerBreachRecord * severityFactor * (exploitOccurs ? 1 : 0);
   }
