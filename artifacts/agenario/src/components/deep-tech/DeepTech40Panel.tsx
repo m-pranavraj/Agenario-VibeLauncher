@@ -1204,7 +1204,7 @@ export function DeepTech40Panel({ scan }: Props) {
     {
       id: "H",
        label: "Future-Proof & Advanced",
-       sublabel: "FHE, post-quantum, neuromorphic, DNA storage",
+       sublabel: "FHE, legacy crypto, architecture, dependency risk",
        icon: Satellite,
        color: "fuchsia",
        engines: [
@@ -1233,7 +1233,7 @@ export function DeepTech40Panel({ scan }: Props) {
            actionItems: !scan.fheAnalyzer ? ["Engine not connected - configure pipeline"] : null,
          },
          {
-           title: "Post-Quantum Readiness",
+           title: "Legacy Crypto Scanner",
            shortName: "PQR",
            icon: Fingerprint,
            color: "purple",
@@ -1257,7 +1257,7 @@ export function DeepTech40Panel({ scan }: Props) {
            actionItems: !scan.postQuantumReadiness ? ["Engine not connected - configure pipeline"] : null,
          },
          {
-           title: "Neuromorphic Drift Detector",
+           title: "Architectural Decay Rate",
            shortName: "NDD",
            icon: BrainCircuit,
            color: "pink",
@@ -1281,7 +1281,7 @@ export function DeepTech40Panel({ scan }: Props) {
            actionItems: !scan.neuromorphicDrift ? ["Engine not connected - configure pipeline"] : null,
          },
          {
-           title: "DNA Storage Compiler",
+           title: "Cyclical Dependency Risk",
            shortName: "DNA",
            icon: Dna,
            color: "emerald",
@@ -1308,7 +1308,7 @@ export function DeepTech40Panel({ scan }: Props) {
     {
       id: "I",
        label: "Quantum & Distributed Systems",
-       sublabel: "DSE, BFT, Kardashev, AGI, GPU tensor",
+       sublabel: "Parallel path, fault tolerance, latency, integrity",
        icon: Cpu,
        color: "purple",
        engines: [
@@ -1408,7 +1408,7 @@ export function DeepTech40Panel({ scan }: Props) {
            actionItems: !scan.agiAlignment ? ["Engine not connected - configure pipeline"] : null,
          },
          {
-           title: "GPU Tensor Bridge",
+           title: "AST Integrity Signature",
            shortName: "GTB",
            icon: Cpu,
            color: "blue",
