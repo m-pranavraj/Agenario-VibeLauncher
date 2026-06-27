@@ -26,6 +26,9 @@ import CareersPage from "@/pages/careers";
 import AdminPage from "@/pages/admin";
 import CertPage from "@/pages/cert";
 import SettingsPage from "@/pages/settings";
+import IntegrationsPage from "@/pages/integrations";
+import SecurityRulesPage from "@/pages/security-rules";
+import ApiKeysPage from "@/pages/api-keys";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -55,6 +58,9 @@ function Router() {
       <Route path="/admin" component={AdminPage} />
       <Route path="/cert/:id" component={CertPage} />
       <Route path="/settings" component={SettingsPage} />
+      <Route path="/integrations" component={IntegrationsPage} />
+      <Route path="/security-rules" component={SecurityRulesPage} />
+      <Route path="/api-keys" component={ApiKeysPage} />
       <Route component={NotFound} />
     </Switch>
   );

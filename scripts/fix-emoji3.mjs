@@ -1,0 +1,20 @@
+import { readFileSync, writeFileSync } from 'fs';
+const file = 'artifacts/agenario/src/pages/scan-results.tsx';
+let content = readFileSync(file, 'utf8');
+
+const win1252extra = { 0x80:0x20AC,0x82:0x201A,0x83:0x0192,0x84:0x201E,0x85:0x2026,0x86:0x2020,0x87:0x2021,0x88:0x02C6,0x89:0x2030,0x8A:0x0160,0x8B:0x2039,0x8C:0x0152,0x8E:0x017D,0x91:0x2018,0x92:0x2019,0x93:0x201C,0x94:0x201D,0x95:0x2022,0x96:0x2013,0x97:0x2014,0x98:0x02DC,0x99:0x2122,0x9A:0x0161,0x9B:0x203A,0x9C:0x0153,0x9E:0x017E,0x9F:0x0178 };
+function bytesToMojibake(bytes) { return bytes.map(b => String.fromCodePoint(b<0x80?b:(b<0xA0?(win1252extra[b]||b):b))).join(''); }
+function emoji(cp) { const s=String.fromCodePoint(cp); const buf=Buffer.from(s,'utf8'); return [bytesToMojibake([...buf]),s]; }
+
+const more = [
+  emoji(0x1F512), // 🔒 lock  
+  emoji(0x1F504), // 🔄 arrows
+];
+
+let count = 0;
+for (const [bad, good] of more) {
+  const parts = content.split(bad);
+  if (parts.length > 1) { console.log(`${bad} -> ${good} [${parts.length-1}x]`); content = parts.join(good); count += parts.length-1; }
+}
+console.log(`Done: ${count}`);
+writeFileSync(file, content, 'utf8');

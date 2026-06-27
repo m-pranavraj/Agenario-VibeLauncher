@@ -1450,7 +1450,7 @@ function EvidenceCard({
                         ? "bg-sky-500/10 text-sky-400 border-sky-500/20"
                         : `bg-white/[0.05] text-white/35 ${isLight ? "border-gray-200" : "border-white/[0.08]"}`
                     }`}>
-                      {issue.sourceEvidence === "runtime" ? "ðŸŸ¢ Runtime" : issue.sourceEvidence === "static" ? "ðŸ”µ Static" : "âšª AI Reasoning"}
+                      {issue.sourceEvidence === "runtime" ? "🟢 Runtime" : issue.sourceEvidence === "static" ? "🔵 Static" : "⚪ AI Reasoning"}
                     </span>
                   )}
                   {issue.retestResult && (
@@ -1459,7 +1459,7 @@ function EvidenceCard({
                         ? "bg-green-500/10 text-green-400 border-green-500/20"
                         : "bg-red-500/10 text-red-400/70 border-red-500/20"
                     }`}>
-                      {issue.retestResult === "fixed" ? "âœ“ Fixed" : "âš  Needs Fix"}
+                      {issue.retestResult === "fixed" ? "âœ“ Fixed" : "⚠ Needs Fix"}
                     </span>
                   )}
                 </div>
@@ -1470,7 +1470,7 @@ function EvidenceCard({
                 <div className="bg-black/50 border border-amber-500/15 rounded-lg overflow-hidden">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/[0.06] border-b border-amber-500/10">
                     <Terminal className="w-3 h-3 text-amber-400/50" />
-                    <span className="text-[10px] text-amber-400/50 font-medium uppercase tracking-wide">Vulnerable Code {issue.functionName ? `â€” Function: ${issue.functionName}` : ""}</span>
+                    <span className="text-[10px] text-amber-400/50 font-medium uppercase tracking-wide">Vulnerable Code {issue.functionName ? `— Function: ${issue.functionName}` : ""}</span>
                     {issue.lineNumber && <span className="text-[10px] text-amber-500/40 ml-auto">Line {issue.lineNumber}</span>}
                   </div>
                   <pre className="px-3 py-2.5 text-[11px] font-mono text-red-300/80 leading-relaxed overflow-x-auto whitespace-pre-wrap">
@@ -1624,8 +1624,8 @@ function EvidenceCard({
                     className={`flex items-center gap-1.5 text-xs bg-violet-500/15 hover:bg-violet-500/25 disabled:opacity-50 ${isLight ? "text-violet-600" : "text-violet-300"} font-semibold px-3 py-2 rounded-lg transition-all border border-violet-500/30 w-full justify-center`}
                   >
                     {generatingFix
-                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Generating patchâ€¦</>
-                      : <><Sparkles className="w-3.5 h-3.5" />âš¡ Generate Code Fix</>}
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Generating patch…</>
+                      : <><Sparkles className="w-3.5 h-3.5" />⚡ Generate Code Fix</>}
                   </button>
                 ) : (
                   <div className="bg-black/50 border border-violet-500/25 rounded-lg overflow-hidden">
@@ -1664,7 +1664,7 @@ function EvidenceCard({
                 onClick={() => window.location.href = "/pricing"}
                 className="flex items-center gap-1.5 text-xs text-violet-400/50 border border-violet-500/20 px-3 py-2 rounded-lg w-full justify-center hover:bg-violet-500/5 transition-colors"
               >
-                <Lock className="w-3 h-3" />âš¡ Generate Code Fix - Creator Plan
+                <Lock className="w-3 h-3" />⚡ Generate Code Fix - Creator Plan
               </button>
             )
           )}
@@ -1678,7 +1678,7 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
   const isLight = useIsLight();
   const cfg = SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.low;
   const fileHint = issue.evidence?.startsWith("Found in:") ? issue.evidence : null;
-  const fixPreview = issue.fixPrompt && !issue.fixPrompt.startsWith("ðŸ”’")
+  const fixPreview = issue.fixPrompt && !issue.fixPrompt.startsWith("🔒")
     ? issue.fixPrompt.slice(0, 60)
     : null;
   const [copied, setCopied] = useState(false);
@@ -1751,7 +1751,7 @@ function LockedIssueCard({ issue, rank }: { issue: ScanIssue; rank?: number }) {
           <div className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-black/30 border-white/[0.07]"} border rounded-lg px-3 py-2.5 relative overflow-hidden`}>
             <div className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/60"} mb-1`}>1-Click Fix Prompt</div>
             <p className={`text-xs font-mono ${isLight ? "text-gray-700" : "text-white/40"} leading-relaxed`} style={{ filter: "blur(3.5px)", userSelect: "none" }}>
-              {fixPreview}â€¦
+              {fixPreview}…
             </p>
             <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
               <Link href="/pricing"
@@ -1863,7 +1863,7 @@ function ExploitTerminalCard({ issue }: { issue: ScanIssue }) {
         <div className="w-3 h-3 rounded-full bg-red-500" />
         <div className="w-3 h-3 rounded-full bg-amber-500" />
         <div className="w-3 h-3 rounded-full bg-green-500 opacity-30" />
-        <span className="text-[10px] text-red-400/70 font-mono ml-2 uppercase tracking-widest">Exploit Terminal Â· {issue.agentName}</span>
+        <span className="text-[10px] text-red-400/70 font-mono ml-2 uppercase tracking-widest">Exploit Terminal · {issue.agentName}</span>
         <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold uppercase">
           {issue.severity}
         </span>
@@ -2006,7 +2006,7 @@ function ComplianceSection({ results }: { results: ComplianceResult[] }) {
                   </div>
                   <div className={`text-[11px] ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>
                     {result.findings.length} finding{result.findings.length !== 1 ? "s" : ""}
-                    {result.riskLevel && ` Â· ${result.riskLevel} risk`}
+                    {result.riskLevel && ` · ${result.riskLevel} risk`}
                   </div>
                 </div>
                 {isExpanded ? <ChevronUp className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/20"} shrink-0`} /> : <ChevronDown className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/20"} shrink-0`} />}
@@ -2077,7 +2077,7 @@ function OldRevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligen
           <div className="text-[10px] text-amber-400/70 uppercase tracking-wide">Proportional Revenue Exposure</div>
           <div className="text-sm font-bold text-amber-400">{revenue.estimatedMonthlyImpact}</div>
           <div className="text-[10px] text-amber-400/50 leading-relaxed">
-            This is a proportional estimate â€” actual exposure scales with your revenue. A â‚¹1Cr/mo business would see roughly this exposure; a â‚¹10Cr/mo business, ~10Ã—.
+            This is a proportional estimate — actual exposure scales with your revenue. A ₹1Cr/mo business would see roughly this exposure; a ₹10Cr/mo business, ~10×.
           </div>
         </div>
       )}
@@ -2285,19 +2285,19 @@ function ConfidenceBadges({ evidence }: { evidence: ProofEvidence[] }) {
       <div className="flex flex-wrap gap-4 items-center text-xs">
         <span className={`${isLight ? "text-gray-400" : "text-white/60"} uppercase tracking-widest font-medium text-[10px]`}>Confidence Scale</span>
         <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/15 border border-green-500/25 text-green-400 text-[10px] font-semibold">
-          ðŸŸ¢ 99% Browser Runtime{browserCount > 0 ? ` (${browserCount})` : ""}
+          🟢 99% Browser Runtime{browserCount > 0 ? ` (${browserCount})` : ""}
         </span>
         <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-semibold">
-          ðŸ”µ 90% HTTP Runtime{httpCount > 0 ? ` (${httpCount})` : ""}
+          🔵 90% HTTP Runtime{httpCount > 0 ? ` (${httpCount})` : ""}
         </span>
         <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[10px] font-semibold">
-          ðŸ”µ 75% Static Code{staticCount > 0 ? ` (${staticCount})` : ""}
+          🔵 75% Static Code{staticCount > 0 ? ` (${staticCount})` : ""}
         </span>
         <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-semibold">
-          ðŸŸ¡ 60% Pattern Match
+          🟡 60% Pattern Match
         </span>
         <span className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-white/35 text-[10px] font-semibold ${isLight ? "bg-gray-100 border-gray-200" : "bg-white/[0.05] border-white/[0.08]"}`}>
-          âšª &lt;60% AI Reasoning
+          ⚪ &lt;60% AI Reasoning
         </span>
       </div>
     </div>
@@ -2329,7 +2329,7 @@ function SandboxProofsSection({
 
   const ineligibleMessage = (() => {
     if (sourceType === "description") {
-      return "Text descriptions can't be executed in a sandbox â€” upload a GitHub repo or ZIP file.";
+      return "Text descriptions can't be executed in a sandbox — upload a GitHub repo or ZIP file.";
     }
     if (sandboxMeta?.reason) return sandboxMeta.reason;
     if (sourceType === "url") {
@@ -2406,7 +2406,7 @@ function SandboxProofsSection({
                   </p>
                   {sandboxMeta?.blockers && sandboxMeta.blockers.length > 0 && (
                     <p className={`text-[10px] mt-2 font-mono ${isLight ? "text-gray-400" : "text-white/25"}`}>
-                      {sandboxMeta.blockers.join(" Â· ")}
+                      {sandboxMeta.blockers.join(" · ")}
                     </p>
                   )}
                 </div>
@@ -2414,7 +2414,7 @@ function SandboxProofsSection({
             </div>
             <div className={`text-xs leading-relaxed ${isLight ? "text-gray-400" : "text-white/35"} text-center`}>
               {sandboxMeta?.status === "completed" ? (
-                <>GitHubbox ran <span className={`font-semibold ${isLight ? "text-gray-600" : "text-white/60"}`}>install â†’ dev server â†’ live probes</span> against your code in an isolated workspace.</>
+                <>GitHubbox ran <span className={`font-semibold ${isLight ? "text-gray-600" : "text-white/60"}`}>install → dev server → live probes</span> against your code in an isolated workspace.</>
               ) : (
                 <>Submit a <span className={`font-semibold ${isLight ? "text-gray-600" : "text-white/60"}`}>Node.js web app</span> (GitHub or ZIP with a dev/start script) for real Chromium screenshots and runtime security probes.</>
               )}
@@ -2426,7 +2426,7 @@ function SandboxProofsSection({
             {/* â”€â”€ FIRST PROOF: always visible â”€â”€ */}
             <div>
               <div className={`text-[10px] font-semibold uppercase tracking-widest mb-2.5 ${isLight ? "text-gray-400" : "text-white/25"}`}>
-                Live Evidence Â· Proof 1 of {proofs.length}
+                Live Evidence · Proof 1 of {proofs.length}
               </div>
               <div className={`border rounded-xl overflow-hidden ${isLight ? "border-gray-200" : "border-white/[0.08]"}`}>
                 {/* Proof header bar */}
@@ -2442,7 +2442,7 @@ function SandboxProofsSection({
                   </span>
                 </div>
 
-                {/* Screenshot â€” full width, always visible */}
+                {/* Screenshot — full width, always visible */}
                 {first.screenshot ? (
                   <div className="relative">
                     <div className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-medium uppercase tracking-wide ${isLight ? "text-gray-400 bg-gray-50 border-b border-gray-100" : "text-white/25 bg-black/30 border-b border-white/[0.05]"}`}>
@@ -2467,7 +2467,7 @@ function SandboxProofsSection({
                   <div className={`flex items-center justify-center h-32 ${isLight ? "bg-gray-50" : "bg-black/20"}`}>
                     <div className="text-center">
                       <Globe className={`w-6 h-6 mx-auto mb-2 ${isLight ? "text-gray-300" : "text-white/20"}`} />
-                      <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>HTTP probe Â· No screenshot captured</p>
+                      <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>HTTP probe · No screenshot captured</p>
                       {first.url && <code className="text-[10px] text-violet-400 mt-1 block">{first.url}</code>}
                     </div>
                   </div>
@@ -2485,7 +2485,7 @@ function SandboxProofsSection({
                   </div>
                 </div>
 
-                {/* Reproduction steps â€” collapsible */}
+                {/* Reproduction steps — collapsible */}
                 <div className={`border-t ${isLight ? "border-gray-100" : "border-white/[0.05]"}`}>
                   <button
                     onClick={() => setStepsOpen((v) => !v)}
@@ -2563,7 +2563,7 @@ function RegressionPanel({ diff }: { diff: RegressionDiff }) {
         {diff.previousScanId && (
           <Link href={`/scans/${diff.previousScanId}`}>
             <span className={`ml-auto text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} hover:text-white/50 transition-colors cursor-pointer`}>
-              vs Scan #{diff.previousScanId} â†’
+              vs Scan #{diff.previousScanId} →
             </span>
           </Link>
         )}
@@ -2580,7 +2580,7 @@ function RegressionPanel({ diff }: { diff: RegressionDiff }) {
             {diff.scoreDelta > 0 ? "+" : ""}{diff.scoreDelta} points
           </div>
           {diff.previousScore != null && (
-            <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>from {diff.previousScore} â†’ {(diff.previousScore ?? 0) + (diff.scoreDelta ?? 0)}</span>
+            <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>from {diff.previousScore} → {(diff.previousScore ?? 0) + (diff.scoreDelta ?? 0)}</span>
           )}
         </div>
       )}
@@ -2699,7 +2699,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
 }> = {
   "replit": {
     label: "Replit AI",
-    emoji: "ðŸŸ ",
+    emoji: "🟠",
     color: "text-orange-400",
     bg: "bg-orange-500/[0.06]",
     border: "border-orange-500/20",
@@ -2714,7 +2714,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
   },
   "cursor": {
     label: "Cursor AI",
-    emoji: "ðŸ”µ",
+    emoji: "🔵",
     color: "text-sky-400",
     bg: "bg-sky-500/[0.06]",
     border: "border-sky-500/20",
@@ -2729,7 +2729,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
   },
   "lovable": {
     label: "Lovable",
-    emoji: "ðŸ©·",
+    emoji: "🩷",
     color: "text-pink-400",
     bg: "bg-pink-500/[0.06]",
     border: "border-pink-500/20",
@@ -2744,7 +2744,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
   },
   "bolt": {
     label: "Bolt",
-    emoji: "âš¡",
+    emoji: "⚡",
     color: "text-yellow-400",
     bg: "bg-yellow-500/[0.06]",
     border: "border-yellow-500/20",
@@ -2759,7 +2759,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
   },
   "windsurf": {
     label: "Windsurf / Codeium",
-    emoji: "ðŸŒŠ",
+    emoji: "🌊",
     color: "text-cyan-400",
     bg: "bg-cyan-500/[0.06]",
     border: "border-cyan-500/20",
@@ -2774,7 +2774,7 @@ const VIBE_TOOL_PATTERNS: Record<string, {
   },
   "copilot": {
     label: "GitHub Copilot",
-    emoji: "ðŸ¤–",
+    emoji: "🤖",
     color: "text-violet-400",
     bg: "bg-violet-500/[0.06]",
     border: "border-violet-500/20",
@@ -2850,7 +2850,7 @@ function VibeCodeIntelPanel({ vibeTool, issues, vibeToolRank }: {
               return (
                 <div key={i} className="flex items-start gap-2.5 text-xs">
                   <span className={`mt-0.5 shrink-0 text-sm ${matched ? "text-red-400" : "text-white/15"}`}>
-                    {matched ? "âš " : "âœ“"}
+                    {matched ? "⚠" : "âœ“"}
                   </span>
                   <span className={matched ? "text-white/60" : isLight ? "text-gray-400" : "text-white/20"}>
                     {p}
@@ -3055,7 +3055,7 @@ function LaunchReplaySection({ steps }: { steps: LaunchReplayStep[] }) {
         <div className="border border-red-500/25 bg-red-500/[0.05] rounded-xl p-4 flex items-start gap-3">
           <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
           <div>
-            <div className="text-xs font-bold text-red-400 mb-0.5">ðŸ”´ DO NOT LAUNCH</div>
+            <div className="text-xs font-bold text-red-400 mb-0.5">🔴 DO NOT LAUNCH</div>
             <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/50"} leading-relaxed`}>
               {failCount} critical user journey failure{failCount !== 1 ? "s" : ""} detected. Real users will experience these in their first session.
               Fix these before going live - first impressions are permanent.
@@ -3208,17 +3208,17 @@ const RISK_CONFIG = {
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
-  payment: "ðŸ’³ Payment",
-  "cloud-credentials": "â˜ï¸ Cloud",
-  database: "ðŸ—„ï¸ Database",
-  cryptographic: "ðŸ”‘ Cryptographic",
-  auth: "ðŸ” Auth",
-  "ai-api": "ðŸ¤– AI API",
-  email: "ðŸ“§ Email",
-  communication: "ðŸ’¬ Comms",
-  vcs: "ðŸ“¦ VCS",
-  credentials: "ðŸ”“ Credentials",
-  generic: "âš ï¸ Generic",
+  payment: "💳 Payment",
+  "cloud-credentials": "☁️ Cloud",
+  database: "🗄ï¸ Database",
+  cryptographic: "🔒 Cryptographic",
+  auth: "🔐 Auth",
+  "ai-api": "🤖 AI API",
+  email: "📧 Email",
+  communication: "💬 Comms",
+  vcs: "📦 VCS",
+  credentials: "🔓 Credentials",
+  generic: "⚠ï¸ Generic",
 };
 
 function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["secretScanResults"]>; isCreator: boolean }) {
@@ -3230,7 +3230,7 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
       className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
       <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} flex items-center gap-3`}>
         <div className="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
-          <span className="text-sm">ðŸ”</span>
+          <span className="text-sm">🔍</span>
         </div>
         <div className="flex-1">
           <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}
@@ -3308,7 +3308,7 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
                           <Lock className="w-3 h-3 text-violet-400 shrink-0" />
                           <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/35"}`}>{finding.context}</span>
                           <Link href="/pricing">
-                            <span className="text-xs text-violet-400 hover:text-violet-300 font-semibold ml-auto cursor-pointer">Unlock â†’</span>
+                            <span className="text-xs text-violet-400 hover:text-violet-300 font-semibold ml-auto cursor-pointer">Unlock →</span>
                           </Link>
                         </div>
                       )}
@@ -3354,12 +3354,12 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
       className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
       <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} flex items-center gap-3`}>
         <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-          <span className="text-sm">ðŸ“¦</span>
+          <span className="text-sm">📦</span>
         </div>
         <div className="flex-1">
           <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}
           >Dependency CVE Tracker</h2>
-          <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-xs mt-0.5`}>{data.totalPackages} packages scanned Â· NVD + GitHub Advisory DB</p>
+          <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-xs mt-0.5`}>{data.totalPackages} packages scanned · NVD + GitHub Advisory DB</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {data.hasCritical && (
@@ -3417,11 +3417,11 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
           >{pkg.name}</span>
                         <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>
                         v{pkg.installedVersion}</span>
-                        <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>â†’</span>
+                        <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>→</span>
                         <span className="text-xs text-green-400/70 font-mono">v{pkg.fixVersion}</span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${sevCfg.badge}`}>{sev}</span>
                       </div>
-                      <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>{pkg.vulns.length} CVE{pkg.vulns.length !== 1 ? "s" : ""} Â· CVSS {pkg.highestCvss.toFixed(1)}</p>
+                      <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5`}>{pkg.vulns.length} CVE{pkg.vulns.length !== 1 ? "s" : ""} · CVSS {pkg.highestCvss.toFixed(1)}</p>
                     </div>
                     <div className={`text-xl font-bold font-['Syne'] shrink-0 ${CVSS_COLOR(pkg.highestCvss)}`}>
                       {pkg.highestCvss.toFixed(1)}
@@ -3439,7 +3439,7 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
                             <span className={`text-sm font-bold ${CVSS_COLOR(vuln.cvssScore)}`}>CVSS {vuln.cvssScore.toFixed(1)}</span>
                             {vuln.exploitAvailable && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 shrink-0">
-                                âš¡ EXPLOIT PUBLIC
+                                ⚡ EXPLOIT PUBLIC
                               </span>
                             )}
                           </div>
@@ -3554,13 +3554,13 @@ function CleanupAgentPanel({ data }: { data: NonNullable<ScanDetail["cleanupRepo
       className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
       <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} flex items-start gap-3`}>
         <div className="w-8 h-8 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0 mt-0.5">
-          <span className="text-sm">ðŸ§¹</span>
+          <span className="text-sm">🧹</span>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}
           >Cleanup Agent</h2>
-            <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>Â·</span>
+            <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>·</span>
             <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>
             Tech Debt Score</span>
             <span className={`text-sm font-bold font-['Syne'] ${DEBT_COLOR(data.debtScore)}`}>{data.debtScore}/100</span>
@@ -3654,7 +3654,7 @@ className={`flex items-center gap-2 px-2.5 py-1 rounded-full border whitespace-n
                       <p className={`text-sm font-semibold ${isLight ? "text-gray-800" : "text-white/80"}`}>{finding.title}</p>
                       {meta && <span className={`text-[10px] ${meta.color}`}><meta.icon className="w-3 h-3 inline mr-0.5" />{meta.label}</span>}
                       {finding.autoFixable && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/15">âš¡ auto-fixable</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/15">⚡ auto-fixable</span>
                       )}
                     </div>
                     {finding.lineHint && (
@@ -3662,7 +3662,7 @@ className={`flex items-center gap-2 px-2.5 py-1 rounded-full border whitespace-n
                     )}
                     <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/35"} leading-relaxed mb-1.5`}>{finding.detail}</p>
                     <div className={`bg-black/30 border rounded-lg px-3 py-2 text-[10px] font-mono leading-relaxed ${isLight ? "border-gray-200 text-gray-400" : "border-white/[0.06] text-white/30"}`}>
-                      ðŸ’¡ {finding.fixSuggestion}
+                      💡 {finding.fixSuggestion}
                     </div>
                   </div>
                 </div>
@@ -3910,7 +3910,7 @@ function PredictiveIntelPanel({ data, isCreator }: { data: PredictiveIntelResult
           <p className={`text-sm ${isLight ? "text-gray-500" : "text-white/55"} leading-relaxed`}>
             {isCreator ? data.narrative : data.narrative}
           </p>
-          {!isCreator && data.narrative.startsWith("ðŸ”’") && (
+          {!isCreator && data.narrative.startsWith("🔒") && (
             <Link href="/pricing" className="inline-flex items-center gap-1 mt-2 text-xs text-violet-400 hover:underline">
               <Zap className="w-3 h-3" />Upgrade to unlock full narrative
             </Link>
@@ -3982,7 +3982,7 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
               <div className="flex-1 min-w-0">
                 <span className={`text-sm font-medium ${isLight ? "text-gray-800" : "text-white/80"} truncate block`}>{chain.issueTitle}</span>
                 <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/30"}`}>
-                Origin: {chain.originLayer} Â· {chain.hops.filter((h: any) => h.status === "implicated").length} layers implicated</span>
+                Origin: {chain.originLayer} · {chain.hops.filter((h: any) => h.status === "implicated").length} layers implicated</span>
               </div>
               <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${chain.issueSeverity === "critical" ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400"}`}>
                 {chain.issueSeverity}
@@ -4035,7 +4035,7 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
                   <div className={`flex items-center gap-2 px-4 py-2 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} ${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"}`}>
                     <Terminal className="w-3 h-3 text-green-400" />
                     <span className={`text-[11px] font-bold ${isLight ? "text-gray-500" : "text-white/50"} flex-1`}>Auto-Generated Fix PR</span>
-                    {!chain.fixPR.startsWith("ðŸ”’") ? (
+                    {!chain.fixPR.startsWith("🔒") ? (
                       <button onClick={() => copyPR(chain.fixPR, ci)}
                         className={`flex items-center gap-1 text-[10px] ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors`}>
                         {copiedPR === ci ? <><CheckCheck className="w-2.5 h-2.5 text-green-400" />Copied!</> : <><Copy className="w-2.5 h-2.5" />Copy</>}
@@ -4246,7 +4246,7 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
     for (const g of groups) {
       lines.push(`## ${g.label}`);
       for (const item of g.items) {
-        lines.push(`- [${checked[item.id] ? "x" : " "}] **${item.title}** - ${item.description.slice(0, 120)}â€¦`);
+        lines.push(`- [${checked[item.id] ? "x" : " "}] **${item.title}** - ${item.description.slice(0, 120)}…`);
       }
       lines.push("");
     }
@@ -4281,7 +4281,7 @@ function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
             />
           </div>
           <span className={`text-xs font-bold ${pct === 100 ? "text-green-400" : isLight ? "text-gray-500" : "text-white/40"}`}>{pct}%</span>
-          {pct === 100 && <span className="text-xs text-green-400 font-semibold">Launch ready! ðŸš€</span>}
+          {pct === 100 && <span className="text-xs text-green-400 font-semibold">Launch ready! 🚀</span>}
         </div>
       </div>
 
@@ -4345,7 +4345,7 @@ function StickyLaunchAlertBanner({ scan }: { scan: ScanDetail }) {
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
         
-            {isRevAlert ? "âš ï¸ Revenue Alert" : "âš ï¸ Launch Security Alert"}
+            {isRevAlert ? "⚠ï¸ Revenue Alert" : "⚠ï¸ Launch Security Alert"}
           </p>
           <p className={`text-xs mt-0.5 truncate ${isRevAlert ? "text-amber-300/70" : "text-red-300/70"}`}>
             {isRevAlert
@@ -4394,7 +4394,7 @@ function LockedInsightsPanel({ scan, plan }: { scan: ScanDetail; plan: string })
     label: "Digital Twin Simulation",
     detail: scan.digitalTwin.simulatedUserCount > 0
       ? `${scan.digitalTwin.simulatedUserCount.toLocaleString()} simulated execution paths`
-      : `${scan.digitalTwin.journeys.length} journeys Â· ${scan.digitalTwin.attackSimulations.length} attack vectors`,
+      : `${scan.digitalTwin.journeys.length} journeys · ${scan.digitalTwin.attackSimulations.length} attack vectors`,
     IconCmp: Globe,
   });
   if (scan.predictiveIntel) items.push({
@@ -4439,7 +4439,7 @@ function LockedInsightsPanel({ scan, plan }: { scan: ScanDetail; plan: string })
           <div key={i} className={`flex items-start gap-2.5 p-3 ${isLight ? "bg-gray-50/50" : "bg-white/[0.02]"} border ${isLight ? "border-gray-200" : "border-white/[0.06]"} rounded-xl`}>
             <item.IconCmp className="w-3.5 h-3.5 text-violet-400/50 shrink-0 mt-0.5" />
             <div className="min-w-0">
-              <p className={`text-xs font-semibold ${isLight ? "text-gray-600" : "text-white/60"} leading-tight`}>ðŸ”’ {item.label}</p>
+              <p className={`text-xs font-semibold ${isLight ? "text-gray-600" : "text-white/60"} leading-tight`}>🔒 {item.label}</p>
               <p className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} mt-0.5 truncate`}>{item.detail}</p>
             </div>
           </div>
@@ -4490,7 +4490,7 @@ function LaunchImpactPanel({ data }: { data: NonNullable<ScanDetail["launchImpac
       )}
       {data.founderWarning && (
         <div className="border border-red-500/20 bg-red-500/[0.05] rounded-xl p-4">
-          <div className="text-[10px] text-red-400/70 uppercase tracking-wide mb-1.5 font-medium">âš ï¸ Founder Warning</div>
+          <div className="text-[10px] text-red-400/70 uppercase tracking-wide mb-1.5 font-medium">⚠ï¸ Founder Warning</div>
           <p className="text-sm text-red-300/80 leading-relaxed">{data.founderWarning}</p>
         </div>
       )}
@@ -4557,7 +4557,7 @@ function ProductHuntPanel({ data }: { data: NonNullable<ScanDetail["productHuntS
             ? "bg-green-500/15 text-green-400 border-green-500/25"
             : "bg-amber-500/10 text-amber-400 border-amber-500/20"
         }`}>
-          {data.readyToHunt ? "ðŸš€ Ready to Hunt" : "âš ï¸ Not Yet Ready"}
+          {data.readyToHunt ? "🚀 Ready to Hunt" : "⚠ï¸ Not Yet Ready"}
         </span>
       </div>
       <div className="flex items-center gap-6">
@@ -4623,7 +4623,7 @@ function ProductHuntPanel({ data }: { data: NonNullable<ScanDetail["productHuntS
                   <div className={`px-4 pb-3 pt-2 border-t ${isLight ? "border-gray-200" : "border-white/[0.05]"} space-y-1`}>
                     {cat.findings.map((f: any, i: any) => (
                       <div key={i} className={`flex items-start gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/45"}`}>
-                        <span className={`${isLight ? "text-gray-400" : "text-white/20"} mt-0.5 shrink-0`}>Â·</span>
+                        <span className={`${isLight ? "text-gray-400" : "text-white/20"} mt-0.5 shrink-0`}>·</span>
                         {f}
                       </div>
                     ))}
@@ -4692,7 +4692,7 @@ function CofounderQAPanel({ scanId }: { scanId: number }) {
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && question.trim()) ask(question.trim()); }}
-          placeholder="Ask anything about your scanâ€¦"
+          placeholder="Ask anything about your scan…"
           className={`flex-1 ${isLight ? "bg-gray-50" : "bg-white/[0.04]"} border border-white/[0.10] rounded-xl px-4 py-2.5 text-sm ${isLight ? "text-gray-900" : "text-white"} placeholder-white/25 focus:outline-none focus:border-violet-500/50 transition-all`}
         />
         <button
@@ -4714,7 +4714,7 @@ function CofounderQAPanel({ scanId }: { scanId: number }) {
             <div className={`flex items-center gap-2 text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>
         
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              Thinkingâ€¦
+              Thinking…
             </div>
           ) : (
             <p className={`text-sm ${isLight ? "text-gray-700" : "text-white/70"} leading-relaxed`}>{answer}</p>
@@ -4820,10 +4820,10 @@ function ScanRunningScreen({
               Reviewing your app
             </h2>
             <p className={`text-sm ${isLight ? "text-gray-400" : "text-white/35"}`}>
-              {elapsed}s elapsed Â· auto-refreshing every 3s
+              {elapsed}s elapsed · auto-refreshing every 3s
             </p>
             <p className={`text-xs ${isLight ? "text-gray-400/80" : "text-white/20"} italic mt-0.5`}>
-              Deep scan runs real browser agents & takes about 4â€“5 minutes
+              Deep scan runs real browser agents & takes about 4—5 minutes
             </p>
           </div>
         </div>
@@ -4886,7 +4886,7 @@ function ScanRunningScreen({
   );
 }
 
-// â”€â”€ Architecture Diagram Panel â€” React Flow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€ Architecture Diagram Panel — React Flow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // World-class interactive architecture map with glassmorphism nodes,
 // severity glow-rings, animated edges, and red issue-count badges.
 
@@ -4934,36 +4934,36 @@ function generateNodeSuggestions(nodeId: string, issues: ScanIssue[], _scan: Sca
   const worst = archWorstSev(issues);
   const out: string[] = [];
   if (nodeId === "auth") {
-    if (hay.includes("session") || hay.includes("token")) out.push("Replace custom sessions with Clerk or Auth.js â€” battle-tested RBAC out-of-the-box");
-    if (hay.includes("password") || hay.includes("hash")) out.push("Switch to Argon2id for password hashing â€” better GPU-attack resistance than bcrypt");
-    if (worst === "critical") out.push("Add MFA (TOTP or passkey) â€” critical auth issues require layered defence");
+    if (hay.includes("session") || hay.includes("token")) out.push("Replace custom sessions with Clerk or Auth.js — battle-tested RBAC out-of-the-box");
+    if (hay.includes("password") || hay.includes("hash")) out.push("Switch to Argon2id for password hashing — better GPU-attack resistance than bcrypt");
+    if (worst === "critical") out.push("Add MFA (TOTP or passkey) — critical auth issues require layered defence");
   }
   if (nodeId === "api") {
-    if (hay.includes("rate limit") || hay.includes("dos")) out.push("Add a WAF layer (Cloudflare, AWS API Gateway) â€” handles rate limiting at the edge");
-    if (hay.includes("cors") || hay.includes("header")) out.push("Use Helmet.js + strict CORS policy â€” one-line fix for most header vulnerabilities");
+    if (hay.includes("rate limit") || hay.includes("dos")) out.push("Add a WAF layer (Cloudflare, AWS API Gateway) — handles rate limiting at the edge");
+    if (hay.includes("cors") || hay.includes("header")) out.push("Use Helmet.js + strict CORS policy — one-line fix for most header vulnerabilities");
     if (hay.includes("injection") || hay.includes("sql")) out.push("Parameterised queries via Drizzle ORM or Prisma eliminate injection class entirely");
   }
   if (nodeId === "frontend") {
-    if (hay.includes("bundle") || hay.includes("performance")) out.push("Add code splitting + lazy loading â€” most bundle issues resolved in < 1 day");
-    if (hay.includes("xss")) out.push("Deploy a strict CSP header â€” blocks XSS even if sanitisation gaps remain");
-    out.push("Run Lighthouse CI in your pipeline â€” catches regressions before they ship");
+    if (hay.includes("bundle") || hay.includes("performance")) out.push("Add code splitting + lazy loading — most bundle issues resolved in < 1 day");
+    if (hay.includes("xss")) out.push("Deploy a strict CSP header — blocks XSS even if sanitisation gaps remain");
+    out.push("Run Lighthouse CI in your pipeline — catches regressions before they ship");
   }
   if (nodeId === "db") {
     if (hay.includes("backup")) out.push("Enable point-in-time recovery (Supabase, Neon, PlanetScale)");
-    if (hay.includes("exposure") || hay.includes("leak")) out.push("Add Row-Level Security (RLS) â€” prevents cross-user data leakage at the DB layer");
+    if (hay.includes("exposure") || hay.includes("leak")) out.push("Add Row-Level Security (RLS) — prevents cross-user data leakage at the DB layer");
     out.push("Run EXPLAIN ANALYZE on slow queries and add composite indexes on filter columns");
   }
   if (nodeId === "payments") {
-    if (worst === "critical" || worst === "high") out.push("Move to Stripe hosted checkout (Payment Links) â€” removes PCI scope from your codebase entirely");
-    out.push("Add idempotency keys to every payment API call â€” prevents double-charges on network retries");
+    if (worst === "critical" || worst === "high") out.push("Move to Stripe hosted checkout (Payment Links) — removes PCI scope from your codebase entirely");
+    out.push("Add idempotency keys to every payment API call — prevents double-charges on network retries");
   }
   if (nodeId === "compliance") {
-    if (hay.includes("gdpr") || hay.includes("consent")) out.push("Integrate CookieYes â€” generates compliant consent banners for GDPR/CCPA automatically");
-    out.push("Use Plausible or PostHog (self-hosted) instead of GA â€” privacy-first and GDPR-compliant");
+    if (hay.includes("gdpr") || hay.includes("consent")) out.push("Integrate CookieYes — generates compliant consent banners for GDPR/CCPA automatically");
+    out.push("Use Plausible or PostHog (self-hosted) instead of GA — privacy-first and GDPR-compliant");
   }
   if (nodeId === "observability") {
-    out.push("Add Sentry for error tracking + PostHog for product analytics â€” covers most gaps immediately");
-    if (hay.includes("log")) out.push("Emit structured JSON logs â€” enables Datadog / Grafana Cloud ingestion without code changes");
+    out.push("Add Sentry for error tracking + PostHog for product analytics — covers most gaps immediately");
+    if (hay.includes("log")) out.push("Emit structured JSON logs — enables Datadog / Grafana Cloud ingestion without code changes");
   }
   return out.slice(0, 3);
 }
@@ -5189,7 +5189,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
           />
         </ReactFlow>
         <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] px-3 py-1 rounded-full ${isLight ? "bg-white/80 text-gray-400 border border-gray-100" : "bg-black/40 text-white/20 border border-white/[0.04]"}`}>
-          Numbers on nodes = issue count Â· red glow = needs immediate fix Â· drag &amp; scroll to explore
+          Numbers on nodes = issue count · red glow = needs immediate fix · drag &amp; scroll to explore
         </div>
       </div>
 
@@ -5198,7 +5198,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
         <div className={`border-t ${isLight ? "border-gray-100" : "border-white/[0.05]"}`}>
           <div className={`px-6 py-2.5 ${isLight ? "bg-gray-50" : "bg-white/[0.01]"}`}>
             <p className={`text-[10px] font-semibold uppercase tracking-widest ${isLight ? "text-gray-400" : "text-white/25"}`}>
-              Affected Components â€” click to expand issues &amp; upgrade suggestions
+              Affected Components — click to expand issues &amp; upgrade suggestions
             </p>
           </div>
           <div className={`divide-y ${isLight ? "divide-gray-50" : "divide-white/[0.03]"}`}>
@@ -5248,12 +5248,12 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
                           );
                         })}
                         {issues.length > 4 && (
-                          <p className={`text-xs px-1 ${isLight ? "text-gray-400" : "text-white/25"}`}>+{issues.length - 4} more Â· see Findings tab</p>
+                          <p className={`text-xs px-1 ${isLight ? "text-gray-400" : "text-white/25"}`}>+{issues.length - 4} more · see Findings tab</p>
                         )}
                       </div>
                       {suggestions.length > 0 && (
                         <div className={`rounded-xl border p-4 space-y-2 ${isLight ? "bg-violet-50/80 border-violet-100" : "bg-violet-500/[0.07] border-violet-500/20"}`}>
-                          <div className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isLight ? "text-violet-600" : "text-violet-400"}`}>ðŸ’¡ Upgrade Suggestions</div>
+                          <div className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isLight ? "text-violet-600" : "text-violet-400"}`}>💡 Upgrade Suggestions</div>
                           {suggestions.map((s, i) => (
                             <div key={i} className={`flex items-start gap-2 text-xs leading-relaxed ${isLight ? "text-violet-700" : "text-violet-300/80"}`}>
                               <ArrowRight className="w-3 h-3 shrink-0 mt-0.5 text-violet-400" />
@@ -5285,37 +5285,37 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
 const TOUR_STEPS = [
   {
     target: "score",
-    title: "ðŸŽ¯ Launch Readiness Score",
-    body: "Your 0â€“100 score across 10 dimensions. Below 70 = needs work before shipping.",
+    title: "🎯 Launch Readiness Score",
+    body: "Your 0—100 score across 10 dimensions. Below 70 = needs work before shipping.",
     placement: "bottom" as const,
   },
   {
     target: "summary",
-    title: "ðŸ“‹ Executive Summary",
-    body: "Board-memo style overview written for founders â€” tells you the big picture fast.",
+    title: "📋 Executive Summary",
+    body: "Board-memo style overview written for founders — tells you the big picture fast.",
     placement: "bottom" as const,
   },
   {
     target: "action-plan",
-    title: "âš¡ Top 3 Action Plan",
+    title: "⚡ Top 3 Action Plan",
     body: "Your three most urgent fixes ranked by business impact. Start here, ship faster.",
     placement: "top" as const,
   },
   {
     target: "tab-issues",
-    title: "ðŸ” Findings Tab",
-    body: "All issues by severity. Filter by evidence type â€” runtime proof, static analysis, or AI reasoning.",
+    title: "🔍 Findings Tab",
+    body: "All issues by severity. Filter by evidence type — runtime proof, static analysis, or AI reasoning.",
     placement: "bottom" as const,
   },
   {
     target: "tab-intelligence",
-    title: "ðŸ§  Intelligence Tab",
+    title: "🧠 Intelligence Tab",
     body: "Revenue forecasts, Launch DNA, and predictive risk signals beyond standard security.",
     placement: "bottom" as const,
   },
   {
     target: "sandbox-proofs",
-    title: "ðŸ“¸ Live Sandbox Proofs",
+    title: "📸 Live Sandbox Proofs",
     body: "Screenshot-backed exploit evidence from real sandbox execution. Actual proof, not guesses.",
     placement: "top" as const,
   },
@@ -5495,7 +5495,7 @@ function ReportTour({ onStartTour }: { onStartTour: (cb: () => void) => void }) 
               onClick={next}
               className="ml-auto flex items-center gap-1.5 text-xs bg-violet-600 hover:bg-violet-500 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors"
             >
-              {step === TOUR_STEPS.length - 1 ? "Done ðŸŽ‰" : "Next"}
+              {step === TOUR_STEPS.length - 1 ? "Done 🎉" : "Next"}
               {step < TOUR_STEPS.length - 1 && <ChevronRight className="w-3 h-3" />}
             </button>
           </div>
@@ -5751,7 +5751,7 @@ function KnowledgeGraphExplorer({ data, issues, isLight }: { data: any, issues?:
   const nodes: RFNode[] = data.nodes.map((n: any, i: number) => ({
     id: n.id,
     position: { x: (i % 6) * 180, y: Math.floor(i / 6) * 100 },
-    data: { label: `${n.type === 'table' ? 'ðŸ“¦' : n.type === 'route' ? 'ðŸ”—' : n.type === 'function' ? 'âš¡' : 'ðŸ“„'} ${n.id.split('/').pop()}` },
+    data: { label: `${n.type === 'table' ? '📦' : n.type === 'route' ? '🔗' : n.type === 'function' ? '⚡' : '🔄'} ${n.id.split('/').pop()}` },
     style: {
       background: isLight ? "#fff" : "#111",
       color: isLight ? "#000" : "#fff",
@@ -5780,7 +5780,7 @@ function KnowledgeGraphExplorer({ data, issues, isLight }: { data: any, issues?:
         nodes.push({
           id: issue.findingId,
           position: { x: (issueNodeIdx % 6) * 180, y: Math.floor(issueNodeIdx / 6) * 100 + 150 },
-          data: { label: `ðŸ”´ ${issue.findingId}` },
+          data: { label: `🔴 ${issue.findingId}` },
           style: {
             background: isLight ? "rgba(239, 68, 68, 0.1)" : "rgba(239, 68, 68, 0.2)",
             color: isLight ? "#dc2626" : "#fca5a5",
@@ -5894,7 +5894,7 @@ export default function ScanResultsPage() {
       if (!active) return;
       if (result) {
         if (result.status === "failed") {
-          // Auto-retry silently â€” show running state while we restart
+          // Auto-retry silently — show running state while we restart
           try {
             await api.scans.rescan(id);
           } catch {
@@ -5929,7 +5929,7 @@ export default function ScanResultsPage() {
         <div className={`w-12 h-12 rounded-2xl ${isLight ? "bg-white border border-gray-200" : "glass"} flex items-center justify-center mx-auto`}>
           <Loader2 className={`w-5 h-5 ${isLight ? "text-gray-600" : "text-white/60"} animate-spin`} />
         </div>
-        <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-sm`}>Loadingâ€¦</p>
+        <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-sm`}>Loading…</p>
       </div>
     </div>
   );
@@ -5941,7 +5941,7 @@ export default function ScanResultsPage() {
           <Loader2 className={`w-5 h-5 ${isLight ? "text-gray-600" : "text-white/60"} animate-spin`} />
         </div>
         <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-sm`}
-          >Loading reportâ€¦</p>
+          >Loading report…</p>
       </div>
     </div>
   );
@@ -5976,7 +5976,7 @@ export default function ScanResultsPage() {
           </div>
           <div className="space-y-2">
             <h2 className={`${isLight ? "text-gray-800" : "text-white/80"} text-base font-semibold`}>Sorry for the trouble!</h2>
-            <p className={`${isLight ? "text-gray-500" : "text-white/40"} text-sm leading-relaxed`}>We ran into an issue during your review. Don't worry â€” this doesn't count against your quota. Hit the button below and we'll get your scan right back.</p>
+            <p className={`${isLight ? "text-gray-500" : "text-white/40"} text-sm leading-relaxed`}>We ran into an issue during your review. Don't worry — this doesn't count against your quota. Hit the button below and we'll get your scan right back.</p>
           </div>
           <div className="flex flex-col gap-2.5">
             <button
@@ -5984,7 +5984,7 @@ export default function ScanResultsPage() {
               disabled={rescanning}
               className={`flex items-center justify-center gap-2 font-bold text-sm px-5 py-2.5 rounded-xl transition-all disabled:opacity-50 ${isLight ? "bg-gray-900 hover:bg-gray-800 text-white" : "bg-white hover:bg-white/90 text-black"}`}
             >
-              {rescanning ? <><Loader2 className="w-4 h-4 animate-spin" />Getting your scan backâ€¦</> : <>Try Again â€” Get My Scan Back</>}
+              {rescanning ? <><Loader2 className="w-4 h-4 animate-spin" />Getting your scan back…</> : <>Try Again — Get My Scan Back</>}
             </button>
             <Link href="/scans/new">
               <button className={`text-sm ${isLight ? "text-gray-400 hover:text-gray-600" : "text-white/35 hover:text-white/55"} transition-colors`}>
@@ -6171,7 +6171,7 @@ export default function ScanResultsPage() {
                 label: "Advanced",
                 icon: Zap,
                 tourId: undefined,
-                badge: user.plan === "creator" || user.plan === "enterprise" ? undefined : "ðŸ”’",
+                badge: user.plan === "creator" || user.plan === "enterprise" ? undefined : "🔒",
               },
               {
                 id: "deeptech",
@@ -6261,7 +6261,7 @@ export default function ScanResultsPage() {
                           {scan.marketReadinessTracker.stage}
                         </span>
                       </div>
-                      <div className="w-full h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden mb-2">
+                      <div className={`w-full h-2 rounded-full overflow-hidden mb-2 ${isLight ? "bg-gray-200" : "bg-white/10"}`}>
                         <div 
                           className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-1000 ease-out"
                           style={{ width: `${scan.marketReadinessTracker.progress}%` }}
@@ -6331,7 +6331,7 @@ export default function ScanResultsPage() {
                 <p
                   className={`${isLight ? "text-gray-500" : "text-white/55"} text-sm leading-relaxed`}
                 >
-                  {scan.summary ?? "Analysis in progressâ€¦"}
+                  {scan.summary ?? "Analysis in progress…"}
                 </p>
 
                 {scan.issueCounts && (
@@ -6817,19 +6817,19 @@ export default function ScanResultsPage() {
                 {[
                   {
                     badge: "bg-green-500/15 text-green-400 border-green-500/25",
-                    label: "ðŸŸ¢ 99% Browser Runtime Proof",
+                    label: "🟢 99% Browser Runtime Proof",
                   },
                   {
                     badge: "bg-green-500/10 text-green-400 border-green-500/20",
-                    label: "ðŸ”µ 90% HTTP Runtime Proof",
+                    label: "🔵 90% HTTP Runtime Proof",
                   },
                   {
                     badge: "bg-sky-500/10 text-sky-400 border-sky-500/20",
-                    label: "ðŸ”µ 75% Static Code Evidence",
+                    label: "🔵 75% Static Code Evidence",
                   },
                   {
                     badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-                    label: "ðŸŸ¡ 60% Pattern Match",
+                    label: "🟡 60% Pattern Match",
                   },
                   {
                     badge: `bg-white/[0.05] text-white/35 ${isLight ? "border-gray-200" : "border-white/[0.08]"}`,
