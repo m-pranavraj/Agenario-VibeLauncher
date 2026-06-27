@@ -386,6 +386,7 @@ async function runAnalysisPipeline(opts: {
   let failSafe: any = null;
   let archScan: any = null;
   let cogFlow: any = null;
+  let sandboxResult: SandboxRunResult | null = null;
 
   if (dir) {
     emit("detection", "Detecting framework and business type...", 3);
@@ -663,65 +664,74 @@ async function runAnalysisPipeline(opts: {
       logger.error({ scanId, err }, "Deep Tech Pillars failed — continuing");
     }
 
-    // ── Deep-scan engine: CSG + taint + 42 security + 55 perf + 63 compliance + UX rules ───
-    emit("deep-scan", "Running deep semantic analysis engine...", 14);
-    try {
-      const deepResult = await runDeepScan({
-        projectRoot: dir,
-        framework,
-        enableTimeAware: true,
-        enableSecurityScan: true,
-        enableCompliance: true,
-        enablePerformance: true,
-        maxFiles: 300,
-      });
-      const secRows = (deepResult.securityFindings ?? []).map((f) => securityFindingToIssueRow(scanId, f));
-      const compRows = (deepResult.complianceFindings ?? []).map((f) => complianceFindingToIssueRow(scanId, f));
-      const perfRows = (deepResult.performanceFindings ?? []).map((f) => performanceFindingToIssueRow(scanId, f));
-      deepScanIssueRows = [...secRows, ...compRows, ...perfRows];
-      logger.info({
-        scanId, csgNodes: deepResult.csgStats.nodeCount, csgEdges: deepResult.csgStats.edgeCount,
-        taintFindings: deepResult.taintStats?.totalTaintPaths ?? 0,
-        securityFindings: deepResult.securityStats?.findingsCount ?? 0,
-        complianceFindings: deepResult.complianceStats?.totalFindings ?? 0,
-        performanceFindings: deepResult.performanceStats?.findingsCount ?? 0,
-        timeAwareFindings: deepResult.timeAwareStats?.vulnerablePackages ?? 0,
-        penaltyEstimate: deepResult.complianceStats?.penaltyEstimateEur?.totalMaxEur ?? 0,
-        perfCostMs: deepResult.performanceStats?.totalEstimatedCostMs ?? 0,
-      }, "Deep scan complete");
-      emit("deep-scan", `Deep scan: ${deepResult.csgStats.nodeCount} CSG nodes, ${deepScanIssueRows.length} findings (${perfRows.length} performance)`, 15, "Deep Scan Engine");
-    } catch (err) {
-      logger.warn({ err, scanId }, "Deep scan engine failed — continuing with static + agent results");
-      emit("deep-scan", "Deep scan engine unavailable, continuing with standard analysis", 15);
-    }
-  }
+    // ── Deep-scan and Sandbox concurrently ───────────────────────────
+    emit("deep-scan", "Running deep semantic analysis & sandbox concurrently...", 14);
 
-  // ── GitHubbox sandbox: install, build, serve, live probes ───────────────
-  emit("sandbox", "Building sandbox environment...", 15);
-  let sandboxResult: SandboxRunResult | null = null;
-  if (dir && (sourceType === "github" || sourceType === "zip")) {
-    sandboxResult = await runGithubboxSandbox({
-      scanId,
-      dir,
-      packageJson: packageJson ?? {},
-      framework,
-      sourceType,
-    }).catch((err) => {
-      logger.warn({ err, scanId }, "GitHubbox sandbox crashed — continuing with static analysis");
-      return {
-        meta: {
-          status: "failed" as const,
-          reason: `Sandbox crashed: ${err instanceof Error ? err.message : String(err)}`,
-        },
-        proofs: [],
-        steps: [{ step: "Sandbox execution", status: "fail" as const, detail: String(err) }],
-      };
-    });
-    logger.info(
-      { scanId, status: sandboxResult.meta.status, proofs: sandboxResult.proofs.length },
-      "GitHubbox sandbox finished",
-    );
-    emit("sandbox", `Sandbox: ${sandboxResult.meta.status}`, 20, "Sandbox Runner");
+    try {
+      const [deepResult, sandboxResultVal] = await Promise.all([
+        runDeepScan({
+          projectRoot: dir,
+          framework,
+          enableTimeAware: true,
+          enableSecurityScan: true,
+          enableCompliance: true,
+          enablePerformance: true,
+          maxFiles: 150, // Optimized limit for scan speed acceleration
+        }).catch((err) => {
+          logger.error({ err, scanId }, "Deep scan engine failed");
+          return null;
+        }),
+        (dir && (sourceType === "github" || sourceType === "zip"))
+          ? runGithubboxSandbox({
+              scanId,
+              dir,
+              packageJson: packageJson ?? {},
+              framework,
+              sourceType,
+            }).catch((err) => {
+              logger.warn({ err, scanId }, "GitHubbox sandbox crashed");
+              return {
+                meta: {
+                  status: "failed" as const,
+                  reason: `Sandbox crashed: ${err instanceof Error ? err.message : String(err)}`,
+                },
+                proofs: [],
+                steps: [{ step: "Sandbox execution", status: "fail" as const, detail: String(err) }],
+              };
+            })
+          : Promise.resolve(null)
+      ]);
+
+      sandboxResult = sandboxResultVal;
+
+      if (deepResult) {
+        const secRows = (deepResult.securityFindings ?? []).map((f) => securityFindingToIssueRow(scanId, f));
+        const compRows = (deepResult.complianceFindings ?? []).map((f) => complianceFindingToIssueRow(scanId, f));
+        const perfRows = (deepResult.performanceFindings ?? []).map((f) => performanceFindingToIssueRow(scanId, f));
+        deepScanIssueRows = [...secRows, ...compRows, ...perfRows];
+        logger.info({
+          scanId, csgNodes: deepResult.csgStats.nodeCount, csgEdges: deepResult.csgStats.edgeCount,
+          taintFindings: deepResult.taintStats?.totalTaintPaths ?? 0,
+          securityFindings: deepResult.securityStats?.findingsCount ?? 0,
+          complianceFindings: deepResult.complianceStats?.totalFindings ?? 0,
+          performanceFindings: deepResult.performanceStats?.findingsCount ?? 0,
+          timeAwareFindings: deepResult.timeAwareStats?.vulnerablePackages ?? 0,
+          penaltyEstimate: deepResult.complianceStats?.penaltyEstimateEur?.totalMaxEur ?? 0,
+          perfCostMs: deepResult.performanceStats?.totalEstimatedCostMs ?? 0,
+        }, "Deep scan complete");
+        emit("deep-scan", `Deep scan: ${deepResult.csgStats.nodeCount} CSG nodes, ${deepScanIssueRows.length} findings`, 15, "Deep Scan Engine");
+      }
+
+      if (sandboxResult) {
+        logger.info(
+          { scanId, status: sandboxResult.meta.status, proofs: sandboxResult.proofs.length },
+          "GitHubbox sandbox finished",
+        );
+        emit("sandbox", `Sandbox: ${sandboxResult.meta.status}`, 20, "Sandbox Runner");
+      }
+    } catch (err) {
+      logger.error({ err, scanId }, "Concurrent scanning phase failed");
+    }
   }
 
   const sandboxLiveUrl =
@@ -762,7 +772,7 @@ async function runAnalysisPipeline(opts: {
 
   // Merge proofs: GitHubbox live proofs > browser > HTTP; add static code proofs when sandbox did not run live
   const browserTypes = new Set(browserProofEvidence.map((p) => p.type));
-  const sandboxTypes = new Set((sandboxResult?.proofs ?? []).map((p) => p.type));
+  const sandboxTypes = new Set((sandboxResult?.proofs ?? []).map((p: any) => p.type));
   const dedupedHttpProofs = httpProofEvidence.filter(
     (p) => !browserTypes.has(p.type) && !sandboxTypes.has(p.type),
   );
@@ -772,7 +782,7 @@ async function runAnalysisPipeline(opts: {
 
   const proofEvidence = [
     ...(sandboxResult?.proofs ?? []),
-    ...staticCodeProofs.filter((p) => !sandboxTypes.has(p.type)),
+    ...staticCodeProofs.filter((p: any) => !sandboxTypes.has(p.type)),
     ...dedupedHttpProofs,
   ];
 
@@ -824,7 +834,7 @@ async function runAnalysisPipeline(opts: {
     findingId: `RUN-${pe.type.toUpperCase().substring(0, 4)}-${Math.floor(Math.random() * 9000) + 1000}`,
     functionName: null,
     routePath: pe.url ?? null,
-    reproductionSteps: pe.steps.map(step => ({ action: step, response: pe.observed, screenshotUrl: pe.screenshot ?? null })),
+    reproductionSteps: pe.steps.map((step: any) => ({ action: step, response: pe.observed, screenshotUrl: pe.screenshot ?? null })),
     blastRadius: { impactedRoutes: pe.url ? [pe.url] : [] },
     autoFixCode: null,
   }));

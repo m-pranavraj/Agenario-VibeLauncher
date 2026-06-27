@@ -8,7 +8,7 @@ import {
   ChevronRight, Plus, Loader2, ShieldCheck, AlertTriangle, 
   Search, Filter, Activity, Server, Database, GitBranch
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 function MetricCard({ title, value, subtext, icon: Icon, isLight, color = "indigo" }: any) {
   return (
@@ -32,6 +32,33 @@ export default function DashboardPage() {
   const { scans, loading: scansLoading } = useScans();
   const [searchQuery, setSearchQuery] = useState("");
 
+  const projects = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    (scans ?? []).forEach(scan => {
+      const key = (scan.sourceInput || "zip-upload-" + scan.id).trim().toLowerCase();
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(scan);
+    });
+
+    return Object.entries(groups).map(([sourceInput, scanList]) => {
+      scanList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      const latestScan = scanList[0];
+      return {
+        id: latestScan.id,
+        sourceInput: latestScan.sourceInput,
+        sourceType: latestScan.sourceType,
+        createdAt: latestScan.createdAt,
+        scansCount: scanList.length,
+        issueCounts: latestScan.issueCounts || { critical: 0, high: 0, medium: 0, low: 0 }
+      };
+    });
+  }, [scans]);
+
+  const filteredProjects = projects.filter(p => 
+    p.sourceInput?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    p.id.toString().includes(searchQuery.toLowerCase())
+  );
+
   if (loading || scansLoading) {
     return (
       <DashboardLayout>
@@ -42,10 +69,7 @@ export default function DashboardPage() {
     );
   }
 
-  const filteredScans = (scans ?? []).filter(s => 
-    s.sourceInput?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    s.id.toString().includes(searchQuery.toLowerCase())
-  );
+
 
   return (
     <DashboardLayout>
@@ -73,7 +97,7 @@ export default function DashboardPage() {
         {/* Top Metrics Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard title="Total Projects" value={scans?.length || 0} subtext="Active codebases monitored" icon={Server} isLight={isLight} color="blue" />
-          <MetricCard title="Critical Findings" value={filteredScans.length * 3} subtext="Blocked before production" icon={AlertTriangle} isLight={isLight} color="rose" />
+          <MetricCard title="Critical Findings" value={(scans ?? []).reduce((acc, s) => acc + ((s.issueCounts as any)?.critical || 0), 0)} subtext="Blocked before production" icon={AlertTriangle} isLight={isLight} color="rose" />
           <MetricCard title="Architectural Decay" value="B+" subtext="Top 15% of organizations" icon={Activity} isLight={isLight} color="emerald" />
           <MetricCard title="Zero-Retention Scans" value={scans?.length || 0} subtext="Code automatically purged" icon={ShieldCheck} isLight={isLight} color="indigo" />
         </div>
@@ -100,22 +124,21 @@ export default function DashboardPage() {
           </div>
 
           <div className="divide-y divide-slate-100 dark:divide-white/5">
-            {filteredScans.length === 0 ? (
+            {filteredProjects.length === 0 ? (
               <div className="p-12 text-center">
                 <Database className={`w-12 h-12 mx-auto mb-4 ${isLight ? "text-slate-300" : "text-white/20"}`} />
                 <h3 className={`font-bold text-lg ${isLight ? "text-slate-700" : "text-white/70"}`}>No projects found</h3>
                 <p className={`text-sm mt-1 ${isLight ? "text-slate-500" : "text-white/40"}`}>Connect a repository to start continuous deep tech analysis.</p>
               </div>
             ) : (
-              filteredScans.map((scan, i) => {
-                // Mock severity counts for UI demonstration
-                const cCount = (i % 3) * 2;
-                const hCount = (i % 4) + 1;
-                const mCount = 12 + i;
-                const lCount = 8;
+              filteredProjects.map((project, i) => {
+                const cCount = project.issueCounts?.critical ?? 0;
+                const hCount = project.issueCounts?.high ?? 0;
+                const mCount = project.issueCounts?.medium ?? 0;
+                const lCount = project.issueCounts?.low ?? 0;
                 
                 return (
-                  <Link href={`/scans/${scan.id}`} key={scan.id}>
+                  <Link href={`/scans/${project.id}`} key={project.id}>
                     <div className={`p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors cursor-pointer ${isLight ? "hover:bg-slate-50" : "hover:bg-white/[0.02]"}`}>
                       <div className="flex items-center gap-3">
                         <div className={`p-2 rounded-lg border ${isLight ? "bg-white border-slate-200" : "bg-black border-white/10"}`}>
@@ -123,9 +146,9 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <h4 className={`font-bold text-sm ${isLight ? "text-slate-900" : "text-white"}`}>
-                            {scan.sourceInput.length > 30 ? scan.sourceInput.slice(0, 30) + '...' : scan.sourceInput}                        </h4>
+                            {project.sourceInput.length > 30 ? project.sourceInput.slice(0, 30) + '...' : project.sourceInput}                        </h4>
                           <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-white/50"}`}>
-                            Scanned {new Date(scan.createdAt).toLocaleDateString()} • Zero-Retention Mode
+                            Scanned {new Date(project.createdAt).toLocaleDateString()} • {project.scansCount} scan(s) • Zero-Retention Mode
                           </p>
                         </div>
                       </div>
