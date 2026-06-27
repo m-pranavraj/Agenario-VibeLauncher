@@ -648,7 +648,7 @@ function checkTemporalProperty(kripke: KripkeStructure, property: string): LTLVe
   function evalFormula(stateId: string, formula: string, depth = 0): boolean {
     if (depth > 100) return false;
 
-    const state = fsm.states.find(s => s.id === stateId);
+    const state = kripke.states.find(s => s.id === stateId);
     if (!state) return false;
 
     const trimmed = formula.trim();
@@ -662,10 +662,10 @@ function checkTemporalProperty(kripke: KripkeStructure, property: string): LTLVe
       visited.add(stateId);
       while (q.length > 0) {
         const cur = q.shift()!;
-        const curState = fsm.states.find(s => s.id === cur);
+        const curState = kripke.states.find(s => s.id === cur);
         if (!curState) continue;
         if (!evalFormula(cur, inner, depth + 1)) return false;
-        for (const t of fsm.transitions) {
+        for (const t of kripke.transitions) {
           if (t.fromState === cur && !visited.has(t.toState)) { visited.add(t.toState); q.push(t.toState); }
         }
       }
@@ -681,10 +681,10 @@ function checkTemporalProperty(kripke: KripkeStructure, property: string): LTLVe
       visited.add(stateId);
       while (q.length > 0) {
         const cur = q.shift()!;
-        const curState = fsm.states.find(s => s.id === cur);
+        const curState = kripke.states.find(s => s.id === cur);
         if (!curState) continue;
         if (evalFormula(cur, inner, depth + 1)) return true;
-        for (const t of fsm.transitions) {
+        for (const t of kripke.transitions) {
           if (t.fromState === cur && !visited.has(t.toState)) { visited.add(t.toState); q.push(t.toState); }
         }
       }

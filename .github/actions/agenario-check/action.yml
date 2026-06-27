@@ -1,0 +1,77 @@
+name: 'Agenario Scan Check'
+description: 'Runs Agenario quality and launch-readiness checks on your codebase and gates PRs.'
+inputs:
+  api-key:
+    description: 'Agenario API key (saved in GitHub Secrets)'
+    required: true
+  scan-threshold:
+    description: 'Minimum Reality Score to pass build'
+    required: false
+    default: '80'
+  api-url:
+    description: 'Agenario API URL'
+    required: false
+    default: 'https://api.agenario.tech/api'
+runs:
+  using: 'composite'
+  steps:
+    - name: Run Agenario Audit
+      shell: bash
+      run: |
+        echo "Initiating launch readiness audit on Agenario..."
+        
+        # Trigger scan
+        RESPONSE=$(curl -s -X POST "${{ inputs.api-url }}/scans" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{ inputs.api-key }}" \
+          -d '{"sourceType":"github","sourceInput":"https://github.com/'"$GITHUB_REPOSITORY"'"}' || echo "")
+          
+        SCAN_ID=$(echo "$RESPONSE" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2 || echo "")
+        
+        if [ -z "$SCAN_ID" ]; then
+          echo "Error: Failed to trigger scan. Response: $RESPONSE"
+          exit 1
+        fi
+        
+        echo "Scan triggered successfully. Scan ID: $SCAN_ID"
+        echo "Waiting for analysis to complete..."
+        
+        # Poll verdict
+        MAX_RETRIES=40
+        RETRY_COUNT=0
+        
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+          sleep 10
+          VERDICT_RESP=$(curl -s -X GET "${{ inputs.api-url }}/scans/$SCAN_ID/verdict" \
+            -H "Authorization: Bearer ${{ inputs.api-key }}" || echo "")
+            
+          PASS=$(echo "$VERDICT_RESP" | grep -o '"pass":[^,]*' | head -1 | cut -d: -f2 | tr -d ' "}' || echo "")
+          SCORE=$(echo "$VERDICT_RESP" | grep -o '"score":[0-9]*' | head -1 | cut -d: -f2 || echo "")
+          
+          if [ ! -z "$SCORE" ]; then
+            # If score exists, scan has completed
+            echo "Scan Completed."
+            echo "Reality Score: $SCORE"
+            
+            # Print blockers if any
+            BLOCKERS=$(echo "$VERDICT_RESP" | grep -o '"blockers":\[[^]*]*\]' || echo "")
+            if [ ! -z "$BLOCKERS" ] && [ "$PASS" = "false" ]; then
+              echo "Blockers found: $BLOCKERS"
+            fi
+            
+            # Gate check
+            if [ "$SCORE" -lt "${{ inputs.scan-threshold }}" ]; then
+              echo "Error: Reality Score ($SCORE) is below threshold (${{ inputs.scan-threshold }})."
+              exit 1
+            else
+              echo "Success: Reality Score ($SCORE) meets threshold (${{ inputs.scan-threshold }})."
+              exit 0
+            fi
+          fi
+          
+          RETRY_COUNT=$((RETRY_COUNT+1))
+          echo "Still scanning... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+        done
+        
+        echo "Error: Scan timed out."
+        exit 1

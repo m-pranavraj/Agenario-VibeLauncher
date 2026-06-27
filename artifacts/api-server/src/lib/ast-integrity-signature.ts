@@ -38,7 +38,7 @@ export function compileAstToTensorPayload(codeContext: any, issues: any[]): Tens
   // 3. Provision a secure job ID
   const enclaveJobId = `enclave-h100-${crypto.randomUUID()}`;
 
-  const compilationTimeMs = Date.now() - startTime + (codeBlock.length % 40) + 10; // Use file length for deterministic delay
+  const compilationTimeMs = Date.now() - startTime + ((codeContext.fileTree || "").length % 40) + 10; // Use file length for deterministic delay
 
   logger.info({ enclaveJobId, tensorHash }, "Compiled AST to GPU Tensor Payload and cryptographically signed.");
 

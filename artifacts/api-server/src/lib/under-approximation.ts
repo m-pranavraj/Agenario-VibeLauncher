@@ -1,7 +1,7 @@
 import { parse } from "@babel/parser";
 import _traverse from "@babel/traverse";
 const traverse = (_traverse as any).default || _traverse;
-import type { CSG } from "./ast-csg-builder.js";
+import type { CSG } from "./csg-builder.js";
 import { logger } from "./logger.js";
 
 // Mathematical Lattices

@@ -93,7 +93,7 @@ export function runPostQuantumReadiness(keyFiles: Array<{ path: string; content:
     }
   }
 
-  if (inventory.aes128 > 0 && inventory.aes128 > 0) {
+  if (inventoryCount.aes > 0 && inventory.aes128!.found.length > 0) {
     for (const f of inventory.aes128!.found) {
       vulnerablePrimitives.push({ algorithm: "AES-128", usage: "Symmetric encryption", filePath: f.file, lineNumber: f.line, severity: "medium", migrationPath: CRYPTO_INVENTORY.aes128!.nistPath });
     }
@@ -134,7 +134,7 @@ export function runPostQuantumReadiness(keyFiles: Array<{ path: string; content:
         ? `Urgent migration needed. ${criticalCount} critical, ${highCount} high-severity primitives detected. Survival probability: ${qDaySurvivalProbability}%.`
         : overallRisk === "medium"
           ? `Moderate risk. ${vulnerablePrimitives.length} vulnerable primitives found. Survival probability: ${qDaySurvivalProbability}%.`
-          : `Low quantum risk. ${vestedPrimitives.length === 0 ? "No legacy cryptography detected." : "Minimal exposure."} Survival probability: ${qDaySurvivalProbability}%.`;
+          : `Low quantum risk. ${vulnerablePrimitives.length === 0 ? "No legacy cryptography detected." : "Minimal exposure."} Survival probability: ${qDaySurvivalProbability}%.`;
 
   // Fix the typo
   // Fix the typo

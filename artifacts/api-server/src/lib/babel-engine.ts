@@ -1,5 +1,5 @@
 import { logger } from "./logger.js";
-import { buildCSG, bfsForward, bfsBackward, tarjanSCC, type CSG } from "./csg-builder.js";
+import { buildCSG, bfsForward, bfsBackward, tarjanSCC, type CSG, type CSGNode } from "./csg-builder.js";
 
 export interface BabelEngineResult {
   irTopologyHash: string;
@@ -27,7 +27,7 @@ const SOURCE_SINKS: Array<{ source: RegExp; sink: RegExp; boundary: string; seve
   { source: /req\.(body|query|params)|Cookie|cookie|session/, sink: /\b(auth|login|authenticate|verifyToken|jwt|sign)\b/, boundary: "User-Input-to-Auth", severity: 8 },
 ];
 
-function computeCanonicalHash(nodes: CSG[], edges: any[]): string {
+function computeCanonicalHash(nodes: CSGNode[], edges: any[]): string {
   const nodeIds = nodes.map(n => `${n.type}:${n.label}:${n.filePath}`).sort().join("|");
   const edgeKeys = edges.map(e => `${e.from}->${e.to}:${e.type}`).sort().join("|");
   const raw = `${nodeIds}::${edgeKeys}`;

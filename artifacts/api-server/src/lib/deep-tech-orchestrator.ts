@@ -87,7 +87,7 @@ export async function runDeepTechAnalysis(
     }),
     Promise.resolve().then(() => {
       logger.info("Pillar 7: FlowValue — Revenue Leakage Modeling starting...");
-      const result = runFlowValue(csg || { nodes: new Map(), edges: new Map(), adjacency: new Map(), entryPoints: [], metadata: { filesParsed: 0, totalLines: 0, language: "", framework: "" } },
+      const result = runFlowValue(csg || emptyCSG,
         keyFiles, []);
       logger.info(`Pillar 7: \$${result.metrics.totalRevenueAtRiskUSD.toLocaleString()}/mo at risk`);
       return result;
@@ -127,8 +127,9 @@ export async function runDeepTechAnalysis(
   );
 
   for (const finding of verified) {
-    const confidenceAdjustment = applySoundUnderApproximation(finding.confidence, underApproximation);
-    finding.confidence = Math.max(finding.confidence, confidenceAdjustment);
+    const isUnreachable = underApproximation?.unreachablePaths?.some((p: any) => p.includes(finding.filePath || ""));
+    const confidenceAdjustment = isUnreachable ? -20 : 5;
+    finding.confidence = Math.max(0, Math.min(100, finding.confidence + confidenceAdjustment));
   }
 
   const endMs = Date.now();

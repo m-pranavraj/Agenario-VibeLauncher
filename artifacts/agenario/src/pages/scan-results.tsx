@@ -14,6 +14,12 @@ import "@xyflow/react/dist/style.css";
 import { useQuery } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { useLocation, useRoute, Link } from "wouter";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
+import { RiskForecastSection } from "@/components/intelligence/RiskForecastSection";
+import { FileExplorer } from "@/components/dashboard/FileExplorer";
+import { Folder } from "lucide-react";
+import { RevenueIntelligenceSection } from "@/components/intelligence/RevenueIntelligenceSection";
 import {
   ArrowLeft,
   Copy,
@@ -1889,7 +1895,7 @@ function ExploitTerminalCard({ issue }: { issue: ScanIssue }) {
   );
 }
 
-function RiskForecastSection({ forecast }: { forecast: RiskForecast }) {
+function OldRiskForecastSection({ forecast }: { forecast: RiskForecast }) {
   const isLight = useIsLight();
   const riskColor = (r: string) =>
     r === "critical" ? "text-red-400" : r === "high" ? "text-amber-400" : r === "medium" ? "text-yellow-400" : "text-green-400";
@@ -2050,7 +2056,7 @@ function ComplianceSection({ results }: { results: ComplianceResult[] }) {
   );
 }
 
-function RevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligence }) {
+function OldRevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligence }) {
   const isLight = useIsLight();
   const riskColor = revenue.overallRevenueRisk === "critical" ? "text-red-400" : revenue.overallRevenueRisk === "high" ? "text-amber-400" : "text-yellow-400";
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -5992,7 +5998,11 @@ export default function ScanResultsPage() {
   }
 
   if (scan.sourceType === "url") {
-    return <UrlSurfaceAuditPanel scan={scan} isLight={isLight} />;
+    return (
+      <DashboardLayout>
+        <UrlSurfaceAuditPanel scan={scan} isLight={isLight} />
+      </DashboardLayout>
+    );
   }
 
   const rawVerdict =
@@ -6043,6 +6053,7 @@ export default function ScanResultsPage() {
   ).length;
 
   return (
+    <DashboardLayout>
     <div className={`min-h-screen ${t.page}`}>
       <div className={t.ambient} />
       <div className={`absolute bottom-0 left-0 w-[600px] h-[400px] rounded-full blur-[150px] pointer-events-none ${isLight ? "bg-purple-200/[0.20]" : "bg-indigo-600/[0.03]"}`} />
@@ -6055,7 +6066,7 @@ export default function ScanResultsPage() {
         </svg>
       </div>}
 
-      <nav className={`border-b sticky top-0 z-10 ${t.nav}`}>
+      <nav className="hidden">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-3">
           <Link href="/dashboard" className={t.navText}>
             <ArrowLeft className="w-5 h-5" />
@@ -6127,6 +6138,9 @@ export default function ScanResultsPage() {
 
       <main className="w-full max-w-full lg:max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-5 overflow-hidden">
         {/* â”€â”€ Sticky Launch Alert Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* Executive Overview Dashboard Component */}
+        <ExecutiveOverview scan={scan} isLight={isLight} />
+
         <StickyLaunchAlertBanner scan={scan} />
 
         {/* â”€â”€ Launch Gate Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
@@ -6142,6 +6156,7 @@ export default function ScanResultsPage() {
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-4xl">
             {([
               { id: "overview", label: "Overview", icon: LayoutDashboard, tourId: undefined },
+              { id: "files", label: "Files", icon: Folder, tourId: undefined },
               {
                 id: "issues",
                 label: "Issues",
@@ -6200,6 +6215,12 @@ export default function ScanResultsPage() {
         </div>
 
         {/* â”€â”€ Overview Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {activeTab === "files" && (
+          <div className="mb-4">
+            <FileExplorer scan={scan} isLight={isLight} plan={user.plan} />
+          </div>
+        )}
+
         {activeTab === "overview" && (
           <>
             {/* â”€â”€ Demo-to-Market-Ready Pipeline & Traffic Light Verdict â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
@@ -7094,5 +7115,6 @@ export default function ScanResultsPage() {
       {/* â”€â”€ Guided Report Tour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <ReportTour onStartTour={(cb) => { tourStartRef.current = cb; }} />
     </div>
+    </DashboardLayout>
   );
 }

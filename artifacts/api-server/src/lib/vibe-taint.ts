@@ -364,7 +364,7 @@ function analyzeFileTaint(
   try {
     ast = parser.parse(content, {
       sourceType: "module",
-      plugins: ["jsx", "typescript", "decorators-legacy", "optionalChaining", "nullishCoalescingOperator"],
+      plugins: ["jsx", "typescript", "decorators-legacy"],
       errorRecovery: true,
     });
   } catch {

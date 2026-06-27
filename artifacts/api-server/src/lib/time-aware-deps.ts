@@ -184,7 +184,7 @@ export async function analyzeTimeAwareDependencies(
     let reachability: "reachable" | "unreachable" | "unknown" = "unknown";
     for (const file of files) {
       const importsDep = file.content.includes(`from "${dep}"`) || file.content.includes(`from '${dep}'`);
-      const callsFunc = vulns.some(v => file.content.includes(v.func));
+      const callsFunc = vulns.some((v: any) => file.content.includes(v.func));
       if (importsDep && callsFunc) {
         reachability = "reachable";
         break;

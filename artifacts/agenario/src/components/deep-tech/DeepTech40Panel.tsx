@@ -9,6 +9,7 @@
  * - Full light + dark mode support
  */
 import { useState, useMemo, useEffect, useCallback } from "react";
+const safeNum = (val: any) => (typeof val === 'number' ? val : 0);
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Globe, Cpu, Key, Zap, FunctionSquare, EyeOff, BrainCircuit,
@@ -1307,13 +1308,13 @@ export function DeepTech40Panel({ scan }: Props) {
     },
     {
       id: "I",
-       label: "Quantum & Distributed Systems",
+       label: "Cryptographic & Distributed Systems",
        sublabel: "Parallel path, fault tolerance, latency, integrity",
        icon: Cpu,
        color: "purple",
        engines: [
          {
-           title: "Multi-Verse DSE",
+           title: "Concurrent Path DSE",
            shortName: "MVD",
            icon: Layers,
            color: "indigo",

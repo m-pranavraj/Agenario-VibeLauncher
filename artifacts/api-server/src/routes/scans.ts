@@ -380,6 +380,12 @@ async function runAnalysisPipeline(opts: {
   let kardashevLatency: any = null;
   let agiAlignment: any = null;
   let thermodynamicEntropy: any = null;
+  let deploySafe: any = null;
+  let promptTrace: any = null;
+  let flowValue: any = null;
+  let failSafe: any = null;
+  let archScan: any = null;
+  let cogFlow: any = null;
 
   if (dir) {
     emit("detection", "Detecting framework and business type...", 3);
@@ -452,14 +458,14 @@ async function runAnalysisPipeline(opts: {
         logger.warn({ err, scanId }, "Failed to persist time-aware deps to DB");
       }
 
-      const regGraph = runRegGraph(csg, keyFiles ?? []);
+      const regGraph = runRegGraph(keyFiles ?? [], csg);
       const symCost = runSymCost(keyFiles ?? [], pkg);
-      const cogFlow = runCogFlow(csg, keyFiles ?? []);
-      const failSafe = runFailSafe(csg, keyFiles ?? []);
+      cogFlow = runCogFlow(csg, keyFiles ?? []);
+      failSafe = runFailSafe(csg, keyFiles ?? []);
       const obsCover = runObsCover(csg, keyFiles ?? []);
-      const deploySafe = runDeploySafe(keyFiles ?? []);
-      const archScan = runArchScan(csg, keyFiles ?? []);
-      const promptTrace = runPromptTrace(csg, keyFiles ?? []);
+      deploySafe = runDeploySafe(keyFiles ?? []);
+      archScan = runArchScan(csg, keyFiles ?? []);
+      promptTrace = runPromptTrace(keyFiles ?? [], csg);
       emit("structural-analysis", "Structural AST fingerprinting + LTL state-space checking...", 10.5);
       const structuralAnalysis = runStructuralAnalysis(keyFiles ?? []);
       try {
@@ -512,21 +518,21 @@ async function runAnalysisPipeline(opts: {
       thermodynamicEntropy = runThermodynamicEntropy(keyFiles ?? []);
       
       const allPillarFindings = [
-        ...vibeTaint.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "security" })),
-        ...regGraph.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "security" })),
-        ...symCost.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "performance" })),
-        ...cogFlow.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "quality" })),
-        ...failSafe.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "reliability" })),
-        ...obsCover.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "reliability" })),
-        ...deploySafe.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "deployment" })),
-        ...archScan.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "architecture" })),
-        ...promptTrace.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "security" })),
-        ...(structuralAnalysis?.vulnerabilities ?? []).map(f => ({ id: `struct-${f.patternId}`, severity: f.severity, filePath: "", category: "security" })),
-        ...cltResult.findings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: "security" })),
-        ...timeAwareFindings.map(f => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category })),
+        ...vibeTaint.findings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "security" })),
+        ...regGraph.findings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: (f as any).category ?? "security" })),
+        ...symCost.findings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "performance" })),
+        ...cogFlow.findings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "quality" })),
+        ...failSafe.findings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "reliability" })),
+        ...obsCover.findings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "reliability" })),
+        ...deploySafe.findings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "deployment" })),
+        ...archScan.findings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "architecture" })),
+        ...promptTrace.findings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "security" })),
+        ...(structuralAnalysis?.vulnerabilities ?? []).map((f: any) => ({ id: `struct-${f.patternId}`, severity: f.severity, filePath: "", category: "security" })),
+        ...cltResult.findings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: "security" })),
+        ...timeAwareFindings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category })),
       ];
       
-      const flowValue = runFlowValue(csg, keyFiles ?? [], allPillarFindings);
+      flowValue = runFlowValue(csg, keyFiles ?? [], allPillarFindings);
       
       // ── Competitive Gap Scanners (Phase 2.5) ───────────────────────────
       let rlsFindings: any[] = [];
@@ -1507,6 +1513,53 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
     res.status(500).json({ error: `Database Error: ${err.message}` });
   }
 });
+// ── GET /scans/:id/verdict — CI Gate Hook ─────────────────────────────────────
+router.get("/scans/:id/verdict", async (req, res): Promise<void> => {
+  if (!requireAuth(req, res)) return;
+
+  try {
+    const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const id = parseInt(raw, 10);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid scan id" });
+      return;
+    }
+
+    const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
+    if (!scan || scan.userId !== req.session.userId) {
+      res.status(404).json({ error: "Scan not found" });
+      return;
+    }
+
+    const issues = await db
+      .select()
+      .from(scanIssuesTable)
+      .where(eq(scanIssuesTable.scanId, id));
+
+    const criticalCount = issues.filter(i => i.severity === "critical").length;
+    const highCount = issues.filter(i => i.severity === "high").length;
+    const score = scan.score ?? 100;
+
+    const blockers: string[] = [];
+    if (criticalCount > 0) blockers.push(`${criticalCount} critical issue(s) detected`);
+    if (highCount > 0) blockers.push(`${highCount} high-severity-issue(s) detected`);
+    if (score < 70) blockers.push(`Reality Score (${score}) is below launch threshold (70)`);
+
+    const pass = blockers.length === 0;
+    const verdict = pass ? "ready" : (score < 70 || criticalCount > 0 ? "do-not-launch" : "caution");
+
+    res.json({
+      pass,
+      score,
+      verdict,
+      blockers
+    });
+  } catch (err: any) {
+    logger.error("GET /scans/:id/verdict DB Error:", err);
+    res.status(500).json({ error: `Database Error: ${err.message}` });
+  }
+});
+
 
 // ── POST /scans/:id/rescan — re-run analysis on a failed scan ────────────────
 router.post("/scans/:id/rescan", async (req, res): Promise<void> => {

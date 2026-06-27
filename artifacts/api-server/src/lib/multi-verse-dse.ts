@@ -55,7 +55,7 @@ export function runMultiVerseDse(keyFiles: Array<{ path: string; content: string
 
   for (const file of keyFiles) {
     const branches = computeCyclomaticComplexity(file.content, file.path);
-    allBranchPoints.push(...branches);
+    allBranchPoints.push(...branches.map(b => ({ ...b, file: file.path })));
     totalCC += branches.reduce((s, b) => s + b.complexity, 0);
 
     for (const branch of branches) {

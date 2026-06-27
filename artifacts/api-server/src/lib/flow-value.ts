@@ -151,7 +151,7 @@ export function runFlowValue(
       }
     }
 
-    const issuesInFile = existingFindings.filter(f => f.filePath === node.file);
+    const issuesInFile = existingFindings.filter(f => f.filePath === node.filePath);
     funnelIssueCounts[matchedStage] += issuesInFile.length;
 
     for (const issue of issuesInFile) {

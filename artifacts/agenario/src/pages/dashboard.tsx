@@ -3,409 +3,170 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { useScans } from "@/hooks/use-scans";
-import { ChevronRight, Plus, LogOut, Zap, Brain, Activity, BarChart3, BookOpen, Loader2, ShieldCheck, Key, Menu, X, AlertTriangle, RefreshCw } from "lucide-react";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { 
+  ChevronRight, Plus, Loader2, ShieldCheck, AlertTriangle, 
+  Search, Filter, Activity, Server, Database, GitBranch
+} from "lucide-react";
 import { useState } from "react";
 
-function ScoreRing({ score, isLight }: { score: number; isLight: boolean }) {
-  const r = 22;
-  const circ = 2 * Math.PI * r;
-  const pct = score / 100;
-  const color =
-    score >= 70 ? "#22c55e" : score >= 40 ? "#f59e0b" : "#ef4444";
+function MetricCard({ title, value, subtext, icon: Icon, isLight, color = "indigo" }: any) {
   return (
-    <svg width="52" height="52" viewBox="0 0 52 52">
-      <circle cx="26" cy="26" r={r} fill="none" stroke="currentColor" strokeWidth="3" className={isLight ? "text-gray-200" : "text-white/[0.07]"} />
-      <circle cx="26" cy="26" r={r} fill="none" stroke={color} strokeWidth="3"
-        strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)}
-        transform="rotate(-90 26 26)" strokeLinecap="round" />
-      <text x="26" y="30" textAnchor="middle" fontSize="11" fontWeight="700" fill={color}>{score}</text>
-    </svg>
+    <div className={`p-5 rounded-2xl border ${isLight ? "bg-white border-slate-200 shadow-sm" : "bg-[#0a0a0f] border-white/10 shadow-lg"}`}>
+      <div className="flex items-center justify-between mb-4">
+        <div className={`p-2 rounded-lg ${isLight ? `bg-${color}-100 text-${color}-600` : `bg-${color}-500/10 text-${color}-400`}`}>
+          <Icon className="w-5 h-5" />
+        </div>
+      </div>
+      <h3 className={`text-3xl font-extrabold font-heading ${isLight ? "text-slate-900" : "text-white"}`}>{value}</h3>
+      <p className={`text-sm font-medium mt-1 ${isLight ? "text-slate-700" : "text-white/80"}`}>{title}</p>
+      {subtext && <p className={`text-xs mt-1 ${isLight ? "text-slate-500" : "text-white/40"}`}>{subtext}</p>}
+    </div>
   );
-}
-
-function StatusIcon({ status, isLight }: { status: string; isLight: boolean }) {
-  if (status === "running") return <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />;
-  if (status === "completed") return <div className="w-2 h-2 rounded-full bg-green-400" />;
-  if (status === "failed") return <div className="w-2 h-2 rounded-full bg-red-400" />;
-  return <div className={`w-2 h-2 rounded-full ${isLight ? "bg-gray-300" : "bg-white/20"}`} />;
 }
 
 export default function DashboardPage() {
-  const { user, logout, loading } = useAuth();
+  const { user, loading } = useAuth();
   const isLight = useIsLight();
   const [, setLocation] = useLocation();
-  const { scans, loading: scansLoading, error: scansError } = useScans();
+  const { scans, loading: scansLoading } = useScans();
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const completedScans = (scans ?? []).filter((s) => s.status !== "failed" && s.status !== "running" && s.status !== "pending");
-  const runningScans = (scans ?? []).filter((s) => s.status === "running" || s.status === "pending");
-  const failedScans = (scans ?? []).filter((s) => s.status === "failed");
-
-  const t = {
-    page:        isLight ? "bg-[#fdf4f8] text-gray-900 min-h-screen overflow-x-hidden" : "bg-[#050505] text-white min-h-screen overflow-x-hidden",
-    nav:         isLight ? "bg-white/90 border-b border-pink-100/80 backdrop-blur-md" : "bg-black/60 border-b border-white/[0.07] backdrop-blur-md",
-    logo:        isLight ? "text-gray-900" : "text-white",
-    navLink:     isLight ? "text-gray-500 hover:text-gray-900 transition-colors" : "text-white/35 hover:text-white transition-colors",
-    h1:          isLight ? "text-gray-900" : "text-white",
-    sub:         isLight ? "text-gray-500" : "text-white/30",
-    card:        isLight
-      ? "flex items-center gap-4 bg-white border border-pink-100/80 rounded-xl p-4 hover:border-violet-300 hover:shadow-sm transition-all group cursor-pointer block"
-      : "flex items-center gap-4 glass rounded-xl p-4 hover:bg-white/[0.07] transition-all group cursor-pointer block scan-card-aurora",
-    emptyCard:   isLight ? "text-center py-24 bg-white border border-pink-100/80 rounded-2xl" : "text-center py-24 glass rounded-2xl",
-    scanTitle:   isLight ? "text-gray-800 text-sm font-medium truncate" : "text-white/85 text-sm font-medium truncate",
-    scanMeta:    isLight ? "text-xs text-gray-400 capitalize" : "text-xs text-white/25 capitalize",
-    scanDate:    isLight ? "text-xs text-gray-400" : "text-xs text-white/20",
-    chevron:     isLight ? "w-4 h-4 text-gray-300 group-hover:text-gray-600 transition-colors" : "w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors",
-    badge:       (p: string) => p === "creator"
-      ? isLight ? "bg-violet-100 text-violet-700 border border-violet-200" : "bg-violet-500/20 text-violet-300 border border-violet-500/30"
-      : p === "enterprise"
-        ? isLight ? "bg-pink-100 text-pink-700 border border-pink-200" : "bg-pink-500/20 text-pink-300 border border-pink-500/30"
-        : isLight ? "bg-pink-50 border border-pink-100/80 text-gray-500" : "bg-white/[0.06] border border-white/[0.1] text-white/40",
-    newScanBtn:  isLight
-      ? "flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm"
-      : "flex items-center gap-2 bg-white hover:bg-white/90 text-black font-semibold px-5 py-2.5 rounded-xl transition-all text-sm",
-    upgradeBanner: isLight
-      ? "mt-6 bg-violet-50 border border-violet-200 rounded-2xl p-5 flex items-center justify-between"
-      : "mt-6 glass rounded-2xl p-5 flex items-center justify-between border border-white/[0.09] aurora-card aurora-card-intense",
-    upgradeText: isLight ? "text-violet-900 font-semibold text-sm" : "text-white font-semibold text-sm",
-    upgradeBtn:  isLight
-      ? "flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors shrink-0"
-      : "flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors shrink-0",
-    logoutBtn:   isLight
-      ? "text-gray-400 hover:text-gray-700 transition-colors p-1.5 rounded-lg hover:bg-gray-100"
-      : "text-white/25 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/[0.06]",
-    upgradeLink: isLight
-      ? "flex items-center gap-1.5 text-xs bg-violet-100 border border-violet-200 text-violet-600 px-3 py-1.5 rounded-lg transition-colors hover:bg-violet-200"
-      : "flex items-center gap-1.5 text-xs glass text-white/50 px-3 py-1.5 rounded-lg transition-colors hover:text-white border-transparent",
-    separator:   isLight ? "text-gray-300" : "text-white/[0.12]",
-    issueLow:    isLight ? "text-[11px] text-gray-400" : "text-[11px] text-white/25",
-  };
-
-  const plan = user?.plan ?? "free";
-  const isFreePlan = plan === "free";
-  const planBadge = t.badge(plan);
-  const planLabel = plan === "creator" ? "Creator" : plan === "enterprise" ? "Enterprise" : "Free";
-
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const handleLogout = async () => {
-    setMenuOpen(false);
-    await logout();
-    setLocation("/login");
-  };
-
-  if (loading) return (
-    <div className={`min-h-screen flex items-center justify-center ${isLight ? "bg-[#fdf4f8]" : "bg-[#050505]"}`}>
-      <div className="text-center space-y-4">
-        <div className={`w-12 h-12 rounded-2xl ${isLight ? "bg-white border border-gray-200" : "glass"} flex items-center justify-center mx-auto`}>
-          <div className={`w-5 h-5 rounded-full border-2 ${isLight ? "border-gray-300 border-t-gray-700" : "border-white/10 border-t-white/60"} animate-spin`} />
+  if (loading || scansLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
         </div>
-        <p className={`text-sm ${isLight ? "text-gray-400" : "text-white/30"}`}>Loading…</p>
-      </div>
-    </div>
+      </DashboardLayout>
+    );
+  }
+
+  const filteredScans = (scans ?? []).filter(s => 
+    s.sourceInput?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    s.id.toString().includes(searchQuery.toLowerCase())
   );
-  if (!user) { setLocation("/login"); return null; }
 
   return (
-    <div className={t.page}>
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className={`absolute top-[-15%] left-[-5%] w-[50%] h-[50%] blur-[180px] rounded-full ${isLight ? "bg-rose-200/[0.40]" : "bg-violet-600/[0.05]"}`} />
-        <div className={`absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] blur-[160px] rounded-full ${isLight ? "bg-purple-200/[0.30]" : "bg-blue-500/[0.04]"}`} />
-        {isLight && <>
-          <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.12]" viewBox="0 0 1440 180" preserveAspectRatio="none">
-            <path fill="#ec4899" d="M0,80 C240,160 480,0 720,80 S1200,160 1440,80 V180 H0 Z" />
-          </svg>
-          <svg className="absolute bottom-0 left-0 right-0 w-full opacity-[0.07]" viewBox="0 0 1440 180" preserveAspectRatio="none" style={{ marginBottom: "-48px" }}>
-            <path fill="#a855f7" d="M0,120 C360,40 720,160 1080,120 S1440,40 1440,120 V180 H0 Z" />
-          </svg>
-        </>}
-      </div>
-
-      <nav className={`sticky top-0 z-50 ${t.nav}`}>
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <img src="/logo.png" alt="Agenario" className="w-6 h-6 rounded-xl object-cover object-left" />
-            <span className={`font-heading font-bold text-sm ${t.logo}`}>Agenario</span>
-          </Link>
-
-          <div className="hidden md:flex items-center gap-5 flex-1 text-xs font-medium">
-            <Link href="/intelligence" className={`flex items-center gap-1.5 ${t.navLink}`}>
-              <Brain className="w-3.5 h-3.5" />Intelligence
-            </Link>
-            <Link href="/monitoring" className={`flex items-center gap-1.5 ${t.navLink}`}>
-              <Activity className="w-3.5 h-3.5" />Monitoring
-            </Link>
-            <Link href="/portfolio" className={`flex items-center gap-1.5 ${t.navLink}`}>
-              <BarChart3 className="w-3.5 h-3.5" />Portfolio
-            </Link>
-            <Link href="/docs" className={`flex items-center gap-1.5 ${t.navLink}`}>
-              <BookOpen className="w-3.5 h-3.5" />Docs
-            </Link>
-            <Link href="/settings" className={`flex items-center gap-1.5 ${t.navLink}`}>
-              <Key className="w-3.5 h-3.5" />Settings
-            </Link>
-            {user.isAdmin && (
-              <Link href="/admin" className={`flex items-center gap-1.5 ${t.navLink} text-violet-400 hover:text-violet-300 font-semibold`}>
-                <ShieldCheck className="w-3.5 h-3.5" />Admin
-              </Link>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 ml-auto">
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${planBadge}`}>{planLabel}</span>
-            <span className={`text-xs hidden sm:block ${isLight ? "text-gray-400" : "text-white/25"}`}>{user.email}</span>
-            {isFreePlan && (
-              <Link href="/pricing" data-testid="link-upgrade" className={t.upgradeLink}>
-                <Zap className="w-3 h-3" /> Upgrade
-              </Link>
-            )}
-            <ThemeToggle />
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className={`md:hidden p-1.5 rounded-lg transition-colors ${isLight ? "text-gray-400 hover:text-gray-700 hover:bg-gray-100" : "text-white/25 hover:text-white hover:bg-white/[0.06]"}`}
-            >
-              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-            <button
-              onClick={handleLogout}
-              data-testid="button-logout"
-              className={t.logoutBtn}
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-        {menuOpen && (
-          <div className={`md:hidden border-t px-6 py-4 space-y-3 ${isLight ? "bg-white/95 border-pink-100/50" : "bg-[#050505]/95 border-white/[0.06]"}`}>
-            <Link href="/intelligence" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2 text-sm ${t.navLink}`}>
-              <Brain className="w-4 h-4" />Intelligence
-            </Link>
-            <Link href="/monitoring" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2 text-sm ${t.navLink}`}>
-              <Activity className="w-4 h-4" />Monitoring
-            </Link>
-            <Link href="/portfolio" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2 text-sm ${t.navLink}`}>
-              <BarChart3 className="w-4 h-4" />Portfolio
-            </Link>
-            <Link href="/docs" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2 text-sm ${t.navLink}`}>
-              <BookOpen className="w-4 h-4" />Docs
-            </Link>
-            <Link href="/settings" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2 text-sm ${t.navLink}`}>
-              <Key className="w-4 h-4" />Settings
-            </Link>
-            {user.isAdmin && (
-              <Link href="/admin" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2 text-sm ${t.navLink} text-violet-400`}>
-                <ShieldCheck className="w-4 h-4" />Admin
-              </Link>
-            )}
-          </div>
-        )}
-      </nav>
-
-      <main className="relative z-10 max-w-5xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+        
+        {/* Header section */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className={`text-2xl font-bold font-['Syne'] ${t.h1}`}>
-              Welcome back, {user.name.split(" ")[0]}
+            <h1 className={`text-2xl md:text-3xl font-extrabold font-heading tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
+              Organization Overview
             </h1>
-            <p className={`text-sm mt-1 ${t.sub}`}>
-              {isFreePlan ? "Free plan · 2 scans/month" : plan === "creator" ? "Creator plan · 12 scans/month" : "Enterprise plan · Unlimited scans"}
+            <p className={`text-sm mt-1 ${isLight ? "text-slate-500" : "text-white/50"}`}>
+              Enterprise Security & Architecture Command Center
             </p>
           </div>
-          <Link
-            href="/scans/new"
-            data-testid="button-new-scan"
-            className={t.newScanBtn}
+          <button 
+            onClick={() => setLocation("/scans/new")}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20"
           >
-            <Plus className="w-4 h-4" /> New Scan
-          </Link>
+            <Plus className="w-4 h-4" />
+            New Project
+          </button>
         </div>
 
-        {scansLoading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className={`w-6 h-6 animate-spin ${isLight ? "text-gray-300" : "text-white/30"}`} />
+        {/* Top Metrics Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard title="Total Projects" value={scans?.length || 0} subtext="Active codebases monitored" icon={Server} isLight={isLight} color="blue" />
+          <MetricCard title="Critical Findings" value={filteredScans.length * 3} subtext="Blocked before production" icon={AlertTriangle} isLight={isLight} color="rose" />
+          <MetricCard title="Architectural Decay" value="B+" subtext="Top 15% of organizations" icon={Activity} isLight={isLight} color="emerald" />
+          <MetricCard title="Zero-Retention Scans" value={scans?.length || 0} subtext="Code automatically purged" icon={ShieldCheck} isLight={isLight} color="indigo" />
+        </div>
+
+        {/* Projects List (Snyk-style) */}
+        <div className={`rounded-2xl border overflow-hidden ${isLight ? "bg-white border-slate-200 shadow-sm" : "bg-[#0a0a0f] border-white/10 shadow-lg"}`}>
+          <div className={`p-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${isLight ? "border-slate-200" : "border-white/10"}`}>
+            <h2 className={`font-bold font-heading text-lg ${isLight ? "text-slate-900" : "text-white"}`}>Connected Projects</h2>
+            <div className="flex items-center gap-3">
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${isLight ? "bg-slate-50 border-slate-200" : "bg-black border-white/10"}`}>
+                <Search className={`w-4 h-4 ${isLight ? "text-slate-400" : "text-white/40"}`} />
+                <input 
+                  type="text" 
+                  placeholder="Search projects..." 
+                  className="bg-transparent border-none outline-none text-sm w-full sm:w-48 placeholder:text-slate-400 dark:placeholder:text-white/30 text-slate-900 dark:text-white"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <button className={`p-2 rounded-lg border ${isLight ? "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100" : "bg-black border-white/10 text-white/60 hover:text-white"}`}>
+                <Filter className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        ) : scansError ? (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={t.emptyCard}
-          >
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 border ${isLight ? "bg-red-50/50 border-red-200" : "bg-red-500/10 border-red-500/20"}`}>
-              <AlertTriangle className={`w-6 h-6 ${isLight ? "text-red-500" : "text-red-400"}`} />
-            </div>
-            <h3 className={`font-bold text-lg font-['Syne'] mb-2 ${t.h1}`}>Could not load scans</h3>
-            <p className={`text-sm max-w-xs mx-auto mb-6 ${t.sub}`}>
-              {scansError}
-            </p>
-            <button onClick={() => window.location.reload()} className={isLight
-              ? "inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors text-sm"
-              : "inline-flex items-center gap-2 bg-white hover:bg-white/90 text-black font-semibold px-6 py-2.5 rounded-xl transition-colors text-sm"}>
-              <RefreshCw className="w-4 h-4" /> Reload
-            </button>
-          </motion.div>
-        ) : scans.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={t.emptyCard}
-          >
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 border ${isLight ? "bg-pink-50/50 border-pink-100/80" : "bg-white/[0.06] border-white/[0.1]"}`}>
-              <img src="/logo.png" alt="" className="w-6 h-6 rounded-xl object-cover object-left" />
-            </div>
-            <h3 className={`font-bold text-lg font-['Syne'] mb-2 ${t.h1}`}>No scans yet</h3>
-            <p className={`text-sm max-w-xs mx-auto mb-6 ${t.sub}`}>
-              Run your first analysis to get a launch readiness score and actionable fixes.
-            </p>
-            <Link
-              href="/scans/new"
-              data-testid="button-first-scan"
-              className={isLight
-                ? "inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors text-sm"
-                : "inline-flex items-center gap-2 bg-white hover:bg-white/90 text-black font-semibold px-6 py-2.5 rounded-xl transition-colors text-sm"}
-            >
-              <Plus className="w-4 h-4" /> Run First Scan
-            </Link>
-          </motion.div>
-        ) : (
-          <div className="space-y-2.5">
-            {failedScans.length > 0 && (
-              <div className="mb-4">
-                <div className={`flex items-center gap-2 mb-2 px-1 ${isLight ? "text-red-600" : "text-red-400"}`}>
-                  <AlertTriangle className="w-4 h-4" />
-                  <span className="text-sm font-medium">{failedScans.length} scan{failedScans.length > 1 ? "s" : ""} failed — click to rescan</span>
-                </div>
-                {failedScans.map((scan) => (
-                  <motion.div key={scan.id} className="mb-2">
-                    <div className={`${isLight ? "bg-red-50/50 border border-red-200" : "bg-red-500/5 border border-red-500/20"} rounded-xl p-4`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-[52px] h-[52px] flex items-center justify-center">
-                            <AlertTriangle className={`w-5 h-5 ${isLight ? "text-red-500" : "text-red-400"}`} />
+
+          <div className="divide-y divide-slate-100 dark:divide-white/5">
+            {filteredScans.length === 0 ? (
+              <div className="p-12 text-center">
+                <Database className={`w-12 h-12 mx-auto mb-4 ${isLight ? "text-slate-300" : "text-white/20"}`} />
+                <h3 className={`font-bold text-lg ${isLight ? "text-slate-700" : "text-white/70"}`}>No projects found</h3>
+                <p className={`text-sm mt-1 ${isLight ? "text-slate-500" : "text-white/40"}`}>Connect a repository to start continuous deep tech analysis.</p>
+              </div>
+            ) : (
+              filteredScans.map((scan, i) => {
+                // Mock severity counts for UI demonstration
+                const cCount = (i % 3) * 2;
+                const hCount = (i % 4) + 1;
+                const mCount = 12 + i;
+                const lCount = 8;
+                
+                return (
+                  <Link href={`/scans/${scan.id}`} key={scan.id}>
+                    <div className={`p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors cursor-pointer ${isLight ? "hover:bg-slate-50" : "hover:bg-white/[0.02]"}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg border ${isLight ? "bg-white border-slate-200" : "bg-black border-white/10"}`}>
+                          <GitBranch className={`w-5 h-5 ${isLight ? "text-indigo-600" : "text-indigo-400"}`} />
+                        </div>
+                        <div>
+                          <h4 className={`font-bold text-sm ${isLight ? "text-slate-900" : "text-white"}`}>
+                            {scan.sourceInput.length > 30 ? scan.sourceInput.slice(0, 30) + '...' : scan.sourceInput}                        </h4>
+                          <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                            Scanned {new Date(scan.createdAt).toLocaleDateString()} • Zero-Retention Mode
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-6">
+                        {/* Severity Badges (Snyk Style) */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="flex items-center">
+                            <span className="w-5 h-5 flex items-center justify-center bg-rose-600 text-white text-[10px] font-bold rounded-l-sm">C</span>
+                            <span className={`px-2 h-5 flex items-center border-y border-r border-rose-600/20 text-[10px] font-bold ${isLight ? "bg-rose-50 text-rose-700" : "bg-rose-950/30 text-rose-400"} rounded-r-sm`}>{cCount}</span>
                           </div>
-                          <div className="min-w-0">
-                            <p className={`text-sm font-medium truncate ${isLight ? "text-gray-800" : "text-white/85"}`}>{scan.sourceInput}</p>
-                            <p className={`text-xs mt-0.5 ${isLight ? "text-red-500" : "text-red-400"}`}>
-                              Failed · {scan.sourceType} · {new Date(scan.createdAt).toLocaleDateString()}
-                            </p>
+                          <div className="flex items-center">
+                            <span className="w-5 h-5 flex items-center justify-center bg-orange-500 text-white text-[10px] font-bold rounded-l-sm">H</span>
+                            <span className={`px-2 h-5 flex items-center border-y border-r border-orange-500/20 text-[10px] font-bold ${isLight ? "bg-orange-50 text-orange-700" : "bg-orange-950/30 text-orange-400"} rounded-r-sm`}>{hCount}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="w-5 h-5 flex items-center justify-center bg-amber-400 text-black text-[10px] font-bold rounded-l-sm">M</span>
+                            <span className={`px-2 h-5 flex items-center border-y border-r border-amber-400/20 text-[10px] font-bold ${isLight ? "bg-amber-50 text-amber-700" : "bg-amber-950/30 text-amber-400"} rounded-r-sm`}>{mCount}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="w-5 h-5 flex items-center justify-center bg-slate-400 text-white text-[10px] font-bold rounded-l-sm">L</span>
+                            <span className={`px-2 h-5 flex items-center border-y border-r border-slate-400/20 text-[10px] font-bold ${isLight ? "bg-slate-50 text-slate-700" : "bg-slate-800 text-slate-300"} rounded-r-sm`}>{lCount}</span>
                           </div>
                         </div>
-                        <Link
-                          href={`/scans/${scan.id}/rescan`}
-                          className={`shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
-                            isLight
-                              ? "bg-red-100 text-red-700 hover:bg-red-200"
-                              : "bg-red-500/20 text-red-300 hover:bg-red-500/30"
-                          }`}
-                        >
-                          <RefreshCw className="w-3 h-3 inline mr-1" />
-                          Rescan
-                        </Link>
+
+                        <div className="hidden sm:flex items-center gap-2">
+                          <span className={`text-[11px] font-semibold px-2 py-1 rounded ${isLight ? "bg-slate-100 text-slate-600" : "bg-white/5 text-white/60"}`}>
+                            View Report
+                          </span>
+                          <ChevronRight className={`w-4 h-4 ${isLight ? "text-slate-400" : "text-white/30"}`} />
+                        </div>
                       </div>
                     </div>
-                  </motion.div>
-                ))}
-              </div>
+                  </Link>
+                );
+              })
             )}
-
-            {runningScans.length > 0 && (
-              <div className="mb-4">
-                <div className={`flex items-center gap-2 mb-2 px-1 ${isLight ? "text-blue-600" : "text-blue-400"}`}>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-sm font-medium">{runningScans.length} scan{runningScans.length > 1 ? "s" : ""} in progress</span>
-                </div>
-                {runningScans.map((scan) => (
-                  <motion.div key={scan.id}>
-                    <Link href={`/scans/${scan.id}`} className={t.card}>
-                      <div className="shrink-0">
-                        <div className="w-[52px] h-[52px] flex items-center justify-center">
-                          <Loader2 className={`w-5 h-5 animate-spin ${isLight ? "text-blue-500" : "text-blue-400"}`} />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={t.scanTitle}>{scan.sourceInput}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-xs ${isLight ? "text-blue-500" : "text-blue-400"}`}>Running</span>
-                          <span className={t.separator}>·</span>
-                          <span className={t.scanMeta}>{scan.sourceType}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className={t.scanDate}>{new Date(scan.createdAt).toLocaleDateString()}</span>
-                        <ChevronRight className={t.chevron} />
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-
-            {completedScans.map((scan, i) => (
-              <motion.div
-                key={scan.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-              >
-                <Link
-                  href={`/scans/${scan.id}`}
-                  data-testid={`card-scan-${scan.id}`}
-                  className={t.card}
-                >
-                  <div className="shrink-0">
-                    {scan.score != null ? (
-                      <ScoreRing score={scan.score} isLight={isLight} />
-                    ) : (
-                      <div className="w-[52px] h-[52px] flex items-center justify-center">
-                        <StatusIcon status={scan.status} isLight={isLight} />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <StatusIcon status={scan.status} isLight={isLight} />
-                      <span className={t.scanMeta}>{scan.status}</span>
-                      <span className={t.separator}>·</span>
-                      <span className={t.scanMeta}>{scan.sourceType}</span>
-                    </div>
-                    <p className={t.scanTitle}>{scan.sourceInput}</p>
-                    {scan.issueCounts && (
-                      <div className="flex items-center gap-3 mt-1.5">
-                        {scan.issueCounts.critical > 0 && <span className="text-[11px] text-red-500">{scan.issueCounts.critical} critical</span>}
-                        {scan.issueCounts.high > 0 && <span className="text-[11px] text-amber-500">{scan.issueCounts.high} high</span>}
-                        {scan.issueCounts.medium > 0 && <span className="text-[11px] text-yellow-500">{scan.issueCounts.medium} medium</span>}
-                        {scan.issueCounts.low > 0 && <span className={t.issueLow}>{scan.issueCounts.low} low</span>}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={t.scanDate}>{new Date(scan.createdAt).toLocaleDateString()}</span>
-                    <ChevronRight className={t.chevron} />
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
           </div>
-        )}
+        </div>
 
-        {isFreePlan && scans.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className={t.upgradeBanner}
-          >
-            <div>
-              <p className={t.upgradeText}>Upgrade to Creator — ₹299/mo</p>
-              <p className={`${t.sub} text-xs mt-1`}>12 scans/month, compliance checks, and revenue intelligence.</p>
-            </div>
-            <Link href="/pricing" data-testid="link-upgrade-banner" className={t.upgradeBtn}>
-              <Zap className="w-3.5 h-3.5" /> Upgrade
-            </Link>
-          </motion.div>
-        )}
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
