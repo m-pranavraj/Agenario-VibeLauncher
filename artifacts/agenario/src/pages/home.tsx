@@ -403,7 +403,13 @@ export default function Home() {
               </motion.div>
 
               <motion.h1 variants={FADE_UP} className={`text-3xl sm:text-5xl lg:text-6xl font-heading font-extrabold leading-[1.05] tracking-tight break-words ${t.h1}`}>
-                Not just another code review software
+                Not just another<br />
+                <span className={isLight
+                  ? "text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500"
+                  : "text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40"
+                }>
+                  code review software
+                </span>
               </motion.h1>
 
               <motion.p variants={FADE_UP} className={`text-lg leading-relaxed max-w-lg ${t.body}`}>
