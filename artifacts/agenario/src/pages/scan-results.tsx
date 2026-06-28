@@ -5816,9 +5816,10 @@ function KnowledgeGraphExplorer({ data, issues, isLight }: { data: any, issues?:
 export default function ScanResultsPage() {
   const { user, loading } = useAuth();
   const isLight = useIsLight();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const pathParts = location.split("/");
-  const id = pathParts[2];
+  const params = { id: pathParts[2] };
+  const id = params.id;
   let rawSection = pathParts[3] || "overview";
   
   let activeCategory: string | null = null;
