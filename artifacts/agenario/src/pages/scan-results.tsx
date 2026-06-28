@@ -6042,7 +6042,89 @@ export default function ScanResultsPage() {
     ? safeIssues.filter((i: any) => (i.agentName || "AI Code Quality") === activeAgent)
     : safeIssues;
   const categoryFiltered = activeCategory
-    ? agentFiltered.filter((i: any) => (i.category || "").toLowerCase() === activeCategory.toLowerCase())
+    ? agentFiltered.filter((i: any) => {
+        const cat = activeCategory.toLowerCase();
+        const issueCat = (i.category || "").toLowerCase();
+        const agentName = (i.agentName || "").toLowerCase();
+        const desc = (i.description || "").toLowerCase();
+        const title = (i.title || "").toLowerCase();
+
+        if (cat === "security") {
+          return (
+            issueCat === "injection" ||
+            issueCat === "auth" ||
+            issueCat === "exposure" ||
+            issueCat === "security-smell" ||
+            issueCat === "mass-assign" ||
+            issueCat === "path-traversal" ||
+            issueCat === "ssti" ||
+            issueCat === "xxe" ||
+            issueCat === "open-redirect" ||
+            issueCat === "log-injection" ||
+            issueCat === "file-upload" ||
+            agentName.includes("security") ||
+            agentName.includes("idor") ||
+            agentName.includes("access") ||
+            agentName.includes("taint") ||
+            title.includes("security") ||
+            title.includes("leak") ||
+            title.includes("cryptographic")
+          );
+        }
+        if (cat === "compliance") {
+          return (
+            issueCat === "compliance" ||
+            issueCat === "regulatory" ||
+            issueCat.includes("compliance") ||
+            agentName.includes("compliance") ||
+            agentName.includes("safety") ||
+            desc.includes("compliance") ||
+            desc.includes("gdpr") ||
+            desc.includes("pci") ||
+            desc.includes("hipaa") ||
+            desc.includes("regulatory") ||
+            desc.includes("policy") ||
+            title.includes("compliance") ||
+            title.includes("policy")
+          );
+        }
+        if (cat === "performance") {
+          return (
+            issueCat === "performance" ||
+            issueCat === "circular_dependency" ||
+            issueCat === "god_module" ||
+            issueCat === "high_instability" ||
+            agentName.includes("performance") ||
+            agentName.includes("architecture") ||
+            desc.includes("performance") ||
+            desc.includes("latency") ||
+            desc.includes("slow") ||
+            desc.includes("database query") ||
+            title.includes("performance") ||
+            title.includes("latency")
+          );
+        }
+        if (cat === "uiux") {
+          return (
+            issueCat === "uiux" ||
+            issueCat === "wcag_violation" ||
+            issueCat === "cognitive_overload" ||
+            issueCat === "ai_boilerplate" ||
+            issueCat === "inconsistent_design" ||
+            agentName.includes("design") ||
+            agentName.includes("ui") ||
+            agentName.includes("ux") ||
+            desc.includes("design") ||
+            desc.includes("contrast") ||
+            desc.includes("wcag") ||
+            title.includes("ui") ||
+            title.includes("ux") ||
+            title.includes("contrast") ||
+            title.includes("accessibility")
+          );
+        }
+        return issueCat === cat;
+      })
     : agentFiltered;
   const filteredIssues =
     evidenceFilter === "all"
