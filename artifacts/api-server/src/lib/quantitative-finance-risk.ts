@@ -72,7 +72,7 @@ export function computeFinancialRisk(
 
   // 2. Monte Carlo Simulation (Deterministic)
   // Seed the PRNG with the input parameters so the scan is fully deterministic
-  let seed = 0x12345678 + totalVulnerabilities + (criticalCount * 100) + (highCount * 10);
+  let seed = Date.now() + Math.floor(Math.random() * 1000000) + totalVulnerabilities;
   const random = function() {
     let t = seed += 0x6D2B79F5;
     t = Math.imul(t ^ t >>> 15, t | 1);

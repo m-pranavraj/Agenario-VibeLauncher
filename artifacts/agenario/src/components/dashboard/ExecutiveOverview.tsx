@@ -1,13 +1,7 @@
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { ShieldAlert, Activity, ShieldCheck, Cpu } from 'lucide-react';
 
-const radarData = [
-  { subject: 'Security', A: 90, fullMark: 100 },
-  { subject: 'Architecture', A: 75, fullMark: 100 },
-  { subject: 'Compliance', A: 85, fullMark: 100 },
-  { subject: 'AI Safety', A: 60, fullMark: 100 },
-  { subject: 'Performance', A: 95, fullMark: 100 },
-];
+
 
 
 
@@ -17,6 +11,22 @@ export function ExecutiveOverview({ scan, isLight }: { scan: any, isLight: boole
   const hCount = (scan.issues ?? []).filter((i:any) => i.severity === 'high').length || 5;
   const mCount = (scan.issues ?? []).filter((i:any) => i.severity === 'medium').length || 14;
   const lCount = (scan.issues ?? []).filter((i:any) => i.severity === 'low').length || 0;
+
+  // Dynamically compute vectors from scan issues list
+  const issuesList = scan.issues ?? [];
+  const securityScore = Math.max(30, 100 - (issuesList.filter((i: any) => i.severity === 'critical' || i.severity === 'high').length * 15));
+  const archScore = Math.max(30, 100 - (issuesList.filter((i: any) => (i.filePath || '').includes('components') || i.agentName?.toLowerCase().includes('clean')).length * 8));
+  const compScore = Math.max(40, 100 - (issuesList.filter((i: any) => i.description?.toLowerCase().includes('compliance') || i.description?.toLowerCase().includes('gdpr') || i.description?.toLowerCase().includes('policy')).length * 12));
+  const aiScore = Math.max(30, 100 - (issuesList.filter((i: any) => i.agentName?.toLowerCase().includes('ai') || i.agentName?.toLowerCase().includes('smell')).length * 10));
+  const perfScore = Math.max(40, 100 - (issuesList.filter((i: any) => i.severity === 'medium' || i.description?.toLowerCase().includes('performance') || i.description?.toLowerCase().includes('loop')).length * 7));
+
+  const radarData = [
+    { subject: 'Security', A: securityScore, fullMark: 100 },
+    { subject: 'Architecture', A: archScore, fullMark: 100 },
+    { subject: 'Compliance', A: compScore, fullMark: 100 },
+    { subject: 'AI Safety', A: aiScore, fullMark: 100 },
+    { subject: 'Performance', A: perfScore, fullMark: 100 },
+  ];
 
   const scoreHistory = scan.scoreHistory || [];
   const trendData = scoreHistory.length > 1
