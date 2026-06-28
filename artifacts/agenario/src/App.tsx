@@ -45,6 +45,7 @@ function Router() {
       <Route path="/scans/new" component={NewScanPage} />
       <Route path="/scan/new" component={NewScanPage} />
       <Route path="/scans/:id/progress" component={ScanProgressPage} />
+      <Route path="/scans/:id/:section" component={ScanResultsPage} />
       <Route path="/scans/:id" component={ScanResultsPage} />
       <Route path="/pricing" component={PricingPage} />
       <Route path="/docs" component={DocsPage} />

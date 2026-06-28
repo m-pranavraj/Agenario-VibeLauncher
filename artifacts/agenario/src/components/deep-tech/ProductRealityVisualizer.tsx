@@ -221,10 +221,10 @@ function DeploymentRow({ check, isLight }: { check: any; isLight: boolean }) {
 
 export function ProductRealityVisualizer({ data, className = "" }: { data: ProductRealityData | null | undefined; className?: string }) {
   const isLight = useIsLight();
-  const [showMockups, setShowMockups] = useState(false);
-  const [showFeatures, setShowFeatures] = useState(false);
-  const [showCleanup, setShowCleanup] = useState(false);
-  const [showDeploy, setShowDeploy] = useState(false);
+  const [showMockups, setShowMockups] = useState(true);
+  const [showFeatures, setShowFeatures] = useState(true);
+  const [showCleanup, setShowCleanup] = useState(true);
+  const [showDeploy, setShowDeploy] = useState(true);
 
   if (!data) {
     return (

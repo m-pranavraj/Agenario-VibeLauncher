@@ -1,4 +1,4 @@
-﻿import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback, createElement, type ElementType, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback, createElement, type ElementType, type ReactNode } from "react";
 import {
   ReactFlow,
   Background,
@@ -20,6 +20,7 @@ import { RiskForecastSection } from "@/components/intelligence/RiskForecastSecti
 import { FileExplorer } from "@/components/dashboard/FileExplorer";
 import { Folder } from "lucide-react";
 import { RevenueIntelligenceSection } from "@/components/intelligence/RevenueIntelligenceSection";
+import { ConfidenceContractView } from "@/components/intelligence/ConfidenceContractView";
 import {
   ArrowLeft,
   Copy,
@@ -5815,62 +5816,28 @@ function KnowledgeGraphExplorer({ data, issues, isLight }: { data: any, issues?:
 export default function ScanResultsPage() {
   const { user, loading } = useAuth();
   const isLight = useIsLight();
-  const [, setLocation] = useLocation();
-  const [, params] = useRoute("/scans/:id");
+  const [location] = useLocation();
+  const pathParts = location.split("/");
+  const id = pathParts[2];
+  let rawSection = pathParts[3] || "overview";
+  
+  let activeCategory: string | null = null;
+  let activeTab = rawSection;
+
+  if (rawSection.startsWith("issues-")) {
+    activeCategory = rawSection.replace("issues-", "");
+    activeTab = "issues";
+  } else if (rawSection.startsWith("deeptech-")) {
+    activeTab = "deeptech";
+  } else if (rawSection.startsWith("impact-")) {
+    activeTab = "intelligence";
+  } else if (rawSection === "sandbox") {
+    activeTab = "overview";
+  }
+
   const [scan, setScan] = useState<ScanDetail | null>(null);
   const [scanLoading, setScanLoading] = useState(true);
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(() => {
-    const hash = window.location.hash.replace("#", "");
-    if (hash.startsWith("issues")) return "issues";
-    if (hash.startsWith("deeptech")) return "deeptech";
-    if (hash.startsWith("impact")) return "intelligence";
-    if (hash === "reality") return "reality";
-    if (hash === "sandbox") return "overview";
-    return hash || "overview";
-  });
-
-  useEffect(() => {
-    const handleHash = () => {
-      const hash = window.location.hash.replace("#", "");
-      if (hash) {
-        if (hash.startsWith("issues")) {
-          setActiveTab("issues");
-          const cat = hash.replace("issues-", "");
-          if (["security", "compliance", "performance", "uiux"].includes(cat)) {
-            setActiveCategory(cat);
-          } else {
-            setActiveCategory(null);
-          }
-        } else if (hash.startsWith("deeptech")) {
-          setActiveTab("deeptech");
-        } else if (hash === "reality") {
-          setActiveTab("reality");
-        } else if (hash.startsWith("impact")) {
-          setActiveTab("intelligence");
-          setTimeout(() => {
-            const el = document.getElementById(hash);
-            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }, 150);
-        } else if (hash === "sandbox") {
-          setActiveTab("overview");
-          setTimeout(() => {
-            const el = document.getElementById("sandbox-proofs");
-            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }, 150);
-        } else {
-          setActiveTab(hash);
-          setActiveCategory(null);
-        }
-      } else {
-        setActiveCategory(null);
-      }
-    };
-    window.addEventListener("hashchange", handleHash);
-    handleHash();
-    return () => window.removeEventListener("hashchange", handleHash);
-  }, []);
   const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("all");
 
   useEffect(() => {
@@ -6203,76 +6170,17 @@ export default function ScanResultsPage() {
         {/* --- Locked Premium Insights (free users) ---------------- */}
         <LockedInsightsPanel scan={scan} plan={user.plan} />
 
-        {/* --- Section Tab Navigation ------------------------------------- */}
-        <div
-          className={`sticky top-[57px] z-[9] -mx-6 px-6 py-2.5 ${t.tabBar}`}
-        >
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-4xl">
-            {([
-              { id: "overview", label: "Overview", icon: LayoutDashboard, tourId: undefined },
-              { id: "files", label: "Files", icon: Folder, tourId: undefined },
-              {
-                id: "issues",
-                label: "Issues",
-                icon: ShieldAlert,
-                tourId: "tab-issues",
-                count: (scan.issues ?? []).filter((i) => !i.locked).length || undefined,
-              },
-              { id: "intelligence", label: "Intelligence", icon: Sparkles, tourId: "tab-intelligence" },
-              { id: "reality", label: "Product Reality", icon: Users, tourId: undefined },
-              { id: "compliance", label: "Compliance", icon: Scale, tourId: undefined },
-              {
-                id: "advanced",
-                label: "Advanced",
-                icon: Zap,
-                tourId: undefined,
-                badge: user.plan === "creator" || user.plan === "enterprise" ? undefined : "🔒",
-              },
-              {
-                id: "deeptech",
-                label: "Deep Tech",
-                icon: Network,
-                tourId: undefined,
-              },
-            ] as { id: string; label: string; icon: ElementType; tourId?: string; count?: number; badge?: string }[]).map((tab) => {
-              const TabIcon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  data-tour={tab.tourId}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 whitespace-nowrap text-xs px-3 py-2 rounded-xl transition-all font-medium shrink-0 ${
-                    isActive ? t.tabActive : t.tabInactive
-                  }`}
-                >
-                  <TabIcon className="w-3 h-3 shrink-0" />
-                  {tab.id === "issues" && scan.issues?.length > 0 && scan.issues[0]?.findingId ? (
-                    <span className="flex items-center gap-1">
-                      {tab.label}
-                      <span className="ml-1 text-[9px] bg-violet-500/20 text-violet-400 px-1 py-0.5 rounded font-bold uppercase">VFI Validated</span>
-                    </span>
-                  ) : (
-                    tab.label
-                  )}
-                  {tab.count !== undefined && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${isActive ? t.tabCountActive : t.tabCountInactive}`}>
-                      {tab.count}
-                    </span>
-                  )}
-                  {tab.badge && (
-                    <span className="text-[10px] opacity-50">{tab.badge}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
+        {/* --- Section Content ---------------------------------------------------- */}
         {/* --- Overview Tab ---------------------------------------------------- */}
         {activeTab === "files" && (
           <div className="mb-4">
             <FileExplorer scan={scan} isLight={isLight} plan={user.plan} />
+          </div>
+        )}
+
+        {activeTab === "confidence" && (
+          <div className="mb-4">
+            <ConfidenceContractView scan={scan} isLight={isLight} />
           </div>
         )}
 

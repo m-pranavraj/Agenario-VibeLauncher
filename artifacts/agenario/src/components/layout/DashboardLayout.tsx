@@ -25,8 +25,10 @@ import {
   Fingerprint,
   Bell,
   ChevronRight,
+  ChevronDown,
   User,
 } from "lucide-react";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 
@@ -54,16 +56,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [location] = useLocation();
   const { logout, user } = useAuth();
   const isLight = useIsLight();
-  const [activeHash, setActiveHash] = React.useState("overview");
+  const [, setLocation] = useLocation();
 
-  React.useEffect(() => {
-    const handleHashChange = () => {
-      setActiveHash(window.location.hash.replace("#", "") || "overview");
-    };
-    window.addEventListener("hashchange", handleHashChange);
-    handleHashChange();
-    return () => window.removeEventListener("hashchange", handleHashChange);
-  }, []);
+  const isReportPage = location.startsWith("/scans/") && 
+                       !location.endsWith("/progress") && 
+                       !location.endsWith("/new");
+
+  // Determine active section from URL if on a report page
+  const pathParts = location.split("/");
+  const scanId = isReportPage ? pathParts[2] : "";
+  const activeSection = isReportPage ? (pathParts[3] || "overview") : "";
 
   const handleLogout = async () => {
     await logout();
@@ -87,12 +89,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const planInfo = user ? (PLAN_LABELS[user.plan] ?? PLAN_LABELS.free) : null;
 
-  const isReportPage = location.startsWith("/scans/") && 
-                       !location.endsWith("/progress") && 
-                       !location.endsWith("/new");
-
-  const navigateTo = (hash: string) => {
-    window.location.hash = hash;
+  const navigateTo = (section: string) => {
+    if (isReportPage && scanId) {
+      setLocation(`/scans/${scanId}/${section}`);
+    }
   };
 
   const getSidebarContent = () => {
@@ -124,7 +124,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
-                    isActive={activeHash === "overview"}
+                    isActive={activeSection === "overview"}
                     className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
                   >
                     <button type="button" onClick={() => navigateTo("overview")} className="flex items-center gap-3 w-full text-left">
@@ -137,7 +137,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
-                    isActive={activeHash === "sandbox"}
+                    isActive={activeSection === "sandbox"}
                     className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
                   >
                     <button type="button" onClick={() => navigateTo("sandbox")} className="flex items-center gap-3 w-full text-left">
@@ -150,102 +150,146 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {/* Group 2: Core Issues */}
+          {/* Group: Confidence Contract (Feature Verifier) */}
           <SidebarGroup className="p-0">
-            <SidebarGroupLabel className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3">
-              Core Issues
+            <SidebarGroupLabel className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider px-3">
+              Confidence Contract
             </SidebarGroupLabel>
             <SidebarGroupContent className="mt-1 px-1">
               <SidebarMenu>
-                {[
-                  { label: "Security Vulnerabilities", hash: "issues-security", color: "bg-rose-500", tourId: "tab-issues" },
-                  { label: "Compliance & Safety", hash: "issues-compliance", color: "bg-amber-500" },
-                  { label: "Performance Sinks", hash: "issues-performance", color: "bg-blue-500" },
-                  { label: "UI / UX Bottlenecks", hash: "issues-uiux", color: "bg-emerald-500" },
-                ].map((sub) => (
-                  <SidebarMenuItem key={sub.hash}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={activeHash === sub.hash}
-                      className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
-                    >
-                      <button type="button" onClick={() => navigateTo(sub.hash)} data-tour={sub.tourId} className="flex items-center gap-2.5 w-full text-left">
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${sub.color}`} />
-                        <span className="font-medium text-xs truncate">{sub.label}</span>
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={activeSection === "confidence"}
+                    className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
+                  >
+                    <button type="button" onClick={() => navigateTo("confidence")} className="flex items-center gap-3 w-full text-left">
+                      <ShieldCheck className="h-4 w-4 shrink-0 text-indigo-500" />
+                      <span className="font-medium text-sm">Feature Completion</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+
+          {/* Group 2: Core Issues */}
+          <Collapsible defaultOpen className="group/collapsible">
+            <SidebarGroup className="p-0">
+              <SidebarGroupLabel asChild className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 py-1.5 hover:bg-slate-100/50 dark:hover:bg-white/5 cursor-pointer transition-colors">
+                <CollapsibleTrigger className="flex w-full items-center justify-between">
+                  Core Issues
+                  <ChevronDown className="h-3.5 w-3.5 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <CollapsibleContent>
+                <SidebarGroupContent className="mt-1 px-1">
+                  <SidebarMenu>
+                    {[
+                      { label: "Security Vulnerabilities", hash: "issues-security", color: "bg-rose-500", tourId: "tab-issues" },
+                      { label: "Compliance & Safety", hash: "issues-compliance", color: "bg-amber-500" },
+                      { label: "Performance Sinks", hash: "issues-performance", color: "bg-blue-500" },
+                      { label: "UI / UX Bottlenecks", hash: "issues-uiux", color: "bg-emerald-500" },
+                    ].map((sub) => (
+                      <SidebarMenuItem key={sub.hash}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={activeSection === sub.hash}
+                          className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
+                        >
+                          <button type="button" onClick={() => navigateTo(sub.hash)} data-tour={sub.tourId} className="flex items-center gap-2.5 w-full text-left">
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${sub.color}`} />
+                            <span className="font-medium text-xs truncate">{sub.label}</span>
+                          </button>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </SidebarGroup>
+          </Collapsible>
 
           {/* Group 3: Deep Tech Analysis */}
-          <SidebarGroup className="p-0">
-            <SidebarGroupLabel className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3">
-              Deep Tech Analysis
-            </SidebarGroupLabel>
-            <SidebarGroupContent className="mt-1 px-1">
-              <div className="pl-3.5 space-y-1 border-l border-slate-200 dark:border-white/10 ml-5 mr-3">
-                {[
-                  { label: "Core Semantic Graph", key: "A" },
-                  { label: "Cryptographic Proof", key: "B" },
-                  { label: "Formal Verification", key: "C" },
-                  { label: "Infrastructure", key: "D" },
-                  { label: "AI Safety & Alignment", key: "E" },
-                  { label: "Architecture & Perf", key: "F" },
-                  { label: "Compliance & Reality", key: "G" },
-                  { label: "Advanced Engines", key: "H" },
-                  { label: "Distributed Systems", key: "I" },
-                ].map((sub) => {
-                  const isSubActive = activeHash === `deeptech-${sub.key}`;
-                  return (
-                    <button
-                      type="button"
-                      key={sub.key}
-                      onClick={() => navigateTo(`deeptech-${sub.key}`)}
-                      className={`block w-full text-left text-[11px] font-medium py-1 px-2.5 rounded-md transition-colors ${
-                        isSubActive
-                          ? "bg-indigo-50/80 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold"
-                          : "text-slate-500 hover:text-slate-800 dark:text-slate-400/60 dark:hover:text-white/90"
-                      }`}
-                    >
-                      {sub.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <Collapsible defaultOpen className="group/collapsible">
+            <SidebarGroup className="p-0">
+              <SidebarGroupLabel asChild className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 py-1.5 hover:bg-slate-100/50 dark:hover:bg-white/5 cursor-pointer transition-colors">
+                <CollapsibleTrigger className="flex w-full items-center justify-between">
+                  Deep Tech Analysis
+                  <ChevronDown className="h-3.5 w-3.5 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <CollapsibleContent>
+                <SidebarGroupContent className="mt-1 px-1">
+                  <div className="pl-3.5 space-y-1 border-l border-slate-200 dark:border-white/10 ml-5 mr-3">
+                    {[
+                      { label: "Core Semantic Graph", key: "A" },
+                      { label: "Cryptographic Proof", key: "B" },
+                      { label: "Formal Verification", key: "C" },
+                      { label: "Infrastructure", key: "D" },
+                      { label: "AI Safety & Alignment", key: "E" },
+                      { label: "Architecture & Perf", key: "F" },
+                      { label: "Compliance & Reality", key: "G" },
+                      { label: "Advanced Engines", key: "H" },
+                      { label: "Distributed Systems", key: "I" },
+                    ].map((sub) => {
+                      const isSubActive = activeSection === `deeptech-${sub.key}`;
+                      return (
+                        <button
+                          type="button"
+                          key={sub.key}
+                          onClick={() => navigateTo(`deeptech-${sub.key}`)}
+                          className={`block w-full text-left text-[11px] font-medium py-1 px-2.5 rounded-md transition-colors ${
+                            isSubActive
+                              ? "bg-indigo-50/80 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold"
+                              : "text-slate-500 hover:text-slate-800 dark:text-slate-400/60 dark:hover:text-white/90"
+                          }`}
+                        >
+                          {sub.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </SidebarGroup>
+          </Collapsible>
 
           {/* Group 4: Launch Impact */}
-          <SidebarGroup className="p-0">
-            <SidebarGroupLabel className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3">
-              Launch Impact & Reality
-            </SidebarGroupLabel>
-            <SidebarGroupContent className="mt-1 px-1">
-              <SidebarMenu>
-                {[
-                  { label: "Revenue Intelligence", hash: "impact-revenue", tourId: "tab-intelligence" },
-                  { label: "Product Hunt Readiness", hash: "impact-producthunt" },
-                  { label: "Product Reality Narrative", hash: "reality" },
-                ].map((sub) => (
-                  <SidebarMenuItem key={sub.hash}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={activeHash === sub.hash}
-                      className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
-                    >
-                      <button type="button" onClick={() => navigateTo(sub.hash)} data-tour={sub.tourId} className="flex items-center gap-2.5 w-full text-left">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-white/30 shrink-0" />
-                        <span className="font-medium text-xs truncate">{sub.label}</span>
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <Collapsible defaultOpen className="group/collapsible">
+            <SidebarGroup className="p-0">
+              <SidebarGroupLabel asChild className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 py-1.5 hover:bg-slate-100/50 dark:hover:bg-white/5 cursor-pointer transition-colors">
+                <CollapsibleTrigger className="flex w-full items-center justify-between">
+                  Launch Impact & Reality
+                  <ChevronDown className="h-3.5 w-3.5 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <CollapsibleContent>
+                <SidebarGroupContent className="mt-1 px-1">
+                  <SidebarMenu>
+                    {[
+                      { label: "Revenue Intelligence", hash: "impact-revenue", tourId: "tab-intelligence" },
+                      { label: "Product Hunt Readiness", hash: "impact-producthunt" },
+                      { label: "Product Reality Narrative", hash: "reality" },
+                    ].map((sub) => (
+                      <SidebarMenuItem key={sub.hash}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={activeSection === sub.hash}
+                          className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
+                        >
+                          <button type="button" onClick={() => navigateTo(sub.hash)} data-tour={sub.tourId} className="flex items-center gap-2.5 w-full text-left">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-white/30 shrink-0" />
+                            <span className="font-medium text-xs truncate">{sub.label}</span>
+                          </button>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </SidebarGroup>
+          </Collapsible>
 
           {/* Group 5: Codebase Navigator */}
           <SidebarGroup className="p-0">
@@ -253,7 +297,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={activeHash === "files"}
+                  isActive={activeSection === "files"}
                   className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
                 >
                   <button type="button" onClick={() => navigateTo("files")} className="flex items-center gap-3 w-full text-left">
