@@ -6159,18 +6159,6 @@ export default function ScanResultsPage() {
       </nav>
 
       <main className="w-full max-w-full lg:max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-5 overflow-hidden">
-        {/* --- Sticky Launch Alert Banner ------------------------------- */}
-        {/* Executive Overview Dashboard Component */}
-        <ExecutiveOverview scan={scan} isLight={isLight} />
-
-        <StickyLaunchAlertBanner scan={scan} />
-
-        {/* --- Launch Gate Banner ------------------------------------------------- */}
-        <LaunchGateBanner scan={scan} isLight={isLight} />
-
-        {/* --- Locked Premium Insights (free users) ---------------- */}
-        <LockedInsightsPanel scan={scan} plan={user.plan} />
-
         {/* --- Section Content ---------------------------------------------------- */}
         {/* --- Overview Tab ---------------------------------------------------- */}
         {activeTab === "files" && (
@@ -6187,6 +6175,18 @@ export default function ScanResultsPage() {
 
         {activeTab === "overview" && (
           <>
+            {/* Executive Overview Dashboard Component */}
+            <ExecutiveOverview scan={scan} isLight={isLight} />
+
+            {/* --- Sticky Launch Alert Banner ------------------------------- */}
+            <StickyLaunchAlertBanner scan={scan} />
+
+            {/* --- Launch Gate Banner ------------------------------------------------- */}
+            <LaunchGateBanner scan={scan} isLight={isLight} />
+
+            {/* --- Locked Premium Insights (free users) ---------------- */}
+            <LockedInsightsPanel scan={scan} plan={user.plan} />
+
             {/* --- Demo-to-Market-Ready Pipeline & Traffic Light Verdict ------------------------------- */}
             {scan.greenLightVerdict && (
               <div className={`${isLight ? "bg-white border-gray-200 shadow-sm" : "bg-[#111] border-white/10"} border rounded-2xl p-6 mb-4`}>
