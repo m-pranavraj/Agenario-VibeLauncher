@@ -19,6 +19,7 @@ Commands:
   cognitive    CogFlow — measure cognitive complexity
   architecture ArchScan — detect circular deps & Martin's metrics
   deps         Time-Aware Dependency Calculus — npm registry decay
+  reality      RealityCheck — detect mockups, hardcoded data, stubs, placeholders
   all          Run all analysis commands
 
 Options:
@@ -31,6 +32,7 @@ Options:
 Examples:
   csg scan --src ./myapp/src
   csg infra --infra ./
+  csg reality --src ./src
   csg all --src ./src --infra ./deploy --package-json ./package.json
 `;
 
@@ -108,12 +110,19 @@ async function main() {
       results.timeAwareDeps = depsReport;
     }
 
+    if (command === 'reality' || command === 'all') {
+      console.log(`\n[7/7] RealityCheck — Mockup & Hardcoded Detection`);
+      const mockReport = csg.analyzeMockups(srcDir);
+      printRealityCheckReport(mockReport);
+      results.realityCheck = mockReport;
+    }
+
     if (outputFile) {
       writeFileSync(outputFile, JSON.stringify(results, null, 2), 'utf-8');
       console.log(`\nReport written to: ${resolve(outputFile)}`);
     }
 
-    if (command !== 'all' && !['scan','infra','resilience','observability','cognitive','architecture','deps'].includes(command)) {
+    if (command !== 'all' && !['scan','infra','resilience','observability','cognitive','architecture','deps','reality'].includes(command)) {
       console.error(`Unknown command: ${command}`);
       console.log(usage);
       process.exit(1);
@@ -225,6 +234,31 @@ function printDepsReport(r: any) {
     if (p.daysSinceLastPublish > 365) reasons.push(`${p.daysSinceLastPublish}d stale`);
     if (p.openVulnerabilities > 0) reasons.push(`${p.openVulnerabilities} vulns`);
     console.log(`  ⚠  ${p.name}@${p.currentVersion} [${reasons.join(', ')}]`);
+  }
+}
+
+function printRealityCheckReport(r: any) {
+  console.log(`  Score: ${r.score}/100 | Files: ${r.totalFilesScanned}`);
+  console.log(`  Mock Data: ${r.mockDataCount} | Fake Endpoints: ${r.fakeEndpointCount} | Stubs: ${r.stubFunctionCount}`);
+  console.log(`  Dummy Auth: ${r.dummyAuthCount} | Hardcoded Env: ${r.hardcodedEnvCount}`);
+  if (r.productRealityNarrative) {
+    console.log(`\n  Product Reality: ${r.productRealityNarrative}`);
+  }
+  if (r.topRecommendations && r.topRecommendations.length > 0) {
+    console.log(`\n  Top Fix Recommendations:`);
+    for (const rec of r.topRecommendations) {
+      console.log(`    → ${rec}`);
+    }
+  }
+  const sevOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+  const sorted = [...(r.findings || [])].sort((a: any, b: any) => (sevOrder[a.severity] ?? 99) - (sevOrder[b.severity] ?? 99));
+  for (const f of sorted.slice(0, 30)) {
+    const icon = f.severity === 'critical' ? '🔴' : f.severity === 'high' ? '🟠' : f.severity === 'medium' ? '🟡' : '⚪';
+    console.log(`  ${icon} [${f.severity}] ${f.pattern} — ${f.file}:${f.line} (${(f.confidence * 100).toFixed(0)}% confidence)`);
+    if (f.fixPrompt) console.log(`     Fix: ${f.fixPrompt.slice(0, 150)}`);
+  }
+  if (r.findings && r.findings.length > 30) {
+    console.log(`  ... and ${r.findings.length - 30} more findings`);
   }
 }
 

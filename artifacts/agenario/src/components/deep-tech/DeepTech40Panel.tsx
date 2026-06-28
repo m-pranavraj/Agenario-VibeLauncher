@@ -28,6 +28,7 @@ import { ObsCoverVisualizer } from "./ObsCoverVisualizer";
 import { CogFlowVisualizer } from "./CogFlowVisualizer";
 import { ArchScanVisualizer } from "./ArchScanVisualizer";
 import { TimeAwareDepsVisualizer } from "./TimeAwareDepsVisualizer";
+import { RealityCheckVisualizer } from "./RealityCheckVisualizer";
 import { DempsterShaferVisualizer } from "./DempsterShaferVisualizer";
 import { EntropyLeakVisualizer } from "./EntropyLeakVisualizer";
 import { ConstraintSolverVisualizer } from "./ConstraintSolverVisualizer";
@@ -1211,13 +1212,40 @@ export function DeepTech40Panel({ scan, activeSection }: Props) {
              { label: "Broken", value: safeNum(scan.productReality.brokenCount) },
              { label: "Dead Files", value: safeNum(scan.productReality.deadFileCount) },
            ] : [],
-           dataKey: "productReality",
-           actionItems: !scan.productReality ? ["Engine not connected - configure pipeline"] : (scan.productReality.score ?? 0) < 70 ? ["Fix mocked/broken features before launch", "Connect all API endpoints to real backends"] : null,
-        },
-      ],
-    },
-    {
-      id: "H",
+            dataKey: "productReality",
+            actionItems: !scan.productReality ? ["Engine not connected - configure pipeline"] : (scan.productReality.score ?? 0) < 70 ? ["Fix mocked/broken features before launch", "Connect all API endpoints to real backends"] : null,
+         },
+         {
+           title: "RealityCheck — Mockup & Hardcoded Detection",
+           shortName: "RCK",
+           icon: BrainCircuit,
+           color: "pink",
+           score: scan.realityCheck?.score ?? (scan.realityCheck ? 50 : 0),
+           threshold: 70,
+           whyNeeded: "Mock data and hardcoded values in production break real integrations.",
+           whatItChecks: "AST hardcoded data, regex mock patterns, high-entropy strings, import mock libs, comment indicators, stub functions, placeholder endpoints, fake auth tokens.",
+           proofPath: "reality-check.ts",
+           why: "Uses 8 detection mechanisms to find mockups, hardcoded data, stubs, and placeholders. Shannon entropy analysis, AST traversal, regex patterns, and import scanning combine to produce a product reality score.",
+           expected: "Score 70; zero mock/hardcoded findings; product reality narrative shows all features connected",
+           actual: scan.realityCheck ? `Score: ${safeNum(scan.realityCheck.score)}/100  ${safeNum(scan.realityCheck.mockDataCount)} mock data  ${safeNum(scan.realityCheck.fakeEndpointCount)} fake endpoints  ${safeNum(scan.realityCheck.stubFunctionCount)} stubs` : "reality_check column empty",
+           proofRef: "reality-check.ts:517",
+           evidenceTier: 3 as const,
+           details: scan.realityCheck ? [
+             { label: "Reality Score", value: `${safeNum(scan.realityCheck.score)}/100` },
+             { label: "Mock Data", value: safeNum(scan.realityCheck.mockDataCount) },
+             { label: "Fake Endpoints", value: safeNum(scan.realityCheck.fakeEndpointCount) },
+             { label: "Stubs", value: safeNum(scan.realityCheck.stubFunctionCount) },
+             { label: "Dummy Auth", value: safeNum(scan.realityCheck.dummyAuthCount) },
+             { label: "Hardcoded Env", value: safeNum(scan.realityCheck.hardcodedEnvCount) },
+             { label: "Files Scanned", value: safeNum(scan.realityCheck.totalFilesScanned) },
+           ] : [],
+           dataKey: "realityCheck",
+           actionItems: !scan.realityCheck ? ["Engine not connected - configure pipeline"] : (scan.realityCheck.score ?? 0) < 70 ? ["Replace mock data with real API integrations", "Remove hardcoded credentials and secrets", "Connect stub functions to real implementations", "Replace placeholder endpoints with actual routes"] : null,
+       },
+     ],
+     },
+     {
+       id: "H",
        label: "Future-Proof & Advanced",
        sublabel: "FHE, legacy crypto, architecture, dependency risk",
        icon: Satellite,
@@ -1595,6 +1623,7 @@ export function DeepTech40Panel({ scan, activeSection }: Props) {
                       {engine.shortName === "FTC" && <FailSafeVisualizer data={scan.failSafe ?? null} />}
                       {engine.shortName === "OCM" && <ObsCoverVisualizer data={scan.obsCover ?? null} />}
                       {engine.shortName === "CF" && <CogFlowVisualizer data={scan.cogFlow ?? null} />}
+                      {engine.shortName === "RCK" && <RealityCheckVisualizer data={scan.realityCheck ?? null} />}
                       {engine.shortName === "CSG" && <StructuralAnalysisVisualizer data={scan.topologicalAnalysis ?? null} isLight={isLight} />}
                     </EngineCard>
                   ))}
