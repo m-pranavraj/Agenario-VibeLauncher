@@ -263,7 +263,9 @@ export function ProductRealityVisualizer({ data, className = "" }: { data: Produ
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLight ? "bg-indigo-100 text-indigo-600" : "bg-indigo-500/20 text-indigo-400"}`}>
                 <Eye className="w-4 h-4" />
               </div>
-              <h3 className={`font-bold font-['Syne'] text-lg ${isLight ? "text-slate-800" : "text-white"}`}>Product Reality Check</h3>
+              <h3 className={`font-bold font-['Syne'] text-lg ${isLight ? "text-slate-800" : "text-white"}`}>
+                Product Reality Check (Score: {(data.score / 10).toFixed(1)}/10)
+              </h3>
             </div>
             <p className={`text-xs mb-3 ${isLight ? "text-slate-500" : "text-white/50"} max-w-xl leading-relaxed`}>{data.summary}</p>
 

@@ -5219,7 +5219,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
                     <span className={`text-sm font-semibold flex-1 ${isLight ? "text-gray-800" : "text-white/85"}`}>{n.label}</span>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${sev.bg}`}>
-                        <span className="text-[8px]">â—</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
                         {issues.length} issue{issues.length !== 1 ? "s" : ""}
                       </span>
                       <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full capitalize border ${sev.bg}`}>{worst}</span>
