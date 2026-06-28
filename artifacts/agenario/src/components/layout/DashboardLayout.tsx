@@ -341,6 +341,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </button>
               </SidebarMenuItem>
             </SidebarMenu>
+          </SidebarGroup>
           {/* Admin link inside report layout */}
           {showAdmin && (
             <SidebarGroup className="pt-2 border-t border-slate-100 dark:border-white/[0.04] px-1">
