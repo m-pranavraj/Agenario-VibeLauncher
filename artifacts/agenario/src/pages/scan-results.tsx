@@ -51,6 +51,7 @@ import {
   Fingerprint,
   ShieldCheck,
   FileText,
+  Clipboard,
   ArrowRight,
   BarChart3,
   DollarSign,
