@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS public.scans (
   prompt_trace          jsonb,
   flow_value            jsonb,
   dempster_shafer       jsonb,
+  reality_check         jsonb,
   cross_language_taint  jsonb,   -- Cross-Language Taint Boundary Inference results
 
   created_at           timestamptz NOT NULL DEFAULT now(),
@@ -468,3 +469,24 @@ CREATE INDEX IF NOT EXISTS idx_state_analysis_scan ON public.state_analysis (sca
 --   AND (s.constraint_solver->>'totalBypasses')::int > 0
 -- ORDER BY (s.constraint_solver->>'totalBypasses')::int DESC
 -- LIMIT 20;
+
+
+-- ============================================================
+-- 17. REALITYCHECK MIGRATION (if table already exists)
+-- ============================================================
+
+ALTER TABLE scans ADD COLUMN IF NOT EXISTS reality_check jsonb;
+
+-- RealityCheck queries:
+-- Find scans with critical mockup/hardcoded issues:
+-- SELECT id, reality_check->>'score' AS reality_score,
+--        reality_check->>'mockDataCount' AS mock_data,
+--        reality_check->>'fakeEndpointCount' AS fake_endpoints,
+--        reality_check->>'dummyAuthCount' AS dummy_auth
+-- FROM scans WHERE reality_check IS NOT NULL
+-- ORDER BY (reality_check->>'score')::int ASC
+-- LIMIT 20;
+
+-- Get full product reality narrative for a scan:
+-- SELECT id, reality_check->>'productRealityNarrative' AS narrative
+-- FROM scans WHERE reality_check IS NOT NULL AND id = <scan_id>;

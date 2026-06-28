@@ -577,6 +577,7 @@ export interface Scan {
   flowValue?: any | null;
   dempsterShafer?: DempsterShaferResult | null;
   constraintSolver?: any | null;
+  realityCheck?: any | null;
   underApproximation?: {
     reachableStates: Array<{
       nodeId: string;

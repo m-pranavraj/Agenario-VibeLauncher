@@ -2,6 +2,7 @@ import type { CSGGraph, CSGOptions, CSGDiagnostic, SourceLocation, ParseResult }
 import type {
   DeploySafeReport, FailSafeReport, ObsCoverReport,
   CogFlowReport, ArchScanReport, DependencyDecayReport,
+  RealityCheckReport,
 } from './types.js';
 import { Parser } from './parser/index.js';
 import { CFGBuilder } from './graph/cfg.js';
@@ -18,6 +19,7 @@ import { ObsCover } from './analysis/obs-cover.js';
 import { CogFlow } from './analysis/cog-flow.js';
 import { ArchScan } from './analysis/arch-scan.js';
 import { TimeAwareDeps } from './analysis/time-aware-deps.js';
+import { RealityCheck } from './analysis/reality-check.js';
 
 export class CombinedSemanticGraph {
   private options: CSGOptions;
@@ -34,6 +36,7 @@ export class CombinedSemanticGraph {
   cogFlow: CogFlow;
   archScan: ArchScan;
   timeAwareDeps: TimeAwareDeps;
+  realityCheck: RealityCheck;
 
   constructor(options: CSGOptions = {}) {
     this.options = {
@@ -54,6 +57,7 @@ export class CombinedSemanticGraph {
     this.cogFlow = new CogFlow();
     this.archScan = new ArchScan();
     this.timeAwareDeps = new TimeAwareDeps();
+    this.realityCheck = new RealityCheck();
   }
 
   /**
@@ -277,6 +281,21 @@ export class CombinedSemanticGraph {
       for (const p of packageJsonPaths) this.timeAwareDeps.loadPackageJson(p);
     }
     return this.timeAwareDeps.analyze();
+  }
+
+  /**
+   * RealityCheck: Detect mockups, hardcoded data, stubs, and placeholder code.
+   */
+  analyzeMockups(directory: string, sourceFiles?: string[]): RealityCheckReport {
+    if (sourceFiles && sourceFiles.length > 0) {
+      this.realityCheck.scanDirectory(directory, sourceFiles);
+    } else {
+      this.realityCheck.scanDirectory(directory);
+    }
+    if (this.parsed.length > 0 && this.graph) {
+      this.realityCheck.scanParsed(this.parsed, this.graph);
+    }
+    return this.realityCheck.report();
   }
 
   /* ─── Private ─── */

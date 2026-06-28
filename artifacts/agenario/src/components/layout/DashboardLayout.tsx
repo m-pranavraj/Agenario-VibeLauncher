@@ -91,6 +91,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                        !location.endsWith("/progress") && 
                        !location.endsWith("/new");
 
+  const navigateTo = (hash: string) => {
+    window.location.hash = hash;
+  };
+
   const getSidebarContent = () => {
     if (isReportPage) {
       const scanId = location.split("/")[2];
@@ -123,10 +127,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     isActive={activeHash === "overview"}
                     className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
                   >
-                    <a href="#overview" className="flex items-center gap-3">
+                    <button type="button" onClick={() => navigateTo("overview")} className="flex items-center gap-3 w-full text-left">
                       <LayoutDashboard className="h-4 w-4 shrink-0" />
                       <span className="font-medium text-sm">Readiness Score</span>
-                    </a>
+                    </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
 
@@ -136,10 +140,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     isActive={activeHash === "sandbox"}
                     className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
                   >
-                    <a href="#sandbox" className="flex items-center gap-3">
+                    <button type="button" onClick={() => navigateTo("sandbox")} className="flex items-center gap-3 w-full text-left">
                       <Box className="h-4 w-4 shrink-0" />
                       <span className="font-medium text-sm">Sandbox Proofs</span>
-                    </a>
+                    </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -165,14 +169,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       isActive={activeHash === sub.hash}
                       className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
                     >
-                      <a
-                        href={`#${sub.hash}`}
-                        data-tour={sub.tourId}
-                        className="flex items-center gap-2.5"
-                      >
+                      <button type="button" onClick={() => navigateTo(sub.hash)} data-tour={sub.tourId} className="flex items-center gap-2.5 w-full text-left">
                         <span className={`w-2 h-2 rounded-full shrink-0 ${sub.color}`} />
                         <span className="font-medium text-xs truncate">{sub.label}</span>
-                      </a>
+                      </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -200,17 +200,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 ].map((sub) => {
                   const isSubActive = activeHash === `deeptech-${sub.key}`;
                   return (
-                    <a
+                    <button
+                      type="button"
                       key={sub.key}
-                      href={`#deeptech-${sub.key}`}
-                      className={`block text-[11px] font-medium py-1 px-2.5 rounded-md transition-colors ${
+                      onClick={() => navigateTo(`deeptech-${sub.key}`)}
+                      className={`block w-full text-left text-[11px] font-medium py-1 px-2.5 rounded-md transition-colors ${
                         isSubActive
                           ? "bg-indigo-50/80 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold"
                           : "text-slate-500 hover:text-slate-800 dark:text-slate-400/60 dark:hover:text-white/90"
                       }`}
                     >
                       {sub.label}
-                    </a>
+                    </button>
                   );
                 })}
               </div>
@@ -235,14 +236,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       isActive={activeHash === sub.hash}
                       className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
                     >
-                      <a
-                        href={`#${sub.hash}`}
-                        data-tour={sub.tourId}
-                        className="flex items-center gap-2.5"
-                      >
+                      <button type="button" onClick={() => navigateTo(sub.hash)} data-tour={sub.tourId} className="flex items-center gap-2.5 w-full text-left">
                         <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-white/30 shrink-0" />
                         <span className="font-medium text-xs truncate">{sub.label}</span>
-                      </a>
+                      </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -259,10 +256,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   isActive={activeHash === "files"}
                   className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
                 >
-                  <a href="#files" className="flex items-center gap-3">
+                  <button type="button" onClick={() => navigateTo("files")} className="flex items-center gap-3 w-full text-left">
                     <Folder className="h-4 w-4 shrink-0" />
                     <span className="font-medium text-sm">Codebase Files</span>
-                  </a>
+                  </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

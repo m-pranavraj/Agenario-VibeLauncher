@@ -117,6 +117,7 @@ import { ObsCoverVisualizer } from "@/components/deep-tech/ObsCoverVisualizer";
 import { CogFlowVisualizer } from "@/components/deep-tech/CogFlowVisualizer";
 import { ArchScanVisualizer } from "@/components/deep-tech/ArchScanVisualizer";
 import { TimeAwareDepsVisualizer } from "@/components/deep-tech/TimeAwareDepsVisualizer";
+import { RealityCheckVisualizer } from "@/components/deep-tech/RealityCheckVisualizer";
 import {
   api,
   type ScanDetail,

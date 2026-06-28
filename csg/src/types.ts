@@ -407,3 +407,36 @@ export interface DependencyDecayReport {
   meanMaintainers: number;
   score: number;               // 0-100, higher = healthier
 }
+
+/* ─── 11. RealityCheck: Mockup & Hardcoded Detection ─── */
+export type MockupDetectionMethod = 'ast-hardcoded-data' | 'regex-mock-pattern' | 'entropy-high-string' | 'import-mock-library' | 'comment-indicator' | 'stub-function' | 'placeholder-endpoint' | 'fake-auth-token';
+
+export type MockupSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+
+export interface RealityFinding {
+  id: string;
+  method: MockupDetectionMethod;
+  severity: MockupSeverity;
+  category: 'mock-data' | 'fake-endpoint' | 'stub-function' | 'test-fixture' | 'placeholder-ui' | 'dummy-auth' | 'hardcoded-env';
+  file: string;
+  line: number;
+  column: number;
+  snippet: string;
+  pattern: string;
+  fixPrompt: string;
+  confidence: number;       // 0-1
+  context: string;          // surrounding code context
+}
+
+export interface RealityCheckReport {
+  findings: RealityFinding[];
+  totalFilesScanned: number;
+  mockDataCount: number;
+  fakeEndpointCount: number;
+  stubFunctionCount: number;
+  dummyAuthCount: number;
+  hardcodedEnvCount: number;
+  score: number;            // 0-100, higher = more real (less mockup)
+  productRealityNarrative: string;
+  topRecommendations: string[];
+}
