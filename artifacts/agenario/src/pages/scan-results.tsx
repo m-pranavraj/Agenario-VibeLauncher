@@ -1459,7 +1459,7 @@ function EvidenceCard({
                         ? "bg-green-500/10 text-green-400 border-green-500/20"
                         : "bg-red-500/10 text-red-400/70 border-red-500/20"
                     }`}>
-                      {issue.retestResult === "fixed" ? "âœ“ Fixed" : "⚠ Needs Fix"}
+                      {issue.retestResult === "fixed" ? "✓ Fixed" : "⚠️ Needs Fix"}
                     </span>
                   )}
                 </div>
@@ -2850,7 +2850,7 @@ function VibeCodeIntelPanel({ vibeTool, issues, vibeToolRank }: {
               return (
                 <div key={i} className="flex items-start gap-2.5 text-xs">
                   <span className={`mt-0.5 shrink-0 text-sm ${matched ? "text-red-400" : "text-white/15"}`}>
-                    {matched ? "⚠" : "âœ“"}
+                    {matched ? "⚠️" : "✓"}
                   </span>
                   <span className={matched ? "text-white/60" : isLight ? "text-gray-400" : "text-white/20"}>
                     {p}
@@ -3218,7 +3218,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   communication: "💬 Comms",
   vcs: "📦 VCS",
   credentials: "🔓 Credentials",
-  generic: "⚠ï¸ Generic",
+  generic: "⚠️ Generic",
 };
 
 function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["secretScanResults"]>; isCreator: boolean }) {
@@ -4328,7 +4328,7 @@ function StickyLaunchAlertBanner({ scan }: { scan: ScanDetail }) {
     scan.revenueIntelligence &&
     scan.revenueIntelligence.overallRevenueRisk !== "low";
 
-  if (dismissed || (critCount === 0 && !hasRevenueLeak)) return null;
+  return null; // Disabled sticky launch alert banner per user request
   const isRevAlert = critCount === 0 && hasRevenueLeak;
 
   return (
@@ -4345,7 +4345,7 @@ function StickyLaunchAlertBanner({ scan }: { scan: ScanDetail }) {
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
         
-            {isRevAlert ? "⚠ï¸ Revenue Alert" : "⚠ï¸ Launch Security Alert"}
+            {isRevAlert ? "⚠️ Revenue Alert" : "⚠️ Launch Security Alert"}
           </p>
           <p className={`text-xs mt-0.5 truncate ${isRevAlert ? "text-amber-300/70" : "text-red-300/70"}`}>
             {isRevAlert
@@ -4490,7 +4490,7 @@ function LaunchImpactPanel({ data }: { data: NonNullable<ScanDetail["launchImpac
       )}
       {data.founderWarning && (
         <div className="border border-red-500/20 bg-red-500/[0.05] rounded-xl p-4">
-          <div className="text-[10px] text-red-400/70 uppercase tracking-wide mb-1.5 font-medium">⚠ï¸ Founder Warning</div>
+          <div className="text-[10px] text-red-400/70 uppercase tracking-wide mb-1.5 font-medium">⚠️ Founder Warning</div>
           <p className="text-sm text-red-300/80 leading-relaxed">{data.founderWarning}</p>
         </div>
       )}
@@ -4557,7 +4557,7 @@ function ProductHuntPanel({ data }: { data: NonNullable<ScanDetail["productHuntS
             ? "bg-green-500/15 text-green-400 border-green-500/25"
             : "bg-amber-500/10 text-amber-400 border-amber-500/20"
         }`}>
-          {data.readyToHunt ? "🚀 Ready to Hunt" : "⚠ï¸ Not Yet Ready"}
+          {data.readyToHunt ? "🚀 Ready to Hunt" : "⚠️ Not Yet Ready"}
         </span>
       </div>
       <div className="flex items-center gap-6">

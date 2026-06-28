@@ -131,7 +131,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
             <div className="pl-2 space-y-0.5 mt-1">
               {[
-                { label: "Security Vulnerabilities", hash: "issues-security", color: "bg-rose-500" },
+                { label: "Security Vulnerabilities", hash: "issues-security", color: "bg-rose-500", tourId: "tab-issues" },
                 { label: "Compliance & Safety", hash: "issues-compliance", color: "bg-amber-500" },
                 { label: "Performance Sinks", hash: "issues-performance", color: "bg-blue-500" },
                 { label: "UI / UX Bottlenecks", hash: "issues-uiux", color: "bg-emerald-500" },
@@ -139,6 +139,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <a
                   key={sub.hash}
                   href={`/scans/${scanId}#${sub.hash}`}
+                  data-tour={sub.tourId}
                   className={`flex items-center gap-2 text-xs py-1 px-3 rounded-lg transition-all ${
                     activeHash === sub.hash
                       ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold"
@@ -194,13 +195,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
             <div className="pl-2 space-y-0.5 mt-1">
               {[
-                { label: "Revenue Intelligence", hash: "impact-revenue" },
+                { label: "Revenue Intelligence", hash: "impact-revenue", tourId: "tab-intelligence" },
                 { label: "Product Hunt Readiness", hash: "impact-producthunt" },
                 { label: "Product Reality Narrative", hash: "impact-reality" },
               ].map((sub) => (
                 <a
                   key={sub.hash}
                   href={`/scans/${scanId}#${sub.hash}`}
+                  data-tour={sub.tourId}
                   className={`block text-xs py-1 px-3 rounded-lg transition-all ${
                     activeHash === sub.hash
                       ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold"
