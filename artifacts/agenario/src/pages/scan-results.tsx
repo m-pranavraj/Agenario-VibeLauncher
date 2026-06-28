@@ -5833,7 +5833,7 @@ export default function ScanResultsPage() {
   } else if (rawSection.startsWith("impact-")) {
     activeTab = "intelligence";
   } else if (rawSection === "sandbox") {
-    activeTab = "overview";
+    activeTab = "sandbox";
   }
 
   const [scan, setScan] = useState<ScanDetail | null>(null);
@@ -6516,21 +6516,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* --- Live Sandbox Proofs ------------------------------------------ */}
-            <motion.div
-              data-tour="sandbox-proofs"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-            >
-              <SandboxProofsSection
-                evidence={scan.proofEvidence}
-                sandboxMeta={scan.sandboxMeta}
-                plan={user.plan}
-                sourceType={scan.sourceType}
-                isLight={isLight}
-              />
-            </motion.div>
+
 
             {/* --- Launch DNA --------------------------------------------------------- */}
             {scan.launchDNA && (
@@ -6617,6 +6603,24 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
           </>
+        )}
+
+        {/* --- Sandbox Proofs Tab ------------------------------------------- */}
+        {activeTab === "sandbox" && (
+          <motion.div
+            data-tour="sandbox-proofs"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+          >
+            <SandboxProofsSection
+              evidence={scan.proofEvidence}
+              sandboxMeta={scan.sandboxMeta}
+              plan={user.plan}
+              sourceType={scan.sourceType}
+              isLight={isLight}
+            />
+          </motion.div>
         )}
 
         {/* --- Product Reality Tab ------------------------------------------- */}

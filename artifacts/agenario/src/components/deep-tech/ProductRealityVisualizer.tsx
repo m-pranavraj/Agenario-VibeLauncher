@@ -319,7 +319,7 @@ export function ProductRealityVisualizer({ data, className = "" }: { data: Produ
             {showFeatures && (
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                 <div className="space-y-2 mt-2">
-                  {data.featureTruths.slice(0, 10).map(f => <FeatureRow key={f.id} feature={f} isLight={isLight} />)}
+                  {data.featureTruths.map(f => <FeatureRow key={f.id} feature={f} isLight={isLight} />)}
                 </div>
               </motion.div>
             )}
@@ -341,7 +341,7 @@ export function ProductRealityVisualizer({ data, className = "" }: { data: Produ
                       <CheckCircle2 className="w-5 h-5 mx-auto mb-1" />
                       <p className="text-xs">No mock data or fake APIs detected</p>
                     </div>
-                  ) : data.mockupFindings.slice(0, 10).map(f => <MockupRow key={f.id} finding={f} isLight={isLight} />)}
+                  ) : data.mockupFindings.map(f => <MockupRow key={f.id} finding={f} isLight={isLight} />)}
                 </div>
               </motion.div>
             )}
@@ -358,7 +358,7 @@ export function ProductRealityVisualizer({ data, className = "" }: { data: Produ
             {showCleanup && (
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                 <div className="space-y-2 mt-2">
-                  {data.cleanupCandidates.slice(0, 10).map(c => <CleanupRow key={c.id} item={c} isLight={isLight} />)}
+                  {data.cleanupCandidates.map(c => <CleanupRow key={c.id} item={c} isLight={isLight} />)}
                 </div>
               </motion.div>
             )}

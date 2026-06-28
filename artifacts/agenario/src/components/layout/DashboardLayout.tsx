@@ -58,6 +58,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isLight = useIsLight();
   const [, setLocation] = useLocation();
 
+  const showAdmin = (user as any)?.isAdmin || (user as any)?.role === "admin" || (user as any)?.email === "admin@agenario.tech" || (user as any)?.email?.includes("admin");
+
   const isReportPage = location.startsWith("/scans/") && 
                        !location.endsWith("/progress") && 
                        !location.endsWith("/new");
@@ -339,12 +341,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </button>
               </SidebarMenuItem>
             </SidebarMenu>
-          </SidebarGroup>
+          {/* Admin link inside report layout */}
+          {showAdmin && (
+            <SidebarGroup className="pt-2 border-t border-slate-100 dark:border-white/[0.04] px-1">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location === "/admin"}
+                    className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] text-rose-500 hover:text-rose-600 font-bold"
+                  >
+                    <Link href="/admin" className="flex items-center gap-3 w-full text-left">
+                      <ShieldAlert className="h-4 w-4 shrink-0 text-rose-500" />
+                      <span className="font-medium text-sm">Admin Panel</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+          )}
         </div>
       );
     }
 
-        const showAdmin = (user as any)?.role === "admin" || (user as any)?.email === "admin@agenario.tech" || (user as any)?.email?.includes("admin");
     const activeNavItems = showAdmin 
       ? [...navItems, { title: "Admin Panel", url: "/admin", icon: ShieldAlert }] 
       : navItems;
