@@ -13,6 +13,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarTrigger,
+  SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard, ChevronLeft, Folder, ShieldCheck, Activity,
@@ -85,182 +86,215 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       const scanId = location.split("/")[2];
       const activeHash = window.location.hash.replace("#", "") || "overview";
       return (
-        <SidebarMenu>
+        <div className="space-y-4 w-full">
           {/* Back button */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild className="mb-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">
-              <Link href="/dashboard" className="flex items-center gap-2">
-                <ChevronLeft className="h-4 w-4" />
-                <span className="font-semibold text-xs uppercase tracking-wider">Back to Dashboard</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <SidebarGroup>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">
+                  <Link href="/dashboard" className="flex items-center gap-2">
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="font-semibold text-[10px] uppercase tracking-wider">Back to Dashboard</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
 
-          {/* 1. Readiness Score */}
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={activeHash === "overview"}
-              className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
-            >
-              <a href={`/scans/${scanId}#overview`} className="flex items-center gap-3">
-                <LayoutDashboard className="h-4 w-4 shrink-0" />
-                <span className="font-medium text-sm">Readiness Score</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          {/* 2. Sandbox Proofs */}
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={activeHash === "sandbox"}
-              className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
-            >
-              <a href={`/scans/${scanId}#sandbox`} className="flex items-center gap-3">
-                <Box className="h-4 w-4 shrink-0" />
-                <span className="font-medium text-sm">Sandbox Proofs</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          {/* 3. Core Issues collapsible group */}
-          <SidebarMenuItem>
-            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-2">
-              Core Issues
-            </div>
-            <div className="pl-2 space-y-0.5 mt-1">
-              {[
-                { label: "Security Vulnerabilities", hash: "issues-security", color: "bg-rose-500", tourId: "tab-issues" },
-                { label: "Compliance & Safety", hash: "issues-compliance", color: "bg-amber-500" },
-                { label: "Performance Sinks", hash: "issues-performance", color: "bg-blue-500" },
-                { label: "UI / UX Bottlenecks", hash: "issues-uiux", color: "bg-emerald-500" },
-              ].map((sub) => (
-                <a
-                  key={sub.hash}
-                  href={`/scans/${scanId}#${sub.hash}`}
-                  data-tour={sub.tourId}
-                  className={`flex items-center gap-2 text-xs py-1 px-3 rounded-lg transition-all ${
-                    activeHash === sub.hash
-                      ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold"
-                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.02]"
-                  }`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${sub.color}`} />
-                  <span>{sub.label}</span>
-                </a>
-              ))}
-            </div>
-          </SidebarMenuItem>
-
-          {/* 4. Deep Tech collapsible group */}
-          <SidebarMenuItem>
-            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-2">
-              Deep Tech Analysis
-            </div>
-            <div className="pl-3 space-y-0.5 mt-1 border-l border-slate-200 dark:border-white/10 ml-5">
-              {[
-                { label: "Core Semantic Graph", key: "A" },
-                { label: "Cryptographic Proof", key: "B" },
-                { label: "Formal Verification", key: "C" },
-                { label: "Infrastructure", key: "D" },
-                { label: "AI Safety & Alignment", key: "E" },
-                { label: "Architecture & Perf", key: "F" },
-                { label: "Compliance & Reality", key: "G" },
-                { label: "Advanced Engines", key: "H" },
-                { label: "Distributed Systems", key: "I" },
-              ].map((sub) => {
-                const isSubActive = activeHash === `deeptech-${sub.key}`;
-                return (
-                  <a
-                    key={sub.key}
-                    href={`/scans/${scanId}#deeptech-${sub.key}`}
-                    className={`block text-[11px] font-medium py-0.5 px-2 rounded-md transition-colors ${
-                      isSubActive
-                        ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-500/5 dark:text-indigo-400 font-semibold"
-                        : "text-slate-500 hover:text-slate-800 dark:text-slate-400/60 dark:hover:text-white/90"
-                    }`}
+          {/* Group 1: Overview & Environment */}
+          <SidebarGroup className="p-0">
+            <SidebarGroupLabel className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3">
+              Overview & Environment
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="mt-1 px-1">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={activeHash === "overview"}
+                    className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
                   >
-                    {sub.label}
-                  </a>
-                );
-              })}
-            </div>
-          </SidebarMenuItem>
+                    <a href="#overview" className="flex items-center gap-3">
+                      <LayoutDashboard className="h-4 w-4 shrink-0" />
+                      <span className="font-medium text-sm">Readiness Score</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
 
-          {/* 5. Launch Impact & Reality */}
-          <SidebarMenuItem>
-            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-2">
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={activeHash === "sandbox"}
+                    className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
+                  >
+                    <a href="#sandbox" className="flex items-center gap-3">
+                      <Box className="h-4 w-4 shrink-0" />
+                      <span className="font-medium text-sm">Sandbox Proofs</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* Group 2: Core Issues */}
+          <SidebarGroup className="p-0">
+            <SidebarGroupLabel className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3">
+              Core Issues
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="mt-1 px-1">
+              <SidebarMenu>
+                {[
+                  { label: "Security Vulnerabilities", hash: "issues-security", color: "bg-rose-500", tourId: "tab-issues" },
+                  { label: "Compliance & Safety", hash: "issues-compliance", color: "bg-amber-500" },
+                  { label: "Performance Sinks", hash: "issues-performance", color: "bg-blue-500" },
+                  { label: "UI / UX Bottlenecks", hash: "issues-uiux", color: "bg-emerald-500" },
+                ].map((sub) => (
+                  <SidebarMenuItem key={sub.hash}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={activeHash === sub.hash}
+                      className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
+                    >
+                      <a
+                        href={`#${sub.hash}`}
+                        data-tour={sub.tourId}
+                        className="flex items-center gap-2.5"
+                      >
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${sub.color}`} />
+                        <span className="font-medium text-xs truncate">{sub.label}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* Group 3: Deep Tech Analysis */}
+          <SidebarGroup className="p-0">
+            <SidebarGroupLabel className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3">
+              Deep Tech Analysis
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="mt-1 px-1">
+              <div className="pl-3.5 space-y-1 border-l border-slate-200 dark:border-white/10 ml-5 mr-3">
+                {[
+                  { label: "Core Semantic Graph", key: "A" },
+                  { label: "Cryptographic Proof", key: "B" },
+                  { label: "Formal Verification", key: "C" },
+                  { label: "Infrastructure", key: "D" },
+                  { label: "AI Safety & Alignment", key: "E" },
+                  { label: "Architecture & Perf", key: "F" },
+                  { label: "Compliance & Reality", key: "G" },
+                  { label: "Advanced Engines", key: "H" },
+                  { label: "Distributed Systems", key: "I" },
+                ].map((sub) => {
+                  const isSubActive = activeHash === `deeptech-${sub.key}`;
+                  return (
+                    <a
+                      key={sub.key}
+                      href={`#deeptech-${sub.key}`}
+                      className={`block text-[11px] font-medium py-1 px-2.5 rounded-md transition-colors ${
+                        isSubActive
+                          ? "bg-indigo-50/80 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold"
+                          : "text-slate-500 hover:text-slate-800 dark:text-slate-400/60 dark:hover:text-white/90"
+                      }`}
+                    >
+                      {sub.label}
+                    </a>
+                  );
+                })}
+              </div>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* Group 4: Launch Impact */}
+          <SidebarGroup className="p-0">
+            <SidebarGroupLabel className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3">
               Launch Impact & Reality
-            </div>
-            <div className="pl-2 space-y-0.5 mt-1">
-              {[
-                { label: "Revenue Intelligence", hash: "impact-revenue", tourId: "tab-intelligence" },
-                { label: "Product Hunt Readiness", hash: "impact-producthunt" },
-                { label: "Product Reality Narrative", hash: "impact-reality" },
-              ].map((sub) => (
-                <a
-                  key={sub.hash}
-                  href={`/scans/${scanId}#${sub.hash}`}
-                  data-tour={sub.tourId}
-                  className={`block text-xs py-1 px-3 rounded-lg transition-all ${
-                    activeHash === sub.hash
-                      ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold"
-                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.02]"
-                  }`}
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="mt-1 px-1">
+              <SidebarMenu>
+                {[
+                  { label: "Revenue Intelligence", hash: "impact-revenue", tourId: "tab-intelligence" },
+                  { label: "Product Hunt Readiness", hash: "impact-producthunt" },
+                  { label: "Product Reality Narrative", hash: "impact-reality" },
+                ].map((sub) => (
+                  <SidebarMenuItem key={sub.hash}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={activeHash === sub.hash}
+                      className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
+                    >
+                      <a
+                        href={`#${sub.hash}`}
+                        data-tour={sub.tourId}
+                        className="flex items-center gap-2.5"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-white/30 shrink-0" />
+                        <span className="font-medium text-xs truncate">{sub.label}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* Group 5: Codebase Navigator */}
+          <SidebarGroup className="p-0">
+            <SidebarMenu className="px-1">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={activeHash === "files"}
+                  className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
                 >
-                  {sub.label}
-                </a>
-              ))}
-            </div>
-          </SidebarMenuItem>
+                  <a href="#files" className="flex items-center gap-3">
+                    <Folder className="h-4 w-4 shrink-0" />
+                    <span className="font-medium text-sm">Codebase Files</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
 
-          {/* 6. Codebase Files */}
-          <SidebarMenuItem className="mt-2">
-            <SidebarMenuButton
-              asChild
-              isActive={activeHash === "files"}
-              className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
-            >
-              <a href={`/scans/${scanId}#files`} className="flex items-center gap-3">
-                <Folder className="h-4 w-4 shrink-0" />
-                <span className="font-medium text-sm">Codebase Files</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {/* Group 6: Shares */}
+          <SidebarGroup className="pt-3 border-t border-slate-100 dark:border-white/[0.04] px-3">
+            <SidebarMenu className="space-y-1.5">
+              <SidebarMenuItem>
+                <button
+                  onClick={() => {
+                    const shareUrl = `${window.location.origin}/cert/${scanId}`;
+                    navigator.clipboard.writeText(shareUrl);
+                    alert("Launch Certificate link copied to clipboard!");
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:opacity-90 shadow-md transition-all cursor-pointer"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>Share Certificate</span>
+                </button>
+              </SidebarMenuItem>
 
-          {/* Share Certificate / Copy Link Buttons */}
-          <SidebarMenuItem className="mt-4 px-2">
-            <button
-              onClick={() => {
-                const shareUrl = `${window.location.origin}/cert/${scanId}`;
-                navigator.clipboard.writeText(shareUrl);
-                alert("Launch Certificate link copied to clipboard!");
-              }}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:opacity-90 shadow-md transition-all cursor-pointer"
-            >
-              <ShieldCheck className="h-4 w-4" />
-              <span>Share Certificate</span>
-            </button>
-          </SidebarMenuItem>
-
-          <SidebarMenuItem className="px-2 mt-1.5">
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(window.location.href);
-                alert("Report Link copied to clipboard!");
-              }}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/80 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all cursor-pointer"
-            >
-              <Code2 className="h-3.5 w-3.5" />
-              <span>Copy Report Link</span>
-            </button>
-          </SidebarMenuItem>
-        </SidebarMenu>
+              <SidebarMenuItem>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert("Report Link copied to clipboard!");
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/80 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all cursor-pointer"
+                >
+                  <Code2 className="h-3.5 w-3.5" />
+                  <span>Copy Report Link</span>
+                </button>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        </div>
       );
     }
 
-    const showAdmin = (user as any)?.role === "admin" || (user as any)?.email === "admin@agenario.tech" || (user as any)?.email?.includes("admin");
+        const showAdmin = (user as any)?.role === "admin" || (user as any)?.email === "admin@agenario.tech" || (user as any)?.email?.includes("admin");
     const activeNavItems = showAdmin 
       ? [...navItems, { title: "Admin Panel", url: "/admin", icon: ShieldAlert }] 
       : navItems;
@@ -312,11 +346,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </SidebarHeader>
 
           <SidebarContent className="px-3 py-5">
-            <SidebarGroup>
-              <SidebarGroupContent>
-                {getSidebarContent()}
-              </SidebarGroupContent>
-            </SidebarGroup>
+            {getSidebarContent()}
           </SidebarContent>
 
           <SidebarFooter className="border-t border-slate-100 dark:border-white/[0.06] p-3 space-y-2">
