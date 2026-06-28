@@ -145,7 +145,8 @@ router.get("/public/cert/:certId", async (req, res) => {
       return;
     }
 
-    const [scan] = await db
+    let scan = null;
+    const [scanByCert] = await db
       .select({
         id: scansTable.id,
         sourceInput: scansTable.sourceInput,
@@ -157,6 +158,25 @@ router.get("/public/cert/:certId", async (req, res) => {
       })
       .from(scansTable)
       .where(eq(scansTable.certId, certId));
+      
+    scan = scanByCert;
+
+    if (!scan && /^\d+$/.test(certId)) {
+      const numericId = parseInt(certId, 10);
+      const [scanById] = await db
+        .select({
+          id: scansTable.id,
+          sourceInput: scansTable.sourceInput,
+          score: scansTable.score,
+          launchVerdict: scansTable.launchVerdict,
+          completedAt: scansTable.completedAt,
+          issueCounts: scansTable.issueCounts,
+          certId: scansTable.certId,
+        })
+        .from(scansTable)
+        .where(eq(scansTable.id, numericId));
+      scan = scanById;
+    }
 
     if (!scan) {
       res.status(404).json({ error: "Certificate not found or invalid." });

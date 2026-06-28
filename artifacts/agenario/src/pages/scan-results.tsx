@@ -5867,7 +5867,7 @@ export default function ScanResultsPage() {
     handleHash();
     return () => window.removeEventListener("hashchange", handleHash);
   }, []);
-  const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("runtime");
+  const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("all");
 
   useEffect(() => {
     if (scan?.issues) {
@@ -6065,9 +6065,9 @@ export default function ScanResultsPage() {
   const verdict = verdictKey ? VERDICT_CONFIG[verdictKey] : null;
 
   const safeIssues = scan.issues ?? [];
-  const agents = Array.from(new Set(safeIssues.map((i: any) => i.agentName)));
+  const agents = Array.from(new Set(safeIssues.map((i: any) => i.agentName || "AI Code Quality").filter(Boolean)));
   const agentFiltered = activeAgent
-    ? safeIssues.filter((i: any) => i.agentName === activeAgent)
+    ? safeIssues.filter((i: any) => (i.agentName || "AI Code Quality") === activeAgent)
     : safeIssues;
   const categoryFiltered = activeCategory
     ? agentFiltered.filter((i: any) => (i.category || "").toLowerCase() === activeCategory.toLowerCase())
@@ -6568,14 +6568,20 @@ export default function ScanResultsPage() {
             )}
 
             {/* --- Technical Co-Founder Narrative ------------------------- */}
-            {scan.cofounderNarrative && scan.cofounderNarrative.length > 20 && (
+            {(scan.cofounderNarrative || scan.productReality) && (
               <motion.div
                 id="impact-reality"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.09 }}
+                className="space-y-6"
               >
-                <CofounderNarrativePanel narrative={scan.cofounderNarrative} />
+                {scan.cofounderNarrative && scan.cofounderNarrative.length > 20 && (
+                  <CofounderNarrativePanel narrative={scan.cofounderNarrative} />
+                )}
+                {scan.productReality && (
+                  <ProductRealityVisualizer data={scan.productReality} />
+                )}
               </motion.div>
             )}
 

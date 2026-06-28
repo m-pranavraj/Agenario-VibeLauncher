@@ -3,7 +3,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { logger } from "../lib/logger.js";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, asc } from "drizzle-orm";
 import { db, usersTable, scansTable, scanIssuesTable } from "@workspace/db";
 import { CreateScanBody } from "@workspace/api-zod";
 import { runAllAgents, runLaunchImpactCalculator, runProductHuntAudit, type CodeContext } from "../lib/agents.js";
@@ -1509,11 +1509,32 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
       .where(eq(usersTable.id, req.session.userId!));
     const plan = viewingUser?.plan ?? "free";
 
+    const pastScans = await db
+      .select({
+        id: scansTable.id,
+        score: scansTable.score,
+        completedAt: scansTable.completedAt,
+      })
+      .from(scansTable)
+      .where(
+        and(
+          eq(scansTable.sourceInput, scan.sourceInput),
+          eq(scansTable.userId, req.session.userId!),
+          eq(scansTable.status, "completed")
+        )
+      )
+      .orderBy(asc(scansTable.id));
+
     let responseData: Record<string, unknown> = {
       ...scan,
       createdAt: scan.createdAt.toISOString(),
       completedAt: scan.completedAt?.toISOString() ?? null,
       issues: enhancedIssues,
+      scoreHistory: pastScans.map(s => ({
+        id: s.id,
+        score: s.score,
+        completedAt: s.completedAt?.toISOString() ?? null
+      }))
     };
 
     responseData = applyTierGate(responseData, plan);

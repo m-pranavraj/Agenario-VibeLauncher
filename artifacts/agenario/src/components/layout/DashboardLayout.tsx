@@ -337,7 +337,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Sidebar */}
         <Sidebar className="border-r border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[#0a0a0f]">
           <SidebarHeader className="flex h-16 items-center px-5 border-b border-slate-100 dark:border-white/[0.06]">
-            <Link href="/dashboard" className="flex items-center gap-2.5">
+            <Link href="/dashboard" className="flex items-center gap-2.5 ml-2">
               <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
               <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white">
                 Agenario
