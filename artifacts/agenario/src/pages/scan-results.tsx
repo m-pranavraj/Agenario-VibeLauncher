@@ -6869,7 +6869,7 @@ export default function ScanResultsPage() {
               <PreLaunchChecklist scan={scan} />
             )}
 
-            {/* --- Confidence legend --------------------------------------------- */}
+            {/* --- Confidence legend (T1-T5 evidence tier system) ------------------- */}
             <div
               className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-xl px-5 py-3`}
             >
@@ -6877,29 +6877,14 @@ export default function ScanResultsPage() {
                 <span
                   className={`${isLight ? "text-gray-400" : "text-white/20"} uppercase tracking-widest font-medium text-[10px] mr-1`}
                 >
-                  Confidence
+                  Evidence Tiers
                 </span>
                 {[
-                  {
-                    badge: "bg-green-500/15 text-green-400 border-green-500/25",
-                    label: "🟢 99% Browser Runtime Proof",
-                  },
-                  {
-                    badge: "bg-green-500/10 text-green-400 border-green-500/20",
-                    label: "🔵 90% HTTP Runtime Proof",
-                  },
-                  {
-                    badge: "bg-sky-500/10 text-sky-400 border-sky-500/20",
-                    label: "🔵 75% Static Code Evidence",
-                  },
-                  {
-                    badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-                    label: "🟡 60% Pattern Match",
-                  },
-                  {
-                    badge: `bg-white/[0.05] text-white/35 ${isLight ? "border-gray-200" : "border-white/[0.08]"}`,
-                    label: "⚪ <60% AI Reasoning",
-                  },
+                  { badge: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25", label: "T1 Browser Runtime" },
+                  { badge: "bg-sky-500/10 text-sky-400 border-sky-500/20", label: "T2 Runtime Verified" },
+                  { badge: "bg-violet-500/10 text-violet-400 border-violet-500/20", label: "T3 Code Proven" },
+                  { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20", label: "T4 Static Signal" },
+                  { badge: "bg-slate-500/10 text-slate-400 border-slate-500/20", label: "T5 AI Advisory" },
                 ].map((item) => (
                   <span
                     key={item.label}

@@ -224,6 +224,143 @@ export function analyzeDeploymentFromCSG(csg: CSG, files: Array<{ path: string; 
   return checks;
 }
 
+function scanCleanupCandidates(
+  files: Array<{ path: string; content: string }>,
+  packageJson?: Record<string, unknown>,
+): { candidates: CleanupCandidate[]; specialCharFiles: string[] } {
+  const candidates: CleanupCandidate[] = [];
+  const specialCharFiles: string[] = [];
+
+  const pathSet = new Set(files.map(f => f.path));
+  const sourceExts = new Set([".ts", ".tsx", ".js", ".jsx", ".css", ".json", ".mjs", ".cjs"]);
+  const docExts = new Set([".md", ".mdx", ".txt"]);
+
+  for (const file of files) {
+    const ext = file.path.slice(file.path.lastIndexOf(".")).toLowerCase();
+
+    // Detect special/hidden unicode characters in source files
+    if (sourceExts.has(ext)) {
+      const specialChars = file.content.match(/[\u2000-\u200F\u2028-\u202F\u2060-\u2069\uFEFF\u00AD\u200B-\u200D\u202A-\u202E]/g);
+      if (specialChars && specialChars.length > 0) {
+        specialCharFiles.push(file.path);
+        const lineNum = file.content.split("\n").findIndex(l => /[\u2000-\u200F\u2028-\u202F\u2060-\u2069\uFEFF\u00AD\u200B-\u200D\u202A-\u202E]/.test(l)) + 1;
+        candidates.push({
+          id: `cleanup-sc-${candidates.length + 1}`,
+          type: "temp-file",
+          severity: "low",
+          title: `Hidden unicode/special characters in ${file.path.split("/").pop()}`,
+          description: `${specialChars.length} invisible unicode characters detected in ${file.path}. These can cause hard-to-debug rendering or parsing issues.`,
+          filePath: file.path,
+          confidence: 95,
+          reason: [
+            `${specialChars.length} zero-width / invisible unicode chars found`,
+            "Characters include zero-width spaces, soft hyphens, or BOM markers",
+            `First occurrence at line ${lineNum}`,
+            "Can cause cryptic CI failures or text rendering bugs",
+          ],
+          suggestedAction: `Run 'sed -i 's/\\xe2\\x80\\x8b//g' ${file.path}' to remove zero-width spaces, or use a linter with unicode rules.`,
+          estimatedCleanup: "1 file, 5-minute fix",
+        });
+      }
+    }
+
+    // Flag unnecessary .md files in src/ directories
+    if (ext === ".md" && (file.path.includes("/src/") || file.path.includes("\\src\\"))) {
+      const mdName = file.path.split("/").pop() ?? file.path;
+      if (file.content.length < 500) {
+        candidates.push({
+          id: `cleanup-md-${candidates.length + 1}`,
+          type: "stale-docs",
+          severity: "low",
+          title: `Stale/minimal .md file in src: ${mdName}`,
+          description: `${mdName} (${file.content.length} chars) in source tree may be leftover scaffolding.`,
+          filePath: file.path,
+          confidence: 80,
+          reason: [
+            "Markdown file inside src/ directory",
+            "Very short content (<500 chars)",
+            "Likely a stale placeholder or generated README",
+          ],
+          suggestedAction: "Move to docs/ or delete if content is not referenced by any component.",
+          estimatedCleanup: "1 file, 0 KB",
+        });
+      }
+    }
+  }
+
+  // Detect duplicate file content by size + path pattern
+  const seenSizes = new Map<number, string[]>();
+  for (const file of files) {
+    if (!sourceExts.has(file.path.slice(file.path.lastIndexOf(".")).toLowerCase())) continue;
+    const hash = file.content.length;
+    if (!seenSizes.has(hash)) seenSizes.set(hash, []);
+    seenSizes.get(hash)!.push(file.path);
+  }
+  for (const [, paths] of seenSizes) {
+    if (paths.length < 2) continue;
+    for (let i = 0; i < Math.min(paths.length, 5); i++) {
+      for (let j = i + 1; j < Math.min(paths.length, 5); j++) {
+        const a = paths[i], b = paths[j];
+        const nameA = a.split("/").pop() ?? "";
+        const nameB = b.split("/").pop() ?? "";
+        if (a === b) continue;
+        candidates.push({
+          id: `cleanup-dup-${candidates.length + 1}`,
+          type: "duplicate",
+          severity: "low",
+          title: `Possible duplicate: ${nameA} ≈ ${nameB}`,
+          description: `${a} and ${b} have identical byte sizes (${hash} bytes). They may be duplicates.`,
+          filePath: a,
+          confidence: 65,
+          reason: [
+            `Both files are ${hash} bytes`,
+            "Same extension and similar path structure",
+            "Check content manually before deleting",
+          ],
+          suggestedAction: `Diff: 'diff ${a} ${b}'. If identical, remove one and update imports.`,
+          estimatedCleanup: "1 file, ~2-50 KB",
+        });
+      }
+    }
+  }
+
+  // Detect unused npm packages
+  if (packageJson) {
+    const allImports = new Set<string>();
+    const IMPORT_RE = /import\s+.*\s+from\s+['"]([^'"]+)['"]/g;
+    for (const file of files) {
+      let m: RegExpExecArray | null;
+      const re = new RegExp(IMPORT_RE.source, "g");
+      while ((m = re.exec(file.content)) !== null) {
+        const pkg = m[1];
+        if (!pkg.startsWith(".") && !pkg.startsWith("/") && !pkg.startsWith("node:")) {
+          allImports.add(pkg.startsWith("@") ? pkg.split("/").slice(0, 2).join("/") : pkg.split("/")[0]);
+        }
+      }
+    }
+    const deps = { ...(packageJson.dependencies as Record<string, string> ?? {}), ...(packageJson.devDependencies as Record<string, string> ?? {}) };
+    const SKIP = new Set(["typescript", "esbuild", "vite", "drizzle-kit", "ts-node", "rimraf", "concurrently", "nodemon", "vercel", "prettier", "@types"]);
+    for (const [dep] of Object.entries(deps)) {
+      if (!allImports.has(dep) && ![...SKIP].some(s => dep.startsWith(s) || dep.includes(s))) {
+        candidates.push({
+          id: `cleanup-pkg-${candidates.length + 1}`,
+          type: "unused-package",
+          severity: "low",
+          title: `Unused dependency: ${dep}`,
+          description: `"${dep}" declared in package.json but not imported in any scanned file.`,
+          filePath: "package.json",
+          confidence: 70,
+          reason: ["No import statement referencing this package", "Declared in package.json dependencies"],
+          suggestedAction: `npm uninstall ${dep}`,
+          estimatedCleanup: "1 package, ~50-500 KB",
+        });
+      }
+    }
+  }
+
+  return { candidates, specialCharFiles };
+}
+
 export function runRealityCheckWithCSG(
   keyFiles: Array<{ path: string; content: string }>,
   packageJson?: Record<string, unknown>,
@@ -231,11 +368,12 @@ export function runRealityCheckWithCSG(
   const { csg, mockupFindings } = buildCSGAndDetectMockups(keyFiles);
   const featureTruths = analyzeFeatureTruths(csg, keyFiles);
   const deploymentChecks = analyzeDeploymentFromCSG(csg, keyFiles);
+  const { candidates: cleanupCandidates } = scanCleanupCandidates(keyFiles, packageJson);
 
   const verifiedLiveCount = featureTruths.filter(f => f.status === "verified_live").length;
   const partiallyConnectedCount = featureTruths.filter(f => f.status === "partially_connected").length;
   const mockedCount = featureTruths.filter(f => f.status === "mocked").length;
-  const brokenCount = 0;
+  const brokenCount = featureTruths.filter(f => f.status === "broken").length;
   const unverifiedCount = featureTruths.filter(f => f.status === "unverified").length;
 
   const deploymentBlockersCount = deploymentChecks.filter(c => !c.passed && c.severity === "critical").length;
@@ -243,22 +381,23 @@ export function runRealityCheckWithCSG(
 
   const mockupPenalty = mockupFindings.length * 6;
   const featurePenalty = mockedCount * 8 + partiallyConnectedCount * 4 + brokenCount * 10;
+  const cleanupPenalty = Math.min(cleanupCandidates.length * 1.5, 15);
   const deployPenalty = (deploymentBlockersCount * 12) + (deploymentHighCount * 4);
-  const rawScore = 100 - mockupPenalty - featurePenalty - deployPenalty;
+  const rawScore = 100 - mockupPenalty - featurePenalty - cleanupPenalty - deployPenalty;
   const score = Math.max(0, Math.min(100, Math.round(rawScore)));
 
   const launchCompletenessScore = Math.max(0, Math.round(
-    100 - (mockedCount * 12) - (partiallyConnectedCount * 6) - (brokenCount * 15) - (unverifiedCount * 2) - (deploymentBlockersCount * 10)
+    100 - (mockedCount * 12) - (partiallyConnectedCount * 6) - (brokenCount * 15) - (unverifiedCount * 2) - (deploymentBlockersCount * 10) - (cleanupCandidates.length * 1)
   ));
 
   const summary = score >= 85
-    ? `Product reality verified — ${verifiedLiveCount} live features, ${mockedCount} mocked, ${deploymentBlockersCount} deployment blockers.`
+    ? `Product reality verified — ${verifiedLiveCount} live features, ${mockedCount} mocked, ${cleanupCandidates.length} cleanup candidates, ${deploymentBlockersCount} deployment blockers.`
     : score >= 60
-      ? `Product has real foundations — ${mockedCount} features are still mockups, ${deploymentBlockersCount} blockers before launch.`
-      : `Significant reality gap — ${mockedCount} features are mocked or broken, ${deploymentBlockersCount} critical deployment blockers.`;
+      ? `Product has real foundations — ${mockedCount} features are still mockups, ${cleanupCandidates.length} files to clean up, ${deploymentBlockersCount} blockers before launch.`
+      : `Significant reality gap — ${mockedCount} features are mocked or broken, ${cleanupCandidates.length} cleanup items, ${deploymentBlockersCount} critical deployment blockers.`;
 
   logger.info(
-    { score, verifiedLiveCount, mockedCount, deploymentBlockersCount, featureCount: featureTruths.length },
+    { score, verifiedLiveCount, mockedCount, cleanupCandidates: cleanupCandidates.length, deploymentBlockersCount, featureCount: featureTruths.length },
     "Reality Check (CSG-powered) complete",
   );
 
@@ -269,11 +408,11 @@ export function runRealityCheckWithCSG(
     mockedCount,
     brokenCount,
     unverifiedCount,
-    cleanupCandidatesCount: 0,
+    cleanupCandidatesCount: cleanupCandidates.length,
     deploymentBlockersCount,
     mockupFindings,
     featureTruths,
-    cleanupCandidates: [],
+    cleanupCandidates,
     deploymentChecks,
     summary,
     launchCompletenessScore,
