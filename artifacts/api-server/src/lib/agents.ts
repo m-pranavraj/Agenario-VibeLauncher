@@ -1156,7 +1156,7 @@ export async function runAllAgents(
 
     // Run agents + compliance concurrently (compliance used to run after all agents = wasted time)
     const [agentResults, complianceResults] = await Promise.all([
-      runBatched(agentTasks, 5, 1000),
+      runBatched(agentTasks, 15, 0),
       runComplianceAnalysis(sourceType, sourceInput, appDescription, codeContext).catch((err) => {
         logger.warn({ err }, "Compliance analysis failed — skipping");
         return [] as ComplianceResult[];

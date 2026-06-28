@@ -406,7 +406,7 @@ export default function Home() {
                 Not just another<br />
                 <span className={isLight
                   ? "text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500"
-                  : "text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40"
+                  : "text-transparent bg-clip-text bg-gradient-to-r from-[#ec4899] via-[#a855f7] to-[#6366f1] drop-shadow-[0_0_25px_rgba(168,85,247,0.45)] select-none bg-300% animate-gradient"
                 }>
                   code review software
                 </span>
