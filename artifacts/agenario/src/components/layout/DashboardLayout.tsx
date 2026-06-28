@@ -218,7 +218,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 {[
                   { label: "Revenue Intelligence", hash: "impact-revenue", tourId: "tab-intelligence" },
                   { label: "Product Hunt Readiness", hash: "impact-producthunt" },
-                  { label: "Product Reality Narrative", hash: "impact-reality" },
+                  { label: "Product Reality Narrative", hash: "reality" },
                 ].map((sub) => (
                   <SidebarMenuItem key={sub.hash}>
                     <SidebarMenuButton

@@ -5825,6 +5825,7 @@ export default function ScanResultsPage() {
     if (hash.startsWith("issues")) return "issues";
     if (hash.startsWith("deeptech")) return "deeptech";
     if (hash.startsWith("impact")) return "intelligence";
+    if (hash === "reality") return "reality";
     if (hash === "sandbox") return "overview";
     return hash || "overview";
   });
@@ -5843,6 +5844,8 @@ export default function ScanResultsPage() {
           }
         } else if (hash.startsWith("deeptech")) {
           setActiveTab("deeptech");
+        } else if (hash === "reality") {
+          setActiveTab("reality");
         } else if (hash.startsWith("impact")) {
           setActiveTab("intelligence");
           setTimeout(() => {
@@ -6215,6 +6218,7 @@ export default function ScanResultsPage() {
                 count: (scan.issues ?? []).filter((i) => !i.locked).length || undefined,
               },
               { id: "intelligence", label: "Intelligence", icon: Sparkles, tourId: "tab-intelligence" },
+              { id: "reality", label: "Product Reality", icon: Users, tourId: undefined },
               { id: "compliance", label: "Compliance", icon: Scale, tourId: undefined },
               {
                 id: "advanced",
@@ -6568,22 +6572,7 @@ export default function ScanResultsPage() {
             )}
 
             {/* --- Technical Co-Founder Narrative ------------------------- */}
-            {(scan.cofounderNarrative || scan.productReality) && (
-              <motion.div
-                id="impact-reality"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.09 }}
-                className="space-y-6"
-              >
-                {scan.cofounderNarrative && scan.cofounderNarrative.length > 20 && (
-                  <CofounderNarrativePanel narrative={scan.cofounderNarrative} />
-                )}
-                {scan.productReality && (
-                  <ProductRealityVisualizer data={scan.productReality} />
-                )}
-              </motion.div>
-            )}
+
 
             {/* --- Launch Replay ---------------------------------------------------- */}
             {scan.launchReplaySteps && scan.launchReplaySteps.length > 0 && (
@@ -6636,6 +6625,23 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
           </>
+        )}
+
+        {/* --- Product Reality Tab ------------------------------------------- */}
+        {activeTab === "reality" && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="w-5 h-5 text-violet-500 animate-pulse" />
+              <h2 className={`text-xl font-extrabold font-heading ${isLight ? "text-slate-900" : "text-white"}`}>Product Reality & Mockup Verification</h2>
+            </div>
+            
+            {scan.cofounderNarrative && scan.cofounderNarrative.length > 20 && (
+              <CofounderNarrativePanel narrative={scan.cofounderNarrative} />
+            )}
+            {scan.productReality && (
+              <ProductRealityVisualizer data={scan.productReality} />
+            )}
+          </div>
         )}
 
         {/* --- Compliance Tab ------------------------------------------------- */}
