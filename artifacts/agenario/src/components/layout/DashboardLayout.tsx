@@ -54,6 +54,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [location] = useLocation();
   const { logout, user } = useAuth();
   const isLight = useIsLight();
+  const [activeHash, setActiveHash] = React.useState("overview");
+
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      setActiveHash(window.location.hash.replace("#", "") || "overview");
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    handleHashChange();
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -84,7 +94,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const getSidebarContent = () => {
     if (isReportPage) {
       const scanId = location.split("/")[2];
-      const activeHash = window.location.hash.replace("#", "") || "overview";
       return (
         <div className="space-y-4 w-full">
           {/* Back button */}
