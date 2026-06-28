@@ -478,11 +478,25 @@ function FrameworkMatrix({ isLight }: { isLight: boolean }) {
 //  Main Panel 
 interface Props {
   scan: any;
+  isLight?: boolean;
+  activeSection?: string;
 }
 
-export function DeepTech40Panel({ scan }: Props) {
+export function DeepTech40Panel({ scan, activeSection }: Props) {
   const isLight = useIsLight();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["A"]));
+
+  useEffect(() => {
+    if (activeSection && SECTION_IDS.includes(activeSection)) {
+      setExpandedSections(new Set([activeSection]));
+      setTimeout(() => {
+        const el = document.getElementById(`section-${activeSection}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 150);
+    }
+  }, [activeSection]);
 
   const toggleSection = useCallback((id: string) => {
     setExpandedSections(prev => {
@@ -1508,7 +1522,7 @@ export function DeepTech40Panel({ scan }: Props) {
         const greenCount = section.engines.filter(e => e.score >= e.threshold).length;
         const isExpanded = expandedSections.has(section.id);
         return (
-          <div key={section.id} className={`rounded-2xl border overflow-hidden ${isLight ? "border-slate-200" : "border-white/[0.08]"}`}>
+          <div key={section.id} id={`section-${section.id}`} className={`rounded-2xl border overflow-hidden ${isLight ? "border-slate-200" : "border-white/[0.08]"}`}>
             <button
               onClick={() => toggleSection(section.id)}
               className={`w-full text-left p-4 flex items-center justify-between gap-3 transition-colors ${

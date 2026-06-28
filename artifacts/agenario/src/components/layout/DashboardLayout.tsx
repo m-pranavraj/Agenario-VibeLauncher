@@ -15,7 +15,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
-  LayoutDashboard,
+  LayoutDashboard, ChevronLeft, Folder, ShieldCheck, Activity,
   Code2,
   ShieldAlert,
   Settings,
@@ -76,6 +76,129 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const planInfo = user ? (PLAN_LABELS[user.plan] ?? PLAN_LABELS.free) : null;
 
+  const isReportPage = location.startsWith("/scans/") && 
+                       !location.endsWith("/progress") && 
+                       !location.endsWith("/new");
+
+  const getSidebarContent = () => {
+    if (isReportPage) {
+      const scanId = location.split("/")[2];
+      const activeHash = window.location.hash.replace("#", "") || "overview";
+      return (
+        <SidebarMenu>
+          {/* Back button */}
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild className="mb-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">
+              <Link href="/dashboard" className="flex items-center gap-2">
+                <ChevronLeft className="h-4 w-4" />
+                <span className="font-semibold text-xs uppercase tracking-wider">Back to Dashboard</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* Report Sections */}
+          {[
+            { title: "Overview", hash: "overview", icon: LayoutDashboard },
+            { title: "Codebase Files", hash: "files", icon: Folder },
+            { title: "Findings & Issues", hash: "issues", icon: ShieldAlert },
+            { title: "Compliance Audit", hash: "compliance", icon: ShieldCheck },
+            { title: "Deep Tech 40 Engines", hash: "deeptech", icon: Activity },
+          ].map((item) => {
+            const isActive = activeHash === item.hash || (item.hash === "deeptech" && activeHash.startsWith("deeptech"));
+            
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  className={[
+                    "transition-all duration-150 rounded-xl py-2 px-3",
+                    "hover:bg-slate-100 dark:hover:bg-white/[0.05]",
+                    "data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12]",
+                    "data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400",
+                    "text-slate-700 dark:text-slate-200",
+                  ].join(" ")}
+                >
+                  <a href={`/scans/${scanId}#${item.hash}`} className="flex items-center gap-3">
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    <span className="font-medium text-sm">{item.title}</span>
+                  </a>
+                </SidebarMenuButton>
+
+                {/* Subheadings for Deep Tech tab if it's the Deep Tech 40 Engines item */}
+                {item.hash === "deeptech" && (
+                  <div className="pl-6 mt-1.5 space-y-1.5 border-l border-slate-200 dark:border-white/10 ml-5">
+                    {[
+                      { label: "Core Semantic Graph", key: "A" },
+                      { label: "Cryptographic Proof", key: "B" },
+                      { label: "Formal Verification", key: "C" },
+                      { label: "Infrastructure", key: "D" },
+                      { label: "AI Safety", key: "E" },
+                      { label: "Architecture", key: "F" },
+                      { label: "Compliance & Reality", key: "G" },
+                      { label: "Advanced Engines", key: "H" },
+                      { label: "Distributed Systems", key: "I" },
+                    ].map((sub) => {
+                      const isSubActive = activeHash === `deeptech-${sub.key}`;
+                      return (
+                        <a
+                          key={sub.key}
+                          href={`/scans/${scanId}#deeptech-${sub.key}`}
+                          className={`block text-[11px] font-medium py-0.5 transition-colors ${
+                            isSubActive 
+                              ? "text-indigo-600 dark:text-indigo-400 font-semibold" 
+                              : "text-slate-500 hover:text-slate-800 dark:text-slate-400/60 dark:hover:text-white/90"
+                          }`}
+                        >
+                          {sub.label}
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      );
+    }
+
+    const showAdmin = (user as any)?.role === "admin" || (user as any)?.email === "admin@agenario.tech" || (user as any)?.email?.includes("admin");
+    const activeNavItems = showAdmin 
+      ? [...navItems, { title: "Admin Panel", url: "/admin", icon: ShieldAlert }] 
+      : navItems;
+
+    return (
+      <SidebarMenu>
+        {activeNavItems.map((item) => {
+          const isActive =
+            location === item.url ||
+            (item.url !== "/dashboard" && location.startsWith(item.url));
+          return (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive}
+                className={[
+                  "transition-all duration-150 rounded-xl py-2 px-3",
+                  "hover:bg-slate-100 dark:hover:bg-white/[0.05]",
+                  "data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12]",
+                  "data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400",
+                  "text-slate-700 dark:text-slate-200",
+                ].join(" ")}
+              >
+                <Link href={item.url} className="flex items-center gap-3">
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span className="font-medium text-sm">{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          );
+        })}
+      </SidebarMenu>
+    );
+  };
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-slate-50 dark:bg-[#050505] transition-colors duration-300 font-sans">
@@ -94,33 +217,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <SidebarContent className="px-3 py-5">
             <SidebarGroup>
               <SidebarGroupContent>
-                <SidebarMenu>
-                  {navItems.map((item) => {
-                    const isActive =
-                      location === item.url ||
-                      (item.url !== "/dashboard" && location.startsWith(item.url));
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          className={[
-                            "transition-all duration-150 rounded-xl py-2 px-3",
-                            "hover:bg-slate-100 dark:hover:bg-white/[0.05]",
-                            "data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12]",
-                            "data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400",
-                            "text-slate-600 dark:text-slate-400",
-                          ].join(" ")}
-                        >
-                          <Link href={item.url} className="flex items-center gap-3">
-                            <item.icon className="h-4 w-4 shrink-0" />
-                            <span className="font-medium text-sm">{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
+                {getSidebarContent()}
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>

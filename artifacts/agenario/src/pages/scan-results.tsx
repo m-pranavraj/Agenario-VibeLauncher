@@ -1402,7 +1402,7 @@ function EvidenceCard({
         <div className={`px-4 pb-4 space-y-3 border-t ${isLight ? "border-gray-200" : "border-white/[0.05]"} pt-3`}>
           <p className={`text-sm ${isLight ? "text-gray-500" : "text-white/55"} leading-relaxed`}>{issue.description}</p>
 
-          {/* â”€â”€ Deep Tech Visualizers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          {/* --- Deep Tech Visualizers ------------------------------------------------ */}
           <div className="space-y-4 my-4">
             {/* Show DS fusion inline indicator */}
             {issue.confidence && issue.confidence > 50 && (
@@ -1429,7 +1429,7 @@ function EvidenceCard({
             )}
           </div>
 
-          {/* â”€â”€ Evidence Graph Chain â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          {/* --- Evidence Graph Chain ------------------------------------------------ */}
           {(issue.filePath || issue.codeSnippet || issue.impactStatement || issue.evidence) && (
             <div className="space-y-2">
               {/* File + Line badge row */}
@@ -1613,7 +1613,7 @@ function EvidenceCard({
             </div>
           )}
 
-          {/* â”€â”€ AI Fix Generator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          {/* --- AI Fix Generator ---------------------------â”€ */}
           {scanId && (
             isCreator ? (
               <div className="space-y-2">
@@ -2137,9 +2137,9 @@ function OldRevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligen
   );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ------------------------------------------------------------------------------------------â”€
 // New Feature Panels
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ------------------------------------------------------------------------------------------â”€
 
 const PROOF_TYPE_CONFIG = {
   idor: { label: "IDOR Probe", icon: Lock, color: "text-red-400", bg: "bg-red-500/[0.07] border-red-500/20" },
@@ -2304,7 +2304,7 @@ function ConfidenceBadges({ evidence }: { evidence: ProofEvidence[] }) {
   );
 }
 
-// â”€â”€ Sandbox Proofs Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Sandbox Proofs Section ------------------------------------------------------------------------
 // Free users see the first proof (screenshot + steps) as a clear glimpse.
 // Remaining proofs are blurred behind a Creator gate.
 function SandboxProofsSection({
@@ -2348,7 +2348,7 @@ function SandboxProofsSection({
 
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden aurora-card`}>
-      {/* â”€â”€ Section header â”€â”€ */}
+      {/* --- Section header --- */}
       <div className={`flex items-center gap-2.5 px-6 py-4 border-b ${isLight ? "border-gray-100" : "border-white/[0.06]"}`}>
         <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isLight ? "bg-violet-50 border border-violet-200" : "bg-violet-500/15 border border-violet-500/25"}`}>
           <Camera className="w-3.5 h-3.5 text-violet-500" />
@@ -2373,7 +2373,7 @@ function SandboxProofsSection({
 
       <div className="p-6 space-y-4">
         {proofs.length === 0 ? (
-          /* â”€â”€ No proofs: placeholder + explanation â”€â”€ */
+          /* --- No proofs: placeholder + explanation --- */
           <div className="space-y-4">
             {/* Demo screenshot placeholder */}
             <div className="relative rounded-xl overflow-hidden border border-dashed border-violet-500/20 bg-gradient-to-br from-violet-500/[0.04] to-indigo-500/[0.04]">
@@ -2421,9 +2421,9 @@ function SandboxProofsSection({
             </div>
           </div>
         ) : (
-          /* â”€â”€ Proofs exist â”€â”€ */
+          /* --- Proofs exist --- */
           <div className="space-y-4">
-            {/* â”€â”€ FIRST PROOF: always visible â”€â”€ */}
+            {/* --- FIRST PROOF: always visible --- */}
             <div>
               <div className={`text-[10px] font-semibold uppercase tracking-widest mb-2.5 ${isLight ? "text-gray-400" : "text-white/25"}`}>
                 Live Evidence · Proof 1 of {proofs.length}
@@ -2509,7 +2509,7 @@ function SandboxProofsSection({
               </div>
             </div>
 
-            {/* â”€â”€ REMAINING PROOFS: locked for free users â”€â”€ */}
+            {/* --- REMAINING PROOFS: locked for free users --- */}
             {rest.length > 0 && (
               <CreatorGate
                 plan={plan}
@@ -2541,7 +2541,7 @@ function SandboxProofsSection({
               </CreatorGate>
             )}
 
-            {/* â”€â”€ Confidence legend â”€â”€ */}
+            {/* --- Confidence legend --- */}
             <ConfidenceBadges evidence={proofs} />
           </div>
         )}
@@ -2686,7 +2686,7 @@ function BenchmarkPanel({ data }: { data: BenchmarkData }) {
   );
 }
 
-// â”€â”€ VibeCode Intelligence Network â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- VibeCode Intelligence Network ------------------------------------------------------------------
 
 const VIBE_TOOL_PATTERNS: Record<string, {
   label: string;
@@ -3200,7 +3200,7 @@ function ShareBadgeButton({ scan }: { scan: ScanDetail }) {
   );
 }
 
-// â”€â”€ Secret & API Key Leakage Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Secret & API Key Leakage Panel ---------------------------------------------------------------â”€
 const RISK_CONFIG = {
   critical: { bg: "bg-red-500/[0.08] border-red-500/20", badge: "bg-red-500/15 text-red-400 border-red-500/25", dot: "bg-red-500" },
   high: { bg: "bg-amber-500/[0.06] border-amber-500/18", badge: "bg-amber-500/15 text-amber-400 border-amber-500/25", dot: "bg-amber-500" },
@@ -3337,7 +3337,7 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
   );
 }
 
-// â”€â”€ Package CVE Vulnerability Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Package CVE Vulnerability Panel ------------------------------------------------------------â”€
 const CVSS_COLOR = (score: number) =>
   score >= 9 ? "text-red-400" : score >= 7 ? "text-amber-400" : score >= 4 ? "text-yellow-400" : "text-white/40";
 
@@ -3507,7 +3507,7 @@ function PackageVulnsPanel({ data, isCreator }: { data: NonNullable<ScanDetail["
   );
 }
 
-// â”€â”€ Cleanup Agent Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Cleanup Agent Panel ---------------------------------------------------------------------------------
 const CLEANUP_CAT_LABEL: Record<string, { label: string; icon: ElementType; color: string }> = {
   "debug-noise":    { label: "Debug Noise",    icon: VolumeX,    color: "text-amber-400" },
   "tech-debt":      { label: "Tech Debt",      icon: Clock,      color: "text-orange-400" },
@@ -3691,7 +3691,7 @@ className={`flex items-center gap-2 px-2.5 py-1 rounded-full border whitespace-n
   );
 }
 
-// â”€â”€ Digital Twin Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Digital Twin Panel ---------------------------------------------------------------------------------â”€
 function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCreator: boolean }) {
   const isLight = useIsLight();
   const [openSection, setOpenSection] = useState<"journeys" | "chaos" | "attacks">("journeys");
@@ -3856,7 +3856,7 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
   );
 }
 
-// â”€â”€ Predictive Intelligence Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Predictive Intelligence Panel ------------------------------------------------------------------
 function PredictiveIntelPanel({ data, isCreator }: { data: PredictiveIntelResult; isCreator: boolean }) {
   const isLight = useIsLight();
   const colorMap: Record<string, string> = {
@@ -3935,7 +3935,7 @@ function PredictiveIntelPanel({ data, isCreator }: { data: PredictiveIntelResult
   );
 }
 
-// â”€â”€ Root Cause Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Root Cause Panel ---------------------------------------------------------------------------------------
 function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator: boolean }) {
   const isLight = useIsLight();
   const [expandedChain, setExpandedChain] = useState<number | null>(0);
@@ -4057,7 +4057,7 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
   );
 }
 
-// â”€â”€ Cleanup Radar Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Cleanup Radar Panel ---------------------------------------------------------------------------------â”€
 function CleanupRadarPanel({ data }: { data: NonNullable<ScanDetail["cleanupReport"]> }) {
   const isLight = useIsLight();
   const [expanded, setExpanded] = useState(false);
@@ -4212,7 +4212,7 @@ function CleanupFindingRow({ finding: f }: { finding: NonNullable<ScanDetail["cl
   );
 }
 
-// â”€â”€ Pre-Launch Checklist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Pre-Launch Checklist ------------------------------------------------------------------------------â”€
 function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
   const isLight = useIsLight();
   const storageKey = `checklist-${scan.id}`;
@@ -4725,7 +4725,7 @@ function CofounderQAPanel({ scanId }: { scanId: number }) {
   );
 }
 
-/* â”€â”€ Premium Animated Scan Loading Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* --- Premium Animated Scan Loading Screen ---------------------------------------------â”€ */
 const ANALYSIS_STEPS = [
   { label: "Security & Authentication", icon: Lock,         color: "#f87171" },
   { label: "Compliance & Regulatory",   icon:   Clipboard,color: "#60a5fa" },
@@ -4769,7 +4769,7 @@ function ScanRunningScreen({
 
   return (
     <div className={`min-h-screen ${t.page} flex items-center justify-center px-6`}>
-      {/* â”€â”€ Ambient glow â”€â”€â”€ */}
+      {/* --- Ambient glow ---â”€ */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
           animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.5, 0.3] }}
@@ -4780,7 +4780,7 @@ function ScanRunningScreen({
       </div>
 
       <div className="relative max-w-sm w-full space-y-8 z-10">
-        {/* â”€â”€ Progress ring â”€â”€â”€ */}
+        {/* --- Progress ring ---â”€ */}
         <div className="flex flex-col items-center gap-5">
           <div className="relative">
             {/* Outer glow ring */}
@@ -4828,7 +4828,7 @@ function ScanRunningScreen({
           </div>
         </div>
 
-        {/* â”€â”€ Analysis step list â”€â”€â”€ */}
+        {/* --- Analysis step list ---â”€ */}
         <div className="space-y-2">
           {ANALYSIS_STEPS.map((step, i) => {
             const done = i < visibleStep;
@@ -4874,7 +4874,7 @@ function ScanRunningScreen({
           })}
         </div>
 
-        {/* â”€â”€ Source chip â”€â”€â”€ */}
+        {/* --- Source chip ---â”€ */}
         {sourceInput && (
           <div className={`flex items-center justify-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>
             <Search className="w-3 h-3" />
@@ -4886,7 +4886,7 @@ function ScanRunningScreen({
   );
 }
 
-// â”€â”€ Architecture Diagram Panel — React Flow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Architecture Diagram Panel — React Flow ---------------------------------------------â”€
 // World-class interactive architecture map with glassmorphism nodes,
 // severity glow-rings, animated edges, and red issue-count badges.
 
@@ -4968,7 +4968,7 @@ function generateNodeSuggestions(nodeId: string, issues: ScanIssue[], _scan: Sca
   return out.slice(0, 3);
 }
 
-// â”€â”€ Severity colour palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Severity colour palette ------------------------------------------------------------------------
 const SEV_COLORS: Record<string, { border: string; glow: string; badgeBg: string; badgeText: string; nodeBg: string; labelColor: string }> = {
   critical: { border: "#ef4444", glow: "rgba(239,68,68,0.45)", badgeBg: "#ef4444", badgeText: "#fff", nodeBg: "rgba(127,29,29,0.82)", labelColor: "#fca5a5" },
   high:     { border: "#f97316", glow: "rgba(249,115,22,0.35)", badgeBg: "#f97316", badgeText: "#fff", nodeBg: "rgba(120,53,15,0.82)", labelColor: "#fed7aa" },
@@ -4984,7 +4984,7 @@ const SEV_COLORS_LIGHT: Record<string, { border: string; glow: string; badgeBg: 
   clean:    { border: "#d1d5db", glow: "rgba(209,213,219,0.0)", badgeBg: "#9ca3af", badgeText: "#fff", nodeBg: "rgba(249,250,251,0.97)", labelColor: "#6b7280" },
 };
 
-// â”€â”€ Custom React Flow node component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Custom React Flow node component ---------------------------------------------------------
 type ArchNodeData = {
   icon: string | ElementType;
   label: string;
@@ -5073,7 +5073,7 @@ function buildFlowGraph(
   const hasCompliance = nodeMap.has("compliance");
   const hasObs = nodeMap.has("observability");
 
-  // â”€â”€ node positions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- node positions ------------------------------------------------------------------------------------
   const nodes: RFNode[] = [
     { id: "user",     type: "archNode", position: { x: 230, y: 0   }, data: { icon: Users,       label: "User",       isUser: true,  severity: "clean",        issueCount: 0 } },
     { id: "frontend", type: "archNode", position: { x: 130, y: 110 }, data: { icon: Cpu,         label: "Frontend",   sublabel: scan.framework ?? "", severity: sev("frontend"), issueCount: cnt("frontend") } },
@@ -5132,7 +5132,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
 
   return (
     <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden aurora-card`}>
-      {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* --- Header --------------------------------------------------------------------------- */}
       <div className={`flex items-center gap-2.5 px-6 py-4 border-b ${isLight ? "border-gray-100" : "border-white/[0.06]"}`}>
         <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isLight ? "bg-violet-50 border border-violet-200" : "bg-violet-500/15 border border-violet-500/25"}`}>
           <Network className="w-3.5 h-3.5 text-violet-500" />
@@ -5154,7 +5154,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
         </div>
       </div>
 
-      {/* â”€â”€ React Flow canvas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* --- React Flow canvas ---------------------------------------------------------â”€ */}
       <div
         style={{ height: flowHeight }}
         className={`w-full relative ${isLight ? "bg-gray-50/80" : "bg-[#080c14]"}`}
@@ -5193,7 +5193,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
         </div>
       </div>
 
-      {/* â”€â”€ Per-node issue breakdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* --- Per-node issue breakdown ------------------------------------------------â”€ */}
       {affectedNodes.length > 0 ? (
         <div className={`border-t ${isLight ? "border-gray-100" : "border-white/[0.05]"}`}>
           <div className={`px-6 py-2.5 ${isLight ? "bg-gray-50" : "bg-white/[0.01]"}`}>
@@ -5278,7 +5278,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
   );
 }
 
-// â”€â”€ Report Tour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Report Tour ---------------------------------------------------------------------------------------â”€
 // Cloud-style tooltip tour. Auto-shows on first report view, re-triggerable
 // via the "?" button. Uses data-tour attributes to locate elements.
 
@@ -5742,7 +5742,7 @@ jobs:
   );
 }
 
-// â”€â”€ Knowledge Graph Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Knowledge Graph Component ---------------------------------------------------------------------
 function KnowledgeGraphExplorer({ data, issues, isLight }: { data: any, issues?: any[], isLight: boolean }) {
   if (!data || !data.nodes || data.nodes.length === 0) {
     return <div className="text-center p-10 opacity-50">No Knowledge Graph Data Available for this Scan.</div>;
@@ -5819,7 +5819,27 @@ export default function ScanResultsPage() {
   const [scan, setScan] = useState<ScanDetail | null>(null);
   const [scanLoading, setScanLoading] = useState(true);
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash.startsWith("deeptech")) return "deeptech";
+    return hash || "overview";
+  });
+
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (hash) {
+        if (hash.startsWith("deeptech")) {
+          setActiveTab("deeptech");
+        } else {
+          setActiveTab(hash);
+        }
+      }
+    };
+    window.addEventListener("hashchange", handleHash);
+    handleHash();
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
   const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("runtime");
 
   useEffect(() => {
@@ -5941,7 +5961,7 @@ export default function ScanResultsPage() {
           <Loader2 className={`w-5 h-5 ${isLight ? "text-gray-600" : "text-white/60"} animate-spin`} />
         </div>
         <p className={`${isLight ? "text-gray-400" : "text-white/30"} text-sm`}
-          >Loading report…</p>
+          >Loading report...</p>
       </div>
     </div>
   );
@@ -6137,19 +6157,19 @@ export default function ScanResultsPage() {
       </nav>
 
       <main className="w-full max-w-full lg:max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-5 overflow-hidden">
-        {/* â”€â”€ Sticky Launch Alert Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* --- Sticky Launch Alert Banner ------------------------------â”€ */}
         {/* Executive Overview Dashboard Component */}
         <ExecutiveOverview scan={scan} isLight={isLight} />
 
         <StickyLaunchAlertBanner scan={scan} />
 
-        {/* â”€â”€ Launch Gate Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* --- Launch Gate Banner ------------------------------------------------â”€ */}
         <LaunchGateBanner scan={scan} isLight={isLight} />
 
-        {/* â”€â”€ Locked Premium Insights (free users) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* --- Locked Premium Insights (free users) ---------------â”€ */}
         <LockedInsightsPanel scan={scan} plan={user.plan} />
 
-        {/* â”€â”€ Section Tab Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* --- Section Tab Navigation ------------------------------------â”€ */}
         <div
           className={`sticky top-[57px] z-[9] -mx-6 px-6 py-2.5 ${t.tabBar}`}
         >
@@ -6214,7 +6234,7 @@ export default function ScanResultsPage() {
           </div>
         </div>
 
-        {/* â”€â”€ Overview Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* --- Overview Tab ---------------------------------------------------â”€ */}
         {activeTab === "files" && (
           <div className="mb-4">
             <FileExplorer scan={scan} isLight={isLight} plan={user.plan} />
@@ -6223,7 +6243,7 @@ export default function ScanResultsPage() {
 
         {activeTab === "overview" && (
           <>
-            {/* â”€â”€ Demo-to-Market-Ready Pipeline & Traffic Light Verdict â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Demo-to-Market-Ready Pipeline & Traffic Light Verdict ------------------------------â”€ */}
             {scan.greenLightVerdict && (
               <div className={`${isLight ? "bg-white border-gray-200 shadow-sm" : "bg-[#111] border-white/10"} border rounded-2xl p-6 mb-4`}>
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -6276,7 +6296,7 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* â”€â”€ Executive summary row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Executive summary row --------------------------------------- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div
                 data-tour="score"
@@ -6379,7 +6399,7 @@ export default function ScanResultsPage() {
               </div>
             </div>
 
-            {/* â”€â”€ Benchmark Network â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Benchmark Network --------------------------------------------- */}
             {scan.benchmarkData && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6416,7 +6436,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Architecture Audit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Architecture Audit ------------------------------------------â”€ */}
             <SectionLabel label="Architecture Audit" icon={Network} isLight={isLight} />
             <motion.div
               data-tour="architecture"
@@ -6427,12 +6447,12 @@ export default function ScanResultsPage() {
               <ArchitectureDiagramPanel scan={scan} />
             </motion.div>
 
-            {/* â”€â”€ Section divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Section divider ------------------------------------------------ */}
             {scan.vibeTool && scan.vibeTool !== "unknown" && (
               <SectionLabel label="Detected Stack" icon={Cpu} isLight={isLight} />
             )}
 
-            {/* â”€â”€ VibeCode Intelligence Network â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- VibeCode Intelligence Network ---------------------------â”€ */}
             {scan.vibeTool && scan.vibeTool !== "unknown" && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6449,10 +6469,10 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* â”€â”€ Intelligence Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* --- Intelligence Tab ---------------------------------------------â”€ */}
         {activeTab === "intelligence" && (
           <>
-            {/* â”€â”€ Launch Impact Calculator - Creator only â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Launch Impact Calculator - Creator only ------------ */}
             {scan.launchImpact && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6470,7 +6490,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Live Sandbox Proofs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Live Sandbox Proofs ------------------------------------------ */}
             <motion.div
               data-tour="sandbox-proofs"
               initial={{ opacity: 0, y: 10 }}
@@ -6486,7 +6506,7 @@ export default function ScanResultsPage() {
               />
             </motion.div>
 
-            {/* â”€â”€ Launch DNA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Launch DNA --------------------------------------------------------- */}
             {scan.launchDNA && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6497,7 +6517,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Product Hunt Readiness - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Product Hunt Readiness - Creator only ---------------â”€ */}
             {scan.productHuntScore && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6515,7 +6535,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Technical Co-Founder Narrative â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Technical Co-Founder Narrative ------------------------â”€ */}
             {scan.cofounderNarrative && scan.cofounderNarrative.length > 20 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6526,7 +6546,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Launch Replay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Launch Replay ---------------------------------------------------â”€ */}
             {scan.launchReplaySteps && scan.launchReplaySteps.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6537,7 +6557,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Regression Memory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Regression Memory --------------------------------------------- */}
             {scan.regressionDiff && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6548,7 +6568,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Benchmark Percentile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Benchmark Percentile ---------------------------------------â”€ */}
             {scan.benchmarkPercentile && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6559,7 +6579,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Launch Risk Forecast - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Launch Risk Forecast - Creator only ------------------ */}
             {scan.riskForecast && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6579,10 +6599,10 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* â”€â”€ Compliance Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* --- Compliance Tab ------------------------------------------------â”€ */}
         {activeTab === "compliance" && (
           <>
-            {/* â”€â”€ Compliance Audit - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Compliance Audit - Creator only ------------------------ */}
             {scan.complianceResults && scan.complianceResults.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6600,7 +6620,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Revenue Intelligence - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Revenue Intelligence - Creator only ------------------ */}
             {scan.revenueIntelligence && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6620,7 +6640,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Shadow API Radar - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Shadow API Radar - Creator only ------------------------ */}
             {scan.shadowApiFindings && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6638,7 +6658,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Secret & API Key Scanner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Secret & API Key Scanner ------------------------------------ */}
             {scan.secretScanResults && (
               <SecretScanPanel
                 data={scan.secretScanResults}
@@ -6648,7 +6668,7 @@ export default function ScanResultsPage() {
               />
             )}
 
-            {/* â”€â”€ Dependency CVE Tracker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Dependency CVE Tracker ------------------------------------â”€ */}
             {scan.packageVulns && (
               <PackageVulnsPanel
                 data={scan.packageVulns}
@@ -6660,10 +6680,10 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* â”€â”€ Advanced Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* --- Advanced Tab ---------------------------------------------------â”€ */}
         {activeTab === "advanced" && (
           <>
-            {/* â”€â”€ Digital Twin Simulation - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Digital Twin Simulation - Creator only --------------- */}
             {scan.digitalTwin && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6686,7 +6706,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Predictive Intelligence - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Predictive Intelligence - Creator only --------------- */}
             {scan.predictiveIntel && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6709,7 +6729,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Root Cause Engine - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Root Cause Engine - Creator only ------------------------ */}
             {scan.rootCause && scan.rootCause.chains.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6732,7 +6752,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ Cleanup Radar - Creator only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Cleanup Radar - Creator only ------------------------------ */}
             {scan.cleanupReport && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6750,7 +6770,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* â”€â”€ GitHub Workflow Integration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- GitHub Workflow Integration ---------------------------------â”€ */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -6761,10 +6781,10 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* â”€â”€ Issues Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* --- Issues Tab ------------------------------------------------------â”€ */}
         {activeTab === "issues" && (
           <>
-            {/* â”€â”€ Top 3 Action Plan â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Top 3 Action Plan --------------------------------------------- */}
             {topThree.length > 0 && (
               <div
                 data-tour="action-plan"
@@ -6799,12 +6819,12 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* â”€â”€ Pre-Launch Checklist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Pre-Launch Checklist ---------------------------------------â”€ */}
             {!activeAgent && (scan.issues ?? []).length > 0 && (
               <PreLaunchChecklist scan={scan} />
             )}
 
-            {/* â”€â”€ Confidence legend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* --- Confidence legend --------------------------------------------- */}
             <div
               className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-xl px-5 py-3`}
             >
@@ -7094,7 +7114,7 @@ export default function ScanResultsPage() {
                 </div>
               </div>
               <div className="p-6">
-                <DeepTech40Panel scan={scan} />
+                <DeepTech40Panel scan={scan} activeSection={window.location.hash.replace("#deeptech-", "")} />
               </div>
             </div>
           </>
@@ -7102,7 +7122,7 @@ export default function ScanResultsPage() {
 
 
 
-        {/* â”€â”€ Privacy footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* --- Privacy footer ------------------------------------------------â”€ */}
         <div className="flex items-center gap-2 justify-center py-4">
           <ShieldCheck className="w-3.5 h-3.5 text-green-400/60" />
           <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}
@@ -7112,7 +7132,7 @@ export default function ScanResultsPage() {
         </div>
       </main>
 
-      {/* â”€â”€ Guided Report Tour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* --- Guided Report Tour ------------------------------------------ */}
       <ReportTour onStartTour={(cb) => { tourStartRef.current = cb; }} />
     </div>
     </DashboardLayout>
