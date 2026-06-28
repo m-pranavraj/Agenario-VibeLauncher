@@ -1,0 +1,42 @@
+#!/bin/sh
+# Pre-commit hook: typecheck staged .ts/.tsx files and check for debug leftovers
+
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx)$')
+
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+echo "🔍 Running pre-commit checks..."
+
+# Check for debugger statements
+for file in $STAGED_FILES; do
+  if [ -f "$file" ]; then
+    if grep -n 'debugger;' "$file" 2>/dev/null; then
+      echo "❌ Found debugger statement in $file"
+      exit 1
+    fi
+  fi
+done
+
+# Run TypeScript typecheck on the whole project if tsc is available
+if command -v pnpm &> /dev/null; then
+  echo "📦 Running TypeScript type check..."
+  pnpm run typecheck:libs 2>/dev/null
+  TSC_EXIT=$?
+  if [ $TSC_EXIT -ne 0 ]; then
+    echo "❌ TypeScript type check failed. Run 'pnpm run typecheck:libs' for details."
+    exit 1
+  fi
+
+  echo "📦 Running API server type check..."
+  pnpm --filter @workspace/api-server run typecheck 2>/dev/null
+  TSC_API=$?
+  if [ $TSC_API -ne 0 ]; then
+    echo "❌ API server type check failed. Run 'pnpm --filter @workspace/api-server run typecheck' for details."
+    exit 1
+  fi
+fi
+
+echo "✅ Pre-commit checks passed."
+exit 0

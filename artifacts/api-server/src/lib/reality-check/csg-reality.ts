@@ -477,11 +477,11 @@ function scanCleanupCandidates(
   const seenSizes = new Map<number, string[]>();
   for (const file of files) {
     if (!sourceExts.has(file.path.slice(file.path.lastIndexOf(".")).toLowerCase())) continue;
-    const hash = file.content.length;
-    if (!seenSizes.has(hash)) seenSizes.set(hash, []);
-    seenSizes.get(hash)!.push(file.path);
+    const sz = file.content.length;
+    if (!seenSizes.has(sz)) seenSizes.set(sz, []);
+    seenSizes.get(sz)!.push(file.path);
   }
-  for (const [, paths] of seenSizes) {
+  for (const [sizeBytes, paths] of seenSizes) {
     if (paths.length < 2) continue;
     for (let i = 0; i < Math.min(paths.length, 5); i++) {
       for (let j = i + 1; j < Math.min(paths.length, 5); j++) {
@@ -490,9 +490,9 @@ function scanCleanupCandidates(
         candidates.push({
           id: `cleanup-dup-${candidates.length + 1}`, type: "duplicate", severity: "low",
           title: `Possible duplicate: ${a.split("/").pop()} ≈ ${b.split("/").pop()}`,
-          description: `${a} and ${b} have identical size (${hash} bytes).`,
+          description: `${a} and ${b} have identical size (${sizeBytes} bytes).`,
           filePath: a, confidence: 65,
-          reason: [`Both files are ${hash} bytes`, "Same extension"],
+          reason: [`Both files are ${sizeBytes} bytes`, "Same extension"],
           suggestedAction: `Diff: 'diff ${a} ${b}'. Remove one and update imports.`,
           estimatedCleanup: "1 file, ~2-50 KB",
         });

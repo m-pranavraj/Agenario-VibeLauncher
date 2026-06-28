@@ -14,4 +14,4 @@ export const insertConversationSchema = createInsertSchema(conversations).omit({
 });
 
 export type Conversation = typeof conversations.$inferSelect;
-export type InsertConversation = z.infer<typeof insertConversationSchema>;
+export type InsertConversation = ReturnType<typeof createInsertSchema<typeof conversations>>["_input"];

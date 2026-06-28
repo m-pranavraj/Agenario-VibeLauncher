@@ -20,4 +20,4 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
 });
 
 export type Message = typeof messages.$inferSelect;
-export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type InsertMessage = ReturnType<typeof createInsertSchema<typeof messages>>["_input"];

@@ -172,5 +172,5 @@ export const scansTable = pgTable("scans", {
 });
 
 export const insertScanSchema = createInsertSchema(scansTable).omit({ id: true, createdAt: true });
-export type InsertScan = z.infer<typeof insertScanSchema>;
+export type InsertScan = ReturnType<typeof createInsertSchema<typeof scansTable>>["_input"];
 export type Scan = typeof scansTable.$inferSelect;

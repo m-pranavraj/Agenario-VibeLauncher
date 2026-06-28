@@ -31,5 +31,5 @@ export const scanIssuesTable = pgTable("scan_issues", {
 });
 
 export const insertScanIssueSchema = createInsertSchema(scanIssuesTable).omit({ id: true });
-export type InsertScanIssue = z.infer<typeof insertScanIssueSchema>;
+export type InsertScanIssue = ReturnType<typeof createInsertSchema<typeof scanIssuesTable>>["_input"];
 export type ScanIssue = typeof scanIssuesTable.$inferSelect;

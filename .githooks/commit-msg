@@ -1,0 +1,25 @@
+#!/bin/sh
+# commit-msg hook: validate conventional commit format
+
+COMMIT_MSG=$(cat "$1")
+
+# Allow common commit prefixes
+if ! echo "$COMMIT_MSG" | grep -qE '^(feat|fix|chore|docs|style|refactor|perf|test|ci|build|revert|wip)(\(.+\))?: .+'; then
+  if ! echo "$COMMIT_MSG" | grep -qE '^(Merge|Squash|Release|Version)'; then
+    echo ""
+    echo "⚠️  Commit message should follow conventional format:"
+    echo "   feat(scope): message"
+    echo "   fix(scope): message"
+    echo "   chore: message"
+    echo "   docs: message"
+    echo "   refactor: message"
+    echo "   test: message"
+    echo "   ci: message"
+    echo ""
+    echo "   Example: feat(scanner): add OSV CVE live feed"
+    echo ""
+    exit 1
+  fi
+fi
+
+exit 0

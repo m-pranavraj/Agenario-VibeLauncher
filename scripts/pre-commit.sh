@@ -1,0 +1,24 @@
+#!/bin/sh
+# Pre-commit hook: run typecheck + prettier on staged files
+# Install: ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
+
+echo "🔍 Running pre-commit checks..."
+
+# Typecheck libs
+pnpm run typecheck:libs
+if [ $? -ne 0 ]; then
+  echo "❌ TypeScript typecheck failed. Fix errors before committing."
+  exit 1
+fi
+
+# Check changed files with prettier
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|json|css)$' || true)
+if [ -n "$STAGED_FILES" ]; then
+  for file in $STAGED_FILES; do
+    if [ -f "$file" ]; then
+      npx prettier --check "$file" 2>/dev/null || echo "⚠️  Prettier issues in $file (not blocking)"
+    fi
+  done
+fi
+
+echo "✅ Pre-commit checks passed"
