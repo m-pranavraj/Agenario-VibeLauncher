@@ -1613,7 +1613,7 @@ function EvidenceCard({
             </div>
           )}
 
-          {/* --- AI Fix Generator ---------------------------â”€ */}
+          {/* --- AI Fix Generator ---------------------------- */}
           {scanId && (
             isCreator ? (
               <div className="space-y-2">
@@ -2137,9 +2137,9 @@ function OldRevenueIntelligenceSection({ revenue }: { revenue: RevenueIntelligen
   );
 }
 
-// ------------------------------------------------------------------------------------------â”€
+// -------------------------------------------------------------------------------------------
 // New Feature Panels
-// ------------------------------------------------------------------------------------------â”€
+// -------------------------------------------------------------------------------------------
 
 const PROOF_TYPE_CONFIG = {
   idor: { label: "IDOR Probe", icon: Lock, color: "text-red-400", bg: "bg-red-500/[0.07] border-red-500/20" },
@@ -3200,7 +3200,7 @@ function ShareBadgeButton({ scan }: { scan: ScanDetail }) {
   );
 }
 
-// --- Secret & API Key Leakage Panel ---------------------------------------------------------------â”€
+// --- Secret & API Key Leakage Panel ----------------------------------------------------------------
 const RISK_CONFIG = {
   critical: { bg: "bg-red-500/[0.08] border-red-500/20", badge: "bg-red-500/15 text-red-400 border-red-500/25", dot: "bg-red-500" },
   high: { bg: "bg-amber-500/[0.06] border-amber-500/18", badge: "bg-amber-500/15 text-amber-400 border-amber-500/25", dot: "bg-amber-500" },
@@ -3337,7 +3337,7 @@ function SecretScanPanel({ data, isCreator }: { data: NonNullable<ScanDetail["se
   );
 }
 
-// --- Package CVE Vulnerability Panel ------------------------------------------------------------â”€
+// --- Package CVE Vulnerability Panel -------------------------------------------------------------
 const CVSS_COLOR = (score: number) =>
   score >= 9 ? "text-red-400" : score >= 7 ? "text-amber-400" : score >= 4 ? "text-yellow-400" : "text-white/40";
 
@@ -3691,7 +3691,7 @@ className={`flex items-center gap-2 px-2.5 py-1 rounded-full border whitespace-n
   );
 }
 
-// --- Digital Twin Panel ---------------------------------------------------------------------------------â”€
+// --- Digital Twin Panel ----------------------------------------------------------------------------------
 function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCreator: boolean }) {
   const isLight = useIsLight();
   const [openSection, setOpenSection] = useState<"journeys" | "chaos" | "attacks">("journeys");
@@ -4057,7 +4057,7 @@ function RootCausePanel({ data, isCreator }: { data: RootCauseResult; isCreator:
   );
 }
 
-// --- Cleanup Radar Panel ---------------------------------------------------------------------------------â”€
+// --- Cleanup Radar Panel ----------------------------------------------------------------------------------
 function CleanupRadarPanel({ data }: { data: NonNullable<ScanDetail["cleanupReport"]> }) {
   const isLight = useIsLight();
   const [expanded, setExpanded] = useState(false);
@@ -4212,7 +4212,7 @@ function CleanupFindingRow({ finding: f }: { finding: NonNullable<ScanDetail["cl
   );
 }
 
-// --- Pre-Launch Checklist ------------------------------------------------------------------------------â”€
+// --- Pre-Launch Checklist -------------------------------------------------------------------------------
 function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
   const isLight = useIsLight();
   const storageKey = `checklist-${scan.id}`;
@@ -4725,7 +4725,7 @@ function CofounderQAPanel({ scanId }: { scanId: number }) {
   );
 }
 
-/* --- Premium Animated Scan Loading Screen ---------------------------------------------â”€ */
+/* --- Premium Animated Scan Loading Screen ---------------------------------------------- */
 const ANALYSIS_STEPS = [
   { label: "Security & Authentication", icon: Lock,         color: "#f87171" },
   { label: "Compliance & Regulatory",   icon:   Clipboard,color: "#60a5fa" },
@@ -4769,7 +4769,7 @@ function ScanRunningScreen({
 
   return (
     <div className={`min-h-screen ${t.page} flex items-center justify-center px-6`}>
-      {/* --- Ambient glow ---â”€ */}
+      {/* --- Ambient glow ---- */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
           animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.5, 0.3] }}
@@ -4780,7 +4780,7 @@ function ScanRunningScreen({
       </div>
 
       <div className="relative max-w-sm w-full space-y-8 z-10">
-        {/* --- Progress ring ---â”€ */}
+        {/* --- Progress ring ---- */}
         <div className="flex flex-col items-center gap-5">
           <div className="relative">
             {/* Outer glow ring */}
@@ -4828,7 +4828,7 @@ function ScanRunningScreen({
           </div>
         </div>
 
-        {/* --- Analysis step list ---â”€ */}
+        {/* --- Analysis step list ---- */}
         <div className="space-y-2">
           {ANALYSIS_STEPS.map((step, i) => {
             const done = i < visibleStep;
@@ -4874,7 +4874,7 @@ function ScanRunningScreen({
           })}
         </div>
 
-        {/* --- Source chip ---â”€ */}
+        {/* --- Source chip ---- */}
         {sourceInput && (
           <div className={`flex items-center justify-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}>
             <Search className="w-3 h-3" />
@@ -4886,7 +4886,7 @@ function ScanRunningScreen({
   );
 }
 
-// --- Architecture Diagram Panel — React Flow ---------------------------------------------â”€
+// --- Architecture Diagram Panel — React Flow ----------------------------------------------
 // World-class interactive architecture map with glassmorphism nodes,
 // severity glow-rings, animated edges, and red issue-count badges.
 
@@ -5154,7 +5154,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
         </div>
       </div>
 
-      {/* --- React Flow canvas ---------------------------------------------------------â”€ */}
+      {/* --- React Flow canvas ---------------------------------------------------------- */}
       <div
         style={{ height: flowHeight }}
         className={`w-full relative ${isLight ? "bg-gray-50/80" : "bg-[#080c14]"}`}
@@ -5193,7 +5193,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
         </div>
       </div>
 
-      {/* --- Per-node issue breakdown ------------------------------------------------â”€ */}
+      {/* --- Per-node issue breakdown ------------------------------------------------- */}
       {affectedNodes.length > 0 ? (
         <div className={`border-t ${isLight ? "border-gray-100" : "border-white/[0.05]"}`}>
           <div className={`px-6 py-2.5 ${isLight ? "bg-gray-50" : "bg-white/[0.01]"}`}>
@@ -5278,7 +5278,7 @@ function ArchitectureDiagramPanel({ scan }: { scan: ScanDetail }) {
   );
 }
 
-// --- Report Tour ---------------------------------------------------------------------------------------â”€
+// --- Report Tour ----------------------------------------------------------------------------------------
 // Cloud-style tooltip tour. Auto-shows on first report view, re-triggerable
 // via the "?" button. Uses data-tour attributes to locate elements.
 
@@ -5819,9 +5819,13 @@ export default function ScanResultsPage() {
   const [scan, setScan] = useState<ScanDetail | null>(null);
   const [scanLoading, setScanLoading] = useState(true);
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(() => {
     const hash = window.location.hash.replace("#", "");
+    if (hash.startsWith("issues")) return "issues";
     if (hash.startsWith("deeptech")) return "deeptech";
+    if (hash.startsWith("impact")) return "intelligence";
+    if (hash === "sandbox") return "overview";
     return hash || "overview";
   });
 
@@ -5829,11 +5833,34 @@ export default function ScanResultsPage() {
     const handleHash = () => {
       const hash = window.location.hash.replace("#", "");
       if (hash) {
-        if (hash.startsWith("deeptech")) {
+        if (hash.startsWith("issues")) {
+          setActiveTab("issues");
+          const cat = hash.replace("issues-", "");
+          if (["security", "compliance", "performance", "uiux"].includes(cat)) {
+            setActiveCategory(cat);
+          } else {
+            setActiveCategory(null);
+          }
+        } else if (hash.startsWith("deeptech")) {
           setActiveTab("deeptech");
+        } else if (hash.startsWith("impact")) {
+          setActiveTab("intelligence");
+          setTimeout(() => {
+            const el = document.getElementById(hash);
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 150);
+        } else if (hash === "sandbox") {
+          setActiveTab("overview");
+          setTimeout(() => {
+            const el = document.getElementById("sandbox-proofs");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 150);
         } else {
           setActiveTab(hash);
+          setActiveCategory(null);
         }
+      } else {
+        setActiveCategory(null);
       }
     };
     window.addEventListener("hashchange", handleHash);
@@ -6042,10 +6069,13 @@ export default function ScanResultsPage() {
   const agentFiltered = activeAgent
     ? safeIssues.filter((i: any) => i.agentName === activeAgent)
     : safeIssues;
+  const categoryFiltered = activeCategory
+    ? agentFiltered.filter((i: any) => (i.category || "").toLowerCase() === activeCategory.toLowerCase())
+    : agentFiltered;
   const filteredIssues =
     evidenceFilter === "all"
-      ? agentFiltered
-      : agentFiltered.filter(
+      ? categoryFiltered
+      : categoryFiltered.filter(
           (i: any) => (i.sourceEvidence ?? "ai_reasoning") === evidenceFilter,
         );
   const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -6157,19 +6187,19 @@ export default function ScanResultsPage() {
       </nav>
 
       <main className="w-full max-w-full lg:max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-5 overflow-hidden">
-        {/* --- Sticky Launch Alert Banner ------------------------------â”€ */}
+        {/* --- Sticky Launch Alert Banner ------------------------------- */}
         {/* Executive Overview Dashboard Component */}
         <ExecutiveOverview scan={scan} isLight={isLight} />
 
         <StickyLaunchAlertBanner scan={scan} />
 
-        {/* --- Launch Gate Banner ------------------------------------------------â”€ */}
+        {/* --- Launch Gate Banner ------------------------------------------------- */}
         <LaunchGateBanner scan={scan} isLight={isLight} />
 
-        {/* --- Locked Premium Insights (free users) ---------------â”€ */}
+        {/* --- Locked Premium Insights (free users) ---------------- */}
         <LockedInsightsPanel scan={scan} plan={user.plan} />
 
-        {/* --- Section Tab Navigation ------------------------------------â”€ */}
+        {/* --- Section Tab Navigation ------------------------------------- */}
         <div
           className={`sticky top-[57px] z-[9] -mx-6 px-6 py-2.5 ${t.tabBar}`}
         >
@@ -6234,7 +6264,7 @@ export default function ScanResultsPage() {
           </div>
         </div>
 
-        {/* --- Overview Tab ---------------------------------------------------â”€ */}
+        {/* --- Overview Tab ---------------------------------------------------- */}
         {activeTab === "files" && (
           <div className="mb-4">
             <FileExplorer scan={scan} isLight={isLight} plan={user.plan} />
@@ -6243,7 +6273,7 @@ export default function ScanResultsPage() {
 
         {activeTab === "overview" && (
           <>
-            {/* --- Demo-to-Market-Ready Pipeline & Traffic Light Verdict ------------------------------â”€ */}
+            {/* --- Demo-to-Market-Ready Pipeline & Traffic Light Verdict ------------------------------- */}
             {scan.greenLightVerdict && (
               <div className={`${isLight ? "bg-white border-gray-200 shadow-sm" : "bg-[#111] border-white/10"} border rounded-2xl p-6 mb-4`}>
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -6436,7 +6466,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* --- Architecture Audit ------------------------------------------â”€ */}
+            {/* --- Architecture Audit ------------------------------------------- */}
             <SectionLabel label="Architecture Audit" icon={Network} isLight={isLight} />
             <motion.div
               data-tour="architecture"
@@ -6452,7 +6482,7 @@ export default function ScanResultsPage() {
               <SectionLabel label="Detected Stack" icon={Cpu} isLight={isLight} />
             )}
 
-            {/* --- VibeCode Intelligence Network ---------------------------â”€ */}
+            {/* --- VibeCode Intelligence Network ---------------------------- */}
             {scan.vibeTool && scan.vibeTool !== "unknown" && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6469,7 +6499,7 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* --- Intelligence Tab ---------------------------------------------â”€ */}
+        {/* --- Intelligence Tab ---------------------------------------------- */}
         {activeTab === "intelligence" && (
           <>
             {/* --- Launch Impact Calculator - Creator only ------------ */}
@@ -6509,6 +6539,7 @@ export default function ScanResultsPage() {
             {/* --- Launch DNA --------------------------------------------------------- */}
             {scan.launchDNA && (
               <motion.div
+                id="impact-revenue"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.08 }}
@@ -6517,9 +6548,10 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* --- Product Hunt Readiness - Creator only ---------------â”€ */}
+            {/* --- Product Hunt Readiness - Creator only ---------------- */}
             {scan.productHuntScore && (
               <motion.div
+                id="impact-producthunt"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.085 }}
@@ -6535,9 +6567,10 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* --- Technical Co-Founder Narrative ------------------------â”€ */}
+            {/* --- Technical Co-Founder Narrative ------------------------- */}
             {scan.cofounderNarrative && scan.cofounderNarrative.length > 20 && (
               <motion.div
+                id="impact-reality"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.09 }}
@@ -6546,7 +6579,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* --- Launch Replay ---------------------------------------------------â”€ */}
+            {/* --- Launch Replay ---------------------------------------------------- */}
             {scan.launchReplaySteps && scan.launchReplaySteps.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6568,7 +6601,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* --- Benchmark Percentile ---------------------------------------â”€ */}
+            {/* --- Benchmark Percentile ---------------------------------------- */}
             {scan.benchmarkPercentile && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -6599,7 +6632,7 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* --- Compliance Tab ------------------------------------------------â”€ */}
+        {/* --- Compliance Tab ------------------------------------------------- */}
         {activeTab === "compliance" && (
           <>
             {/* --- Compliance Audit - Creator only ------------------------ */}
@@ -6668,7 +6701,7 @@ export default function ScanResultsPage() {
               />
             )}
 
-            {/* --- Dependency CVE Tracker ------------------------------------â”€ */}
+            {/* --- Dependency CVE Tracker ------------------------------------- */}
             {scan.packageVulns && (
               <PackageVulnsPanel
                 data={scan.packageVulns}
@@ -6680,7 +6713,7 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* --- Advanced Tab ---------------------------------------------------â”€ */}
+        {/* --- Advanced Tab ---------------------------------------------------- */}
         {activeTab === "advanced" && (
           <>
             {/* --- Digital Twin Simulation - Creator only --------------- */}
@@ -6770,7 +6803,7 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
 
-            {/* --- GitHub Workflow Integration ---------------------------------â”€ */}
+            {/* --- GitHub Workflow Integration ---------------------------------- */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -6781,7 +6814,7 @@ export default function ScanResultsPage() {
           </>
         )}
 
-        {/* --- Issues Tab ------------------------------------------------------â”€ */}
+        {/* --- Issues Tab ------------------------------------------------------- */}
         {activeTab === "issues" && (
           <>
             {/* --- Top 3 Action Plan --------------------------------------------- */}
@@ -6819,7 +6852,7 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* --- Pre-Launch Checklist ---------------------------------------â”€ */}
+            {/* --- Pre-Launch Checklist ---------------------------------------- */}
             {!activeAgent && (scan.issues ?? []).length > 0 && (
               <PreLaunchChecklist scan={scan} />
             )}
@@ -7122,7 +7155,7 @@ export default function ScanResultsPage() {
 
 
 
-        {/* --- Privacy footer ------------------------------------------------â”€ */}
+        {/* --- Privacy footer ------------------------------------------------- */}
         <div className="flex items-center gap-2 justify-center py-4">
           <ShieldCheck className="w-3.5 h-3.5 text-green-400/60" />
           <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"}`}

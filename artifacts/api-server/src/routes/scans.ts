@@ -1571,6 +1571,28 @@ router.get("/scans/:id/verdict", async (req, res): Promise<void> => {
 });
 
 
+// ── POST /scans/:id/cancel — cancel a running scan ────────────────
+router.post("/scans/:id/cancel", async (req, res): Promise<void> => {
+  if (!requireAuth(req, res)) return;
+
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid scan id" }); return; }
+
+  const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
+  if (!scan || scan.userId !== req.session.userId) {
+    res.status(404).json({ error: "Scan not found" }); return;
+  }
+
+  // Update status to failed with reason "Cancelled by user"
+  await db.update(scansTable).set({
+    status: "failed"
+  }).where(eq(scansTable.id, id));
+
+  logger.info({ scanId: id }, "Scan cancelled by user");
+  res.json({ success: true, status: "failed", message: "Scan cancelled" });
+});
+
 // ── POST /scans/:id/rescan — re-run analysis on a failed scan ────────────────
 router.post("/scans/:id/rescan", async (req, res): Promise<void> => {
   if (!requireAuth(req, res)) return;

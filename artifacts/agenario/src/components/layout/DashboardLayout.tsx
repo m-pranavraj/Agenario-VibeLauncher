@@ -96,69 +96,136 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {/* Report Sections */}
-          {[
-            { title: "Overview", hash: "overview", icon: LayoutDashboard },
-            { title: "Codebase Files", hash: "files", icon: Folder },
-            { title: "Findings & Issues", hash: "issues", icon: ShieldAlert },
-            { title: "Compliance Audit", hash: "compliance", icon: ShieldCheck },
-            { title: "Deep Tech 40 Engines", hash: "deeptech", icon: Activity },
-          ].map((item) => {
-            const isActive = activeHash === item.hash || (item.hash === "deeptech" && activeHash.startsWith("deeptech"));
-            
-            return (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive}
-                  className={[
-                    "transition-all duration-150 rounded-xl py-2 px-3",
-                    "hover:bg-slate-100 dark:hover:bg-white/[0.05]",
-                    "data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12]",
-                    "data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400",
-                    "text-slate-700 dark:text-slate-200",
-                  ].join(" ")}
-                >
-                  <a href={`/scans/${scanId}#${item.hash}`} className="flex items-center gap-3">
-                    <item.icon className="h-4 w-4 shrink-0" />
-                    <span className="font-medium text-sm">{item.title}</span>
-                  </a>
-                </SidebarMenuButton>
+          {/* 1. Readiness Score */}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={activeHash === "overview"}
+              className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
+            >
+              <a href={`/scans/${scanId}#overview`} className="flex items-center gap-3">
+                <LayoutDashboard className="h-4 w-4 shrink-0" />
+                <span className="font-medium text-sm">Readiness Score</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
 
-                {/* Subheadings for Deep Tech tab if it's the Deep Tech 40 Engines item */}
-                {item.hash === "deeptech" && (
-                  <div className="pl-6 mt-1.5 space-y-1.5 border-l border-slate-200 dark:border-white/10 ml-5">
-                    {[
-                      { label: "Core Semantic Graph", key: "A" },
-                      { label: "Cryptographic Proof", key: "B" },
-                      { label: "Formal Verification", key: "C" },
-                      { label: "Infrastructure", key: "D" },
-                      { label: "AI Safety", key: "E" },
-                      { label: "Architecture", key: "F" },
-                      { label: "Compliance & Reality", key: "G" },
-                      { label: "Advanced Engines", key: "H" },
-                      { label: "Distributed Systems", key: "I" },
-                    ].map((sub) => {
-                      const isSubActive = activeHash === `deeptech-${sub.key}`;
-                      return (
-                        <a
-                          key={sub.key}
-                          href={`/scans/${scanId}#deeptech-${sub.key}`}
-                          className={`block text-[11px] font-medium py-0.5 transition-colors ${
-                            isSubActive 
-                              ? "text-indigo-600 dark:text-indigo-400 font-semibold" 
-                              : "text-slate-500 hover:text-slate-800 dark:text-slate-400/60 dark:hover:text-white/90"
-                          }`}
-                        >
-                          {sub.label}
-                        </a>
-                      );
-                    })}
-                  </div>
-                )}
-              </SidebarMenuItem>
-            );
-          })}
+          {/* 2. Sandbox Proofs */}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={activeHash === "sandbox"}
+              className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
+            >
+              <a href={`/scans/${scanId}#sandbox`} className="flex items-center gap-3">
+                <Box className="h-4 w-4 shrink-0" />
+                <span className="font-medium text-sm">Sandbox Proofs</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* 3. Core Issues collapsible group */}
+          <SidebarMenuItem>
+            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-2">
+              Core Issues
+            </div>
+            <div className="pl-2 space-y-0.5 mt-1">
+              {[
+                { label: "Security Vulnerabilities", hash: "issues-security", color: "bg-rose-500" },
+                { label: "Compliance & Safety", hash: "issues-compliance", color: "bg-amber-500" },
+                { label: "Performance Sinks", hash: "issues-performance", color: "bg-blue-500" },
+                { label: "UI / UX Bottlenecks", hash: "issues-uiux", color: "bg-emerald-500" },
+              ].map((sub) => (
+                <a
+                  key={sub.hash}
+                  href={`/scans/${scanId}#${sub.hash}`}
+                  className={`flex items-center gap-2 text-xs py-1 px-3 rounded-lg transition-all ${
+                    activeHash === sub.hash
+                      ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.02]"
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${sub.color}`} />
+                  <span>{sub.label}</span>
+                </a>
+              ))}
+            </div>
+          </SidebarMenuItem>
+
+          {/* 4. Deep Tech collapsible group */}
+          <SidebarMenuItem>
+            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-2">
+              Deep Tech Analysis
+            </div>
+            <div className="pl-3 space-y-0.5 mt-1 border-l border-slate-200 dark:border-white/10 ml-5">
+              {[
+                { label: "Core Semantic Graph", key: "A" },
+                { label: "Cryptographic Proof", key: "B" },
+                { label: "Formal Verification", key: "C" },
+                { label: "Infrastructure", key: "D" },
+                { label: "AI Safety & Alignment", key: "E" },
+                { label: "Architecture & Perf", key: "F" },
+                { label: "Compliance & Reality", key: "G" },
+                { label: "Advanced Engines", key: "H" },
+                { label: "Distributed Systems", key: "I" },
+              ].map((sub) => {
+                const isSubActive = activeHash === `deeptech-${sub.key}`;
+                return (
+                  <a
+                    key={sub.key}
+                    href={`/scans/${scanId}#deeptech-${sub.key}`}
+                    className={`block text-[11px] font-medium py-0.5 px-2 rounded-md transition-colors ${
+                      isSubActive
+                        ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-500/5 dark:text-indigo-400 font-semibold"
+                        : "text-slate-500 hover:text-slate-800 dark:text-slate-400/60 dark:hover:text-white/90"
+                    }`}
+                  >
+                    {sub.label}
+                  </a>
+                );
+              })}
+            </div>
+          </SidebarMenuItem>
+
+          {/* 5. Launch Impact & Reality */}
+          <SidebarMenuItem>
+            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-2">
+              Launch Impact & Reality
+            </div>
+            <div className="pl-2 space-y-0.5 mt-1">
+              {[
+                { label: "Revenue Intelligence", hash: "impact-revenue" },
+                { label: "Product Hunt Readiness", hash: "impact-producthunt" },
+                { label: "Product Reality Narrative", hash: "impact-reality" },
+              ].map((sub) => (
+                <a
+                  key={sub.hash}
+                  href={`/scans/${scanId}#${sub.hash}`}
+                  className={`block text-xs py-1 px-3 rounded-lg transition-all ${
+                    activeHash === sub.hash
+                      ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.02]"
+                  }`}
+                >
+                  {sub.label}
+                </a>
+              ))}
+            </div>
+          </SidebarMenuItem>
+
+          {/* 6. Codebase Files */}
+          <SidebarMenuItem className="mt-2">
+            <SidebarMenuButton
+              asChild
+              isActive={activeHash === "files"}
+              className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
+            >
+              <a href={`/scans/${scanId}#files`} className="flex items-center gap-3">
+                <Folder className="h-4 w-4 shrink-0" />
+                <span className="font-medium text-sm">Codebase Files</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       );
     }

@@ -355,10 +355,33 @@ export default function DashboardPage() {
                               {truncated}
                             </h4>
                             {isRunning && (
-                              <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-500 border border-indigo-500/25">
-                                <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                                Scanning
-                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-500 border border-indigo-500/25">
+                                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                  Scanning
+                                </span>
+                                <button
+                                  onClick={async (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (confirm("Are you sure you want to cancel this scan?")) {
+                                      try {
+                                        const res = await fetch(`/api/scans/${project.id}/cancel`, { method: "POST" });
+                                        if (res.ok) {
+                                          window.location.reload();
+                                        } else {
+                                          alert("Failed to cancel scan");
+                                        }
+                                      } catch (err) {
+                                        alert("Failed to cancel scan");
+                                      }
+                                    }
+                                  }}
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-500 border border-red-500/25 hover:bg-red-500/35 transition-colors cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
                             )}
                             {isFailed && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-500 border border-red-500/25">
