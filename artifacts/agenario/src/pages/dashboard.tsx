@@ -96,9 +96,9 @@ export default function DashboardPage() {
   // Aggregate stats from real data
   const totalCritical = (scans ?? []).reduce((acc, s) => acc + ((s.issueCounts as any)?.critical || 0), 0);
   const totalHigh = (scans ?? []).reduce((acc, s) => acc + ((s.issueCounts as any)?.high || 0), 0);
-  const completedScans = (scans ?? []).filter(s => s.status === "complete").length;
+  const completedScans = (scans ?? []).filter(s => s.status === "completed").length;
   const avgScore = completedScans > 0 
-    ? Math.round((scans ?? []).filter(s => s.status === "complete" && s.score != null).reduce((acc, s) => acc + (s.score ?? 0), 0) / Math.max(1, completedScans))
+    ? Math.round((scans ?? []).filter(s => s.status === "completed" && s.score != null).reduce((acc, s) => acc + (s.score ?? 0), 0) / Math.max(1, completedScans))
     : null;
 
   if (loading || scansLoading) {

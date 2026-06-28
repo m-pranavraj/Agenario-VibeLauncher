@@ -11,6 +11,7 @@ interface FileExplorerProps {
 export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [liveContent, setLiveContent] = useState<string | null>(null);
+  const [gitHubTreeFiles, setGitHubTreeFiles] = useState<string[]>([]);
   const [fetching, setFetching] = useState(false);
   const [ghToken, setGhToken] = useState<string>(() => localStorage.getItem("gh_jit_token") || "");
 
@@ -58,6 +59,17 @@ export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
       });
     }
 
+    // 3. Get from deploySafe files
+    if ((scan as any).deploySafe?.filesScanned) {
+      const arr = (scan as any).deploySafe.filesScanned;
+      if (Array.isArray(arr)) {
+        arr.forEach((f: string) => filePaths.add(f));
+      }
+    }
+
+    // 4. Merge GitHub Tree files
+    gitHubTreeFiles.forEach(f => filePaths.add(f));
+
     // Default list if empty
     if (filePaths.size === 0) {
       filePaths.add("src/App.tsx");
@@ -66,13 +78,49 @@ export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
     }
 
     return Array.from(filePaths).sort();
-  }, [scan]);
+  }, [scan, gitHubTreeFiles]);
 
   // Find findings matching the selected file
   const fileFindings = useMemo(() => {
     if (!selectedFile || !scan.issues) return [];
     return scan.issues.filter(issue => issue.filePath === selectedFile);
   }, [selectedFile, scan.issues]);
+
+  // Load complete repository tree from GitHub recursively
+  useEffect(() => {
+    if (!githubInfo) return;
+    const fetchTree = async () => {
+      try {
+        const { owner, repo } = githubInfo;
+        const headers: Record<string, string> = {
+          "Accept": "application/vnd.github.v3+json"
+        };
+        if (ghToken) {
+          headers["Authorization"] = `token ${ghToken}`;
+        }
+        
+        // Try branches
+        const branches = ["main", "master"];
+        for (const branch of branches) {
+          const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+          const res = await fetch(url, { headers });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.tree) {
+              const paths = data.tree
+                .filter((node: any) => node.type === "blob")
+                .map((node: any) => node.path);
+              setGitHubTreeFiles(paths);
+              break;
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch repository tree", e);
+      }
+    };
+    fetchTree();
+  }, [githubInfo, ghToken]);
 
   // Load live file content from GitHub JIT
   useEffect(() => {
