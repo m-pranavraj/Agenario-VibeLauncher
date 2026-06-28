@@ -287,26 +287,61 @@ export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
                         <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"} leading-relaxed`}>
                           {finding.description}
                         </p>
-                        {finding.fixPrompt && (
-                          <div className="bg-black/40 p-2.5 rounded-lg border border-white/5 mt-1 relative overflow-hidden">
-                            <div className="text-[9px] text-indigo-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
-                              <Lightbulb className="w-3 h-3" /> Fix Suggestion
+                        {plan === "free" ? (
+                          <div className="bg-black/40 p-3 rounded-xl border border-white/5 mt-2 relative overflow-hidden">
+                            <div className="filter blur-[2px] select-none text-[10px] font-mono text-slate-500 leading-normal">
+                              {"// Premium Auto-Fix Suggestion\nfunction fixIssue() {\n  return secureExecution();\n}"}
                             </div>
-                            {plan === "free" ? (
-                              <div className="py-2 space-y-1 relative">
-                                <div className="filter blur-[2px] select-none text-[10px] font-mono text-slate-500 leading-normal">
-                                  {"// Premium Auto-Fix Suggestion\nfunction fixIssue() {\n  return secureExecution();\n}"}
-                                </div>
-                                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-center p-1 rounded-md">
-                                  <span className="text-[10px] font-bold text-violet-400 flex items-center gap-1">
-                                    🔒 Upgrade to Creator to view AI Fix Suggestions
+                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-center p-2 rounded-md">
+                              <span className="text-[10px] font-bold text-violet-400 flex items-center gap-1">
+                                🔒 Upgrade to Creator to view AI Fix Suggestions & Prompts
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-2.5 mt-2">
+                            {finding.autoFixCode && (
+                              <div className="bg-emerald-500/5 border border-emerald-500/10 p-3.5 rounded-xl space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                                    <CheckCircle className="w-3.5 h-3.5" /> Copy Autofix Code
                                   </span>
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(finding.autoFixCode || "");
+                                      alert("Autofix code copied to clipboard!");
+                                    }}
+                                    className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 hover:bg-emerald-500/35 text-emerald-400 transition-colors cursor-pointer"
+                                  >
+                                    Copy Code
+                                  </button>
                                 </div>
+                                <pre className="text-[10px] font-mono text-slate-300 overflow-x-auto p-2.5 bg-black/40 rounded-lg border border-white/5 whitespace-pre">
+                                  {finding.autoFixCode}
+                                </pre>
                               </div>
-                            ) : (
-                              <code className="text-[10px] font-mono text-slate-300 block overflow-x-auto whitespace-pre-wrap">
-                                {finding.fixPrompt}
-                              </code>
+                            )}
+
+                            {finding.fixPrompt && (
+                              <div className="bg-indigo-500/5 border border-indigo-500/10 p-3.5 rounded-xl space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1">
+                                    <Lightbulb className="w-3.5 h-3.5" /> AI Fix Prompt
+                                  </span>
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(finding.fixPrompt || "");
+                                      alert("Fix prompt copied to clipboard!");
+                                    }}
+                                    className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/20 hover:bg-indigo-500/35 text-indigo-400 transition-colors cursor-pointer"
+                                  >
+                                    Copy Prompt
+                                  </button>
+                                </div>
+                                <pre className="text-[10px] font-mono text-slate-300 overflow-x-auto p-2.5 bg-black/40 rounded-lg border border-white/5 whitespace-pre-wrap">
+                                  {finding.fixPrompt}
+                                </pre>
+                              </div>
                             )}
                           </div>
                         )}

@@ -226,6 +226,34 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
+
+          {/* Share Certificate / Copy Link Buttons */}
+          <SidebarMenuItem className="mt-4 px-2">
+            <button
+              onClick={() => {
+                const shareUrl = `${window.location.origin}/cert/${scanId}`;
+                navigator.clipboard.writeText(shareUrl);
+                alert("Launch Certificate link copied to clipboard!");
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:opacity-90 shadow-md transition-all cursor-pointer"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              <span>Share Certificate</span>
+            </button>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem className="px-2 mt-1.5">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                alert("Report Link copied to clipboard!");
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/80 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all cursor-pointer"
+            >
+              <Code2 className="h-3.5 w-3.5" />
+              <span>Copy Report Link</span>
+            </button>
+          </SidebarMenuItem>
         </SidebarMenu>
       );
     }
