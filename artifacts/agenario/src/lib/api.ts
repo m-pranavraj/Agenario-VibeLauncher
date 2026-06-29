@@ -98,6 +98,7 @@ export interface AdminStats {
     issueCounts: { critical: number; high: number; medium: number; low: number } | null;
     createdAt: string;
     completedAt: string | null;
+    unlockedByAdmin: boolean;
     userEmail: string | null;
     userName: string | null;
   }>;
@@ -883,6 +884,11 @@ export const api = {
       request<{ success: boolean; message: string }>(`/admin/users/${id}`, { method: "DELETE" }),
     deleteScan: (id: number) =>
       request<{ success: boolean; message: string }>(`/admin/scans/${id}`, { method: "DELETE" }),
+    toggleScanPro: (id: number, unlocked: boolean) =>
+      request<{ success: boolean; message: string }>(`/admin/scans/${id}/toggle-pro`, {
+        method: "POST",
+        body: JSON.stringify({ unlocked }),
+      }),
   },
   apiKeys: {
     list: () => request<{ keys: Array<{ id: number; prefix: string; name: string; lastUsedAt: string | null; createdAt: string; revokedAt: string | null }> }>("/api-keys"),

@@ -386,6 +386,10 @@ async function runAnalysisPipeline(opts: {
   let failSafe: any = null;
   let archScan: any = null;
   let cogFlow: any = null;
+  let regGraph: any = null;
+  let symCost: any = null;
+  let obsCover: any = null;
+  let crossLanguageTaint: any = null;
   let sandboxResult: SandboxRunResult | null = null;
 
   if (dir) {
@@ -424,6 +428,16 @@ async function runAnalysisPipeline(opts: {
     try {
       csg = buildCSG(keyFiles ?? []);
       const cltResult = await inferCrossLanguageBoundaries(keyFiles ?? []);
+      crossLanguageTaint = {
+        stats: cltResult.stats,
+        findings: cltResult.findings.map(f => ({
+          id: f.id, type: f.type, severity: f.severity, title: f.title,
+          routePair: f.routePair, frontendFile: f.frontendFile,
+          backendFile: f.backendFile, sanitized: f.sanitized,
+          taintChain: f.taintChain,
+        })),
+        scanDate: new Date().toISOString(),
+      };
       const timeAwareDepsData = await analyzeTimeAwareDependencies(keyFiles ?? [], (pkg.dependencies || {}) as Record<string, string>);
       const timeAwareFindings = timeAwareDepsData.packages
         .filter(p => p.severity !== "none")
@@ -459,11 +473,11 @@ async function runAnalysisPipeline(opts: {
         logger.warn({ err, scanId }, "Failed to persist time-aware deps to DB");
       }
 
-      const regGraph = runRegGraph(keyFiles ?? [], csg);
-      const symCost = runSymCost(keyFiles ?? [], pkg);
+      regGraph = runRegGraph(keyFiles ?? [], csg);
+      symCost = runSymCost(keyFiles ?? [], pkg);
       cogFlow = runCogFlow(csg, keyFiles ?? []);
       failSafe = runFailSafe(csg, keyFiles ?? []);
-      const obsCover = runObsCover(csg, keyFiles ?? []);
+      obsCover = runObsCover(csg, keyFiles ?? []);
       deploySafe = runDeploySafe(keyFiles ?? []);
       archScan = runArchScan(csg, keyFiles ?? []);
       promptTrace = runPromptTrace(keyFiles ?? [], csg);
@@ -1189,6 +1203,10 @@ async function runAnalysisPipeline(opts: {
        productReality: productReality ?? null,
        marketReadinessTracker: marketReadiness ?? null,
        greenLightVerdict: greenLightVerdict ?? null,
+       regGraph: regGraph ?? null,
+       symCost: symCost ?? null,
+       obsCover: obsCover ?? null,
+       crossLanguageTaint: crossLanguageTaint ?? null,
        cleanupFindings: cleanupReport ? {
          totalFindings: cleanupReport.totalFindings,
          debtScore: cleanupReport.debtScore,

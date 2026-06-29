@@ -32,6 +32,7 @@ export function applyTierGate(
   data: Record<string, unknown>,
   plan: string,
 ): Record<string, unknown> {
+  if (data["unlockedByAdmin"] === true) return data;
   if (plan !== "free") return data;
 
   // ── Issues: first 3 fully unlocked, issues 4-5 fix-prompt visible but

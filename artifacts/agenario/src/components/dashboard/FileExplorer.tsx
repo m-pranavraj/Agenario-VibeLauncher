@@ -8,6 +8,75 @@ interface FileExplorerProps {
   plan: string;
 }
 
+function getFileExplanation(filePath: string): { explanation: string; architecture: string; type: string } {
+  const parts = filePath.split('/');
+  const name = parts[parts.length - 1];
+  
+  if (filePath.includes('App.tsx') || filePath.includes('App.jsx')) {
+    return {
+      type: "Application Routing & Root Component",
+      explanation: "This is the core React entry point. It manages client-side routing, theme providers, and mounts layout frames.",
+      architecture: "Root Node (Mount / Control Layer)"
+    };
+  }
+  if (filePath.includes('routes') || filePath.includes('api')) {
+    return {
+      type: "API Routing & Endpoint Handlers",
+      explanation: "Handles HTTP queries, integrates middlewares (session auth, rate limiting), and processes backend services.",
+      architecture: "Controller Layer (Transport & Orchestration)"
+    };
+  }
+  if (filePath.includes('components/')) {
+    return {
+      type: "Reusable UI Component",
+      explanation: "Declares modular user interface layout. Uses Tailwind CSS styling, React state primitives, and triggers events.",
+      architecture: "Presentation Layer (Reusable Modular Node)"
+    };
+  }
+  if (filePath.includes('pages/')) {
+    return {
+      type: "Page Screen Wrapper",
+      explanation: "Main layout component representing a full viewport route. Orchestrates internal container states.",
+      architecture: "Presentation Layer (Screen Node)"
+    };
+  }
+  if (filePath.includes('hooks/')) {
+    return {
+      type: "Custom React Hook",
+      explanation: "Encapsulates reusable reactive logic (fetching, authentication context, state sync) out of visual rendering components.",
+      architecture: "Domain Logic / React Extension State"
+    };
+  }
+  if (filePath.includes('package.json')) {
+    return {
+      type: "Dependency Manifest",
+      explanation: "Defines package metadata, execution scripts, build dependencies, and engine versions.",
+      architecture: "Workspace Infrastructure"
+    };
+  }
+  if (filePath.includes('utils/') || filePath.includes('lib/')) {
+    return {
+      type: "Utility & Core Helper Library",
+      explanation: "Exports pure helper functions, configuration files, and common algorithmic processors used throughout the project.",
+      architecture: "Service Layer (Utility Core)"
+    };
+  }
+  if (filePath.includes('db') || filePath.includes('schema')) {
+    return {
+      type: "Database Schema Definition",
+      explanation: "Configures database columns, indexes, relationships, and tables. Acts as the Single Source of Truth for database objects.",
+      architecture: "Data Layer (Persistence Specification)"
+    };
+  }
+  
+  // Generic Fallback
+  return {
+    type: "Source Code Module",
+    explanation: `This file contains code contributing to application runtime business operations.`,
+    architecture: "Application Domain Logic"
+  };
+}
+
 export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [liveContent, setLiveContent] = useState<string | null>(null);
@@ -304,6 +373,29 @@ export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
               </div>
             </div>
             
+            {/* Architectural Explanation Header */}
+            {(() => {
+              const info = getFileExplanation(selectedFile);
+              return (
+                <div className={`p-4 border-b ${isLight ? "bg-indigo-50/30 border-slate-200" : "bg-indigo-500/[0.02] border-white/10"} flex flex-col md:flex-row md:items-center justify-between gap-2.5`}>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase tracking-wide">
+                        {info.type}
+                      </span>
+                      <span className="text-[10px] font-mono opacity-60">
+                        {info.architecture}
+                      </span>
+                    </div>
+                    <p className={`text-xs ${isLight ? "text-slate-600" : "text-white/70"} leading-relaxed max-w-2xl`}>
+                      <span className="font-semibold text-indigo-400">Architectural Role: </span>
+                      {info.explanation}
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Split Code and Finding details */}
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
               

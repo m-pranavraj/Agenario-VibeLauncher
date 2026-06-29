@@ -6247,6 +6247,17 @@ export default function ScanResultsPage() {
       </nav>
 
       <main className="w-full max-w-full lg:max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-5 overflow-hidden">
+        {scan.unlockedByAdmin && (
+          <div className="bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-indigo-500/25 rounded-2xl p-4 flex items-center justify-between shadow-[0_0_12px_rgba(99,102,241,0.1)]">
+            <div className="flex items-center gap-3">
+              <span className="text-xl animate-bounce">🎁</span>
+              <div>
+                <h4 className="text-xs font-bold text-indigo-400 font-['Syne']">Free Pro 1 Scan Access Given (Gift Bonus)</h4>
+                <p className="text-[10px] text-white/60 mt-0.5 font-medium">An administrator has unlocked this report. All premium deep tech analysis, verification cards, and reproduction replays are fully accessible.</p>
+              </div>
+            </div>
+          </div>
+        )}
         {/* --- Section Content ---------------------------------------------------- */}
         {/* --- Overview Tab ---------------------------------------------------- */}
         {activeTab === "files" && (
@@ -7146,7 +7157,7 @@ export default function ScanResultsPage() {
                 </div>
               </div>
               <div className="p-6">
-                <DeepTech40Panel scan={scan} activeSection={window.location.hash.replace("#deeptech-", "")} />
+                <DeepTech40Panel scan={scan} activeSection={rawSection.replace("deeptech-", "")} />
               </div>
             </div>
           </>

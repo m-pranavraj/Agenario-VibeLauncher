@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, jsonb, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -111,6 +111,7 @@ export const scansTable = pgTable("scans", {
   knowledgeGraph: jsonb("knowledge_graph").$type<any>(),
   sandboxMeta: jsonb("sandbox_meta").$type<SandboxMeta>(),
   certId: text("cert_id"),
+  unlockedByAdmin: boolean("unlocked_by_admin").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp("completed_at", { withTimezone: true }),
 

@@ -63,6 +63,16 @@ export default function AdminPage() {
     }
   };
 
+  const handleTogglePro = async (scanId: number, unlocked: boolean) => {
+    try {
+      await api.admin.toggleScanPro(scanId, unlocked);
+      const updatedStats = await api.admin.stats();
+      setStats(updatedStats);
+    } catch (err: any) {
+      alert(err.message || "Failed to update pro status");
+    }
+  };
+
   const t = {
     page:    isLight ? "bg-gray-50 text-gray-900 min-h-screen" : "bg-[#050505] text-white min-h-screen",
     nav:     isLight ? "bg-white/90 border-b border-gray-200 backdrop-blur-md" : "bg-black/60 border-b border-white/[0.07] backdrop-blur-md",
@@ -545,6 +555,7 @@ export default function AdminPage() {
                           <th className="py-3 px-2">Launch score</th>
                           <th className="py-3 px-2">Stack / Tools</th>
                           <th className="py-3 px-2">Vulnerabilities</th>
+                          <th className="py-3 px-2">Pro Access</th>
                           <th className="py-3 px-2 text-right">Actions</th>
                         </tr>
                       </thead>
@@ -601,6 +612,18 @@ export default function AdminPage() {
                                 ) : (
                                   <span className="opacity-40">-</span>
                                 )}
+                              </td>
+                              <td className="py-3 px-2">
+                                <button
+                                  onClick={() => handleTogglePro(scan.id, !scan.unlockedByAdmin)}
+                                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border transition-all ${
+                                    scan.unlockedByAdmin
+                                      ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.2)]"
+                                      : "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                                  }`}
+                                >
+                                  {scan.unlockedByAdmin ? "🎁 Gifted (Pro)" : "Give Pro"}
+                                </button>
                               </td>
                               <td className="py-3 px-2 text-right">
                                 <div className="flex justify-end items-center gap-3">
