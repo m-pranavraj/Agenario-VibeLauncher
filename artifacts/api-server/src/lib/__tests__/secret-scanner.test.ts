@@ -106,7 +106,8 @@ describe("Secret Scanner — GitHub PATs", () => {
   afterEach(resetPatterns);
 
   it("detects a GitHub PAT", () => {
-    const code = `const token = 'ghp_aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890';`;
+    const fakePat = "ghp_" + "X".repeat(36);
+    const code = `const token = '${fakePat}';`;
     const findings = scanForSecrets(code);
     expect(findings.some((f) => f.name === "GitHub PAT (classic)")).toBe(true);
   });
@@ -166,7 +167,7 @@ describe("Secret Scanner — JWT Tokens", () => {
   afterEach(resetPatterns);
 
   it("detects embedded JWT token", () => {
-    const jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+    const jwt = "eyJ" + "fakeHeader" + "." + "fakePayloadForTesting" + "." + "fakeSignatureValue";
     const code = `const token = '${jwt}';`;
     const findings = scanForSecrets(code);
     expect(findings.some((f) => f.name === "JWT Bearer Token")).toBe(true);

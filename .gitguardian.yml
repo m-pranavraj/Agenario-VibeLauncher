@@ -1,0 +1,5 @@
+# GitGuardian configuration
+# Exclude secret scanner test files — they contain fake tokens used to
+# test detection regexes. These are NOT real secrets.
+paths-ignore:
+  - "artifacts/api-server/src/lib/__tests__/secret-scanner.test.ts"

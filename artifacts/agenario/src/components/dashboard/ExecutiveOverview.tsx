@@ -6,7 +6,6 @@ import { ShieldAlert, Activity, ShieldCheck, Cpu } from 'lucide-react';
 
 
 export function ExecutiveOverview({ scan, isLight }: { scan: any, isLight: boolean }) {
-  // Mock counters based on scan data for visual demonstration
   const cCount = (scan.issues ?? []).filter((i:any) => i.severity === 'critical').length;
   const hCount = (scan.issues ?? []).filter((i:any) => i.severity === 'high').length;
   const mCount = (scan.issues ?? []).filter((i:any) => i.severity === 'medium').length;
