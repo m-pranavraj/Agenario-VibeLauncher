@@ -147,15 +147,7 @@ router.get("/public/cert/:certId", async (req, res) => {
 
     let scan = null;
     const [scanByCert] = await db
-      .select({
-        id: scansTable.id,
-        sourceInput: scansTable.sourceInput,
-        score: scansTable.score,
-        launchVerdict: scansTable.launchVerdict,
-        completedAt: scansTable.completedAt,
-        issueCounts: scansTable.issueCounts,
-        certId: scansTable.certId,
-      })
+      .select()
       .from(scansTable)
       .where(eq(scansTable.certId, certId));
       
@@ -164,15 +156,7 @@ router.get("/public/cert/:certId", async (req, res) => {
     if (!scan && /^\d+$/.test(certId)) {
       const numericId = parseInt(certId, 10);
       const [scanById] = await db
-        .select({
-          id: scansTable.id,
-          sourceInput: scansTable.sourceInput,
-          score: scansTable.score,
-          launchVerdict: scansTable.launchVerdict,
-          completedAt: scansTable.completedAt,
-          issueCounts: scansTable.issueCounts,
-          certId: scansTable.certId,
-        })
+        .select()
         .from(scansTable)
         .where(eq(scansTable.id, numericId));
       scan = scanById;
@@ -183,7 +167,14 @@ router.get("/public/cert/:certId", async (req, res) => {
       return;
     }
 
+    const issues = await db
+      .select()
+      .from(scanIssuesTable)
+      .where(eq(scanIssuesTable.scanId, scan.id));
+
     res.json({
+      ...scan,
+      issues,
       certId: scan.certId,
       source: scan.sourceInput,
       score: scan.score,

@@ -903,7 +903,7 @@ export const api = {
   },
   public: {
     stats: () => request<{ scansDone: number; issuesReproduced: number; fixesGenerated: number; proofsGenerated: number; screenshotsCaptured: string }>("/public/stats"),
-    cert: (certId: string) => request<{ certId: string; source: string; score: number; verdict: string; completedAt: string; criticalIssues: number; totalIssues: number }>(`/public/cert/${certId}`),
+    cert: (certId: string) => request<ScanDetail & { certId: string; source: string; score: number; verdict: string; completedAt: string; criticalIssues: number; totalIssues: number }>(`/public/cert/${certId}`),
   },
   intelligence: {
     failures: (issueTitle: string) => request<{

@@ -5,6 +5,10 @@ import { Shield, ExternalLink, Loader2, Target, CheckCircle2, AlertTriangle, Shi
 import { api } from "@/lib/api";
 import { useIsLight } from "@/hooks/use-is-light";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
+import { FileExplorer } from "@/components/dashboard/FileExplorer";
+import { ConfidenceContractView } from "@/components/intelligence/ConfidenceContractView";
+import { DeepTech40Panel } from "@/components/deep-tech/DeepTech40Panel";
 
 export default function CertPage() {
   const [, params] = useRoute("/cert/:id");
@@ -93,35 +97,35 @@ export default function CertPage() {
       </nav>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-2xl mx-auto px-6 pt-20 pb-24">
-        <div className={`border rounded-3xl p-8 sm:p-12 relative overflow-hidden ${isLight ? "bg-white border-gray-200 shadow-xl" : "bg-[#111] border-white/10"}`}>
+      <main className="relative z-10 max-w-4xl mx-auto px-6 pt-12 pb-24 space-y-10">
+        <div className={`border rounded-3xl p-8 sm:p-10 relative overflow-hidden ${isLight ? "bg-white border-gray-200 shadow-xl" : "bg-[#111] border-white/10"}`}>
           {/* Certificate Header */}
-          <div className="flex flex-col items-center text-center mb-10">
+          <div className="flex flex-col items-center text-center mb-8">
             {isValid ? (
-              <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(16,185,129,0.3)] ${isLight ? "bg-emerald-50" : "bg-emerald-500/10"}`}>
-                <ShieldCheck className="w-10 h-10 text-emerald-500" />
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(16,185,129,0.25)] ${isLight ? "bg-emerald-50" : "bg-emerald-500/10"}`}>
+                <ShieldCheck className="w-8 h-8 text-emerald-500" />
               </div>
             ) : (
-              <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(245,158,11,0.2)] ${isLight ? "bg-amber-50" : "bg-amber-500/10"}`}>
-                <Shield className="w-10 h-10 text-amber-500" />
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(245,158,11,0.15)] ${isLight ? "bg-amber-50" : "bg-amber-500/10"}`}>
+                <Shield className="w-8 h-8 text-amber-500" />
               </div>
             )}
             
-            <h1 className="text-3xl sm:text-4xl font-bold font-['Syne'] tracking-tight mb-3">
+            <h1 className="text-2xl sm:text-3xl font-bold font-['Syne'] tracking-tight mb-2">
               Agenario Certified
             </h1>
-            <p className={`text-lg ${isLight ? "text-gray-500" : "text-white/50"} max-w-md`}>
+            <p className={`text-sm ${isLight ? "text-gray-500" : "text-white/50"} max-w-md`}>
               Independent security and launch readiness verification for modern applications.
             </p>
           </div>
 
           {/* Badge Preview */}
-          <div className={`flex justify-center mb-8`}>
-            <img src={badgeUrl} alt="Agenario Score Badge" className="h-6" />
+          <div className={`flex justify-center mb-6`}>
+            <img src={badgeUrl} alt="Agenario Logo" className="h-6" />
           </div>
 
           {/* Details Grid */}
-          <div className={`rounded-2xl border p-6 mb-8 ${isLight ? "bg-gray-50/50 border-gray-200" : "bg-white/5 border-white/5"}`}>
+          <div className={`rounded-2xl border p-6 mb-6 ${isLight ? "bg-gray-50/50 border-gray-200" : "bg-white/5 border-white/5"}`}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               
               <div>
@@ -178,7 +182,7 @@ export default function CertPage() {
           </div>
 
           {/* Share Actions */}
-          <div className="mb-8">
+          <div className="mb-6">
             <div className={`text-xs uppercase tracking-wider mb-3 font-semibold text-center ${isLight ? "text-gray-400" : "text-white/30"}`}>Share This Certificate</div>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <button onClick={shareTwitter} className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all ${isLight ? "bg-white border-gray-200 text-gray-700 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200" : "bg-[#161616] border-white/10 text-white/70 hover:text-sky-400 hover:border-sky-400/30"}`}>
@@ -197,10 +201,10 @@ export default function CertPage() {
           </div>
 
           {/* Badge Embed Code */}
-          <div className={`rounded-2xl border p-4 mb-8 ${isLight ? "bg-gray-50/50 border-gray-200" : "bg-white/5 border-white/5"}`}>
+          <div className={`rounded-2xl border p-4 mb-6 ${isLight ? "bg-gray-50/50 border-gray-200" : "bg-white/5 border-white/5"}`}>
             <div className={`text-xs uppercase tracking-wider mb-2 font-semibold ${isLight ? "text-gray-400" : "text-white/30"}`}>Embed Badge</div>
             <code className={`text-xs font-mono block p-3 rounded-xl border ${isLight ? "bg-white border-gray-200 text-gray-600" : "bg-black/40 border-white/5 text-white/50"}`}>
-              {`[![Agenario](${badgeUrl})](${currentUrl})`}
+              {`[![Agenario Logo](${badgeUrl})](${currentUrl})`}
             </code>
           </div>
 
@@ -213,6 +217,68 @@ export default function CertPage() {
             </Link>
           </div>
         </div>
+
+        {/* 1. Executive Summary */}
+        <section className="space-y-4 pt-4 border-t border-white/5">
+          <h2 className="text-xl font-bold font-['Syne'] flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-indigo-400 animate-pulse" />
+            Executive Audit Summary
+          </h2>
+          <ExecutiveOverview scan={cert as any} isLight={isLight} />
+        </section>
+
+        {/* 2. Detected Issues */}
+        {cert.issues && cert.issues.length > 0 && (
+          <section className="space-y-4 pt-4 border-t border-white/5">
+            <h2 className="text-xl font-bold font-['Syne'] flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500 animate-pulse" />
+              Detected Vulnerabilities ({cert.issues.length})
+            </h2>
+            <div className="space-y-3">
+              {cert.issues.map((issue: any) => (
+                <div key={issue.id} className={`p-5 rounded-2xl border ${isLight ? "bg-white border-gray-200" : "bg-white/[0.02] border-white/5"} space-y-2`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-500 border border-red-500/20 uppercase">
+                        {issue.severity}
+                      </span>
+                      <h4 className="text-xs font-bold">{issue.title}</h4>
+                    </div>
+                    <span className="text-[10px] font-mono opacity-50">{issue.filePath}:{issue.lineNumber}</span>
+                  </div>
+                  <p className={`text-xs ${isLight ? "text-gray-600" : "text-white/60"} leading-relaxed`}>{issue.description}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 3. Codebase Architecture & Explorer */}
+        <section className="space-y-4 pt-4 border-t border-white/5">
+          <h2 className="text-xl font-bold font-['Syne'] flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-emerald-400 animate-pulse" />
+            Codebase Architecture & Explorer
+          </h2>
+          <FileExplorer scan={cert as any} isLight={isLight} plan="creator" />
+        </section>
+
+        {/* 4. Deep Tech Verification Engines */}
+        <section className="space-y-4 pt-4 border-t border-white/5">
+          <h2 className="text-xl font-bold font-['Syne'] flex items-center gap-2">
+            <Target className="w-5 h-5 text-violet-400 animate-pulse" />
+            Deep Tech Verification Engines
+          </h2>
+          <DeepTech40Panel scan={cert as any} activeSection="A" />
+        </section>
+
+        {/* 5. Launch Confidence checklist */}
+        <section className="space-y-4 pt-4 border-t border-white/5">
+          <h2 className="text-xl font-bold font-['Syne'] flex items-center gap-2">
+            <Clock className="w-5 h-5 text-pink-400 animate-pulse" />
+            Launch Confidence Checklist
+          </h2>
+          <ConfidenceContractView scan={cert as any} isLight={isLight} />
+        </section>
       </main>
     </div>
   );

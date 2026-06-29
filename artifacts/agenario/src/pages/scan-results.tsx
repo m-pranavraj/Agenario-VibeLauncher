@@ -3159,8 +3159,8 @@ function ShareBadgeButton({ scan }: { scan: ScanDetail }) {
   const label = scan.launchVerdict === "ready" ? "launch-ready" : scan.launchVerdict === "do-not-launch" ? "do-not-launch" : "launch-with-caution";
 
   const badgeUrl = `https://img.shields.io/badge/Agenario-${score}%2F100_${encodeURIComponent(label)}-${color}?style=flat-square`;
-  const markdownBadge = `[![Agenario Score](${badgeUrl})](https://agenario.app)`;
-  const htmlBadge = `<a href="https://agenario.app"><img src="${badgeUrl}" alt="Agenario Score ${score}/100" /></a>`;
+  const markdownBadge = `[![Agenario Logo](${badgeUrl})](https://agenario.app)`;
+  const htmlBadge = `<a href="https://agenario.app"><img src="${badgeUrl}" alt="Agenario Logo" /></a>`;
 
   const options = [
     { label: "Markdown badge", value: markdownBadge, hint: "For GitHub README" },
