@@ -464,4 +464,126 @@ router.post("/auth/update-password", async (req, res): Promise<void> => {
   res.json({ success: true, message: "Password updated successfully. You can now log in." });
 });
 
+  // ── Google OAuth Routes ───────────────────────────────────────────────────
+router.get("/auth/google", (req, res) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI || "https://agenario.tech/api/auth/google/callback";
+  
+  if (!clientId) {
+    console.error("[GOOGLE AUTH] Missing GOOGLE_CLIENT_ID in env.");
+    res.status(500).send("Google OAuth is not configured on this server (Missing GOOGLE_CLIENT_ID)");
+    return;
+  }
+
+  const googleConsentUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `response_type=code` +
+    `&client_id=${clientId}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&scope=${encodeURIComponent("openid email profile")}` +
+    `&prompt=consent`;
+
+  res.redirect(googleConsentUrl);
+});
+
+router.get("/auth/google/callback", async (req, res): Promise<void> => {
+  const code = typeof req.query.code === "string" ? req.query.code : "";
+  if (!code) {
+    res.redirect("/login?error=Google auth callback failed (no code received)");
+    return;
+  }
+
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI || "https://agenario.tech/api/auth/google/callback";
+
+  if (!clientId || !clientSecret) {
+    console.error("[GOOGLE AUTH] Missing Client credentials in env.");
+    res.redirect("/login?error=Server OAuth misconfiguration");
+    return;
+  }
+
+  try {
+    // 1. Exchange auth code for access token
+    const tokenResp = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: "authorization_code",
+      }).toString(),
+    });
+
+    if (!tokenResp.ok) {
+      const tokenErr = await tokenResp.text();
+      console.error("[GOOGLE AUTH] Token exchange failed:", tokenErr);
+      res.redirect("/login?error=Token exchange failed");
+      return;
+    }
+
+    const tokens = await tokenResp.json() as { access_token: string; id_token?: string };
+    
+    // 2. Fetch user information from Google API
+    const userinfoResp = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${tokens.access_token}` },
+    });
+
+    if (!userinfoResp.ok) {
+      const userinfoErr = await userinfoResp.text();
+      console.error("[GOOGLE AUTH] Userinfo fetch failed:", userinfoErr);
+      res.redirect("/login?error=Failed to retrieve user profile");
+      return;
+    }
+
+    const googleUser = await userinfoResp.json() as { email: string; name?: string; sub: string };
+    const email = googleUser.email.toLowerCase().trim();
+    const name = googleUser.name || "Google User";
+
+    // 3. Upsert user in the database
+    let [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, email));
+
+    if (!user) {
+      [user] = await db
+        .insert(usersTable)
+        .values({
+          email,
+          name,
+          passwordHash: "", // Google SSO users have empty passwords
+          plan: "free",
+        })
+        .returning();
+      console.log(`[GOOGLE AUTH] Registered new user: ${email}`);
+    } else {
+      console.log(`[GOOGLE AUTH] Logged in existing user: ${email}`);
+    }
+
+    // 4. Save to session
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error("[GOOGLE AUTH] Session regeneration failed:", err);
+        res.redirect("/login?error=Session error");
+        return;
+      }
+      req.session.userId = user.id;
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error("[GOOGLE AUTH] Session save failed:", saveErr);
+          res.redirect("/login?error=Session save error");
+          return;
+        }
+        res.redirect("/dashboard");
+      });
+    });
+
+  } catch (err) {
+    console.error("[GOOGLE AUTH] Fatal authentication error:", err);
+    res.redirect("/login?error=OAuth internal error");
+  }
+});
+
 export default router;
