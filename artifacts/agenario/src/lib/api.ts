@@ -306,6 +306,7 @@ export interface Scan {
   id: number;
   certId?: string;
   userId: number;
+  unlockedByAdmin?: boolean;
   sourceType: string;
   sourceInput: string;
   appDescription: string | null;
