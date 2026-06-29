@@ -11,70 +11,82 @@ interface FileExplorerProps {
 function getFileExplanation(filePath: string): { explanation: string; architecture: string; type: string } {
   const parts = filePath.split('/');
   const name = parts[parts.length - 1];
+  const ext = name.split('.').pop() || '';
   
+  let type = "Source Code Module";
+  let architecture = "Application Domain Logic";
+  let explanation = `This file contains code contributing to application runtime business operations.`;
+
   if (filePath.includes('App.tsx') || filePath.includes('App.jsx')) {
-    return {
-      type: "Application Routing & Root Component",
-      explanation: "This is the core React entry point. It manages client-side routing, theme providers, and mounts layout frames.",
-      architecture: "Root Node (Mount / Control Layer)"
-    };
+    type = "Application Routing & Root Component";
+    architecture = "Root Node (Mount / Control Layer)";
+    explanation = "This is the core React entry point. It manages client-side routing, theme providers, global state context wrappers, and mounts layout frames.";
+  } else if (filePath.includes('routes/scans.ts')) {
+    type = "Scans Orchestrator API Controller";
+    architecture = "Controller Layer (Orchestration & Deep Verification)";
+    explanation = "Orchestrates static analysis and security scanning engines, computes readiness scores, handles issue generation, and saves detailed telemetry.";
+  } else if (filePath.includes('routes/admin.ts')) {
+    type = "Administration Operations API Endpoints";
+    architecture = "Control Plane (Security Administration)";
+    explanation = "Handles elevated admin calls, including statistics aggregation, MRR tracking, user deletes, and toggling Pro-Scan status dynamically.";
+  } else if (filePath.includes('routes/')) {
+    type = "API Routing & Endpoint Handlers";
+    architecture = "Controller Layer (Transport & Orchestration)";
+    explanation = "Declares Express/Fastify routes, validates incoming payload schemas, handles session/cookie auth, and maps parameters to DB handlers.";
+  } else if (filePath.includes('DeepTech40Panel.tsx')) {
+    type = "Deep Tech WebAssembly Engine Controller";
+    architecture = "Telemetry Presentation (Local Verification)";
+    explanation = "Renders and orchestrates tree-sitter AST nodes, Z3 solver logic, registry graphs, and cross-language taint analysis visually inside the browser.";
+  } else if (filePath.includes('FileExplorer.tsx')) {
+    type = "JIT Zero-Retention Codebase Browser";
+    architecture = "Codebase Telemetry & Hybrid File Inspector";
+    explanation = "Retrieves raw code directly from GitHub via client-side authentication tokens. Employs Zero-Retention local caching to prevent files from being saved on the server.";
+  } else if (filePath.includes('components/deep-tech/')) {
+    type = "Advanced Mathematical Telemetry View";
+    architecture = "Presentation Layer (Mathematical Verification Visuals)";
+    explanation = "Visualizes heavy client-side compilation telemetry, including registry graphs, memory taint flows, and formal proof graphs.";
+  } else if (filePath.includes('components/')) {
+    type = "Reusable Visual Primitive Component";
+    architecture = "Presentation Layer (Modular UI Node)";
+    explanation = `Declares a reusable UI block (${name}) using Tailwind CSS styling and React state primitives. Integrated with theme contexts.`;
+  } else if (filePath.includes('pages/')) {
+    type = "Page View Route Controller";
+    architecture = "Presentation Layer (Screen Controller Node)";
+    explanation = `Mounts a primary viewport route (${name}). Connects TanStack query hooks to local page states and layout elements.`;
+  } else if (filePath.includes('hooks/')) {
+    type = "Custom React State Hooks";
+    architecture = "Domain Logic / React Extension State";
+    explanation = "Extracts complex stateful operations, authentication contexts, or server data fetching logic out of visual UI components.";
+  } else if (filePath.includes('package.json')) {
+    type = "Dependency Manifest & Metadata";
+    architecture = "Workspace Infrastructure Definition";
+    explanation = "Specifies private workspace dependencies, build commands, and execution scripts for compiling TypeScript and Vite bundles.";
+  } else if (filePath.includes('db/schema') || filePath.includes('schema/')) {
+    type = "Drizzle PG Database Schema";
+    architecture = "Data Layer (Persistence Specification)";
+    explanation = `Defines PostgreSQL tables, database constraints, index parameters, and relationships for the ${name} object mapping.`;
+  } else if (filePath.includes('utils/') || filePath.includes('lib/')) {
+    type = "Pure Helper Utility Function";
+    architecture = "Service Layer (Utility Core)";
+    explanation = "Exports pure algorithms, date/string helpers, security filters, or configuration parameters used across both client and server.";
+  } else {
+    // Smart Dynamic Explainer based on file extensions
+    if (ext === 'css') {
+      type = "Cascading Style Sheets Definition";
+      architecture = "Styling Specification Layer";
+      explanation = `Provides design tokens, global layout styles, animations, and Tailwind overrides for component styling.`;
+    } else if (ext === 'ts' || ext === 'tsx') {
+      type = "TypeScript Code Module";
+      architecture = "Application Component Layer";
+      explanation = `Implements strongly-typed business logic and exports modular functions to structure the project runtime.`;
+    } else if (ext === 'json') {
+      type = "Static Schema / Data Config file";
+      architecture = "Static Resource Layer";
+      explanation = `Holds structured data config, compile directions, or localized string key pairs.`;
+    }
   }
-  if (filePath.includes('routes') || filePath.includes('api')) {
-    return {
-      type: "API Routing & Endpoint Handlers",
-      explanation: "Handles HTTP queries, integrates middlewares (session auth, rate limiting), and processes backend services.",
-      architecture: "Controller Layer (Transport & Orchestration)"
-    };
-  }
-  if (filePath.includes('components/')) {
-    return {
-      type: "Reusable UI Component",
-      explanation: "Declares modular user interface layout. Uses Tailwind CSS styling, React state primitives, and triggers events.",
-      architecture: "Presentation Layer (Reusable Modular Node)"
-    };
-  }
-  if (filePath.includes('pages/')) {
-    return {
-      type: "Page Screen Wrapper",
-      explanation: "Main layout component representing a full viewport route. Orchestrates internal container states.",
-      architecture: "Presentation Layer (Screen Node)"
-    };
-  }
-  if (filePath.includes('hooks/')) {
-    return {
-      type: "Custom React Hook",
-      explanation: "Encapsulates reusable reactive logic (fetching, authentication context, state sync) out of visual rendering components.",
-      architecture: "Domain Logic / React Extension State"
-    };
-  }
-  if (filePath.includes('package.json')) {
-    return {
-      type: "Dependency Manifest",
-      explanation: "Defines package metadata, execution scripts, build dependencies, and engine versions.",
-      architecture: "Workspace Infrastructure"
-    };
-  }
-  if (filePath.includes('utils/') || filePath.includes('lib/')) {
-    return {
-      type: "Utility & Core Helper Library",
-      explanation: "Exports pure helper functions, configuration files, and common algorithmic processors used throughout the project.",
-      architecture: "Service Layer (Utility Core)"
-    };
-  }
-  if (filePath.includes('db') || filePath.includes('schema')) {
-    return {
-      type: "Database Schema Definition",
-      explanation: "Configures database columns, indexes, relationships, and tables. Acts as the Single Source of Truth for database objects.",
-      architecture: "Data Layer (Persistence Specification)"
-    };
-  }
-  
-  // Generic Fallback
-  return {
-    type: "Source Code Module",
-    explanation: `This file contains code contributing to application runtime business operations.`,
-    architecture: "Application Domain Logic"
-  };
+
+  return { type, explanation, architecture };
 }
 
 export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
@@ -354,6 +366,104 @@ export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
               <span className="font-bold">Cleanup Suggestion: </span>
               {scan.cleanupReport?.summary || "No critical dead code or dummy mockup paths detected. Codebase hygiene score is excellent."}
             </div>
+
+            {/* Scrollable list of mockup and cleanup files */}
+            {((scan.cleanupReport?.findings && scan.cleanupReport.findings.length > 0) || 
+              (scan.productReality?.mockupFindings && scan.productReality.mockupFindings.length > 0)) ? (
+              <div className="mt-4 pt-3.5 border-t border-dashed border-white/10 space-y-2 max-h-[180px] overflow-y-auto pr-1">
+                <div className="text-[9px] uppercase font-extrabold tracking-wider opacity-50 mb-1.5 flex items-center justify-between">
+                  <span>Detected Files & Solutions</span>
+                  <span className="text-[8px] font-mono opacity-60">
+                    {((scan.cleanupReport?.findings?.length ?? 0) + (scan.productReality?.mockupFindings?.length ?? 0))} items found
+                  </span>
+                </div>
+                
+                {/* Mockup Findings */}
+                {scan.productReality?.mockupFindings?.map((mock: any, idx: number) => {
+                  const promptText = `Refactor the mocked data pattern in ${mock.filePath} line ${mock.line || 1} to use a dynamic database query or live API controller: "${mock.pattern || "dummy mock data"}".`;
+                  return (
+                    <div key={`mock-${idx}`} className={`p-2.5 rounded-xl border text-[10px] space-y-1.5 ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-red-500/[0.02] border-red-500/10 text-slate-300"}`}>
+                      <div className="flex justify-between items-center">
+                        <span className="font-mono font-bold text-red-400 truncate max-w-[155px]" title={mock.filePath}>{mock.filePath}</span>
+                        <span className="text-[8px] uppercase font-bold text-red-400 bg-red-500/15 border border-red-500/25 px-1.5 rounded-md">Mock Pattern</span>
+                      </div>
+                      <p className="opacity-70 leading-normal text-[9px]">{mock.description || `Mockup pattern "${mock.pattern}" detected on line ${mock.line || 1}.`}</p>
+                      
+                      <div className="space-y-1 mt-1 pt-1.5 border-t border-white/5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[8px] text-red-300 font-bold uppercase">💡 Remediation Prompt</span>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(promptText);
+                              alert("Prompt copied to clipboard!");
+                            }}
+                            className="px-2 py-0.5 rounded-lg bg-red-500/15 text-red-300 font-bold hover:bg-red-500/25 border border-red-500/20 text-[9px] transition-colors"
+                          >
+                            Copy Prompt
+                          </button>
+                        </div>
+                        {mock.snippet && (
+                          <pre className="p-2 bg-black/40 rounded border border-white/5 font-mono text-[8px] text-slate-400 overflow-x-auto whitespace-pre truncate">{mock.snippet}</pre>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Cleanup Findings */}
+                {scan.cleanupReport?.findings?.map((clean: any, idx: number) => {
+                  const isSmallFix = clean.autoFixCode && clean.autoFixCode.length < 250;
+                  const fixPrompt = clean.fixPrompt || `Refactor ESLint/code quality issue in ${clean.file || clean.filePath}: ${clean.detail || clean.description}`;
+                  return (
+                    <div key={`clean-${idx}`} className={`p-2.5 rounded-xl border text-[10px] space-y-1.5 ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-amber-500/[0.02] border-amber-500/10 text-slate-300"}`}>
+                      <div className="flex justify-between items-center">
+                        <span className="font-mono font-bold text-amber-400 truncate max-w-[155px]" title={clean.file || clean.filePath}>{clean.file || clean.filePath}</span>
+                        <span className="text-[8px] uppercase font-bold text-amber-400 bg-amber-500/15 border border-amber-500/25 px-1.5 rounded-md">{clean.category || "Hygiene"}</span>
+                      </div>
+                      <p className="opacity-70 leading-normal text-[9px]">{clean.detail || clean.description}</p>
+                      
+                      {clean.autoFixCode ? (
+                        <div className="space-y-1 mt-1 pt-1.5 border-t border-white/5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[8px] text-emerald-400 font-bold uppercase">✨ Autofix Code</span>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(clean.autoFixCode);
+                                alert("Autofix code copied!");
+                              }}
+                              className="px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-400 font-bold hover:bg-emerald-500/25 border border-emerald-500/20 text-[9px] transition-colors"
+                            >
+                              Copy Code
+                            </button>
+                          </div>
+                          {clean.autoFixCode.length < 150 ? (
+                            <pre className="p-2 bg-black/40 rounded border border-white/5 font-mono text-[8px] text-slate-300 overflow-x-auto whitespace-pre">{clean.autoFixCode}</pre>
+                          ) : (
+                            <div className="p-2 bg-black/30 rounded border border-white/5 font-mono text-[8px] text-slate-400">Autofix package size large. Copy code to apply.</div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-1 mt-1 pt-1.5 border-t border-white/5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[8px] text-indigo-400 font-bold uppercase">💡 Remediation Prompt</span>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(fixPrompt);
+                                alert("Prompt copied to clipboard!");
+                              }}
+                              className="px-2 py-0.5 rounded-lg bg-indigo-500/15 text-indigo-400 font-bold hover:bg-indigo-500/25 border border-indigo-500/20 text-[9px] transition-colors"
+                            >
+                              Copy Prompt
+                            </button>
+                          </div>
+                          <pre className="p-2 bg-black/40 rounded border border-white/5 font-mono text-[8px] text-slate-300 overflow-x-auto whitespace-pre-wrap leading-tight">{fixPrompt}</pre>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
