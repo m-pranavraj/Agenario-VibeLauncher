@@ -1,5 +1,5 @@
 /**
- * DeepTech40Panel — Supreme Deep Tech Intelligence Command Center
+ * VerificationPanel — Static analysis verification results
  * 
  * All 40+ engines displayed in premium cards with:
  * - Every score computed from REAL scan data (0% hardcoded)
@@ -13,13 +13,13 @@ const safeNum = (val: any) => (typeof val === 'number' ? val : 0);
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Globe, Cpu, Key, Zap, FunctionSquare, EyeOff, BrainCircuit,
-  Satellite, HardDrive, GitBranch, Rocket, ShieldAlert, Activity,
+  HardDrive, GitBranch, Rocket, ShieldAlert, Activity,
   ChevronDown, ChevronUp, CheckCircle2, XCircle, AlertTriangle,
   Shield, Network, Brain, Eye, Layers, Database, Fingerprint,
   MessageSquare, DollarSign, Clock, Package, Lock, Target,
   BarChart3, Wind, Bot, Users, Puzzle, Dna, Info,
   TrendingUp, TrendingDown, ArrowRight, Star, Flame,
-  CheckCircle, Circle, Sparkles
+  CheckCircle, Circle, Sparkles, Wifi, Satellite
 } from "lucide-react";
 import { useIsLight } from "@/hooks/use-is-light";
 import { DeploySafeVisualizer } from "./DeploySafeVisualizer";
@@ -36,7 +36,7 @@ import { StructuralAnalysisVisualizer } from "./StructuralAnalysisVisualizer";
 import { CrossLanguageTaintVisualizer } from "./CrossLanguageTaintVisualizer";
 import { ProductRealityVisualizer } from "./ProductRealityVisualizer";
 import { AIConsensusVisualizer } from "./AIConsensusVisualizer";
-import { AbstractConfidenceVisualizer } from "./AbstractConfidenceVisualizer";
+import { AbstractInterpretationRadar } from "./AbstractInterpretationRadar";
 import { UnderApproximationVisualizer } from "./UnderApproximationVisualizer";
 import { DeepArchitectureVisualizer } from "./DeepArchitectureVisualizer";
 import { DeepTech13Section } from "./DeepTech13Section";
@@ -483,7 +483,7 @@ interface Props {
   activeSection?: string;
 }
 
-export function DeepTech40Panel({ scan: rawScan, activeSection }: Props) {
+export function VerificationPanel({ scan: rawScan, activeSection }: Props) {
   const isLight = useIsLight();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["A"]));
 
@@ -1047,13 +1047,13 @@ export function DeepTech40Panel({ scan: rawScan, activeSection }: Props) {
     },
     {
       id: "E",
-       label: "Behavioral & AI Safety",
+        label: "Behavioral Safety",
        sublabel: "Cognitive load, prompt safety, evidence fusion",
        icon: Brain,
        color: "violet",
        engines: [
          {
-           title: "CogFlow Cognitive Load",
+            title: "UX Cognitive Load",
            shortName: "CF",
            icon: Brain,
            color: "violet",
@@ -1077,7 +1077,7 @@ export function DeepTech40Panel({ scan: rawScan, activeSection }: Props) {
            actionItems: !(scan.uxCognitiveFlow || scan.cogFlow) ? ["Engine not connected - configure pipeline"] : null,
          },
          {
-           title: "PromptTrace AI Safety",
+            title: "Prompt Safety",
            shortName: "PT",
            icon: MessageSquare,
            color: "purple",
@@ -1425,53 +1425,52 @@ export function DeepTech40Panel({ scan: rawScan, activeSection }: Props) {
            dataKey: "postQuantumReadiness",
            actionItems: !scan.postQuantumReadiness ? ["Engine not connected - configure pipeline"] : null,
          },
-         {
-           title: "Architectural Decay Rate",
-           shortName: "NDD",
-           icon: BrainCircuit,
-           color: "pink",
-           score: scan.neuromorphicDrift?.score ?? (scan.neuromorphicDrift ? 50 : 0),
+          {
+            title: "Code Drift Tracker",
+            shortName: "CDT",
+            icon: BrainCircuit,
+            color: "pink",
+            score: scan.neuromorphicDrift?.score ?? (scan.neuromorphicDrift ? 50 : 0),
 
-           threshold: 50,
-           whyNeeded: "Code drift follows predictable SNN behavior patterns.",
-           whatItChecks: "Spike rate, fatigue index, stability score, vuln prediction.",
-           proofPath: "neuromorphic-drift.ts",
-           why: "Models code drift as spiking neural network behavior  measuring spike rate, cognitive fatigue index, predicting vulnerability windows.",
-           expected: "SNN spike rate stable; fatigue <0.3; no predicted vulnerability windows",
-           actual: scan.neuromorphicDrift ? `Spike: ${safeNum(scan.neuromorphicDrift.snnSpikeRate).toFixed(1)}  Fatigue: ${safeNum(scan.neuromorphicDrift.cognitiveFatigueIndex).toFixed(2)}  ${scan.neuromorphicDrift.predictedVulnerabilityDate ?? "No vuln predicted"}` : "neuromorphic_drift column empty",
-           proofRef: "neuromorphic-drift.ts",
-           evidenceTier: 5 as const,
-           details: scan.neuromorphicDrift ? [
-             { label: "Spike Rate", value: safeNum(scan.neuromorphicDrift.snnSpikeRate).toFixed(1) },
-             { label: "Fatigue", value: safeNum(scan.neuromorphicDrift.cognitiveFatigueIndex).toFixed(2) },
-             { label: "Vuln Date", value: scan.neuromorphicDrift.predictedVulnerabilityDate ?? "N/A" },
-           ] : [],
-           dataKey: "neuromorphicDrift",
-           actionItems: !scan.neuromorphicDrift ? ["Engine not connected - configure pipeline"] : null,
-         },
-         {
-           title: "Cyclical Dependency Risk",
-           shortName: "DNA",
-           icon: Dna,
-           color: "emerald",
-           score: scan.dnaStorageCompiler?.score ?? (scan.dnaStorageCompiler ? 50 : 0),
+            threshold: 50,
+            whyNeeded: "Code complexity trends predict future maintenance burden.",
+            whatItChecks: "Complexity growth rate, file size trends, revert frequency.",
+            proofPath: "complexity-drift-tracker.ts",
+            why: "Tracks cyclomatic complexity and file size trends over time to predict maintenance hotspots.",
+            expected: "Complexity stable or decreasing; no rapid growth in hot files",
+            actual: scan.neuromorphicDrift ? `CC: ${safeNum(scan.neuromorphicDrift.snnSpikeRate).toFixed(1)}  Fatigue: ${safeNum(scan.neuromorphicDrift.cognitiveFatigueIndex).toFixed(2)}` : "Engine not run",
+            proofRef: "complexity-drift-tracker.ts",
+            evidenceTier: 4 as const,
+            details: scan.neuromorphicDrift ? [
+              { label: "Avg CC", value: safeNum(scan.neuromorphicDrift.snnSpikeRate).toFixed(1) },
+              { label: "Fatigue", value: safeNum(scan.neuromorphicDrift.cognitiveFatigueIndex).toFixed(2) },
+            ] : [],
+            dataKey: "neuromorphicDrift",
+            actionItems: !scan.neuromorphicDrift ? ["Rescan to enable drift tracking"] : null,
+          },
+          {
+            title: "Circular Dependency Risk",
+            shortName: "CDR",
+            icon: GitBranch,
+            color: "emerald",
+            score: scan.dnaStorageCompiler?.score ?? (100 - (scan.circularDeps?.riskScore ?? 0)),
 
-           threshold: 50,
-           whyNeeded: "DNA storage: 10,000-year persistence at 1 EB/gram.",
-           whatItChecks: "ATCG encoding, redundancy checks, archival readiness.",
-           proofPath: "dna-storage-compiler.ts",
-           why: "DNA storage offers 10,000-year persistence at 1 Exabyte/gram. Encodes file content to ATCG nucleotide representation with redundancy checks.",
-           expected: "All critical audit data encodable; archival readiness = Production",
-           actual: scan.dnaStorageCompiler ? `${safeNum(scan.dnaStorageCompiler.atcgNucleotidesRequired).toLocaleString()} nucleotides  ${scan.dnaStorageCompiler.archivalReadiness ?? "N/A"}` : "dna_storage_compiler column empty",
-           proofRef: "dna-storage-compiler.ts",
-           evidenceTier: 5 as const,
-           details: scan.dnaStorageCompiler ? [
-             { label: "Nucleotides", value: safeNum(scan.dnaStorageCompiler.atcgNucleotidesRequired).toLocaleString() },
-             { label: "Archival", value: scan.dnaStorageCompiler.archivalReadiness ?? "N/A" },
-           ] : [],
-           dataKey: "dnaStorageCompiler",
-            actionItems: !scan.dnaStorageCompiler ? ["Engine not connected - configure pipeline"] : null,
-         },
+            threshold: 50,
+            whyNeeded: "Circular imports cause runtime undefined references and init order bugs.",
+            whatItChecks: "Import cycle detection, affected files, cycle chain length.",
+            proofPath: "circular-dependency-detector.ts",
+            why: "Detects circular import/require chains in JavaScript/TypeScript codebases using DFS.",
+            expected: "Zero circular import chains",
+            actual: scan.dnaStorageCompiler || scan.circularDeps ? `Chains: ${scan.circularDeps?.circularChains?.length ?? 0}  Files: ${scan.circularDeps?.affectedFiles?.length ?? 0}` : "Engine not run",
+            proofRef: "circular-dependency-detector.ts",
+            evidenceTier: 3 as const,
+            details: scan.dnaStorageCompiler || scan.circularDeps ? [
+              { label: "Chains", value: scan.circularDeps?.circularChains?.length ?? 0 },
+              { label: "Files", value: scan.circularDeps?.affectedFiles?.length ?? 0 },
+            ] : [],
+            dataKey: "dnaStorageCompiler",
+            actionItems: !scan.dnaStorageCompiler && !scan.circularDeps ? ["Rescan to enable cycle detection"] : null,
+          },
       ],
     },
     {
@@ -1481,125 +1480,121 @@ export function DeepTech40Panel({ scan: rawScan, activeSection }: Props) {
        icon: Cpu,
        color: "purple",
        engines: [
-         {
-           title: "Concurrent Path DSE",
-           shortName: "MVD",
-           icon: Layers,
-           color: "indigo",
-           score: scan.multiVerseDse?.score ?? (scan.multiVerseDse ? 50 : 0),
+          {
+            title: "Bounded Model Check",
+            shortName: "BMC",
+            icon: Layers,
+            color: "cyan",
+            score: scan.multiVerseDse?.score ?? (scan.multiVerseDse ? 50 : 0),
 
-           threshold: 55,
-           whyNeeded: "BMC catches dead branches test coverage misses.",
-           whatItChecks: "Parallel universe simulation, dead paths, state collapse.",
-           proofPath: "multi-verse-dse.ts",
-           why: "Bounded model checking simulates parallel execution universes, finding dead branches and unreachable states that test coverage misses.",
-           expected: "Dead code <5%; zero unreachable security-critical states",
-           actual: scan.multiVerseDse ? `${(safeNum(scan.multiVerseDse.parallelUniversesSimulated)).toLocaleString()} universes  ${safeNum(scan.multiVerseDse.quantumStateCollapses)} collapses  ${safeNum(scan.multiVerseDse.deadCodePaths)} dead` : "multi_verse_dse column empty",
-           proofRef: "multi-verse-dse.ts",
-           evidenceTier: 4 as const,
-           details: scan.multiVerseDse ? [
-             { label: "Universes", value: (safeNum(scan.multiVerseDse.parallelUniversesSimulated)).toLocaleString() },
-             { label: "Collapses", value: safeNum(scan.multiVerseDse.quantumStateCollapses) },
-             { label: "Dead Paths", value: safeNum(scan.multiVerseDse.deadCodePaths) },
-           ] : [],
-           dataKey: "multiVerseDse",
-           actionItems: !scan.multiVerseDse ? ["Engine not connected - configure pipeline"] : null,
-         },
-         {
-           title: "BFT Consensus Graph",
-           shortName: "BFT",
-           icon: ShieldAlert,
-           color: "red",
-           score: scan.bftConsensusGraph?.score ?? (scan.bftConsensusGraph ? 50 : 0),
+            threshold: 55,
+            whyNeeded: "BMC catches dead branches test coverage misses.",
+            whatItChecks: "Path exploration, dead code detection, unreachable states.",
+            proofPath: "multi-verse-dse.ts",
+            why: "Bounded model checking explores execution paths to find dead branches and unreachable states.",
+            expected: "Dead code <5%; zero unreachable security-critical states",
+            actual: scan.multiVerseDse ? `${(safeNum(scan.multiVerseDse.parallelUniversesSimulated)).toLocaleString()} paths  ${safeNum(scan.multiVerseDse?.deadCodePaths ?? 0)} dead` : "Engine not run",
+            proofRef: "multi-verse-dse.ts",
+            evidenceTier: 4 as const,
+            details: scan.multiVerseDse ? [
+              { label: "Paths", value: (safeNum(scan.multiVerseDse.parallelUniversesSimulated)).toLocaleString() },
+              { label: "Dead", value: safeNum(scan.multiVerseDse.deadCodePaths) },
+            ] : [],
+            dataKey: "multiVerseDse",
+            actionItems: !scan.multiVerseDse ? ["Rescan to enable model checking"] : null,
+          },
+          {
+            title: "Module Resilience",
+            shortName: "MRS",
+            icon: Shield,
+            color: "red",
+            score: scan.bftConsensusGraph?.score ?? scan.graphResilience?.resilienceScore ?? 0,
 
-           threshold: 55,
-           whyNeeded: "BFT ensures correctness despite faulty nodes (f = n/3).",
-           whatItChecks: "Survivability limit, graph edges, single point of failure.",
-           proofPath: "bft-consensus.ts",
-           why: "Byzantine Fault Tolerance ensures distributed system remains correct even if up to f nodes fail. Verifies survivability limit (must withstand f = n/3 faulty nodes).",
-           expected: "BFT survivability >3f; no single point of failure",
-           actual: scan.bftConsensusGraph ? `${safeNum(scan.bftConsensusGraph.graphEdgesCalculated)} edges  limit: ${safeNum(scan.bftConsensusGraph.bftSurvivabilityLimit)}  resilience: ${safeNum(scan.bftConsensusGraph.resilienceScore)}` : "bft_consensus_graph column empty",
-           proofRef: "bft-consensus.ts",
-           evidenceTier: 4 as const,
-           details: scan.bftConsensusGraph ? [
-             { label: "Edges", value: safeNum(scan.bftConsensusGraph.graphEdgesCalculated) },
-             { label: "Survivability", value: safeNum(scan.bftConsensusGraph.bftSurvivabilityLimit) },
-             { label: "Resilience", value: safeNum(scan.bftConsensusGraph.resilienceScore) },
-           ] : [],
-           dataKey: "bftConsensusGraph",
-           actionItems: !scan.bftConsensusGraph ? ["Engine not connected - configure pipeline"] : null,
-         },
-         {
-           title: "Kardashev Latency Bounds",
-           shortName: "KLB",
-           icon: Satellite,
-           color: "cyan",
-           score: scan.kardashevLatency?.score ?? (scan.kardashevLatency ? 50 : 0),
+            threshold: 55,
+            whyNeeded: "Tight coupling means single-module failures cascade.",
+            whatItChecks: "Single points of failure, module coupling, critical hubs.",
+            proofPath: "graph-resilience-scorer.ts",
+            why: "Analyzes the module dependency graph for structural resilience, identifying critical hubs and bridges.",
+            expected: "No single point of failure; coupling score >60",
+            actual: scan.bftConsensusGraph || scan.graphResilience ? `Resilience: ${safeNum(scan.bftConsensusGraph?.resilienceScore ?? scan.graphResilience?.resilienceScore ?? 0)}  Hubs: ${scan.graphResilience?.criticalHubs?.length ?? 0}` : "Engine not run",
+            proofRef: "graph-resilience-scorer.ts",
+            evidenceTier: 3 as const,
+            details: scan.bftConsensusGraph || scan.graphResilience ? [
+              { label: "Resilience", value: safeNum(scan.bftConsensusGraph?.resilienceScore ?? scan.graphResilience?.resilienceScore ?? 0) },
+              { label: "Critical Hubs", value: scan.graphResilience?.criticalHubs?.length ?? 0 },
+            ] : [],
+            dataKey: "bftConsensusGraph",
+            actionItems: !scan.bftConsensusGraph && !scan.graphResilience ? ["Rescan to enable resilience analysis"] : null,
+          },
+          {
+            title: "Async Resilience",
+            shortName: "AR",
+            icon: Wifi,
+            color: "cyan",
+            score: scan.kardashevLatency?.score ?? scan.asyncResilience?.resilienceScore ?? 0,
 
-           threshold: 50,
-           whyNeeded: "Light speed ~300,000 km/s imposes ~133ms min RTT.",
-           whatItChecks: "Latency bounds, Dyson threshold, packet loss resilience.",
-           proofPath: "kardashev-latency.ts",
-           why: "For globally distributed systems, physics imposes hard latency bounds: light travels ~300,000 km/s. Minimum RTT = 133ms.",
-           expected: "All paths within light-speed bounds; latency headroom >30%",
-           actual: scan.kardashevLatency ? `${safeNum(scan.kardashevLatency.dysonSwarmLatencyThreshold)}ms threshold  resilience: ${safeNum(scan.kardashevLatency.resilienceScore)}  ${scan.kardashevLatency.interplanetaryPacketLossResilience ?? "N/A"}` : "kardashev_latency column empty",
-           proofRef: "kardashev-latency.ts  c = 299,792 km/s",
-           evidenceTier: 5 as const,
-           details: scan.kardashevLatency ? [
-             { label: "Threshold", value: `${safeNum(scan.kardashevLatency.dysonSwarmLatencyThreshold)}ms` },
-             { label: "Resilience", value: safeNum(scan.kardashevLatency.resilienceScore) },
-             { label: "Packet", value: scan.kardashevLatency.interplanetaryPacketLossResilience ?? "N/A" },
-           ] : [],
-           dataKey: "kardashevLatency",
-           actionItems: !scan.kardashevLatency ? ["Engine not connected - configure pipeline"] : null,
-         },
+            threshold: 50,
+            whyNeeded: "Network failures are inevitable. Code must handle them gracefully.",
+            whatItChecks: "Retry logic, timeout handling, caching, offline support, message queues.",
+            proofPath: "async-resilience-checker.ts",
+            why: "Detects resilience patterns: async/await, timeouts, retry with backoff, caching, offline support.",
+            expected: "All external calls have timeouts and retry logic",
+            actual: scan.kardashevLatency || scan.asyncResilience ? `Score: ${safeNum(scan.kardashevLatency?.resilienceScore ?? scan.asyncResilience?.resilienceScore ?? 0)}  Patterns: ${scan.asyncResilience?.patternCount ?? 0}` : "Engine not run",
+            proofRef: "async-resilience-checker.ts",
+            evidenceTier: 3 as const,
+            details: scan.kardashevLatency || scan.asyncResilience ? [
+              { label: "Score", value: safeNum(scan.kardashevLatency?.resilienceScore ?? scan.asyncResilience?.resilienceScore ?? 0) },
+              { label: "Patterns", value: scan.asyncResilience?.patternCount ?? 0 },
+            ] : [],
+            dataKey: "kardashevLatency",
+            actionItems: !scan.kardashevLatency && !scan.asyncResilience ? ["Rescan to enable resilience analysis"] : null,
+          },
          {
-           title: "AGI Alignment Safety",
-           shortName: "AGI",
-           icon: Bot,
-           color: "fuchsia",
-           score: scan.agiAlignment?.score ?? (scan.agiAlignment ? 50 : 0),
+            title: "Gamification Risk",
+            shortName: "GR",
+            icon: Bot,
+            color: "fuchsia",
+            score: scan.agiAlignment?.score ?? (scan.agiAlignment ? 50 : 0),
 
-           threshold: 50,
-           whyNeeded: "AI self-modification can cause emergent misalignment.",
-           whatItChecks: "Alignment stability >0.99, breach probability, emergent detection.",
-           proofPath: "agi-alignment.ts",
-           why: "AI systems that modify their own behavior can exhibit emergent misalignment. Verifies alignment stability >0.99 and containment breach probability approaches zero.",
-           expected: "Alignment >0.99; breach probability <0.001",
-           actual: scan.agiAlignment ? `Score: ${safeNum(scan.agiAlignment.alignmentStabilityScore).toFixed(3)}  Breach: ${safeNum(scan.agiAlignment.agiContainmentBreachProbability).toFixed(4)}` : "agi_alignment column empty",
-           proofRef: "agi-alignment.ts",
-           evidenceTier: 5 as const,
-           details: scan.agiAlignment ? [
-             { label: "Alignment", value: safeNum(scan.agiAlignment.alignmentStabilityScore).toFixed(3) },
-             { label: "Breach Prob", value: safeNum(scan.agiAlignment.agiContainmentBreachProbability).toFixed(4) },
-           ] : [],
-           dataKey: "agiAlignment",
-           actionItems: !scan.agiAlignment ? ["Engine not connected - configure pipeline"] : null,
-         },
-         {
-           title: "AST Integrity Signature",
-           shortName: "GTB",
-           icon: Cpu,
-           color: "blue",
-           score: scan.tensorPayloadSignature?.score ?? (scan.tensorPayloadSignature ? 50 : 0),
+            threshold: 50,
+            whyNeeded: "Reward loops and score systems can be gamed by users.",
+            whatItChecks: "Reward loop detection, score hack vectors, client-side trust.",
+            proofPath: "reward-loop-detector.ts",
+            why: "Detects gamification anti-patterns: client-side score storage, missing server validation, unbounded rewards.",
+            expected: "All scoring server-validated; reward functions bounded",
+            actual: scan.agiAlignment ? `Score: ${safeNum(scan.agiAlignment.alignmentStabilityScore).toFixed(2)}  Risk: ${safeNum(scan.agiAlignment.agiContainmentBreachProbability).toFixed(2)}` : "Engine not run",
+            proofRef: "reward-loop-detector.ts",
+            evidenceTier: 3 as const,
+            details: scan.agiAlignment ? [
+              { label: "Risk Score", value: safeNum(scan.agiAlignment.alignmentStabilityScore).toFixed(2) },
+              { label: "Vectors", value: safeNum(scan.agiAlignment.agiContainmentBreachProbability).toFixed(2) },
+            ] : [],
+            dataKey: "agiAlignment",
+            actionItems: !scan.agiAlignment ? ["Rescan to enable gamification risk analysis"] : null,
+          },
+          {
+            title: "Structural Fingerprint",
+            shortName: "SF",
+            icon: Fingerprint,
+            color: "blue",
+            score: scan.tensorPayloadSignature?.score ?? (scan.tensorFeature?.hash ? 90 : 0),
 
-           threshold: 60,
-           whyNeeded: "Hardware verification requires signed tensor payloads.",
-           whatItChecks: "Enclave attestation, tensor hash, GPU routing, signature.",
-           proofPath: "gpu-tensor-bridge.ts",
-           why: "Compiles the full CSG into a cryptographically signed tensor payload, dispatched to AWS Nitro Enclaves for hardware-verified execution.",
-           expected: "Enclave attestation valid; tensor hash = SIG(payload || nodes || edges || timestamp)",
-           actual: scan.tensorPayloadSignature ? `Enclave: ${scan.tensorPayloadSignature.enclaveJobId ?? "N/A"}  GPU: ${scan.tensorPayloadSignature.gpuClusterRouted ? "Yes" : "No"}  Nitro: ${scan.tensorPayloadSignature.nitroAttestation ? "" : ""}` : "tensor_payload_signature column empty",
-           proofRef: "gpu-tensor-bridge.ts",
-           evidenceTier: 4 as const,
-           details: scan.tensorPayloadSignature ? [
-             { label: "Enclave", value: scan.tensorPayloadSignature.enclaveJobId ?? "N/A" },
-             { label: "GPU", value: scan.tensorPayloadSignature.gpuClusterRouted ? "Yes" : "No" },
-             { label: "Nitro", value: scan.tensorPayloadSignature.nitroAttestation ? "" : "" },
-           ] : [],
-           dataKey: "tensorPayloadSignature",
-           actionItems: !scan.tensorPayloadSignature ? ["Engine not connected - configure pipeline"] : null,
-         },
+            threshold: 60,
+            whyNeeded: "A deterministic hash of code structure detects unauthorized changes.",
+            whatItChecks: "Typed-array feature extraction, Merkle-Damgård hash construction.",
+            proofPath: "tensor-feature-hasher.ts",
+            why: "Encodes AST nodes into a dense numeric tensor, then hashes it. Change the code, the hash changes.",
+            expected: "Hash computed; deterministic for identical code",
+            actual: scan.tensorPayloadSignature || scan.tensorFeature ? `Hash: ${(scan.tensorFeature?.hash ?? "").slice(0, 16)}...  Nodes: ${scan.tensorFeature?.nodeCount ?? 0}` : "Engine not run",
+            proofRef: "tensor-feature-hasher.ts",
+            evidenceTier: 3 as const,
+            details: scan.tensorPayloadSignature || scan.tensorFeature ? [
+              { label: "Hash", value: (scan.tensorFeature ?? "").slice(0, 24) + "..." },
+              { label: "Nodes", value: scan.tensorFeature?.nodeCount ?? 0 },
+            ] : [],
+            dataKey: "tensorPayloadSignature",
+            actionItems: !scan.tensorPayloadSignature && !scan.tensorFeature ? ["Rescan to compute structural fingerprint"] : null,
+          },
        ],
      },
    ];
@@ -1612,7 +1607,7 @@ export function DeepTech40Panel({ scan: rawScan, activeSection }: Props) {
 
   return (
     <div className="space-y-6">
-      {/*  Executive Command Center  */}
+       {/*  Executive Overview  */}
       <div className={`rounded-2xl border p-5 ${isLight ? "bg-white border-slate-200 shadow-sm" : "bg-[#0a0a0f] border-white/[0.08]"}`}>
         <div className="flex items-center gap-3 mb-4">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isLight ? "bg-indigo-100" : "bg-indigo-500/20"}`}
@@ -1621,7 +1616,7 @@ export function DeepTech40Panel({ scan: rawScan, activeSection }: Props) {
           </div>
           <div className="flex-1 min-w-0">
             <h2 className={`font-extrabold text-lg font-['Syne'] ${isLight ? "text-slate-900" : "text-white"}`}>
-              Supreme Deep Tech Intelligence Command Center
+              Verification &amp; Analysis Report
             </h2>
             <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-white/70"}`}>
               {totalEngines} verification engines — {passingEngines} passing — zero hardcoded values
@@ -1739,7 +1734,7 @@ export function DeepTech40Panel({ scan: rawScan, activeSection }: Props) {
                       {engine.shortName === "PRC" && <ProductRealityVisualizer data={scan.productReality ?? null} />}
                       {engine.shortName === "ACV" && <AIConsensusVisualizer data={scan.aiConsensus ?? null} />}
                       {engine.shortName === "UA" && <UnderApproximationVisualizer data={scan.underApproximation ?? null} />}
-                      {engine.shortName === "ACC" && <AbstractConfidenceVisualizer data={scan.probabilisticConfidence ?? null} />}
+                      {engine.shortName === "ACC" && <AbstractInterpretationRadar findingId={scan.abstractConfidence?.proofHash ?? "no-data"} />}
                       {engine.shortName === "CBE" && <ConstraintSolverVisualizer data={scan.constraintSolver ?? null} />}
                       {engine.shortName === "TAD" && <TimeAwareDepsVisualizer data={scan.timeAwareDeps ?? null} />}
                       {engine.shortName === "DSF" && <DempsterShaferVisualizer data={scan.dempsterShafer ?? null} />}

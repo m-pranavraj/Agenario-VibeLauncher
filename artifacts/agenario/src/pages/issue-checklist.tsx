@@ -6,8 +6,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { Shield, Lock, Loader2, AlertTriangle, CheckCircle2, XCircle, Search, ArrowLeft, ChevronDown, ChevronUp, Eye, Zap, Bug, Lock as LockIcon } from "lucide-react";
+import { Shield, Lock, Loader2, AlertTriangle, CheckCircle2, XCircle, Search, ArrowLeft, ChevronDown, ChevronUp, Eye, Zap, Bug, Lock as LockIcon, Crown, ArrowRight } from "lucide-react";
 import { api, type ScanDetail, type ScanIssue } from "@/lib/api";
+import { useAuth } from "@/hooks/use-auth";
 
 const SEVERITY_CONFIG = {
   critical: { color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", icon: XCircle, label: "Critical" },
@@ -30,6 +31,10 @@ export default function IssueChecklistPage() {
   const [tierFilter, setTierFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedIssue, setExpandedIssue] = useState<number | null>(null);
+  const { user, loading: authLoading } = useAuth();
+
+  if (authLoading) return <LoadingScreen />;
+  if (user.plan !== "creator" && user.plan !== "enterprise") return <UpgradeScreen />;
 
   const { data: scan, isLoading } = useQuery<ScanDetail>({
     queryKey: ["/api/scans", params?.id],
@@ -249,6 +254,27 @@ function getRealEvidenceTier(issue: ScanIssue): string {
   if (issue.sourceEvidence === "static" || issue.codeSnippet) return "T3";
   if (issue.sourceEvidence === "ai_reasoning") return issue.confidence && issue.confidence > 60 ? "T4" : "T5";
   return "T4"; // Default to static signal
+}
+
+function UpgradeScreen() {
+  return (
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6">
+      <div className="text-center max-w-md space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/30 flex items-center justify-center mx-auto">
+          <Crown className="w-8 h-8 text-violet-500" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-xl font-bold font-['Syne'] text-white">Issue Checklist</h1>
+          <p className="text-sm text-white/40">Detailed issue management is available on the Creator plan and above.</p>
+        </div>
+        <Link href="/pricing">
+          <button className="flex items-center gap-2 bg-white text-black font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all shadow-lg mx-auto">
+            Upgrade to Creator - Rs.299/mo <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </Link>
+      </div>
+    </div>
+  );
 }
 
 function LoadingScreen() {

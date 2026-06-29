@@ -24,7 +24,7 @@ jobs:
 
       - name: Wait for Results
         run: |
-          SCAN_ID=$(echo '${{ steps.agenario.outputs.response }}' | grep -o '"id":[0-9]*' | grep -o '[0-9]*')
+          SCAN_ID=$(echo '${{ steps.agenario.outputs.response }}' | grep -o '"id":[0-9]+' | grep -o '[0-9]+')
           echo "Scan ID: $SCAN_ID"
           for i in {1..60}; do
             STATUS=$(curl -s "${{ secrets.AGENARIO_API_URL }}/api/scans/$SCAN_ID" \

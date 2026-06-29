@@ -19,7 +19,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { FileExplorer } from "@/components/dashboard/FileExplorer";
 import { ConfidenceContractView } from "@/components/intelligence/ConfidenceContractView";
-import { DeepTech40Panel } from "@/components/deep-tech/DeepTech40Panel";
+import { VerificationPanel } from "@/components/deep-tech/VerificationPanel";
 
 export default function ReportPage() {
   const [, params] = useRoute("/report/:id");
@@ -170,7 +170,7 @@ export default function ReportPage() {
             <Target className="w-5 h-5 text-violet-400 animate-pulse" />
             Deep Tech Verification Engines
           </h2>
-          <DeepTech40Panel scan={cert as any} activeSection="A" />
+          <VerificationPanel scan={cert as any} activeSection="A" />
         </section>
 
         {/* 5. Launch Confidence checklist */}

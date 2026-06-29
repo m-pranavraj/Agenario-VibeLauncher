@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { useLocation, useRoute, Link } from "wouter";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { FounderView } from "@/components/report/FounderView";
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { RiskForecastSection } from "@/components/intelligence/RiskForecastSection";
 import { FileExplorer } from "@/components/dashboard/FileExplorer";
@@ -148,9 +149,8 @@ import { StructuralAnalysisVisualizer } from "@/components/deep-tech/StructuralA
 import { CrossLanguageTaintVisualizer } from "@/components/deep-tech/CrossLanguageTaintVisualizer";
 import { ProductRealityVisualizer } from "@/components/deep-tech/ProductRealityVisualizer";
 import { AIConsensusVisualizer } from "@/components/deep-tech/AIConsensusVisualizer";
-import { AbstractConfidenceVisualizer } from "@/components/deep-tech/AbstractConfidenceVisualizer";
 import { UnderApproximationVisualizer } from "@/components/deep-tech/UnderApproximationVisualizer";
-import { DeepTech40Panel } from "@/components/deep-tech/DeepTech40Panel";
+import { VerificationPanel } from "@/components/deep-tech/VerificationPanel";
 import { DeepTech13Section } from "@/components/deep-tech/DeepTech13Section";
 
 
@@ -5857,6 +5857,7 @@ export default function ScanResultsPage() {
   const [scanLoading, setScanLoading] = useState(true);
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
   const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("all");
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
     if (scan?.issues) {
@@ -6294,17 +6295,30 @@ export default function ScanResultsPage() {
 
         {activeTab === "overview" && (
           <>
-            {/* Executive Overview Dashboard Component */}
-            <ExecutiveOverview scan={scan} isLight={isLight} />
+            {/* View Toggle: Simple (Founder) vs Advanced (Technical) */}
+            <div className="flex items-center justify-end mb-4">
+              <div className={`flex items-center gap-1 p-1 rounded-lg border ${isLight ? "border-gray-200 bg-gray-50" : "border-white/[0.06] bg-white/[0.02]"}`}>
+                <button
+                  onClick={() => setShowAdvanced(false)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${!showAdvanced ? (isLight ? "bg-white shadow text-gray-900" : "bg-white/[0.1] text-white") : "text-white/40 hover:text-white/60"}`}
+                >
+                  Simple
+                </button>
+                <button
+                  onClick={() => setShowAdvanced(true)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${showAdvanced ? (isLight ? "bg-white shadow text-gray-900" : "bg-white/[0.1] text-white") : "text-white/40 hover:text-white/60"}`}
+                >
+                  Advanced
+                </button>
+              </div>
+            </div>
 
-            {/* --- Sticky Launch Alert Banner ------------------------------- */}
-            <StickyLaunchAlertBanner scan={scan} />
-
-            {/* --- Launch Gate Banner ------------------------------------------------- */}
-            <LaunchGateBanner scan={scan} isLight={isLight} />
-
-            {/* --- Locked Premium Insights (free users) ---------------- */}
-            <LockedInsightsPanel scan={scan} plan={user.plan} />
+            {showAdvanced ? (
+              <>
+                <ExecutiveOverview scan={scan} isLight={isLight} />
+                <StickyLaunchAlertBanner scan={scan} />
+                <LaunchGateBanner scan={scan} isLight={isLight} />
+                <LockedInsightsPanel scan={scan} plan={user.plan} />
 
             {/* --- Demo-to-Market-Ready Pipeline & Traffic Light Verdict ------------------------------- */}
             {scan.greenLightVerdict && (
@@ -6313,18 +6327,18 @@ export default function ScanResultsPage() {
                   {/* Traffic Light Status */}
                   <div className="flex items-center gap-4 min-w-[250px]">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner ${
-                      scan.greenLightVerdict.color === "green" ? "bg-emerald-500/20 text-emerald-500 border border-emerald-500/30" : 
-                      scan.greenLightVerdict.color === "yellow" ? "bg-amber-500/20 text-amber-500 border border-amber-500/30" : 
+                      scan.greenLightVerdict.color === "green" ? "bg-emerald-500/20 text-emerald-500 border border-emerald-500/30" :
+                      scan.greenLightVerdict.color === "yellow" ? "bg-amber-500/20 text-amber-500 border border-amber-500/30" :
                       "bg-rose-500/20 text-rose-500 border border-rose-500/30"
                     }`}>
-                      {scan.greenLightVerdict.color === "green" ? <ShieldCheck className="w-7 h-7" /> : 
-                       scan.greenLightVerdict.color === "yellow" ? <Activity className="w-7 h-7" /> : 
+                      {scan.greenLightVerdict.color === "green" ? <ShieldCheck className="w-7 h-7" /> :
+                       scan.greenLightVerdict.color === "yellow" ? <Activity className="w-7 h-7" /> :
                        <ShieldAlert className="w-7 h-7" />}
                     </div>
                     <div>
                       <h2 className={`font-black font-['Syne'] text-xl uppercase ${
-                        scan.greenLightVerdict.color === "green" ? "text-emerald-500" : 
-                        scan.greenLightVerdict.color === "yellow" ? "text-amber-500" : 
+                        scan.greenLightVerdict.color === "green" ? "text-emerald-500" :
+                        scan.greenLightVerdict.color === "yellow" ? "text-amber-500" :
                         "text-rose-500"
                       }`}>{scan.greenLightVerdict.status}</h2>
                       <p className={`text-sm font-medium ${isLight ? "text-gray-600" : "text-white/60"}`}>
@@ -6345,7 +6359,7 @@ export default function ScanResultsPage() {
                         </span>
                       </div>
                       <div className={`w-full h-2 rounded-full overflow-hidden mb-2 ${isLight ? "bg-gray-200" : "bg-white/10"}`}>
-                        <div 
+                        <div
                           className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-1000 ease-out"
                           style={{ width: `${scan.marketReadinessTracker.progress}%` }}
                         />
@@ -6384,150 +6398,57 @@ export default function ScanResultsPage() {
                     <span
                       className={`text-[10px] px-2 py-0.5 rounded-lg border capitalize ${isLight ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white/[0.05] border-white/[0.08] text-white/40"}`}
                     >
-                      {scan.vibeTool.replace("-", " ")}
+                      {scan.vibeTool}
                     </span>
                   )}
                   {scan.businessType && (
                     <span
                       className={`text-[10px] px-2 py-0.5 rounded-lg border capitalize ${isLight ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white/[0.05] border-white/[0.08] text-white/40"}`}
                     >
-                      {scan.businessType.replace("-", " ")}
+                      {scan.businessType}
                     </span>
                   )}
                 </div>
+                <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>Security Audit Score</p>
               </div>
 
-              <div
-                data-tour="summary"
-                className={`lg:col-span-2 ${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-6`}
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <FileText
-                    className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`}
-                  />
-                  <h2
-                    className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm`}
-                  >
-                    Executive Summary
-                  </h2>
-                </div>
-                <p
-                  className={`${isLight ? "text-gray-500" : "text-white/55"} text-sm leading-relaxed`}
-                >
-                  {scan.summary ?? "Analysis in progress…"}
-                </p>
-
-                {scan.issueCounts && (
-                  <div className="grid grid-cols-4 gap-2 mt-5">
-                    {[
-                      {
-                        label: "Critical",
-                        count: scan.issueCounts.critical,
-                        color: "text-red-400",
-                      },
-                      {
-                        label: "High",
-                        count: scan.issueCounts.high,
-                        color: "text-amber-400",
-                      },
-                      {
-                        label: "Medium",
-                        count: scan.issueCounts.medium,
-                        color: "text-yellow-400",
-                      },
-                      {
-                        label: "Low",
-                        count: scan.issueCounts.low,
-                        color: "text-gray-400",
-                      },
-                    ].map((s) => (
-                      <div
-                        key={s.label}
-                        className={`${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.07]"} border rounded-xl p-3 text-center`}
-                      >
-                        <div
-                          className={`text-xl font-bold font-['Syne'] ${s.color}`}
-                        >
-                          {s.count}
-                        </div>
-                        <div
-                          className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/25"} mt-0.5`}
-                        >
-                          {s.label}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* --- Benchmark Network --------------------------------------------- */}
-            {scan.benchmarkData && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`${isLight ? "bg-white border-gray-200" : "bg-[#111] border-white/10"} border rounded-2xl p-6 mt-4`}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Network className={`w-5 h-5 ${isLight ? "text-violet-500" : "text-violet-400"}`} />
-                    <h2 className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Benchmark Network</h2>
-                  </div>
-                  <div className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>
-                    Compared against <strong className={isLight ? "text-gray-900" : "text-white"}>{scan.benchmarkData.totalCompared.toLocaleString()}</strong> React SaaS Apps
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Quick issue summary */}
+              <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-5`}>
+                <h3 className={`text-sm font-bold mb-3 ${isLight ? "text-gray-900" : "text-white"}`}>Issue Summary</h3>
+                <div className="space-y-2">
                   {[
-                    { label: "Security", val: scan.benchmarkData.percentiles.security, icon: ShieldCheck, color: "text-green-500", bg: "bg-green-500/10" },
-                    { label: "Reliability", val: scan.benchmarkData.percentiles.reliability, icon: Zap, color: "text-blue-500", bg: "bg-blue-500/10" },
-                    { label: "Revenue Risk", val: scan.benchmarkData.percentiles.revenueRisk, icon: Activity, color: "text-amber-500", bg: "bg-amber-500/10" },
-                  ].map((b) => (
-                    <div key={b.label} className={`flex items-center gap-4 ${isLight ? "bg-gray-50 border-gray-200" : "bg-black/30 border-white/[0.05]"} border rounded-xl p-4`}>
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${b.bg} ${b.color}`}>
-                        <b.icon className="w-5 h-5" />
+                    { label: "Critical", count: (scan.issues ?? []).filter((i: any) => i.severity === "critical").length, color: "bg-red-500" },
+                    { label: "High", count: (scan.issues ?? []).filter((i: any) => i.severity === "high").length, color: "bg-orange-500" },
+                    { label: "Medium", count: (scan.issues ?? []).filter((i: any) => i.severity === "medium").length, color: "bg-amber-500" },
+                    { label: "Low", count: (scan.issues ?? []).filter((i: any) => i.severity === "low").length, color: "bg-slate-400" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${item.color}`} />
+                        <span className={`text-xs ${isLight ? "text-gray-600" : "text-white/60"}`}>{item.label}</span>
                       </div>
-                      <div>
-                        <div className={`text-[10px] font-bold uppercase tracking-wider ${isLight ? "text-gray-500" : "text-white/40"} mb-0.5`}>{b.label}</div>
-                        <div className={`font-bold ${isLight ? "text-gray-900" : "text-white"}`}>{b.val}</div>
-                      </div>
+                      <span className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white"}`}>{item.count}</span>
                     </div>
                   ))}
                 </div>
-              </motion.div>
-            )}
+              </div>
 
-            {/* --- Architecture Audit ------------------------------------------- */}
-            <SectionLabel label="Architecture Audit" icon={Network} isLight={isLight} />
-            <motion.div
-              data-tour="architecture"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-            >
-              <ArchitectureDiagramPanel scan={scan} />
-            </motion.div>
-
-            {/* --- Section divider ------------------------------------------------ */}
-            {scan.vibeTool && scan.vibeTool !== "unknown" && (
-              <SectionLabel label="Detected Stack" icon={Cpu} isLight={isLight} />
-            )}
-
-            {/* --- VibeCode Intelligence Network ---------------------------- */}
-            {scan.vibeTool && scan.vibeTool !== "unknown" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08 }}
-              >
-                <VibeCodeIntelPanel
-                  vibeTool={scan.vibeTool}
-                  issues={scan.issues ?? []}
-                  vibeToolRank={scan.benchmarkPercentile?.vibeToolRank}
-                />
-              </motion.div>
+              {/* Framework */}
+              <div className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl p-5`}>
+                <h3 className={`text-sm font-bold mb-3 ${isLight ? "text-gray-900" : "text-white"}`}>Stack Detected</h3>
+                <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/40"}`}>
+                  {scan.framework || "Unknown"} {scan.vibeTool ? `• ${scan.vibeTool}` : ""}
+                </p>
+                <p className={`text-[10px] mt-2 ${isLight ? "text-gray-400" : "text-white/30"}`}>
+                  {scan.sourceType} • {(scan.issues?.length ?? 0)} items analyzed
+                </p>
+              </div>
+            </div>
+              </>
+            ) : (
+              <FounderView scan={scan} isLight={isLight} onNavigate={(section) => {
+                setShowAdvanced(true);
+              }} />
             )}
           </>
         )}
@@ -7367,7 +7288,7 @@ export default function ScanResultsPage() {
                 </div>
               </div>
               <div className="p-6">
-                <DeepTech40Panel scan={scan} activeSection={rawSection.replace("deeptech-", "")} />
+                 <VerificationPanel scan={scan} activeSection={rawSection.replace("deeptech-", "")} />
               </div>
             </div>
           </>

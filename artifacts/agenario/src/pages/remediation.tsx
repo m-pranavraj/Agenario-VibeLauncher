@@ -4,11 +4,12 @@ import { useRoute, Link } from "wouter";
 import {
   Shield, Loader2, AlertTriangle, CheckCircle2, XCircle, Clock,
   ChevronRight, Zap, GitBranch, Download, RotateCcw, ArrowLeft,
-  Sparkles, Code2, Play, CheckCheck
+  Sparkles, Code2, Play, CheckCheck, Lock, Crown
 } from "lucide-react";
 import { useIsLight } from "@/hooks/use-is-light";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ScanFix {
   id: string;
@@ -44,6 +45,27 @@ const SEVERITY_COLORS: Record<string, string> = {
   medium: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   low: "bg-blue-500/10 text-blue-400 border-blue-500/20",
 };
+
+function UpgradeScreen({ isLight }: { isLight: boolean }) {
+  return (
+    <div className={`min-h-screen flex items-center justify-center p-6 ${isLight ? "bg-white" : "bg-[#020204]"}`}>
+      <div className="text-center max-w-md space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/30 flex items-center justify-center mx-auto">
+          <Crown className="w-8 h-8 text-violet-500" />
+        </div>
+        <div className="space-y-2">
+          <h1 className={`text-xl font-bold font-['Syne'] ${isLight ? "text-gray-900" : "text-white"}`}>Remediation Engine</h1>
+          <p className={`text-sm ${isLight ? "text-gray-500" : "text-white/40"}`}>AI-powered fix generation and application is available on the Creator plan and above.</p>
+        </div>
+        <Link href="/pricing">
+          <button className="flex items-center gap-2 bg-white text-black font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all shadow-lg mx-auto">
+            Upgrade to Creator - Rs.299/mo <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 function DiffViewer({ original, patched }: { original: string; patched: string }) {
   const origLines = (original || "").split("\n");
@@ -230,6 +252,10 @@ export default function RemediationPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const scanId = params?.id ?? "";
+  const { user, loading: authLoading } = useAuth();
+
+  if (authLoading) return <div className={`min-h-screen flex items-center justify-center ${isLight ? "bg-white" : "bg-[#0A0A0A]"}`}><Loader2 className="w-8 h-8 animate-spin text-violet-500" /></div>;
+  if (user.plan !== "creator" && user.plan !== "enterprise") return <UpgradeScreen isLight={isLight} />;
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["/api/scans/remediate", scanId],

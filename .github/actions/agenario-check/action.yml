@@ -46,7 +46,7 @@ runs:
             -H "Authorization: Bearer ${{ inputs.api-key }}" || echo "")
             
           PASS=$(echo "$VERDICT_RESP" | grep -o '"pass":[^,]*' | head -1 | cut -d: -f2 | tr -d ' "}' || echo "")
-          SCORE=$(echo "$VERDICT_RESP" | grep -o '"score":[0-9]*' | head -1 | cut -d: -f2 || echo "")
+          SCORE=$(echo "$VERDICT_RESP" | grep -o '"score":[0-9]+' | head -1 | cut -d: -f2 || echo "")
           
           if [ ! -z "$SCORE" ]; then
             # If score exists, scan has completed

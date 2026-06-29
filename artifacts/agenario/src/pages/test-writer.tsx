@@ -14,8 +14,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { CheckCircle2, XCircle, Loader2, ArrowLeft, Play, FileCode, AlertTriangle, Clock, CheckCheck, Terminal } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, ArrowLeft, Play, FileCode, AlertTriangle, Clock, CheckCheck, Terminal, Lock, Crown } from "lucide-react";
 import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/use-auth";
 
 interface TestResult {
   id: string;
@@ -30,6 +31,10 @@ export default function TestWriterPage() {
   const [, params] = useRoute("/scans/:id/tests");
   const [isRunning, setIsRunning] = useState(false);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
+  const { user, loading: authLoading } = useAuth();
+
+  if (authLoading) return <LoadingScreen />;
+  if (user.plan !== "creator" && user.plan !== "enterprise") return <UpgradeScreen />;
 
   const { data: scan, isLoading } = useQuery({
     queryKey: ["/api/scans", params?.id],
@@ -203,6 +208,27 @@ function generateTestForIssue(issue: any): { name: string; type: string } {
     return { name: `CORS Misconfiguration Test: ${issue.filePath}`, type: "cors" };
   }
   return { name: `Security Test: ${issue.title.slice(0, 40)}`, type: "generic" };
+}
+
+function UpgradeScreen() {
+  return (
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6">
+      <div className="text-center max-w-md space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/30 flex items-center justify-center mx-auto">
+          <Crown className="w-8 h-8 text-violet-500" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-xl font-bold font-['Syne'] text-white">Automated Test Writer</h1>
+          <p className="text-sm text-white/40">Automated test generation and execution is available on the Creator plan and above.</p>
+        </div>
+        <Link href="/pricing">
+          <button className="flex items-center gap-2 bg-white text-black font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all shadow-lg mx-auto">
+            Upgrade to Creator - Rs.299/mo <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </Link>
+      </div>
+    </div>
+  );
 }
 
 function LoadingScreen() {

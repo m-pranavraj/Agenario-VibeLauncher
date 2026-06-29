@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { FileExplorer } from "@/components/dashboard/FileExplorer";
 import { ConfidenceContractView } from "@/components/intelligence/ConfidenceContractView";
-import { DeepTech40Panel } from "@/components/deep-tech/DeepTech40Panel";
+import { VerificationPanel } from "@/components/deep-tech/VerificationPanel";
 
 export default function CertPage() {
   const [, params] = useRoute("/cert/:id");

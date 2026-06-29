@@ -10,7 +10,8 @@
  */
 
 import { useState } from "react";
-import { CheckCircle2, XCircle, AlertTriangle, Clock, ArrowRight, Shield, Cpu, Eye, Zap, FileCheck, Lock, Globe, Activity } from "lucide-react";
+import { CheckCircle2, XCircle, AlertTriangle, Clock, ArrowRight, Shield, Cpu, Eye, Zap, FileCheck, Lock, Globe, Activity, Crown, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 type ComponentStatus = "real" | "partial" | "planned";
 
@@ -122,6 +123,10 @@ const ROADMAP_PHASES = [
 
 export default function RoadmapPage() {
   const [activeTab, setActiveTab] = useState<"real" | "partial" | "planned" | "roadmap">("roadmap");
+  const { user, loading: authLoading } = useAuth();
+
+  if (authLoading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-violet-500" /></div>;
+  if (user.plan !== "creator" && user.plan !== "enterprise") return <UpgradeScreen />;
 
   return (
     <div className="min-h-screen bg-[#050505] text-white">
@@ -232,6 +237,27 @@ export default function RoadmapPage() {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function UpgradeScreen() {
+  return (
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6">
+      <div className="text-center max-w-md space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/30 flex items-center justify-center mx-auto">
+          <Crown className="w-8 h-8 text-violet-500" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-xl font-bold font-['Syne'] text-white">Roadmap to Real System</h1>
+          <p className="text-sm text-white/40">Full roadmap access with detailed component assessment is available on the Creator plan and above.</p>
+        </div>
+        <Link href="/pricing">
+          <button className="flex items-center gap-2 bg-white text-black font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all shadow-lg mx-auto">
+            Upgrade to Creator - Rs.299/mo <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </Link>
       </div>
     </div>
   );
