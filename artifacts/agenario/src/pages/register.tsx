@@ -110,8 +110,14 @@ export default function RegisterPage() {
         className="relative z-10 w-full max-w-sm"
       >
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center mb-6">
-            <img src="/logo2-transparent.png" alt="Agenario" className="w-48 object-contain" style={{ height: "auto" }} />
+          <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
+            <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover" />
+            <div className="flex items-center gap-1.5">
+              <span className={`font-heading font-bold text-lg tracking-tight text-white`}>Agenario</span>
+              <span className="px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.2)] select-none">
+                Beta
+              </span>
+            </div>
           </Link>
           <h1 className={`text-2xl font-bold font-['Syne'] ${t.heading}`}>Create your account</h1>
           <p className={`mt-1.5 text-sm ${t.sub}`}>2 free scans per month · No credit card needed</p>
