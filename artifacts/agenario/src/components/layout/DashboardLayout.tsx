@@ -409,9 +409,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <SidebarHeader className="flex h-16 items-center px-5 border-b border-slate-100 dark:border-white/[0.06]">
             <Link href="/dashboard" className="flex items-center gap-2.5 ml-2">
               <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
-              <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white">
-                Agenario
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white">
+                  Agenario
+                </span>
+                <span className="px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.2)] select-none">
+                  Beta
+                </span>
+              </div>
             </Link>
           </SidebarHeader>
 
@@ -443,20 +448,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             )}
 
             {/* Appearance & Logout */}
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-1.5">
-                <span className={`text-[10px] font-semibold uppercase tracking-wider ${isLight ? "text-slate-400" : "text-slate-500"}`}>
-                  Theme
-                </span>
-                <ThemeToggle />
-              </div>
+            <div className="flex items-center justify-end px-1">
               <button
                 onClick={handleLogout}
-                className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors ${
-                  isLight
-                    ? "text-slate-500 hover:text-red-600 hover:bg-red-50"
-                    : "text-slate-500 hover:text-red-400 hover:bg-red-500/[0.08]"
-                }`}
+                className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors text-slate-500 hover:text-red-400 hover:bg-red-500/[0.08]"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 Sign out

@@ -71,7 +71,12 @@ export default function AboutPage() {
           </Link>
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="Agenario" className="w-7 h-7 rounded-xl object-cover" />
-            <span className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Agenario</span>
+            <div className="flex items-center gap-1.5">
+              <span className={`font-bold font-['Syne'] text-sm ${isLight ? "text-gray-900" : "text-white"}`}>Agenario</span>
+              <span className="px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.2)] select-none">
+                Beta
+              </span>
+            </div>
           </Link>
           <div className="ml-auto flex items-center gap-3">
             <ThemeToggle />

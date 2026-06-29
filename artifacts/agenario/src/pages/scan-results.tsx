@@ -5563,7 +5563,12 @@ function UrlSurfaceAuditPanel({ scan, isLight }: { scan: any, isLight: boolean }
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 -ml-1">
             <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover object-left" />
-            <span className={`font-heading font-bold text-lg tracking-tight ${isLight ? "text-gray-900" : "text-white"}`}>Agenario</span>
+            <div className="flex items-center gap-1.5">
+              <span className={`font-heading font-bold text-lg tracking-tight ${isLight ? "text-gray-900" : "text-white"}`}>Agenario</span>
+              <span className="px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.2)] select-none">
+                Beta
+              </span>
+            </div>
           </Link>
           <div className="flex items-center gap-4">
             <ThemeToggle />
