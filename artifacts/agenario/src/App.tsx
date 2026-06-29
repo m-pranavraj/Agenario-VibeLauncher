@@ -25,6 +25,7 @@ import ThankYouPage from "@/pages/thank-you";
 import CareersPage from "@/pages/careers";
 import AdminPage from "@/pages/admin";
 import CertPage from "@/pages/cert";
+import ReportPage from "@/pages/report";
 import SettingsPage from "@/pages/settings";
 import IntegrationsPage from "@/pages/integrations";
 import SecurityRulesPage from "@/pages/security-rules";
@@ -62,6 +63,7 @@ function Router() {
       <Route path="/careers" component={CareersPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/cert/:id" component={CertPage} />
+      <Route path="/report/:id" component={ReportPage} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/integrations" component={IntegrationsPage} />
       <Route path="/security-rules" component={SecurityRulesPage} />
