@@ -113,7 +113,7 @@ export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
   const githubInfo = useMemo(() => {
     if (scan.sourceType !== "github") return null;
     try {
-      const cleanUrl = (scan.sourceInput || scan.source || "")
+      const cleanUrl = ((scan as any).sourceInput || (scan as any).source || "")
         .replace("git@", "")
         .replace("https://github.com/", "")
         .replace("http://github.com/", "")
@@ -280,7 +280,7 @@ export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
     const extension = selectedFile.split('.').pop() || '';
     if (selectedFile.endsWith("package.json")) {
       return JSON.stringify({
-        name: (scan.sourceInput || scan.source || "").split("/").pop() || "vibe-app",
+        name: ((scan as any).sourceInput || (scan as any).source || "").split("/").pop() || "vibe-app",
         version: "1.0.0",
         private: true,
         dependencies: {
