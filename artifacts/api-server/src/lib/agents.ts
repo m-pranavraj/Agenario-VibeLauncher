@@ -610,7 +610,7 @@ function withCallTimeout<T>(fn: () => Promise<T>, label: string): Promise<T> {
  * NEVER THROWS. Returns "{}" when all providers fail so callers always get
  * a parseable result and can return 0 issues rather than crashing the scan.
  */
-async function callWithFallback(
+export async function callWithFallback(
   messages: { role: "system" | "user"; content: string }[],
   opts: { model: string; cerebrasModel?: string; maxTokens?: number; useSmart?: boolean },
 ): Promise<string> {

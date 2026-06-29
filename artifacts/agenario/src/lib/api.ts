@@ -916,6 +916,22 @@ export const api = {
       frameworkRootCause: string;
     }>(`/intelligence/failures?issueTitle=${encodeURIComponent(issueTitle)}`),
   },
+  automation: {
+    claimNextRun: (workerId: string) => request<any>("/automation/claim-next-run", { method: "POST", body: JSON.stringify({ workerId }) }),
+    createRun: (data: any) => request<any>("/automation/create-run", { method: "POST", body: JSON.stringify(data) }),
+    getRunDetail: (runId: string) => request<any>(`/automation/run/${runId}`),
+    listRuns: (status?: string, limit?: number) => {
+      const q = new URLSearchParams();
+      if (status) q.set("status", status);
+      if (limit) q.set("limit", limit.toString());
+      return request<any[]>(`/automation/runs?${q.toString()}`);
+    },
+    submitWorkerArtifacts: (data: any) => request<any>("/automation/submit-artifacts", { method: "POST", body: JSON.stringify(data) }),
+  },
+  compiler: {
+    analyzeConsensus: (data: any) => request<any>("/compiler/analyze-consensus", { method: "POST", body: JSON.stringify(data) }),
+    generatePatch: (data: any) => request<any>("/compiler/generate-patch", { method: "POST", body: JSON.stringify(data) }),
+  },
   subscribeProgress: (scanId: number, onEvent: (event: any) => void): (() => void) => {
     const url = `${BASE}/scans/${scanId}/progress`;
     const eventSource = new EventSource(url, { withCredentials: true });

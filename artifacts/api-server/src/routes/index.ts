@@ -8,6 +8,8 @@ import monitoringRouter from "./monitoring.js";
 import adminRouter from "./admin.js";
 import publicRouter from "./public.js";
 import apiKeysRouter from "./api-keys.js";
+import automationRouter from "./automation.js";
+import compilerRouter from "./compiler.js";
 
 const router: IRouter = Router();
 
@@ -20,5 +22,7 @@ router.use(monitoringRouter);
 router.use(adminRouter);
 router.use(publicRouter);
 router.use(apiKeysRouter);
+router.use(automationRouter);
+router.use(compilerRouter);
 
 export default router;
