@@ -5,4 +5,10 @@ export * from "./session";
 export * from "./api-keys";
 export * from "./webhook-secrets";
 export * from "./automation";
-
+export * from "./coupons";
+export * from "./scan-engine-results";
+export * from "./scan-proofs";
+export * from "./remediation";
+export * from "./teams";
+export * from "./conversations";
+export * from "./messages";

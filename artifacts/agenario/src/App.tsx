@@ -26,10 +26,13 @@ import CareersPage from "@/pages/careers";
 import AdminPage from "@/pages/admin";
 import CertPage from "@/pages/cert";
 import ReportPage from "@/pages/report";
-import SettingsPage from "@/pages/settings";
 import IntegrationsPage from "@/pages/integrations";
-import SecurityRulesPage from "@/pages/security-rules";
 import ApiKeysPage from "@/pages/api-keys";
+import RemediationPage from "@/pages/remediation";
+import IssueChecklistPage from "@/pages/issue-checklist";
+import RoadmapPage from "@/pages/roadmap";
+import TestWriterPage from "@/pages/test-writer";
+import EvidenceTiersPage from "@/pages/evidence-tiers";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -64,9 +67,12 @@ function Router() {
       <Route path="/admin" component={AdminPage} />
       <Route path="/cert/:id" component={CertPage} />
       <Route path="/report/:id" component={ReportPage} />
-      <Route path="/settings" component={SettingsPage} />
+      <Route path="/scans/:id/remediate" component={RemediationPage} />
+      <Route path="/scans/:id/issues" component={IssueChecklistPage} />
+      <Route path="/scans/:id/tests" component={TestWriterPage} />
+      <Route path="/scans/:id/evidence" component={EvidenceTiersPage} />
+      <Route path="/roadmap" component={RoadmapPage} />
       <Route path="/integrations" component={IntegrationsPage} />
-      <Route path="/security-rules" component={SecurityRulesPage} />
       <Route path="/api-keys" component={ApiKeysPage} />
       <Route component={NotFound} />
     </Switch>

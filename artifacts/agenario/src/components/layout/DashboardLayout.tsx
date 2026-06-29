@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Link, useLocation } from "wouter";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   SidebarProvider,
   Sidebar,
@@ -18,15 +17,23 @@ import {
 import {
   LayoutDashboard, ChevronLeft, Folder, ShieldCheck, Activity,
   Code2,
-  ShieldAlert,
-  Settings,
   LogOut,
   Box,
   Fingerprint,
-  Bell,
   ChevronRight,
   ChevronDown,
-  User,
+  ListChecks,
+  Bug,
+  TestTube,
+  TrendingUp,
+  Telescope,
+  Bot,
+  FileSearch,
+  Shield,
+  Zap,
+  Palette,
+  Route,
+  Search,
 } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { useAuth } from "@/hooks/use-auth";
@@ -40,9 +47,7 @@ const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "New Project", url: "/scans/new", icon: Box },
   { title: "Integrations", url: "/integrations", icon: Code2 },
-  { title: "Security Rules", url: "/security-rules", icon: ShieldAlert },
   { title: "API Keys", url: "/api-keys", icon: Fingerprint },
-  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 const PLAN_LABELS: Record<string, { label: string; color: string }> = {
@@ -64,7 +69,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                        !location.endsWith("/progress") && 
                        !location.endsWith("/new");
 
-  // Determine active section from URL if on a report page
   const pathParts = location.split("/");
   const scanId = isReportPage ? pathParts[2] : "";
   const activeSection = isReportPage ? (pathParts[3] || "overview") : "";
@@ -74,16 +78,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     window.location.href = "/";
   };
 
-  // Get page title from location
   const getPageTitle = () => {
     if (location === "/dashboard") return "Dashboard";
     if (location.startsWith("/scans/new") || location.startsWith("/scan/new")) return "New Project";
     if (location.startsWith("/scans/") && location.includes("/progress")) return "Scan Progress";
     if (location.startsWith("/scans/")) return "Report";
+    if (location === "/roadmap") return "Roadmap to Real System";
     if (location === "/integrations") return "Integrations";
-    if (location === "/security-rules") return "Security Rules";
     if (location === "/api-keys") return "API Keys";
-    if (location === "/settings") return "Settings";
     if (location === "/monitoring") return "Monitoring";
     if (location === "/intelligence") return "Intelligence";
     return "Agenario";
@@ -97,12 +99,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   };
 
+  const btnClass = "transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200";
+
   const getSidebarContent = () => {
     if (isReportPage) {
       const scanId = location.split("/")[2];
       return (
         <div className="space-y-4 w-full">
-          {/* Back button */}
           <SidebarGroup>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -116,32 +119,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarMenu>
           </SidebarGroup>
 
-          {/* Group 1: Overview & Environment */}
+          {/* ─── Overview & Environment ─────────────────────────── */}
           <SidebarGroup className="p-0">
             <SidebarGroupLabel className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3">
-              Overview & Environment
+              Overview &amp; Environment
             </SidebarGroupLabel>
             <SidebarGroupContent className="mt-1 px-1">
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={activeSection === "overview"}
-                    className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
-                  >
+                  <SidebarMenuButton asChild isActive={activeSection === "overview"} className={btnClass}>
                     <button type="button" onClick={() => navigateTo("overview")} className="flex items-center gap-3 w-full text-left">
                       <LayoutDashboard className="h-4 w-4 shrink-0" />
                       <span className="font-medium text-sm">Readiness Score</span>
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={activeSection === "sandbox"}
-                    className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
-                  >
+                  <SidebarMenuButton asChild isActive={activeSection === "sandbox"} className={btnClass}>
                     <button type="button" onClick={() => navigateTo("sandbox")} className="flex items-center gap-3 w-full text-left">
                       <Box className="h-4 w-4 shrink-0" />
                       <span className="font-medium text-sm">Sandbox Proofs</span>
@@ -152,7 +146,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {/* Group: Confidence Contract (Feature Verifier) */}
+          {/* ─── Confidence Contract ─────────────────────────────── */}
           <SidebarGroup className="p-0">
             <SidebarGroupLabel className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider px-3">
               Confidence Contract
@@ -160,11 +154,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <SidebarGroupContent className="mt-1 px-1">
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={activeSection === "confidence"}
-                    className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
-                  >
+                  <SidebarMenuButton asChild isActive={activeSection === "confidence"} className={btnClass}>
                     <button type="button" onClick={() => navigateTo("confidence")} className="flex items-center gap-3 w-full text-left">
                       <ShieldCheck className="h-4 w-4 shrink-0 text-indigo-500" />
                       <span className="font-medium text-sm">Feature Completion</span>
@@ -175,12 +165,31 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {/* Group 2: Core Issues */}
+          {/* ─── Core Issues ──────────────────────────────────────── */}
+          <SidebarGroup className="p-0">
+            <SidebarGroupLabel className="text-[10px] font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider px-3">
+              Core Issues
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="mt-1 px-1">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={activeSection === "issues"} className={btnClass}>
+                    <button type="button" onClick={() => navigateTo("issues")} className="flex items-center gap-3 w-full text-left">
+                      <ListChecks className="h-4 w-4 shrink-0 text-rose-500" />
+                      <span className="font-medium text-sm">All Issues</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* ─── Deep Audits (Issue Categories) ───────────────────── */}
           <Collapsible defaultOpen className="group/collapsible">
             <SidebarGroup className="p-0">
               <SidebarGroupLabel asChild className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 py-1.5 hover:bg-slate-100/50 dark:hover:bg-white/5 cursor-pointer transition-colors">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
-                  Core Issues
+                  Issue Dimensions
                   <ChevronDown className="h-3.5 w-3.5 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
@@ -188,19 +197,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <SidebarGroupContent className="mt-1 px-1">
                   <SidebarMenu>
                     {[
-                      { label: "Security Vulnerabilities", hash: "issues-security", color: "bg-rose-500", tourId: "tab-issues" },
-                      { label: "Compliance & Safety", hash: "issues-compliance", color: "bg-amber-500" },
-                      { label: "Performance Sinks", hash: "issues-performance", color: "bg-blue-500" },
-                      { label: "UI / UX Bottlenecks", hash: "issues-uiux", color: "bg-emerald-500" },
+                      { label: "Security Vulnerabilities", hash: "issues-security", color: "bg-rose-500", icon: Shield },
+                      { label: "Compliance & Safety", hash: "issues-compliance", color: "bg-amber-500", icon: FileSearch },
+                      { label: "Performance Sinks", hash: "issues-performance", color: "bg-blue-500", icon: Zap },
+                      { label: "UI / UX Bottlenecks", hash: "issues-uiux", color: "bg-emerald-500", icon: Palette },
                     ].map((sub) => (
                       <SidebarMenuItem key={sub.hash}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={activeSection === sub.hash}
-                          className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
-                        >
-                          <button type="button" onClick={() => navigateTo(sub.hash)} data-tour={sub.tourId} className="flex items-center gap-2.5 w-full text-left">
-                            <span className={`w-2 h-2 rounded-full shrink-0 ${sub.color}`} />
+                        <SidebarMenuButton asChild isActive={activeSection === sub.hash} className={btnClass}>
+                          <button type="button" onClick={() => navigateTo(sub.hash)} className="flex items-center gap-2.5 w-full text-left">
+                            <sub.icon className={`h-3.5 w-3.5 shrink-0 ${sub.color.replace("bg-", "text-")}`} />
                             <span className="font-medium text-xs truncate">{sub.label}</span>
                           </button>
                         </SidebarMenuButton>
@@ -212,8 +217,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarGroup>
           </Collapsible>
 
-          {/* Group 3: Deep Tech Analysis */}
-          <Collapsible defaultOpen className="group/collapsible">
+          {/* ─── Deep Tech Analysis ────────────────────────────────── */}
+          <Collapsible className="group/collapsible">
             <SidebarGroup className="p-0">
               <SidebarGroupLabel asChild className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 py-1.5 hover:bg-slate-100/50 dark:hover:bg-white/5 cursor-pointer transition-colors">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
@@ -257,12 +262,31 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarGroup>
           </Collapsible>
 
-          {/* Group 4: Launch Impact */}
-          <Collapsible defaultOpen className="group/collapsible">
+          {/* ─── Evidence Board ─────────────────────────────────────── */}
+          <SidebarGroup className="p-0">
+            <SidebarGroupLabel className="text-[10px] font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider px-3">
+              Evidence Board
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="mt-1 px-1">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={activeSection === "evidence"} className={btnClass}>
+                    <button type="button" onClick={() => navigateTo("evidence")} className="flex items-center gap-3 w-full text-left">
+                      <Activity className="h-4 w-4 shrink-0 text-emerald-500" />
+                      <span className="font-medium text-sm">Evidence Tiers (T1-T5)</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* ─── Launch Impact & Reality ───────────────────────────── */}
+          <Collapsible className="group/collapsible">
             <SidebarGroup className="p-0">
               <SidebarGroupLabel asChild className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 py-1.5 hover:bg-slate-100/50 dark:hover:bg-white/5 cursor-pointer transition-colors">
                 <CollapsibleTrigger className="flex w-full items-center justify-between">
-                  Launch Impact & Reality
+                  Launch Impact &amp; Reality
                   <ChevronDown className="h-3.5 w-3.5 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
@@ -270,18 +294,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <SidebarGroupContent className="mt-1 px-1">
                   <SidebarMenu>
                     {[
-                      { label: "Revenue Intelligence", hash: "impact-revenue", tourId: "tab-intelligence" },
-                      { label: "Product Hunt Readiness", hash: "impact-producthunt" },
-                      { label: "Product Reality Narrative", hash: "reality" },
+                      { label: "Pre-Launch Checklist", hash: "prelaunch", icon: Route },
+                      { label: "Revenue Intelligence", hash: "impact-revenue", icon: TrendingUp },
+                      { label: "Product Hunt Readiness", hash: "impact-producthunt", icon: Telescope },
+                      { label: "Product Reality Narrative", hash: "reality", icon: Search },
                     ].map((sub) => (
                       <SidebarMenuItem key={sub.hash}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={activeSection === sub.hash}
-                          className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
-                        >
-                          <button type="button" onClick={() => navigateTo(sub.hash)} data-tour={sub.tourId} className="flex items-center gap-2.5 w-full text-left">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-white/30 shrink-0" />
+                        <SidebarMenuButton asChild isActive={activeSection === sub.hash} className={btnClass}>
+                          <button type="button" onClick={() => navigateTo(sub.hash)} className="flex items-center gap-2.5 w-full text-left">
+                            <sub.icon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                             <span className="font-medium text-xs truncate">{sub.label}</span>
                           </button>
                         </SidebarMenuButton>
@@ -293,33 +314,73 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarGroup>
           </Collapsible>
 
-          {/* Group 5: Codebase Navigator */}
+          {/* ─── Codebase Files ─────────────────────────────────────── */}
           <SidebarGroup className="p-0">
-            <SidebarMenu className="px-1">
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={activeSection === "files"}
-                  className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12] data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400 text-slate-700 dark:text-slate-200"
-                >
-                  <button type="button" onClick={() => navigateTo("files")} className="flex items-center gap-3 w-full text-left">
-                    <Folder className="h-4 w-4 shrink-0" />
-                    <span className="font-medium text-sm">Codebase Files</span>
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+            <SidebarGroupLabel className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3">
+              Codebase
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="mt-1 px-1">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={activeSection === "files"} className={btnClass}>
+                    <button type="button" onClick={() => navigateTo("files")} className="flex items-center gap-3 w-full text-left">
+                      <Folder className="h-4 w-4 shrink-0" />
+                      <span className="font-medium text-sm">Codebase Files</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
           </SidebarGroup>
 
-          {/* Group 6: Shares */}
+          {/* ─── Tools ───────────────────────────────────────────── */}
+          <SidebarGroup className="p-0">
+            <SidebarGroupLabel className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3">
+              Tools
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="mt-1 px-1">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={activeSection === "cofounder"} className={btnClass}>
+                    <button type="button" onClick={() => navigateTo("cofounder")} className="flex items-center gap-3 w-full text-left">
+                      <Bot className="h-4 w-4 shrink-0 text-violet-500" />
+                      <span className="font-medium text-sm">Technical Cofounder</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={activeSection === "tests"} className={btnClass}>
+                    <button type="button" onClick={() => navigateTo("tests")} className="flex items-center gap-3 w-full text-left">
+                      <TestTube className="h-4 w-4 shrink-0 text-cyan-500" />
+                      <span className="font-medium text-sm">Auto Tests Writer</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* ─── Roadmap ─────────────────────────────────────────── */}
+          <SidebarGroup className="px-1 pt-1">
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] text-emerald-600 dark:text-emerald-400 font-bold">
+                <Link href="/roadmap" className="flex items-center gap-3 w-full text-left">
+                  <Route className="h-4 w-4 shrink-0" />
+                  <span className="font-medium text-sm">Roadmap to Real System</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarGroup>
+
+          {/* ─── Share ───────────────────────────────────────────── */}
           <SidebarGroup className="pt-3 border-t border-slate-100 dark:border-white/[0.04] px-3">
             <SidebarMenu className="space-y-1.5">
               <SidebarMenuItem>
                 <button
                   onClick={() => {
-                    const shareUrl = `${window.location.origin}/cert/${scanId}`;
+                    const shareUrl = `${window.location.origin}/report/${scanId}`;
                     navigator.clipboard.writeText(shareUrl);
-                    alert("Launch Certificate link copied to clipboard!");
+                    alert("Report link copied to clipboard!");
                   }}
                   className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:opacity-90 shadow-md transition-all cursor-pointer"
                 >
@@ -327,7 +388,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <span>Share Certificate</span>
                 </button>
               </SidebarMenuItem>
-
               <SidebarMenuItem>
                 <button
                   onClick={() => {
@@ -342,18 +402,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
-          {/* Admin link inside report layout */}
+
+          {/* ─── Admin (Admin Users Only) ────────────────────────── */}
           {showAdmin && (
             <SidebarGroup className="pt-2 border-t border-slate-100 dark:border-white/[0.04] px-1">
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location === "/admin"}
-                    className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] text-rose-500 hover:text-rose-600 font-bold"
-                  >
+                  <SidebarMenuButton asChild isActive={location === "/admin"} className="transition-all duration-150 rounded-xl py-2 px-3 hover:bg-slate-100 dark:hover:bg-white/[0.05] text-rose-500 hover:text-rose-600 font-bold">
                     <Link href="/admin" className="flex items-center gap-3 w-full text-left">
-                      <ShieldAlert className="h-4 w-4 shrink-0 text-rose-500" />
+                      <Shield className="h-4 w-4 shrink-0 text-rose-500" />
                       <span className="font-medium text-sm">Admin Panel</span>
                     </Link>
                   </SidebarMenuButton>
@@ -366,28 +423,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
 
     const activeNavItems = showAdmin 
-      ? [...navItems, { title: "Admin Panel", url: "/admin", icon: ShieldAlert }] 
+      ? [...navItems, { title: "Admin Panel", url: "/admin", icon: Shield }] 
       : navItems;
 
     return (
       <SidebarMenu>
         {activeNavItems.map((item) => {
-          const isActive =
-            location === item.url ||
-            (item.url !== "/dashboard" && location.startsWith(item.url));
+          const isActive = location === item.url || (item.url !== "/dashboard" && location.startsWith(item.url));
           return (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                isActive={isActive}
-                className={[
-                  "transition-all duration-150 rounded-xl py-2 px-3",
-                  "hover:bg-slate-100 dark:hover:bg-white/[0.05]",
-                  "data-[active=true]:bg-indigo-50 dark:data-[active=true]:bg-indigo-500/[0.12]",
-                  "data-[active=true]:text-indigo-600 dark:data-[active=true]:text-indigo-400",
-                  "text-slate-700 dark:text-slate-200",
-                ].join(" ")}
-              >
+              <SidebarMenuButton asChild isActive={isActive} className={btnClass}>
                 <Link href={item.url} className="flex items-center gap-3">
                   <item.icon className="h-4 w-4 shrink-0" />
                   <span className="font-medium text-sm">{item.title}</span>

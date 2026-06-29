@@ -66,7 +66,7 @@ function FindingRow({ finding, isLight }: { finding: AIConsensusFinding; isLight
           <div className="flex items-center gap-2 mb-1">
             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${sevCfg.color} ${sevCfg.bg}`}>{sevCfg.label}</span>
             <span className={`text-[9px] font-mono ${isLight ? "text-slate-500" : "text-white/40"}`}>
-              {finding.filePath.split("/").pop()}:{finding.lineNumber}
+              {(finding.filePath || '').split("/").pop()}:{finding.lineNumber}
             </span>
           </div>
           <div className={`text-[11px] font-medium truncate ${isLight ? "text-slate-700" : "text-white/70"}`}>{finding.title}</div>

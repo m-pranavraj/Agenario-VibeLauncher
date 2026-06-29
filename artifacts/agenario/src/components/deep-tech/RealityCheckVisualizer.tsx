@@ -184,7 +184,7 @@ export function RealityCheckVisualizer({ data }: { data: RealityCheckData }) {
                       <button onClick={() => handleOpenFile(f.file, f.line)}
                         className="flex items-center gap-1 text-[10px] font-mono text-rose-400 hover:text-rose-300 transition-colors">
                         <FileText className="w-3 h-3" />
-                        {f.file.split(/[/\\]/).pop()}:{f.line}
+                        {(f.file || "").split(/[/\\]/).pop()}:{f.line}
                         <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
                       </button>
                     </div>

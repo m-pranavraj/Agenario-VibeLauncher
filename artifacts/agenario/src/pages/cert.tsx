@@ -205,7 +205,7 @@ export default function CertPage() {
           <div className={`rounded-2xl border p-4 mb-8 ${isLight ? "bg-gray-50/50 border-gray-200" : "bg-white/5 border-white/5"}`}>
             <div className={`text-xs uppercase tracking-wider mb-2 font-semibold ${isLight ? "text-gray-400" : "text-white/30"}`}>Embed Badge</div>
             <code className={`text-xs font-mono block p-3 rounded-xl border ${isLight ? "bg-white border-gray-200 text-gray-600" : "bg-black/40 border-white/5 text-white/50"}`}>
-              {`[![Agenario Logo](${badgeUrl})](${currentUrl})`}
+              {`[![Agenario Security Audit](${badgeUrl})](${currentUrl})`}
             </code>
           </div>
 

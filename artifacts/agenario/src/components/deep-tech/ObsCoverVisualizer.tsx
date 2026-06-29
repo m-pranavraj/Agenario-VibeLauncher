@@ -95,7 +95,7 @@ export function ObsCoverVisualizer({ data }: { data: ObsCoverData | null }) {
               {b.coverage === "covered" ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400 shrink-0" /> :
                b.coverage === "partial" ? <AlertTriangle className="w-3.5 h-3.5 text-yellow-400 shrink-0" /> :
                <EyeOff className="w-3.5 h-3.5 text-red-400 shrink-0" />}
-              <span className="text-[10px] font-mono text-white/50">{b.file.split(/[/\\]/).pop()}:{b.line}</span>
+              <span className="text-[10px] font-mono text-white/50">{(b.file || "").split(/[/\\]/).pop()}:{b.line}</span>
               <span className={`text-[10px] px-1.5 py-0.5 rounded ${isLight ? "bg-slate-200 text-slate-600" : "bg-white/10 text-white/60"}`}>{b.blockType}</span>
               <span className="text-[10px] text-white/40">log={b.hasLogging ? "Y" : "N"} trace={b.hasTracing ? "Y" : "N"}</span>
             </div>

@@ -2887,7 +2887,7 @@ function VibeCodeIntelPanel({ vibeTool, issues, vibeToolRank }: {
                       <span className={`text-xs ${isLight ? "text-gray-800" : "text-white/80"} font-medium`}>{issue.title}</span>
                       {issue.filePath && (
                         <span className={`ml-auto text-[10px] ${isLight ? "text-gray-400" : "text-white/20"} font-mono shrink-0 truncate max-w-[120px]`}>
-                          {issue.filePath.split("/").pop()}
+                          {(issue.filePath || "").split("/").pop()}
                         </span>
                       )}
                     </div>
@@ -3182,7 +3182,7 @@ function ShareBadgeButton({ scan }: { scan: ScanDetail }) {
         className={`flex items-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/30"} hover:text-white/60 transition-colors px-3 py-1.5 rounded-lg border ${isLight ? "border-gray-200" : "border-white/[0.07]"} hover:border-white/15`}
       >
         {copied ? <CheckCheck className="w-3 h-3 text-green-400" /> : <Share2 className="w-3 h-3" />}
-        {copied ? "Copied!" : "Share"}
+        {copied ? "Copied!" : "Embed Badge"}
       </button>
       {showMenu && (
         <div className={`absolute right-0 top-9 z-50 bg-[#111] border ${isLight ? "border-gray-200" : "border-white/[0.1]"} rounded-xl shadow-2xl py-1 min-w-[180px]`}>
@@ -5838,6 +5838,17 @@ export default function ScanResultsPage() {
     activeTab = "deeptech";
   } else if (rawSection.startsWith("impact-")) {
     activeTab = "intelligence";
+  } else if (rawSection.startsWith("issues-")) {
+    activeCategory = rawSection.replace("issues-", "");
+    activeTab = "issues";
+  } else if (rawSection === "cofounder") {
+    activeTab = "cofounder";
+  } else if (rawSection === "evidence") {
+    activeTab = "evidence";
+  } else if (rawSection === "prelaunch") {
+    activeTab = "prelaunch";
+  } else if (rawSection === "tests") {
+    activeTab = "tests";
   } else if (rawSection === "sandbox") {
     activeTab = "sandbox";
   }
@@ -6197,6 +6208,15 @@ export default function ScanResultsPage() {
             </div>
           )}
           <div className="ml-auto flex items-center gap-2">
+            {/* Phase 11 — Remediation Engine link */}
+            {scan.issues && scan.issues.length > 0 && (
+              <Link href={`/scans/${scan.id}/remediate`}>
+                <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-bold transition-all shadow-lg ${isLight ? "bg-gradient-to-b from-violet-600 to-violet-700 border-violet-500 text-white shadow-violet-600/20 hover:from-violet-700 hover:to-violet-800" : "bg-violet-600 border-violet-500 text-white shadow-violet-600/25 hover:bg-violet-700"}`}>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Fix Issues
+                </button>
+              </Link>
+            )}
             {scan.score != null && <ShareBadgeButton scan={scan} />}
             {scan.certId && (
               <button 
@@ -7128,6 +7148,196 @@ export default function ScanResultsPage() {
               </motion.div>
             )}
           </>
+        )}
+
+        {/* ——— Evidence Tiers Tab ———————————————————————————————————————— */}
+        {activeTab === "evidence" && (
+          <div className="space-y-6">
+            <div className={`rounded-2xl p-6 ${isLight ? "bg-white border border-gray-200" : "glass"}`}>
+              <h2 className={`font-bold text-lg mb-4 ${isLight ? "text-gray-900" : "text-white"}`}>Evidence Tiers</h2>
+              <p className={`text-sm mb-6 ${isLight ? "text-gray-500" : "text-white/50"}`}>
+                Evidence tier system: T1 (strongest) to T5 (advisory)
+              </p>
+              <div className="grid grid-cols-5 gap-3 mb-8">
+                {[
+                  { tier: "T1", label: "Browser Runtime", color: "bg-emerald-500", count: 0 },
+                  { tier: "T2", label: "Runtime Verified", color: "bg-sky-500", count: 0 },
+                  { tier: "T3", label: "Code Proven", color: "bg-violet-500", count: 0 },
+                  { tier: "T4", label: "Static Signal", color: "bg-amber-500", count: 0 },
+                  { tier: "T5", label: "AI Advisory", color: "bg-slate-500", count: 0 },
+                ].map((t) => {
+                  const actualCount = (scan?.issues ?? []).filter((i: any) => {
+                    const level = i.evidenceLevel || i.sourceEvidence || "";
+                    if (t.tier === "T1") return level === "Verified Exploit" || level === "runtime";
+                    if (t.tier === "T2") return level === "Verified Code Risk" || level === "http";
+                    if (t.tier === "T3") return level === "Likely Risk" || level === "static";
+                    if (t.tier === "T4") return level === "Advisory" || level?.includes("pattern");
+                    return false;
+                  }).length;
+                  return (
+                    <div key={t.tier} className={`rounded-xl p-4 text-center ${isLight ? "bg-gray-50 border border-gray-100" : "bg-white/[0.03] border border-white/[0.06]"}`}>
+                      <div className={`w-8 h-8 rounded-full ${t.color} mx-auto mb-2 flex items-center justify-center text-white font-bold text-xs`}>{t.tier}</div>
+                      <div className={`text-2xl font-bold ${isLight ? "text-gray-900" : "text-white"}`}>{actualCount}</div>
+                      <div className={`text-[10px] mt-1 ${isLight ? "text-gray-400" : "text-white/40"}`}>{t.label}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              {(scan?.issues ?? []).length > 0 ? (
+                <div className="space-y-2">
+                  <h3 className={`font-semibold text-sm ${isLight ? "text-gray-700" : "text-white/70"}`}>Issues by Evidence Level</h3>
+                  {(scan.issues ?? []).slice(0, 10).map((issue: any, i: number) => {
+                    const level = issue.evidenceLevel || issue.sourceEvidence || "static";
+                    const tierColor = level === "Verified Exploit" ? "bg-emerald-500" : level === "Verified Code Risk" ? "bg-sky-500" : level === "Likely Risk" ? "bg-violet-500" : "bg-amber-500";
+                    const tierLabel = level === "Verified Exploit" ? "T1" : level === "Verified Code Risk" ? "T2" : level === "Likely Risk" ? "T3" : "T4";
+                    return (
+                      <div key={i} className={`flex items-center gap-3 p-2 rounded-lg ${isLight ? "hover:bg-gray-50" : "hover:bg-white/[0.03]"}`}>
+                        <span className={`w-5 h-5 rounded-full ${tierColor} flex items-center justify-center text-white text-[9px] font-bold`}>{tierLabel}</span>
+                        <span className={`text-sm flex-1 ${isLight ? "text-gray-700" : "text-white/70"}`}>{issue.title || issue.description}</span>
+                        <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/40"}`}>{issue.severity}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className={`text-center py-8 ${isLight ? "text-gray-400" : "text-white/30"}`}>
+                  No issues found — your app passed all checks in this dimension.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ——— Pre-Launch Checklist Tab —————————————————————————————————— */}
+        {activeTab === "prelaunch" && (
+          <div className="space-y-6">
+            <div className={`rounded-2xl p-6 ${isLight ? "bg-white border border-gray-200" : "glass"}`}>
+              <h2 className={`font-bold text-lg mb-4 ${isLight ? "text-gray-900" : "text-white"}`}>Pre-Launch Checklist</h2>
+              {(() => {
+                const issues = scan?.issues ?? [];
+                const categories = ["security", "compliance", "performance", "uiux"];
+                const checklist = categories.map(cat => ({
+                  category: cat,
+                  count: issues.filter((i: any) => (i.category || "").toLowerCase() === cat).length,
+                  severity: issues.filter((i: any) => (i.category || "").toLowerCase() === cat && (i.severity === "critical" || i.severity === "high")).length,
+                }));
+                return (
+                  <div className="space-y-4">
+                    {checklist.map(item => (
+                      <div key={item.category} className={`flex items-center justify-between p-4 rounded-xl ${isLight ? "bg-gray-50 border border-gray-100" : "bg-white/[0.03] border border-white/[0.06]"}`}>
+                        <div>
+                          <span className={`font-semibold capitalize ${isLight ? "text-gray-800" : "text-white"}`}>{item.category}</span>
+                          <span className={`ml-2 text-xs ${isLight ? "text-gray-400" : "text-white/40"}`}>
+                            {item.severity > 0 ? `${item.severity} critical/high issues` : `${item.count} total issues`}
+                          </span>
+                        </div>
+                        <div className={`text-lg font-bold ${item.severity > 0 ? "text-red-500" : item.count > 0 ? "text-amber-500" : "text-green-500"}`}>
+                          {item.count === 0 ? "✓ Pass" : `${item.count} open`}
+                        </div>
+                      </div>
+                    ))}
+                    <div className={`mt-6 p-4 rounded-xl ${isLight ? "bg-indigo-50 border border-indigo-100" : "bg-indigo-500/[0.06] border border-indigo-500/20"}`}>
+                      <p className={`text-sm font-medium ${isLight ? "text-indigo-700" : "text-indigo-300"}`}>
+                        Overall Launch Verdict: {scan?.launchVerdict || "Pending"}
+                      </p>
+                      <p className={`text-xs mt-1 ${isLight ? "text-indigo-500" : "text-indigo-400/60"}`}>
+                         Score: {scan?.score ?? 0}/100 — {scan.score != null ? (scan.score >= 70 ? "Ready to launch" : scan.score >= 40 ? "Needs work" : "Not ready") : "Not scored yet"}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* ——— Technical Cofounder Tab ———————————————————————————————————— */}
+        {activeTab === "cofounder" && (
+          <div className="space-y-6">
+            <div className={`rounded-2xl p-6 ${isLight ? "bg-white border border-gray-200" : "glass"}`}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-violet-400" />
+                </div>
+                <div>
+                  <h2 className={`font-bold text-lg ${isLight ? "text-gray-900" : "text-white"}`}>Technical Cofounder</h2>
+                  <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/50"}`}>AI-driven analysis based on complete scan report</p>
+                </div>
+              </div>
+              {(scan?.issues ?? []).length > 0 ? (
+                <div className="space-y-4">
+                  <div className={`rounded-xl p-4 ${isLight ? "bg-amber-50 border border-amber-100" : "bg-amber-500/[0.06] border border-amber-500/20"}`}>
+                    <h3 className={`font-semibold text-sm mb-2 ${isLight ? "text-amber-800" : "text-amber-300"}`}>Top 3 Critical Issues to Fix</h3>
+                    <ol className="list-decimal list-inside space-y-1">
+                      {(scan.issues ?? []).filter((i: any) => i.severity === "critical" || i.severity === "high").slice(0, 3).map((issue: any, i: number) => (
+                        <li key={i} className={`text-sm ${isLight ? "text-gray-700" : "text-white/70"}`}>{issue.title || issue.description}</li>
+                      ))}
+                    </ol>
+                  </div>
+                  <div className={`rounded-xl p-4 ${isLight ? "bg-blue-50 border border-blue-100" : "bg-blue-500/[0.06] border border-blue-500/20"}`}>
+                    <h3 className={`font-semibold text-sm mb-2 ${isLight ? "text-blue-800" : "text-blue-300"}`}>Architecture Overview</h3>
+                    <p className={`text-sm ${isLight ? "text-gray-600" : "text-white/60"}`}>
+                       {scan?.summary || "Framework: " + (scan?.framework || "Unknown") + ", " + ((scan?.issues?.length ?? 0) > 0 ? scan.issues.length + " issues found" : "No issues") + "."}
+                    </p>
+                  </div>
+                  <div className={`rounded-xl p-4 ${isLight ? "bg-green-50 border border-green-100" : "bg-green-500/[0.06] border border-green-500/20"}`}>
+                    <h3 className={`font-semibold text-sm mb-2 ${isLight ? "text-green-800" : "text-green-300"}`}>Score Breakdown</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm"><span className={isLight ? "text-gray-600" : "text-white/60"}>Security</span><span className="font-bold">{scan?.issueCounts ? `Critical: ${(scan.issueCounts as any).critical || 0}, High: ${(scan.issueCounts as any).high || 0}` : "No data"}</span></div>
+                      <div className="flex justify-between text-sm"><span className={isLight ? "text-gray-600" : "text-white/60"}>Overall Score</span><span className="font-bold">{scan?.score || 0}/100</span></div>
+                      <div className="flex justify-between text-sm"><span className={isLight ? "text-gray-600" : "text-white/60"}>Verdict</span><span className="font-bold">{scan?.launchVerdict || "Pending"}</span></div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className={`text-center py-8 ${isLight ? "text-gray-400" : "text-white/30"}`}>
+                  No scan data available. Run a scan first.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ——— Auto Tests Writer Tab —————————————————————————————————————— */}
+        {activeTab === "tests" && (
+          <div className="space-y-6">
+            <div className={`rounded-2xl p-6 ${isLight ? "bg-white border border-gray-200" : "glass"}`}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center">
+                   <Terminal className="w-5 h-5 text-cyan-400" />
+                </div>
+                <div>
+                  <h2 className={`font-bold text-lg ${isLight ? "text-gray-900" : "text-white"}`}>Automatic Tests Writer</h2>
+                  <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/50"}`}>Generate tests from real scan findings</p>
+                </div>
+              </div>
+              {(scan?.issues ?? []).length > 0 ? (
+                <div className="space-y-4">
+                  <div className={`rounded-xl p-4 ${isLight ? "bg-gray-50 border border-gray-200" : "bg-white/[0.03] border border-white/[0.06]"}`}>
+                    <h3 className={`font-semibold text-sm mb-3 ${isLight ? "text-gray-700" : "text-white/70"}`}>Testable Findings</h3>
+                    {(scan.issues ?? []).slice(0, 5).map((issue: any, i: number) => (
+                      <div key={i} className={`flex items-center justify-between py-2 border-b last:border-0 ${isLight ? "border-gray-100" : "border-white/[0.04]"}`}>
+                        <span className={`text-sm ${isLight ? "text-gray-600" : "text-white/60"}`}>{issue.title || issue.description}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${issue.severity === "critical" ? "bg-red-500/20 text-red-400" : issue.severity === "high" ? "bg-orange-500/20 text-orange-400" : "bg-slate-500/20 text-slate-400"}`}>
+                          {issue.severity}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={`rounded-xl p-4 ${isLight ? "bg-indigo-50 border border-indigo-100" : "bg-indigo-500/[0.06] border border-indigo-500/20"}`}>
+                    <p className={`text-sm ${isLight ? "text-indigo-700" : "text-indigo-300"}`}>
+                      Tests generation available for {Math.min((scan.issues ?? []).length, 5)} findings.
+                      Each test targets the specific vulnerability or issue detected.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className={`text-center py-8 ${isLight ? "text-gray-400" : "text-white/30"}`}>
+                  No findings to test. Run a scan to generate test cases.
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
         {/* ——— Knowledge Graph Tab ———————————————————————————————————————— */}

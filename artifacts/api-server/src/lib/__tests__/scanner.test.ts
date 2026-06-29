@@ -213,7 +213,7 @@ describe("Quality detection", () => {
 
   it("detects Math.random for crypto purposes", () => {
     writeFile("src/utils.ts", `
-      const token = crypto.randomUUID().slice(0, 8).substring(2) + "_secret";
+      const token = Math.random().toString(36).slice(2) + "_secret";
     `);
     const { findings } = scanDirectory(tmpDir);
     expect(findings.some((f) => f.title.includes("Math.random"))).toBe(true);

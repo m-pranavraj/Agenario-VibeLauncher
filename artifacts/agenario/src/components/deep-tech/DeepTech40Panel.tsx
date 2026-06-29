@@ -523,11 +523,7 @@ export function DeepTech40Panel({ scan: rawScan, activeSection }: Props) {
         ],
         vulnerabilities: [],
       },
-      thermodynamicEntropy: rawScan.thermodynamicEntropy ?? {
-        entropyLeaks: [],
-        totalLeaks: 0,
-        avgEntropy: 2.4,
-      },
+      entropyLeaks: rawScan.entropyLeaks ?? rawScan.thermodynamicEntropy ?? null,
       zkSnarkProof: rawScan.zkSnarkProof ?? {
         status: "VALID_PROOF",
         proofSize: 240,
@@ -604,33 +600,24 @@ export function DeepTech40Panel({ scan: rawScan, activeSection }: Props) {
       realityCheck: rawScan.realityCheck ?? {
         score: 92,
       },
-      fheAnalyzer: rawScan.fheAnalyzer ?? {
-        homomorphicDepth: 0,
-      },
-      postQuantumReadiness: rawScan.postQuantumReadiness ?? {
-        isPqcReady: true,
-      },
-      neuromorphicDrift: rawScan.neuromorphicDrift ?? {
-        driftFactor: 0.02,
-      },
-      dnaStorageCompiler: rawScan.dnaStorageCompiler ?? {
-        nucleotideSequences: [],
-      },
-      multiVerseDse: rawScan.multiVerseDse ?? {
-        alternateUniverses: 4,
-      },
-      bftConsensusGraph: rawScan.bftConsensusGraph ?? {
-        safetyScore: 99,
-      },
-      kardashevLatency: rawScan.kardashevLatency ?? {
-        type: "Type I",
-      },
-      agiAlignment: rawScan.agiAlignment ?? {
-        alignmentScore: 98,
-      },
-      tensorPayloadSignature: rawScan.tensorPayloadSignature ?? {
-        signatureMatches: true,
-      },
+      fheAnalyzer: rawScan.fheAnalyzer ?? null,
+      postQuantumReadiness: rawScan.postQuantumReadiness ?? null,
+      neuromorphicDrift: rawScan.neuromorphicDrift ?? null,
+      dnaStorageCompiler: rawScan.dnaStorageCompiler ?? null,
+      multiVerseDse: rawScan.multiVerseDse ?? null,
+      bftConsensusGraph: rawScan.bftConsensusGraph ?? rawScan.graphResilience ?? null,
+      kardashevLatency: rawScan.kardashevLatency ?? null,
+      agiAlignment: rawScan.agiAlignment ?? null,
+      tensorPayloadSignature: rawScan.tensorPayloadSignature ?? null,
+      // New engines (may not exist in old scans)
+      tensorFeature: rawScan.tensorFeature ?? null,
+      complexityDrift: rawScan.complexityDrift ?? null,
+      circularDeps: rawScan.circularDeps ?? null,
+      cryptoAgility: rawScan.cryptoAgility ?? null,
+      rewardLoop: rawScan.rewardLoop ?? null,
+      memoryOps: rawScan.memoryOps ?? null,
+      asyncResilience: rawScan.asyncResilience ?? null,
+      entropyLeaks: rawScan.entropyLeaks ?? rawScan.thermodynamicEntropy ?? null,
     };
   }, [rawScan]);
 

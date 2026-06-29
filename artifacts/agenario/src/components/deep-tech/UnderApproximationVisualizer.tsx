@@ -147,7 +147,7 @@ function StateRow({ state, isLight }: { state: any; isLight: boolean }) {
         {state.isReachable ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <XCircle className="w-4 h-4 text-red-400" />}
         <div className="flex-1 min-w-0">
           <div className={`text-[11px] font-medium truncate ${isLight ? "text-slate-700" : "text-white/70"}`}>
-            {state.filePath.split("/").pop()}:{state.line} — {state.nodeId}
+            {(state.filePath || "").split("/").pop()}:{state.line} — {state.nodeId}
           </div>
           {state.pathConstraint.length > 0 && (
             <div className={`text-[10px] font-mono mt-1 ${isLight ? "text-slate-500" : "text-white/40"}`}>

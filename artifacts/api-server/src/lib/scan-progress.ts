@@ -13,6 +13,8 @@ export interface ProgressEvent {
 }
 
 const emitters = new Map<number, EventEmitter>();
+export const globalEmitter = new EventEmitter();
+globalEmitter.setMaxListeners(1000);
 
 export function getEmitter(scanId: number): EventEmitter {
   let e = emitters.get(scanId);
@@ -28,6 +30,7 @@ export function emitProgress(scanId: number, event: Omit<ProgressEvent, "timesta
   const e = getEmitter(scanId);
   const full: ProgressEvent = { ...event, timestamp: Date.now() };
   e.emit("progress", full);
+  globalEmitter.emit("progress", full);
 }
 
 export function removeEmitter(scanId: number) {

@@ -30,6 +30,8 @@ const UNSUPPORTED_FRAMEWORKS = new Set([
   "go",
   "rust",
   "java",
+  "swift",
+  "kotlin",
 ]);
 
 const MAX_REPO_FILES = 8_000;

@@ -4,7 +4,7 @@ import os from "os";
 import path from "path";
 import { logger } from "../lib/logger.js";
 import { eq, desc, and, asc } from "drizzle-orm";
-import { db, usersTable, scansTable, scanIssuesTable } from "@workspace/db";
+import { db, usersTable, scansTable, scanIssuesTable, scanEngineResults, scanProofs } from "@workspace/db";
 import { CreateScanBody } from "@workspace/api-zod";
 import { runAllAgents, runLaunchImpactCalculator, runProductHuntAudit, type CodeContext } from "../lib/agents.js";
 import { PLAN_LIMITS, applyTierGate } from "../utils/tierGate.js";
@@ -33,6 +33,10 @@ import { runPredictiveIntel } from "../lib/predictive-intelligence.js";
 import { runRootCause } from "../lib/root-cause.js";
 import { buildKnowledgeGraph } from "../lib/knowledge-graph.js";
 import { getEmitter, emitProgress, removeEmitter } from "../lib/scan-progress.js";
+import { scanQueue } from "../lib/scan-queue.js";         // Phase 6.2 — Concurrency limiter
+import { cache, TTL, cacheMiddleware } from "../lib/cache.js"; // Phase 6.1 — Response cache
+import { metrics } from "../lib/metrics.js";
+
 
 import { buildCSGFromAST as buildCSG } from "../lib/ast-csg-builder.js";
 import { runVibeTaint } from "../lib/vibe-taint.js";
@@ -67,17 +71,17 @@ import type { AIContextMetrics } from "../lib/probabilistic-confidence.js";
 import type { VerifiedFinding } from "../lib/ai-verifier.js";
 import { runBabelEngine } from "../lib/babel-engine.js";
 import { runMultiVerseDse } from "../lib/multi-verse-dse.js";
-import { runZkSnarkAttestation } from "../lib/zk-attestation.js";
+import { runAstMerkleHasher } from "../lib/ast-merkle-hasher.js";
 import { runBigOProfiler } from "../lib/big-o-profiler.js";
-import { runFheReadiness } from "../lib/fhe-readiness.js";
-import { runNeuromorphicDrift } from "../lib/architectural-decay.js";
-import { runGpuTensorBridge } from "../lib/gpu-ast-integrity.js";
-import { runPostQuantumReadiness } from "../lib/legacy-crypto.js";
-import { runDnaStorageCompiler } from "../lib/cyclical-dependency.js";
-import { runBftConsensusGraph } from "../lib/bft-consensus.js";
-import { runKardashevLatency } from "../lib/kardashev-latency.js";
-import { runAgiAlignmentProver } from "../lib/agi-alignment.js";
-import { runThermodynamicEntropy } from "../lib/thermodynamic-entropy.js";
+import { runCryptoAgilityChecker } from "../lib/crypto-agility-checker.js";
+import { runComplexityDriftTracker } from "../lib/complexity-drift-tracker.js";
+import { runTensorFeatureHasher } from "../lib/tensor-feature-hasher.js";
+import { runPostQuantumReadiness } from "../lib/post-quantum-readiness.js";
+import { runCircularDependencyDetector } from "../lib/circular-dependency-detector.js";
+import { runGraphResilienceScorer } from "../lib/graph-resilience-scorer.js";
+import { runAsyncResilienceChecker } from "../lib/async-resilience-checker.js";
+import { runRewardLoopDetector } from "../lib/reward-loop-detector.js";
+import { runMemoryOperationCounter } from "../lib/memory-operation-counter.js";
 
 const router: IRouter = Router();
 
@@ -132,6 +136,68 @@ function getEvidenceLevel(confidence: number) {
   if (confidence >= 85) return "Verified Code Risk";
   if (confidence >= 70) return "Likely Risk";
   return "Advisory";
+}
+
+async function saveEngineResult(scanId: number, engineName: string, result: any) {
+  if (result === undefined || result === null) return;
+  try {
+    await db.delete(scanEngineResults).where(
+      and(
+        eq(scanEngineResults.scanId, scanId),
+        eq(scanEngineResults.engineName, engineName)
+      )
+    );
+    await db.insert(scanEngineResults).values({
+      scanId,
+      engineName,
+      result: typeof result === "object" ? result : { value: result },
+    });
+  } catch (err) {
+    logger.warn({ err, scanId, engineName }, "Failed to save normalized engine result");
+  }
+}
+
+async function saveScanProofs(scanId: number, proofs: any[]) {
+  if (!proofs || proofs.length === 0) return;
+  try {
+    await db.delete(scanProofs).where(eq(scanProofs.scanId, scanId));
+    const values = proofs.map(p => ({
+      scanId,
+      type: p.type || "unknown",
+      title: p.title || "Untitled Proof",
+      severity: p.severity || "info",
+      confidence: p.confidence || null,
+      url: p.url || null,
+      observed: p.observed || null,
+      impact: p.impact || null,
+      codeRef: p.codeRef || null,
+      screenshot: p.screenshot || null,
+      steps: p.steps || null,
+      videoUrl: p.videoUrl || null,
+      engineName: p.engineName || null,
+    }));
+    await db.insert(scanProofs).values(values);
+  } catch (err) {
+    logger.warn({ err, scanId }, "Failed to save normalized scan proofs");
+  }
+}
+
+async function getEngineResult(scanId: number, engineName: string): Promise<any | null> {
+  try {
+    const [row] = await db
+      .select({ result: scanEngineResults.result })
+      .from(scanEngineResults)
+      .where(
+        and(
+          eq(scanEngineResults.scanId, scanId),
+          eq(scanEngineResults.engineName, engineName)
+        )
+      )
+      .limit(1);
+    return row?.result ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function staticFindingToIssueRow(
@@ -348,6 +414,7 @@ async function runAnalysisPipeline(opts: {
   const emit = (phase: string, message: string, progress: number, agentName?: string) =>
     emitProgress(scanId, { scanId, phase, status: "running", message, progress, agentName });
 
+  metrics.scansStarted++;
   emit("initializing", "Starting analysis pipeline...", 0);
   const {
     userId, sourceType, sourceInput, appDescription,
@@ -369,17 +436,17 @@ async function runAnalysisPipeline(opts: {
   let csg: ReturnType<typeof buildCSG> | null = null;
   let babelEngine: any = null;
   let multiVerseDse: any = null;
-  let zkSnarkProof: any = null;
+  let astMerkle: any = null;
   let bigOProfiler: any = null;
-  let fheAnalyzer: any = null;
-  let neuromorphicDrift: any = null;
-  let tensorPayloadSignature: any = null;
+  let cryptoAgility: any = null;
+  let complexityDrift: any = null;
+  let tensorFeature: any = null;
   let postQuantumReadiness: any = null;
-  let dnaStorageCompiler: any = null;
-  let bftConsensusGraph: any = null;
-  let kardashevLatency: any = null;
-  let agiAlignment: any = null;
-  let thermodynamicEntropy: any = null;
+  let circularDeps: any = null;
+  let graphResilience: any = null;
+  let asyncResilience: any = null;
+  let rewardLoop: any = null;
+  let memoryOps: any = null;
   let deploySafe: any = null;
   let promptTrace: any = null;
   let flowValue: any = null;
@@ -450,28 +517,16 @@ async function runAnalysisPipeline(opts: {
         }));
 
       const vibeTaint = runVibeTaint(keyFiles ?? [], pkg);
-      try {
-        await db.update(scansTable).set({
-          vibeTaint: {
-            dfgNodesConstructed: vibeTaint.stats.sourceNodes + vibeTaint.stats.sinkNodes,
-            taintPathsDetected: vibeTaint.stats.taintedPaths,
-            sanitizedPaths: vibeTaint.stats.sanitizedPaths,
-            implicitFlows: vibeTaint.stats.implicitFlowsDetected,
-            taintScore: vibeTaint.taintScore,
-            insight: `VibeTaint tracked ${vibeTaint.stats.sourceNodes} source → sink paths across the CSG. Found ${vibeTaint.stats.taintedPaths} unsanitized taint paths (${vibeTaint.stats.sanitizedPaths} sanitized). ${vibeTaint.stats.implicitFlowsDetected} implicit control-dependence flows detected. Overall taint score: ${vibeTaint.taintScore}/100.`,
-          },
-        }).where(eq(scansTable.id, scanId));
-      } catch (err) {
-        logger.warn({ err, scanId }, "Failed to persist VibeTaint results to DB");
-      }
+      await saveEngineResult(scanId, "vibeTaint", {
+        dfgNodesConstructed: vibeTaint.stats.sourceNodes + vibeTaint.stats.sinkNodes,
+        taintPathsDetected: vibeTaint.stats.taintedPaths,
+        sanitizedPaths: vibeTaint.stats.sanitizedPaths,
+        implicitFlows: vibeTaint.stats.implicitFlowsDetected,
+        taintScore: vibeTaint.taintScore,
+        insight: `VibeTaint tracked ${vibeTaint.stats.sourceNodes} source → sink paths across the CSG. Found ${vibeTaint.stats.taintedPaths} unsanitized taint paths (${vibeTaint.stats.sanitizedPaths} sanitized). ${vibeTaint.stats.implicitFlowsDetected} implicit control-dependence flows detected. Overall taint score: ${vibeTaint.taintScore}/100.`,
+      });
 
-      try {
-        await db.update(scansTable).set({
-          timeAwareDeps: timeAwareDepsData,
-        }).where(eq(scansTable.id, scanId));
-      } catch (err) {
-        logger.warn({ err, scanId }, "Failed to persist time-aware deps to DB");
-      }
+      await saveEngineResult(scanId, "timeAwareDeps", timeAwareDepsData);
 
       regGraph = runRegGraph(keyFiles ?? [], csg);
       symCost = runSymCost(keyFiles ?? [], pkg);
@@ -483,13 +538,7 @@ async function runAnalysisPipeline(opts: {
       promptTrace = runPromptTrace(keyFiles ?? [], csg);
       emit("structural-analysis", "Structural AST fingerprinting + LTL state-space checking...", 10.5);
       const structuralAnalysis = runStructuralAnalysis(keyFiles ?? []);
-      try {
-        await db.update(scansTable).set({
-          topologicalAnalysis: structuralAnalysis,
-        }).where(eq(scansTable.id, scanId));
-      } catch (err) {
-        logger.warn({ err, scanId }, "Failed to persist structural analysis to DB");
-      }
+      await saveEngineResult(scanId, "topologicalAnalysis", structuralAnalysis);
 
       let deepTechReport: DeepTechReport | null = null;
       try {
@@ -520,17 +569,17 @@ async function runAnalysisPipeline(opts: {
 
       babelEngine = runBabelEngine(keyFiles ?? [], csg);
       multiVerseDse = runMultiVerseDse(keyFiles ?? [], csg);
-      zkSnarkProof = runZkSnarkAttestation(keyFiles ?? [], csg);
+      astMerkle = runAstMerkleHasher(keyFiles ?? [], csg);
       bigOProfiler = runBigOProfiler(keyFiles ?? [], csg);
-      fheAnalyzer = runFheReadiness(keyFiles ?? [], csg);
-      neuromorphicDrift = runNeuromorphicDrift(keyFiles ?? [], codeContext ?? undefined);
-      tensorPayloadSignature = runGpuTensorBridge(keyFiles ?? [], csg);
+      cryptoAgility = runCryptoAgilityChecker(keyFiles ?? []);
+      complexityDrift = runComplexityDriftTracker(keyFiles ?? [], codeContext ?? undefined);
+      tensorFeature = runTensorFeatureHasher(keyFiles ?? [], csg);
       postQuantumReadiness = runPostQuantumReadiness(keyFiles ?? []);
-      dnaStorageCompiler = runDnaStorageCompiler(keyFiles ?? []);
-      bftConsensusGraph = runBftConsensusGraph(csg);
-      kardashevLatency = runKardashevLatency(keyFiles ?? []);
-      agiAlignment = runAgiAlignmentProver(keyFiles ?? []);
-      thermodynamicEntropy = runThermodynamicEntropy(keyFiles ?? []);
+      circularDeps = runCircularDependencyDetector(keyFiles ?? []);
+      graphResilience = runGraphResilienceScorer(csg);
+      asyncResilience = runAsyncResilienceChecker(keyFiles ?? []);
+      rewardLoop = runRewardLoopDetector(keyFiles ?? []);
+      memoryOps = runMemoryOperationCounter(keyFiles ?? []);
       
       const allPillarFindings = [
         ...vibeTaint.findings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "security" })),
@@ -586,57 +635,55 @@ async function runAnalysisPipeline(opts: {
       const mathResult = await runAdvancedMathEngines(codeContext, 
         csg.nodes instanceof Map ? Array.from(csg.nodes.values()) : (csg.nodes as any));
 
-      // Persist to thermodynamicEntropy & constraintSolver columns
-      try {
-        await db.update(scansTable).set({
-          thermodynamicEntropy: {
-            entropyLeaks: mathResult.entropyLeaks,
-            totalLeaks: mathResult.entropyLeaks.length,
-            scanDate: new Date().toISOString(),
-            avgEntropy: mathResult.entropyLeaks.length > 0
-              ? mathResult.entropyLeaks.reduce((s: number, l: any) => s + l.entropy, 0) / mathResult.entropyLeaks.length
-              : 0,
-            patternDistribution: mathResult.entropyLeaks.reduce((acc: Record<string, number>, l: any) => {
-              acc[l.patternType] = (acc[l.patternType] || 0) + 1;
-              return acc;
-            }, {} as Record<string, number>),
-          },
-          constraintSolver: {
-            constraintBypasses: mathResult.smtViolations,
-            totalBypasses: mathResult.smtViolations.length,
-            scanDate: new Date().toISOString(),
-            byConditionType: mathResult.smtViolations.reduce((acc: Record<string, number>, s: any) => {
-              acc[s.conditionType] = (acc[s.conditionType] || 0) + 1;
-              return acc;
-            }, {} as Record<string, number>),
-            byBypassType: mathResult.smtViolations.reduce((acc: Record<string, number>, s: any) => {
-              acc[s.bypassType] = (acc[s.bypassType] || 0) + 1;
-              return acc;
-            }, {} as Record<string, number>),
-          },
-        }).where(eq(scansTable.id, scanId));
-      } catch (err) {
-        logger.warn({ err, scanId }, "Failed to persist math engine results to DB");
-      }
+      // Persist entropy leaks from math engine
+      await saveEngineResult(scanId, "entropyLeaks", {
+        entropyLeaks: mathResult.entropyLeaks,
+        totalLeaks: mathResult.entropyLeaks.length,
+        scanDate: new Date().toISOString(),
+        avgEntropy: mathResult.entropyLeaks.length > 0
+          ? mathResult.entropyLeaks.reduce((s: number, l: any) => s + l.entropy, 0) / mathResult.entropyLeaks.length
+          : 0,
+        patternDistribution: mathResult.entropyLeaks.reduce((acc: Record<string, number>, l: any) => {
+          acc[l.patternType] = (acc[l.patternType] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
+      });
+      await saveEngineResult(scanId, "constraintSolver", {
+        constraintBypasses: mathResult.smtViolations,
+        totalBypasses: mathResult.smtViolations.length,
+        scanDate: new Date().toISOString(),
+        byConditionType: mathResult.smtViolations.reduce((acc: Record<string, number>, s: any) => {
+          acc[s.conditionType] = (acc[s.conditionType] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
+        byBypassType: mathResult.smtViolations.reduce((acc: Record<string, number>, s: any) => {
+          acc[s.bypassType] = (acc[s.bypassType] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
+      });
+      await saveEngineResult(scanId, "homomorphicFingerprinting", {
+        matches: mathResult.homomorphicMatches,
+        totalMatches: mathResult.homomorphicMatches.length,
+        scanDate: new Date().toISOString(),
+      });
+      await saveEngineResult(scanId, "temporalViolations", {
+        violations: mathResult.temporalViolations,
+        totalViolations: mathResult.temporalViolations.length,
+        scanDate: new Date().toISOString(),
+      });
 
       // Persist cross-language taint boundary findings
-      try {
-        if (cltResult.stats.activeTaintPaths > 0 || cltResult.stats.structuralIssues > 0) {
-          await db.update(scansTable).set({
-            crossLanguageTaint: {
-              stats: cltResult.stats,
-              findings: cltResult.findings.map(f => ({
-                id: f.id, type: f.type, severity: f.severity, title: f.title,
-                routePair: f.routePair, frontendFile: f.frontendFile,
-                backendFile: f.backendFile, sanitized: f.sanitized,
-                taintChain: f.taintChain,
-              })),
-              scanDate: new Date().toISOString(),
-            },
-          }).where(eq(scansTable.id, scanId));
-        }
-      } catch (err) {
-        logger.warn({ err, scanId }, "Failed to persist CLT results to DB");
+      if (cltResult.stats.activeTaintPaths > 0 || cltResult.stats.structuralIssues > 0) {
+        await saveEngineResult(scanId, "crossLanguageTaint", {
+          stats: cltResult.stats,
+          findings: cltResult.findings.map(f => ({
+            id: f.id, type: f.type, severity: f.severity, title: f.title,
+            routePair: f.routePair, frontendFile: f.frontendFile,
+            backendFile: f.backendFile, sanitized: f.sanitized,
+            taintChain: f.taintChain,
+          })),
+          scanDate: new Date().toISOString(),
+        });
       }
 
       const mathFindings: any[] = [
@@ -1159,92 +1206,96 @@ async function runAnalysisPipeline(opts: {
     ...(launchReplaySteps ?? []),
   ];
 
-  const [updated] = await db
-    .update(scansTable)
-    .set({
-      certId,
-      status: "completed",
-      score: finalScore,
-      summary: result.summary,
-      launchVerdict: computedVerdict,
-      issueCounts,
-      riskForecast: result.riskForecast ?? null,
-      revenueIntelligence: result.revenueIntelligence ?? null,
-      complianceResults: result.complianceResults ?? null,
-      proofEvidence: proofEvidence.length > 0 ? proofEvidence : null,
-      sandboxMeta: sandboxResult?.meta ?? null,
-      regressionDiff: regressionDiff ?? null,
-      benchmarkPercentile,
-      launchDNA,
-      cofounderNarrative: cofounderNarrative || null,
-      shadowApiFindings: shadowApiFindings ?? null,
-      launchReplaySteps: mergedReplaySteps.length > 0 ? mergedReplaySteps : null,
-      secretScanResults: secretScanResults ?? null,
-      packageVulns: packageVulns ?? null,
-      sbomData: sbomData ?? null,
+    await saveEngineResult(scanId, "riskForecast", result.riskForecast ?? null);
+    await saveEngineResult(scanId, "revenueIntelligence", result.revenueIntelligence ?? null);
+    await saveEngineResult(scanId, "complianceResults", result.complianceResults ?? null);
+    await saveEngineResult(scanId, "sandboxMeta", sandboxResult?.meta ?? null);
+    await saveEngineResult(scanId, "regressionDiff", regressionDiff ?? null);
+    await saveEngineResult(scanId, "benchmarkPercentile", benchmarkPercentile);
+    await saveEngineResult(scanId, "launchDNA", launchDNA);
+    await saveEngineResult(scanId, "cofounderNarrative", cofounderNarrative || null);
+    await saveEngineResult(scanId, "shadowApiFindings", shadowApiFindings ?? null);
+    await saveEngineResult(scanId, "launchReplaySteps", mergedReplaySteps.length > 0 ? mergedReplaySteps : null);
+    await saveEngineResult(scanId, "secretScanResults", secretScanResults ?? null);
+    await saveEngineResult(scanId, "packageVulns", packageVulns ?? null);
+    await saveEngineResult(scanId, "sbomData", sbomData ?? null);
+    await saveEngineResult(scanId, "cleanupReport", cleanupReport ?? null);
+    await saveEngineResult(scanId, "digitalTwin", digitalTwin ?? null);
+    await saveEngineResult(scanId, "predictiveIntel", predictiveIntel ?? null);
+    await saveEngineResult(scanId, "rootCause", rootCause ?? null);
+    await saveEngineResult(scanId, "launchImpact", launchImpact ?? null);
+    await saveEngineResult(scanId, "productHuntScore", productHuntScore ?? null);
+    await saveEngineResult(scanId, "knowledgeGraph", knowledgeGraph ?? null);
+    await saveEngineResult(scanId, "dempsterShafer", dempsterShaferResult ?? null);
+    await saveEngineResult(scanId, "underApproximation", underApproximation ?? null);
+    await saveEngineResult(scanId, "abstractConfidence", abstractConfidence ?? null);
+    await saveEngineResult(scanId, "aiConsensus", aiConsensus.length > 0 ? aiConsensus : null);
+    await saveEngineResult(scanId, "promptTrace", promptTrace ?? null);
+    await saveEngineResult(scanId, "flowValue", flowValue ?? null);
+    await saveEngineResult(scanId, "failSafe", failSafe ?? null);
+    await saveEngineResult(scanId, "deploySafe", deploySafe ?? null);
+    await saveEngineResult(scanId, "archScan", archScan ?? null);
+    await saveEngineResult(scanId, "uxCognitiveFlow", cogFlow ?? null);
+    await saveEngineResult(scanId, "productReality", productReality ?? null);
+    await saveEngineResult(scanId, "marketReadinessTracker", marketReadiness ?? null);
+    await saveEngineResult(scanId, "greenLightVerdict", greenLightVerdict ?? null);
+    await saveEngineResult(scanId, "regGraph", regGraph ?? null);
+    await saveEngineResult(scanId, "symCost", symCost ?? null);
+    await saveEngineResult(scanId, "obsCover", obsCover ?? null);
+    await saveEngineResult(scanId, "crossLanguageTaint", crossLanguageTaint ?? null);
+    await saveEngineResult(scanId, "cleanupFindings", cleanupReport ? {
+      totalFindings: cleanupReport.totalFindings,
+      debtScore: cleanupReport.debtScore,
+      autoFixableCount: cleanupReport.autoFixableCount,
+      estimatedCleanupMinutes: cleanupReport.estimatedCleanupMinutes,
+      hasCritical: cleanupReport.hasCritical,
+      summary: cleanupReport.summary,
+      categories: cleanupReport.categories,
+      topFiles: cleanupReport.topFiles,
+    } : null);
+    await saveEngineResult(scanId, "babelEngine", babelEngine ?? null);
+    await saveEngineResult(scanId, "multiVerseDse", multiVerseDse ?? null);
+    await saveEngineResult(scanId, "astMerkle", astMerkle ?? null);
+    await saveEngineResult(scanId, "bigOProfiler", bigOProfiler ?? null);
+    await saveEngineResult(scanId, "cryptoAgility", cryptoAgility ?? null);
+    await saveEngineResult(scanId, "complexityDrift", complexityDrift ?? null);
+    await saveEngineResult(scanId, "tensorFeature", tensorFeature ?? null);
+    await saveEngineResult(scanId, "postQuantumReadiness", postQuantumReadiness ?? null);
+    await saveEngineResult(scanId, "circularDeps", circularDeps ?? null);
+    await saveEngineResult(scanId, "graphResilience", graphResilience ?? null);
+    await saveEngineResult(scanId, "asyncResilience", asyncResilience ?? null);
+    await saveEngineResult(scanId, "rewardLoop", rewardLoop ?? null);
+    await saveEngineResult(scanId, "memoryOps", memoryOps ?? null);
 
-      cleanupReport: cleanupReport ?? null,
-      digitalTwin: digitalTwin ?? null,
-      predictiveIntel: predictiveIntel ?? null,
-      rootCause: rootCause ?? null,
-      launchImpact: launchImpact ?? null,
-      productHuntScore: productHuntScore ?? null,
-      knowledgeGraph: knowledgeGraph ?? null,
-       dempsterShafer: dempsterShaferResult ?? null,
-       underApproximation: underApproximation ?? null,
-       abstractConfidence: abstractConfidence ?? null,
-       aiConsensus: aiConsensus.length > 0 ? aiConsensus : null,
-       promptTrace: promptTrace ?? null,
-       flowValue: flowValue ?? null,
-       failSafe: failSafe ?? null,
-       deploySafe: deploySafe ?? null,
-       archScan: archScan ?? null,
-       uxCognitiveFlow: cogFlow ?? null,
-       productReality: productReality ?? null,
-       marketReadinessTracker: marketReadiness ?? null,
-       greenLightVerdict: greenLightVerdict ?? null,
-       regGraph: regGraph ?? null,
-       symCost: symCost ?? null,
-       obsCover: obsCover ?? null,
-       crossLanguageTaint: crossLanguageTaint ?? null,
-       cleanupFindings: cleanupReport ? {
-         totalFindings: cleanupReport.totalFindings,
-         debtScore: cleanupReport.debtScore,
-         autoFixableCount: cleanupReport.autoFixableCount,
-         estimatedCleanupMinutes: cleanupReport.estimatedCleanupMinutes,
-         hasCritical: cleanupReport.hasCritical,
-         summary: cleanupReport.summary,
-         categories: cleanupReport.categories,
-         topFiles: cleanupReport.topFiles,
-       } : null,
-       babelEngine: babelEngine ?? null,
-       multiVerseDse: multiVerseDse ?? null,
-       zkSnarkProof: zkSnarkProof ?? null,
-       bigOProfiler: bigOProfiler ?? null,
-       fheAnalyzer: fheAnalyzer ?? null,
-       neuromorphicDrift: neuromorphicDrift ?? null,
-       tensorPayloadSignature: tensorPayloadSignature ?? null,
-       postQuantumReadiness: postQuantumReadiness ?? null,
-       dnaStorageCompiler: dnaStorageCompiler ?? null,
-       bftConsensusGraph: bftConsensusGraph ?? null,
-       kardashevLatency: kardashevLatency ?? null,
-       agiAlignment: agiAlignment ?? null,
-       thermodynamicEntropy: thermodynamicEntropy ?? null,
-       framework: framework !== "unknown" ? framework : undefined,
-       vibeTool: vibeTool !== "unknown" ? vibeTool : undefined,
-       businessType: businessType !== "unknown" ? businessType : undefined,
-       completedAt: new Date(),
-     })
-     .where(eq(scansTable.id, scanId))
-     .returning();
+    if (proofEvidence.length > 0) {
+      await saveScanProofs(scanId, proofEvidence);
+    }
+
+    const [updated] = await db
+      .update(scansTable)
+      .set({
+        certId,
+        status: "completed",
+        score: finalScore,
+        summary: result.summary,
+        launchVerdict: computedVerdict,
+        issueCounts,
+        framework: framework !== "unknown" ? framework : undefined,
+        vibeTool: vibeTool !== "unknown" ? vibeTool : undefined,
+        businessType: businessType !== "unknown" ? businessType : undefined,
+        completedAt: new Date(),
+      })
+      .where(eq(scansTable.id, scanId))
+      .returning();
 
   // Emit final progress events to ensure the frontend reaches 100%
   emit("finalizing", "Finalizing report and persisting results...", 95);
-   emitProgress(scanId, { scanId, phase: "finalizing", status: "running", message: "Finalizing report...", progress: 95 });
+  emitProgress(scanId, { scanId, phase: "finalizing", status: "running", message: "Finalizing report...", progress: 95 });
    
-   const totalIssues = issueCounts.critical + issueCounts.high + issueCounts.medium + issueCounts.low;
-   emit("complete", `Analysis complete: ${totalIssues} issues found, score: ${finalScore}/100`, 100);
-   emitProgress(scanId, { scanId, phase: "complete", status: "complete", message: "All done", progress: 100 });
+  const totalIssues = issueCounts.critical + issueCounts.high + issueCounts.medium + issueCounts.low;
+  emit("complete", `Analysis complete: ${totalIssues} issues found, score: ${finalScore}/100`, 100);
+  metrics.scansCompleted++;
+  emitProgress(scanId, { scanId, phase: "complete", status: "complete", message: "All done", progress: 100 });
 
   logger.info({ scanId }, "Analysis pipeline complete");
 }
@@ -1340,6 +1391,7 @@ router.post("/scans", async (req, res): Promise<void> => {
 
   // Fire-and-forget background pipeline
   void (async () => {
+    const release = await scanQueue.acquire(user.id);
     try {
       let dir: string | undefined;
       let packageJson: Record<string, unknown> | undefined;
@@ -1385,9 +1437,11 @@ router.post("/scans", async (req, res): Promise<void> => {
       });
     } catch (err) {
       logger.error({ err, scanId: scan.id }, "Analysis failed");
+      metrics.scansFailed++;
       emitProgress(scan.id, { scanId: scan.id, phase: "error", status: "error", message: "Analysis failed", progress: 0, error: (err as Error)?.message });
       await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, scan.id));
     } finally {
+      release();
       if (parsed.data.sourceType === "github") cleanupScan(scan.id);
     }
   })();
@@ -1448,27 +1502,33 @@ router.post(
       res.status(202).json({ id: scan.id, status: "running" });
 
       // Run pipeline in background
-      void runAnalysisPipeline({
-        scanId: scan.id,
-        userId: user.id,
-        sourceType: "zip",
-        sourceInput: "Uploaded ZIP",
-        appDescription,
-        vibeTool,
-        businessType,
-        dir: ingested.dir,
-        packageJson: ingested.context.packageJson,
-        fileTree: ingested.context.fileTree,
-        totalFiles: ingested.context.totalFiles,
-        keyFiles: ingested.context.keyFiles,
-        schemas: ingested.context.schemas,
-      }).catch(async (err) => {
-        logger.error({ err, scanId: scan.id }, "ZIP analysis failed");
-        await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, scan.id));
-      }).finally(() => {
-        cleanupZip(scan.id);
-        try { fs.unlinkSync(tmpZipPath); } catch { /* ignore */ }
-      });
+      void (async () => {
+        const release = await scanQueue.acquire(user.id);
+        try {
+          await runAnalysisPipeline({
+            scanId: scan.id,
+            userId: user.id,
+            sourceType: "zip",
+            sourceInput: "Uploaded ZIP",
+            appDescription,
+            vibeTool,
+            businessType,
+            dir: ingested.dir,
+            packageJson: ingested.context.packageJson,
+            fileTree: ingested.context.fileTree,
+            totalFiles: ingested.context.totalFiles,
+            keyFiles: ingested.context.keyFiles,
+            schemas: ingested.context.schemas,
+          });
+        } catch (err) {
+          logger.error({ err, scanId: scan.id }, "ZIP analysis failed");
+          await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, scan.id));
+        } finally {
+          release();
+          cleanupZip(scan.id);
+          try { fs.unlinkSync(tmpZipPath); } catch { /* ignore */ }
+        }
+      })();
     } catch (err) {
       logger.error({ err, scanId: scan.id }, "ZIP ingestion failed");
       await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, scan.id));
@@ -1543,8 +1603,112 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
       )
       .orderBy(asc(scansTable.id));
 
+    const engineResults = await db
+      .select()
+      .from(scanEngineResults)
+      .where(eq(scanEngineResults.scanId, id));
+
+    const proofs = await db
+      .select()
+      .from(scanProofs)
+      .where(eq(scanProofs.scanId, id));
+
+    const mergedScan = { ...scan };
+    for (const er of engineResults) {
+      (mergedScan as any)[er.engineName] = er.result;
+    }
+    if (proofs.length > 0) {
+      (mergedScan as any).proofEvidence = proofs.map(p => ({
+        type: p.type,
+        title: p.title,
+        severity: p.severity,
+        confidence: p.confidence,
+        url: p.url,
+        steps: p.steps || [],
+        observed: p.observed,
+        impact: p.impact,
+        screenshot: p.screenshot,
+        videoUrl: p.videoUrl,
+        codeRef: p.codeRef,
+      }));
+    }
+
+    // ── Backward Compatibility: Generate stub data for engines that didn't exist
+    //     when older scans were created. Prevents blank sections in the UI.
+    const existingEngineNames = new Set(engineResults.map(e => e.engineName));
+    const scanCreatedAt = scan.createdAt;
+    const isLegacyScan = scanCreatedAt < new Date("2025-06-30"); // Before engine rebuild
+
+    if (isLegacyScan) {
+      // Generate honest "not available" stubs for engines that didn't exist
+      if (!existingEngineNames.has("tensorFeature")) {
+        (mergedScan as any).tensorFeature = {
+          hash: null,
+          algorithm: "Not scanned",
+          nodeCount: 0,
+          edgeCount: 0,
+          legacy: true,
+          message: "This scan was created before the Tensor Feature Hasher engine was added. Rescan to get structural fingerprint analysis.",
+        };
+      }
+      if (!existingEngineNames.has("complexityDrift")) {
+        (mergedScan as any).complexityDrift = {
+          avgCyclomaticComplexity: null,
+          legacy: true,
+          message: "This scan was created before the Complexity Drift Tracker engine was added. Rescan for complexity analysis.",
+        };
+      }
+      if (!existingEngineNames.has("postQuantumReadiness")) {
+        (mergedScan as any).postQuantumReadiness = {
+          score: null,
+          legacy: true,
+          message: "This scan was created before the Post-Quantum Readiness engine was added. Rescan for crypto agility analysis.",
+        };
+      }
+      if (!existingEngineNames.has("circularDeps")) {
+        (mergedScan as any).circularDeps = {
+          totalFiles: null,
+          circularChains: [],
+          legacy: true,
+          message: "This scan was created before the Circular Dependency Detector was added. Rescan for import cycle analysis.",
+        };
+      }
+      if (!existingEngineNames.has("cryptoAgility")) {
+        (mergedScan as any).cryptoAgility = {
+          cryptoScore: null,
+          legacy: true,
+          message: "This scan was created before the Crypto Agility Checker was added. Rescan for modern crypto analysis.",
+        };
+      }
+      if (!existingEngineNames.has("rewardLoop")) {
+        (mergedScan as any).rewardLoop = {
+          alignmentScore: null,
+          legacy: true,
+          message: "This scan was created before the Reward Loop Detector was added. Rescan for gamification risk analysis.",
+        };
+      }
+      if (!existingEngineNames.has("memoryOps")) {
+        (mergedScan as any).memoryOps = {
+          totalAllocations: null,
+          legacy: true,
+          message: "This scan was created before the Memory Operation Counter was added. Rescan for memory churn analysis.",
+        };
+      }
+      if (!existingEngineNames.has("asyncResilience")) {
+        (mergedScan as any).asyncResilience = {
+          resilienceScore: null,
+          legacy: true,
+          message: "This scan was created before the Async Resilience Checker was added. Rescan for failure recovery analysis.",
+        };
+      }
+      // Map old engine names to new ones for continuity
+      if (!existingEngineNames.has("graphResilience") && existingEngineNames.has("bftConsensus")) {
+        (mergedScan as any).graphResilience = engineResults.find(e => e.engineName === "bftConsensus")?.result;
+      }
+    }
+
     let responseData: Record<string, unknown> = {
-      ...scan,
+      ...mergedScan,
       createdAt: scan.createdAt.toISOString(),
       completedAt: scan.completedAt?.toISOString() ?? null,
       issues: enhancedIssues,
@@ -1660,6 +1824,7 @@ router.post("/scans/:id/rescan", async (req, res): Promise<void> => {
 
   // Fire pipeline in background
   (async () => {
+    const release = await scanQueue.acquire(user.id);
     try {
       let dir: string | undefined;
       let packageJson: Record<string, unknown> | undefined;
@@ -1692,6 +1857,7 @@ router.post("/scans/:id/rescan", async (req, res): Promise<void> => {
       logger.error({ err, scanId: id }, "Rescan failed");
       await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, id));
     } finally {
+      release();
       if (scan.sourceType === "github") cleanupScan(id);
     }
   })();
@@ -1741,7 +1907,7 @@ router.post("/scans/:id/digital-twin", async (req, res): Promise<void> => {
 
   const codeContext = await recomputeCodeContext(scan);
   const digitalTwin = await runDigitalTwin(scan.sourceType, scan.sourceInput, scan.appDescription, codeContext);
-  await db.update(scansTable).set({ digitalTwin }).where(eq(scansTable.id, id));
+  await saveEngineResult(id, "digitalTwin", digitalTwin);
   if (scan.sourceType === "github") cleanupScan(id);
   res.json(digitalTwin);
 });
@@ -1766,8 +1932,9 @@ router.get("/scans/:id/dempster-shafer", async (req, res): Promise<void> => {
   }
 
   // Return stored result if available
-  if (scan.dempsterShafer) {
-    res.json(scan.dempsterShafer);
+  const storedDS = await getEngineResult(id, "dempsterShafer");
+  if (storedDS) {
+    res.json(storedDS);
     return;
   }
 
@@ -1792,7 +1959,7 @@ router.get("/scans/:id/dempster-shafer", async (req, res): Promise<void> => {
   }));
 
   const result = analyzeScanFindings(dsFindings);
-  await db.update(scansTable).set({ dempsterShafer: result }).where(eq(scansTable.id, id));
+  await saveEngineResult(id, "dempsterShafer", result);
   res.json(result);
 });
 
@@ -1816,8 +1983,9 @@ router.get("/scans/:id/root-cause", async (req, res): Promise<void> => {
   }
 
   // Return stored result or recompute on-demand
-  if (scan.rootCause) {
-    res.json(scan.rootCause);
+  const storedRC = await getEngineResult(id, "rootCause");
+  if (storedRC) {
+    res.json(storedRC);
     return;
   }
 
@@ -1828,7 +1996,7 @@ router.get("/scans/:id/root-cause", async (req, res): Promise<void> => {
     agentName: i.agentName, recommendation: i.fixPrompt ?? "", category: i.agentName,
   }));
   const rootCause = await runRootCause(criticalAndHigh, scan.sourceInput, codeContext, scan.appDescription);
-  await db.update(scansTable).set({ rootCause }).where(eq(scansTable.id, id));
+  await saveEngineResult(id, "rootCause", rootCause);
   if (scan.sourceType === "github") cleanupScan(id);
   res.json(rootCause);
 });
@@ -1853,8 +2021,9 @@ router.get("/scans/:id/cleanup", async (req, res): Promise<void> => {
   }
 
   // Return stored result or recompute on-demand
-  if (scan.cleanupReport) {
-    res.json(scan.cleanupReport);
+  const storedCleanup = await getEngineResult(id, "cleanupReport");
+  if (storedCleanup) {
+    res.json(storedCleanup);
     return;
   }
 
@@ -1864,7 +2033,7 @@ router.get("/scans/:id/cleanup", async (req, res): Promise<void> => {
     return;
   }
   const cleanupReport = runCleanupAgent(codeContext.keyFiles, scan.appDescription);
-  await db.update(scansTable).set({ cleanupReport }).where(eq(scansTable.id, id));
+  await saveEngineResult(id, "cleanupReport", cleanupReport);
   if (scan.sourceType === "github") cleanupScan(id);
   res.json(cleanupReport);
 });
@@ -2013,6 +2182,11 @@ router.post("/scans/:id/ask", async (req, res): Promise<void> => {
     .from(scanIssuesTable)
     .where(eq(scanIssuesTable.scanId, scanId));
 
+  const engineResults = await db
+    .select()
+    .from(scanEngineResults)
+    .where(eq(scanEngineResults.scanId, scanId));
+
   const topIssues = issues.slice(0, 8).map((i) => ({
     title: i.title,
     severity: i.severity,
@@ -2034,7 +2208,7 @@ router.post("/scans/:id/ask", async (req, res): Promise<void> => {
       framework: scan.framework ?? undefined,
       vibeTool: scan.vibeTool ?? undefined,
       topIssues,
-      riskForecast: scan.riskForecast as { executiveRecommendation?: string; revenueAtRisk?: string } | null ?? undefined,
+      riskForecast: (engineResults.find(er => er.engineName === "riskForecast")?.result ?? undefined) as { executiveRecommendation?: string; revenueAtRisk?: string } | null ?? undefined,
     });
     res.json({ answer });
   } catch (err) {
@@ -2065,6 +2239,16 @@ router.get("/scans/:id/export", async (req, res): Promise<void> => {
     .where(eq(usersTable.id, req.session.userId!));
   const plan = viewingUser?.plan ?? "free";
 
+  const engineResults = await db
+    .select()
+    .from(scanEngineResults)
+    .where(eq(scanEngineResults.scanId, id));
+
+  const proofs = await db
+    .select()
+    .from(scanProofs)
+    .where(eq(scanProofs.scanId, id));
+
   let payload: Record<string, unknown> = {
     scanDetails: {
       id: scan.id,
@@ -2074,8 +2258,27 @@ router.get("/scans/:id/export", async (req, res): Promise<void> => {
       completedAt: scan.completedAt,
     },
     issues: issues,
-    knowledgeGraph: scan.knowledgeGraph,
   };
+
+  for (const er of engineResults) {
+    payload[er.engineName] = er.result;
+  }
+
+  if (proofs.length > 0) {
+    payload.proofEvidence = proofs.map(p => ({
+      type: p.type,
+      title: p.title,
+      severity: p.severity,
+      confidence: p.confidence,
+      url: p.url,
+      steps: p.steps || [],
+      observed: p.observed,
+      impact: p.impact,
+      screenshot: p.screenshot,
+      videoUrl: p.videoUrl,
+      codeRef: p.codeRef,
+    }));
+  }
 
   payload = applyTierGate(payload, plan);
   const gatedIssues = payload.issues as Array<

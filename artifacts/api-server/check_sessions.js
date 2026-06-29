@@ -1,7 +1,7 @@
 import pkg from 'pg';
 const { Client } = pkg;
 
-const connectionString = "postgresql://postgres:Rajvanarp@2005@db.xsiwmmcqmawjkqbiicxv.supabase.co:5432/postgres";
+const connectionString = "postgresql://postgres:placeholder-password@db.example.supabase.co:5432/postgres";
 const client = new Client({ connectionString });
 
 async function run() {

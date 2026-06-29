@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { scansTable as scans, usersTable as users } from "@workspace/db/schema";
+import { scansTable as scans, usersTable as users, scanEngineResults } from "@workspace/db/schema";
 import { eq, desc, and, lt, gte } from "drizzle-orm";
 import { logger } from "../lib/logger.js";
 import { sendRetentionEmail, previewRetentionEmail, type RetentionEmailData } from "../lib/email.js";
@@ -184,8 +184,11 @@ router.post("/monitoring/pulse", async (req, res) => {
       const scoreDrop = previous?.score != null ? Math.max(0, previous.score - latest.score) : 0;
       const hasScoreDrop = scoreDrop >= 5;
 
-      // Check for critical CVEs in the latest scan
-      const vulns = latest.packageVulns as null | { findings?: Array<{ highestSeverity?: string; vulns?: Array<{ cveId?: string; description?: string; title?: string }> }> ; hasCritical?: boolean };
+      // Check for critical CVEs in the latest scan (fetched from scan_engine_results)
+      const [vulnResult] = await db.select().from(scanEngineResults)
+        .where(and(eq(scanEngineResults.scanId, latest.id), eq(scanEngineResults.engineName, "packageVulns")))
+        .limit(1);
+      const vulns = vulnResult?.result as null | { findings?: Array<{ highestSeverity?: string; vulns?: Array<{ cveId?: string; description?: string; title?: string }> }> ; hasCritical?: boolean };
       const criticalPackages = vulns?.findings?.filter((f) => f.highestSeverity === "critical") ?? [];
       const hasCriticalCves = criticalPackages.length > 0 || (vulns?.hasCritical ?? false);
 
@@ -290,6 +293,49 @@ router.get("/monitoring/preview-email", requireAuth, async (req, res) => {
   const html = previewRetentionEmail(emailData);
   res.setHeader("Content-Type", "text/html");
   res.send(html);
+});
+
+// ── Real-time SSE Stream for Monitoring Dashboard ───────────────────────────
+import { globalEmitter } from "../lib/scan-progress.js";
+
+router.get("/monitoring/stream", requireAuth, async (req, res) => {
+  const userId = req.session!.userId!;
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  });
+
+  res.write(`: connected\n\n`);
+
+  const onProgress = async (event: any) => {
+    try {
+      const [scan] = await db
+        .select({ userId: scans.userId })
+        .from(scans)
+        .where(eq(scans.id, event.scanId))
+        .limit(1);
+
+      if (scan && scan.userId === userId) {
+        res.write("data: " + JSON.stringify(event) + "\n\n");
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  globalEmitter.on("progress", onProgress);
+
+  const heartbeat = setInterval(() => {
+    res.write(`: heartbeat\n\n`);
+  }, 10000);
+
+  req.on("close", () => {
+    globalEmitter.off("progress", onProgress);
+    clearInterval(heartbeat);
+  });
 });
 
 export default router;

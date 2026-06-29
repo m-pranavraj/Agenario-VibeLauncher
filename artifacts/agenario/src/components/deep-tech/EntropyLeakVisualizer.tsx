@@ -189,7 +189,7 @@ function EntropyLeakRow({ leak, maxEntropy, isLight }: { leak: EntropyLeak; maxE
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <span className={`text-[10px] font-mono truncate ${isLight ? "text-slate-500" : "text-white/40"}`}>
-              {leak.file.split("/").pop()}:{leak.line}
+              {(leak.file || "").split("/").pop()}:{leak.line}
             </span>
             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${severity.color} bg-current/10`}>
               {severity.label}

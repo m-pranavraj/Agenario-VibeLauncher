@@ -7,7 +7,8 @@
     "build": "node -e \"if(!process.env.RENDER && !process.env.VERCEL) { require('child_process').execSync('pnpm run typecheck', {stdio: 'inherit'}); }\" && pnpm -r --if-present run build",
     "build:vercel": "pnpm --filter @workspace/agenario run build && node -e \"const fs = require('fs'); fs.rmSync('dist', { recursive: true, force: true }); fs.cpSync('artifacts/agenario/dist', 'dist', { recursive: true });\"",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "private": true,
   "packageManager": "pnpm@10.0.0",

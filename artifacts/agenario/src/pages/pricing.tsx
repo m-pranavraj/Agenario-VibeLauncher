@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { api, type CouponResult } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 
 declare global {
   interface Window {
@@ -110,6 +111,14 @@ export default function PricingPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
   const [couponOpen, setCouponOpen] = useState(false);
+
+  // Phase 0.3 — Fetch real scan count, never hardcode social proof
+  const { data: publicStats } = useQuery({
+    queryKey: ["/api/public/stats"],
+    queryFn: () => fetch("/api/public/stats").then(r => r.ok ? r.json() : null).catch(() => null),
+    staleTime: 60_000, // cache for 60s
+    retry: false,
+  });
 
   const applyCoupon = async () => {
     const code = couponInput.trim().toUpperCase();
@@ -222,12 +231,22 @@ export default function PricingPage() {
       <main className="max-w-5xl mx-auto px-6 py-16">
         <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }} className="text-center mb-14">
           <motion.p variants={FADE_UP} className={`text-xs ${isLight ? "text-gray-500" : "text-white/30"} uppercase tracking-widest mb-4 font-medium`}>Pricing</motion.p>
-          <motion.div variants={FADE_UP} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-5 ${
-            isLight ? "bg-purple-100 text-purple-700" : "bg-purple-500/10 text-purple-300 border border-purple-500/20"
-          }`}>
-            <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-            <span>1,247+ apps scanned this month</span>
-          </motion.div>
+            {/* Phase 0.3 — Only show real stats from the API, never fabricated numbers */}
+            {publicStats?.scansThisMonth ? (
+              <motion.div variants={FADE_UP} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-5 ${
+                isLight ? "bg-purple-100 text-purple-700" : "bg-purple-500/10 text-purple-300 border border-purple-500/20"
+              }`}>
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                <span>{publicStats.scansThisMonth.toLocaleString()}+ apps scanned this month</span>
+              </motion.div>
+            ) : (
+              <motion.div variants={FADE_UP} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-5 ${
+                isLight ? "bg-purple-100 text-purple-700" : "bg-purple-500/10 text-purple-300 border border-purple-500/20"
+              }`}>
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                <span>Trusted by founders who ship production-grade code</span>
+              </motion.div>
+            )}
           <motion.h1 variants={FADE_UP} className={`text-4xl font-bold font-['Syne'] mb-4 ${isLight ? "text-gray-900" : "text-white"}`}>
             Your first scan is free.
           </motion.h1>

@@ -7,10 +7,10 @@ import { ShieldAlert, Activity, ShieldCheck, Cpu } from 'lucide-react';
 
 export function ExecutiveOverview({ scan, isLight }: { scan: any, isLight: boolean }) {
   // Mock counters based on scan data for visual demonstration
-  const cCount = (scan.issues ?? []).filter((i:any) => i.severity === 'critical').length || 2;
-  const hCount = (scan.issues ?? []).filter((i:any) => i.severity === 'high').length || 5;
-  const mCount = (scan.issues ?? []).filter((i:any) => i.severity === 'medium').length || 14;
-  const lCount = (scan.issues ?? []).filter((i:any) => i.severity === 'low').length || 0;
+  const cCount = (scan.issues ?? []).filter((i:any) => i.severity === 'critical').length;
+  const hCount = (scan.issues ?? []).filter((i:any) => i.severity === 'high').length;
+  const mCount = (scan.issues ?? []).filter((i:any) => i.severity === 'medium').length;
+  const lCount = (scan.issues ?? []).filter((i:any) => i.severity === 'low').length;
 
   // Dynamically compute vectors from scan issues list
   const issuesList = scan.issues ?? [];

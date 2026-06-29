@@ -10,7 +10,7 @@ const INTEGRATIONS = [
     category: "Source Control",
     items: [
       { name: "GitHub", icon: Github, description: "Connect repositories for continuous scanning. Trigger scans on every push or pull request.", status: "available", badge: "Popular" },
-      { name: "GitLab", icon: Code2, description: "Connect GitLab repositories and pipelines for automated security analysis.", status: "coming-soon" },
+      { name: "GitLab", icon: Code2, description: "Connect GitLab repositories and pipelines for automated security analysis.", status: "available" },
       { name: "Bitbucket", icon: Code2, description: "Integrate Bitbucket repos and CI pipelines.", status: "coming-soon" },
     ]
   },

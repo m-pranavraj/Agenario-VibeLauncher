@@ -79,7 +79,7 @@ export function FailSafeVisualizer({ data }: { data: FailSafeData | null }) {
                 <div className="flex items-center gap-2">
                   {hasIssues ? <AlertTriangle className="w-3.5 h-3.5 text-red-400" /> : <ShieldCheck className="w-3.5 h-3.5 text-green-400" />}
                   <span className={`text-xs ${isLight ? "text-slate-700" : "text-white/70"}`}>
-                    {t.file.split(/[/\\]/).pop()}:{t.line}
+                    {(t.file || "").split(/[/\\]/).pop()}:{t.line}
                   </span>
                   {flags.length > 0 && (
                     <span className="text-[10px] text-red-400 font-mono">[{flags.join(", ")}]</span>

@@ -92,7 +92,7 @@ export async function ingestGitHubRepo(repoUrl: string, scanId: number): Promise
     }
 
     const fileTree = treeOf(dir);
-    const totalFiles = findFiles(dir, [".ts", ".tsx", ".js", ".jsx", ".py", ".go"]).length;
+    const totalFiles = findFiles(dir, [".ts", ".tsx", ".js", ".jsx", ".py", ".go", ".swift", ".kt", ".java", ".dart", ".m", ".h"]).length;
 
     const ALWAYS_FETCH = [
       "README.md", "package.json",

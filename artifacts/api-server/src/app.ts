@@ -12,8 +12,12 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import router from "./routes/index.js";
+import "node:crypto"; // ensure crypto module is available
+import crypto from "crypto";
 import { logger } from "./lib/logger.js";
+import { errorHandler } from "./lib/errors.js";
 import { enrichSession } from "./middlewares/auth.js";
+import { metricsMiddleware } from "./lib/metrics.js";
 
 const { Pool } = pkg;
 
@@ -28,7 +32,9 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
+        // Phase 1.5 — Removed 'unsafe-inline' from scriptSrc. CSP violation reports now surfaced.
+        // If Razorpay checkout requires inline scripts, use their hosted page and scope the nonce to that route only.
+        scriptSrc: ["'self'", "https://checkout.razorpay.com"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "https:"],
         connectSrc: ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
@@ -81,6 +87,7 @@ const otpLimiter = rateLimit({
   skipSuccessfulRequests: false,
 });
 
+app.use(metricsMiddleware);
 app.use(globalLimiter);
 app.use("/api/auth", authLimiter);
 app.use("/api/auth/send-otp", otpLimiter);
@@ -188,7 +195,18 @@ app.use(
       pool,
       errorLog: (err: Error) => logger.error({ err }, "Session store error"),
     }),
-    secret: process.env["SESSION_SECRET"] ?? "dev-secret-change-me",
+    secret: (() => {
+      const secret = process.env["SESSION_SECRET"];
+      if (!secret) {
+        if (isProduction) {
+          // Phase 1.1 — Never fall back to a weak secret in production. Session forgery risk.
+          throw new Error("FATAL: SESSION_SECRET env var must be set in production. Refusing to start.");
+        }
+        logger.warn("SESSION_SECRET not set — using random ephemeral secret for development. Sessions will not persist across restarts.");
+        return crypto.randomBytes(32).toString("hex");
+      }
+      return secret;
+    })(),
     resave: false,
     saveUninitialized: false,
     name: "agn_sid", // Don't use default 'connect.sid'
@@ -248,19 +266,9 @@ app.use((req, res, next) => {
   }
 });
 
-// ── Global error handler ──────────────────────────────────────────────────
-app.use(
-  (
-    err: Error,
-    _req: express.Request,
-    res: express.Response,
-    _next: express.NextFunction,
-  ) => {
-    logger.error({ err }, "Unhandled error");
-    if (!res.headersSent) {
-      res.status(500).json({ error: "Internal server error" });
-    }
-  },
-);
+// ── Global error handler (Phase 5.4) ─────────────────────────────────────
+// Handles AppError with typed codes, logs 5xx errors, returns clean JSON.
+app.use(errorHandler);
+
 
 export default app;

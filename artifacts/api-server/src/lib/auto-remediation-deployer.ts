@@ -149,7 +149,10 @@ export class AutoRemediationDeployer {
     const blobSha = await this.createBlob(baseUrl, fixCode, headers);
     if (!blobSha) return "";
 
-    const treeSha = await this.createTree(baseUrl, baseSha, filePath, blobSha, headers);
+    const commitTreeSha = await this.getCommitTreeSha(baseUrl, baseSha, headers);
+    if (!commitTreeSha) return "";
+
+    const treeSha = await this.createTree(baseUrl, commitTreeSha, filePath, blobSha, headers);
     if (!treeSha) return "";
 
     const commitSha = await this.createCommit(baseUrl, title, treeSha, baseSha, headers);
@@ -190,9 +193,19 @@ export class AutoRemediationDeployer {
     return data.sha;
   }
 
+  private async getCommitTreeSha(baseUrl: string, commitSha: string, headers: Record<string, string>): Promise<string> {
+    const res = await fetch(`${baseUrl}/git/commits/${commitSha}`, { headers });
+    if (!res.ok) {
+      logger.warn({ status: res.status }, "Failed to get commit tree SHA");
+      return "";
+    }
+    const data = (await res.json()) as any;
+    return data.tree?.sha || "";
+  }
+
   private async createTree(
     baseUrl: string,
-    baseSha: string,
+    treeSha: string,
     filePath: string,
     blobSha: string,
     headers: Record<string, string>,
@@ -201,7 +214,7 @@ export class AutoRemediationDeployer {
       method: "POST",
       headers,
       body: JSON.stringify({
-        base_tree: baseSha,
+        base_tree: treeSha,
         tree: [{ path: filePath, mode: "100644", type: "blob", sha: blobSha }],
       }),
     });

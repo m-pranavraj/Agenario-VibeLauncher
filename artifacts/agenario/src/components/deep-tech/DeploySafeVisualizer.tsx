@@ -82,7 +82,7 @@ export function DeploySafeVisualizer({ data }: { data: DeploySafeData | null }) 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${sev.color} ${isLight ? "bg-opacity-10" : ""}`}>{f.ruleId}</span>
-                      <span className={`text-[10px] ${isLight ? "text-slate-500" : "text-white/40"}`}>{f.file.split(/[/\\]/).pop()}:{f.line}</span>
+                      <span className={`text-[10px] ${isLight ? "text-slate-500" : "text-white/40"}`}>{(f.file || "").split(/[/\\]/).pop()}:{f.line}</span>
                     </div>
                     <p className={`text-xs mt-1 ${isLight ? "text-slate-700" : "text-white/70"}`}>{f.message}</p>
                     <p className={`text-[10px] mt-1 ${isLight ? "text-slate-400" : "text-white/30"}`}>Fix: {f.remediation}</p>

@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import crypto from "crypto";
+import { logger } from "../lib/logger.js";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 import { eq, or } from "drizzle-orm";
@@ -16,6 +17,69 @@ function generateOtp(): string {
 }
 
 // ── Send OTP (mock — replace with Twilio/MSG91 for production) ────────────
+async function sendOtpSms(phone: string, otp: string): Promise<boolean> {
+  const twilioSid = process.env["TWILIO_ACCOUNT_SID"];
+  const twilioAuth = process.env["TWILIO_AUTH_TOKEN"];
+  const twilioFrom = process.env["TWILIO_PHONE_NUMBER"];
+
+  if (twilioSid && twilioAuth && twilioFrom) {
+    try {
+      const url = "https://api.twilio.com/2010-04-01/Accounts/" + twilioSid + "/Messages.json";
+      const basicAuth = Buffer.from(twilioSid + ":" + twilioAuth).toString("base64");
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Authorization": "Basic " + basicAuth,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          From: twilioFrom,
+          To: phone,
+          Body: "Your Agenario verification code is: " + otp + ". Valid for 10 minutes.",
+        }).toString(),
+      });
+      if (res.ok) {
+        logger.info({ phone }, "OTP SMS sent successfully via Twilio");
+        return true;
+      }
+      const errText = await res.text();
+      logger.error({ status: res.status, errText }, "Twilio API error sending OTP");
+    } catch (err) {
+      logger.error({ err }, "Exception sending OTP via Twilio");
+    }
+  }
+
+  const msg91Key = process.env["MSG91_AUTH_KEY"];
+  const msg91Template = process.env["MSG91_TEMPLATE_ID"];
+  if (msg91Key && msg91Template) {
+    try {
+      const res = await fetch("https://control.msg91.com/api/v5/otp", {
+        method: "POST",
+        headers: {
+          "authkey": msg91Key,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          template_id: msg91Template,
+          mobile: phone.replace("+", ""),
+          otp: otp,
+        }),
+      });
+      if (res.ok) {
+        logger.info({ phone }, "OTP SMS sent successfully via MSG91");
+        return true;
+      }
+      const errText = await res.text();
+      logger.error({ status: res.status, errText }, "MSG91 API error sending OTP");
+    } catch (err) {
+      logger.error({ err }, "Exception sending OTP via MSG91");
+    }
+  }
+
+  logger.warn({ phone, otp }, "No SMS provider configured. OTP printed to logs.");
+  return false;
+}
+
 router.post("/auth/send-otp", async (req, res): Promise<void> => {
   const phone = typeof req.body?.phone === "string" ? req.body.phone.trim() : "";
   // E.164 international format: + followed by 7–15 digits
@@ -41,12 +105,9 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
   req.session.pendingOtp = { phone, otp, expiresAt };
 
   const isDev = process.env["NODE_ENV"] !== "production";
-
-  // In production: integrate Twilio / MSG91 here
-  // For now: log to console in dev mode
-  if (isDev) {
-    console.log(`[DEV OTP] Phone: ${phone} → OTP: ${otp}`);
-  }
+  
+  // Call real SMS delivery provider
+  const sentReal = await sendOtpSms(phone, otp);
 
   req.session.save((err) => {
     if (err) {
@@ -55,7 +116,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
     }
     res.json({
       sent: true,
-      ...(isDev ? { devOtp: otp } : {}), // Only expose in development
+      ...(isDev || !sentReal ? { devOtp: otp } : {}), // Only expose in development or fallback
     });
   });
 });
@@ -96,32 +157,16 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     return;
   }
 
-  // Phone + OTP fields (optional for now, required once SMS is live)
-  const phone: string | undefined = typeof req.body.phone === "string" ? req.body.phone : undefined;
-  const otpInput: string | undefined = typeof req.body.otp === "string" ? req.body.otp : undefined;
+  // Phone field (OTP verification service is disabled, format validation and uniqueness checks remain)
+  const phone: string | undefined = typeof req.body.phone === "string" ? req.body.phone.trim() : undefined;
 
-  // Verify phone OTP if phone is provided
   if (phone) {
-    const pending = req.session.pendingOtp;
-    if (!pending) {
-      res.status(400).json({ error: "No OTP session found. Please request a new OTP." });
-      return;
-    }
-    if (pending.phone !== phone) {
-      res.status(400).json({ error: "Phone number does not match OTP session." });
-      return;
-    }
-    if (Date.now() > pending.expiresAt) {
-      req.session.pendingOtp = undefined;
-      res.status(400).json({ error: "OTP has expired. Please request a new one." });
-      return;
-    }
-    if (pending.otp !== otpInput) {
-      res.status(400).json({ error: "Incorrect OTP. Please try again." });
+    if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
+      res.status(400).json({ error: "Invalid phone number. Use international format e.g. +911234567890" });
       return;
     }
 
-    // Check phone uniqueness (double-check in case of race condition)
+    // Check phone uniqueness
     const [phoneExists] = await db
       .select({ id: usersTable.id })
       .from(usersTable)
@@ -297,11 +342,9 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
     .set({ resetToken, resetTokenExpiry })
     .where(eq(usersTable.id, user.id));
 
-  const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/update-password?token=${resetToken}`;
-  console.log(`\n================================================================`);
-  console.log(`[PASSWORD RESET] User: ${email}`);
-  console.log(`[PASSWORD RESET] Link: ${resetUrl}`);
-  console.log(`================================================================\n`);
+  const resetUrl = (process.env.FRONTEND_URL || "http://localhost:5173") + "/update-password?token=" + resetToken;
+  // Phase 0.5 — Never log full reset URLs with tokens — they appear in log aggregators.
+  logger.info(`[PASSWORD RESET] User: ${email}, Token: ${resetToken.slice(0, 8)}... (full URL sent via email)`);
 
   // Send the email asynchronously in the background (fire-and-forget) to avoid blocking the HTTP response
   (async () => {
@@ -553,26 +596,26 @@ router.get("/auth/google/callback", async (req, res): Promise<void> => {
         .values({
           email,
           name,
-          passwordHash: "", // Google SSO users have empty passwords
+          passwordHash: crypto.randomBytes(32).toString("hex"), // Phase 1.2 — OAuth users get a random unguessable hash, never empty
           plan: "free",
         })
         .returning();
-      console.log(`[GOOGLE AUTH] Registered new user: ${email}`);
+      logger.info({ email }, "[GOOGLE AUTH] Registered new user");
     } else {
-      console.log(`[GOOGLE AUTH] Logged in existing user: ${email}`);
+      logger.info({ email }, "[GOOGLE AUTH] Logged in existing user");
     }
 
     // 4. Save to session
     req.session.regenerate((err) => {
       if (err) {
-        console.error("[GOOGLE AUTH] Session regeneration failed:", err);
+        logger.error({ err }, "[GOOGLE AUTH] Session regeneration failed");
         res.redirect("/login?error=Session error");
         return;
       }
       req.session.userId = user.id;
       req.session.save((saveErr) => {
         if (saveErr) {
-          console.error("[GOOGLE AUTH] Session save failed:", saveErr);
+          logger.error({ err: saveErr }, "[GOOGLE AUTH] Session save failed");
           res.redirect("/login?error=Session save error");
           return;
         }

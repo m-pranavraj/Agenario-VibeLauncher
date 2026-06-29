@@ -1,35 +1,35 @@
 import { Router } from "express";
 import { db, scanIssuesTable, scansTable } from "@workspace/db";
-import { isNotNull, sql, eq } from "drizzle-orm";
+import { isNotNull, sql, eq, gte } from "drizzle-orm";
+import { cacheMiddleware, TTL } from "../lib/cache.js";
+import { logger } from "../lib/logger.js";
 
 const router = Router();
 
 // Public aggregated stats for the Landing Page Hero
-router.get("/public/stats", async (req, res) => {
+// Phase 6.1 — Cached for 60s to avoid hammering DB on every page load
+// Phase 0.3 — Only real counts, no fake padding numbers
+router.get("/public/stats", cacheMiddleware(TTL.ONE_MINUTE), async (req, res) => {
   try {
-    const totalIssuesResult = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(scanIssuesTable);
-    const fixesGeneratedResult = await db.select({ count: sql`count(*)`.mapWith(Number) })
-      .from(scanIssuesTable)
-      .where(isNotNull(scanIssuesTable.autoFixCode));
-    const proofsGeneratedResult = await db.select({ count: sql`count(*)`.mapWith(Number) })
-      .from(scanIssuesTable)
-      .where(isNotNull(scanIssuesTable.reproductionSteps));
-    const totalScansResult = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(scansTable);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    const scansDone = (totalScansResult[0]?.count || 0) + 1482;
-    const issuesReproduced = (totalIssuesResult[0]?.count || 0) + 6942;
-    const fixesGenerated = (fixesGeneratedResult[0]?.count || 0) + 4210;
-    const proofsGenerated = (proofsGeneratedResult[0]?.count || 0) + 2196;
+    const [totalScans, totalIssues, fixesGenerated, proofsGenerated, scansThisMonth] = await Promise.all([
+      db.select({ count: sql`count(*)`.mapWith(Number) }).from(scansTable),
+      db.select({ count: sql`count(*)`.mapWith(Number) }).from(scanIssuesTable),
+      db.select({ count: sql`count(*)`.mapWith(Number) }).from(scanIssuesTable).where(isNotNull(scanIssuesTable.autoFixCode)),
+      db.select({ count: sql`count(*)`.mapWith(Number) }).from(scanIssuesTable).where(isNotNull(scanIssuesTable.reproductionSteps)),
+      db.select({ count: sql`count(*)`.mapWith(Number) }).from(scansTable).where(gte(scansTable.createdAt, thirtyDaysAgo)),
+    ]);
 
     res.json({
-      scansDone,
-      issuesReproduced,
-      fixesGenerated,
-      proofsGenerated,
-      screenshotsCaptured: Math.round(proofsGenerated * 1.5).toString(),
+      scansDone: totalScans[0]?.count ?? 0,
+      issuesReproduced: totalIssues[0]?.count ?? 0,
+      fixesGenerated: fixesGenerated[0]?.count ?? 0,
+      proofsGenerated: proofsGenerated[0]?.count ?? 0,
+      scansThisMonth: scansThisMonth[0]?.count ?? 0, // Used by pricing page social proof
     });
   } catch (error) {
-    console.error("Failed to fetch public stats:", error);
+    logger.error({ error }, "Failed to fetch public stats");
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

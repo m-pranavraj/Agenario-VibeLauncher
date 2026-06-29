@@ -76,7 +76,7 @@ export function CogFlowVisualizer({ data }: { data: CogFlowData | null }) {
                   <div className="flex items-center gap-2 min-w-0">
                     {f.category === "high" || f.category === "extreme" ? <Flame className="w-3.5 h-3.5 text-red-400 shrink-0" /> : <CheckCircle2 className="w-3.5 h-3.5 text-green-400 shrink-0" />}
                     <span className={`text-xs font-medium truncate ${isLight ? "text-slate-700" : "text-white/70"}`}>{f.functionName}</span>
-                    <span className="text-[10px] text-white/40">{f.file.split(/[/\\]/).pop()}:{f.line}</span>
+                    <span className="text-[10px] text-white/40">{(f.file || "").split(/[/\\]/).pop()}:{f.line}</span>
                   </div>
                   <span className={`text-xs font-bold font-mono shrink-0 ml-2`} style={{ color: catColor }}>{f.complexity}</span>
                 </div>

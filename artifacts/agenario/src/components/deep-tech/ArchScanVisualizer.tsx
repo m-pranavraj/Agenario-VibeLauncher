@@ -77,7 +77,7 @@ export function ArchScanVisualizer({ data }: { data: ArchScanData | null }) {
             <div key={`mod-${i}`} className={`p-2 rounded-lg border ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/10"}`}>
               <div className="flex items-center gap-2">
                 {(m.instability > 0.7 || m.distance > 0.5) ? <Flame className="w-3.5 h-3.5 text-orange-400 shrink-0" /> : <CheckCircle2 className="w-3.5 h-3.5 text-green-400 shrink-0" />}
-                <span className={`text-xs truncate ${isLight ? "text-slate-700" : "text-white/70"}`}>{m.file.split(/[/\\]/).pop()}</span>
+                <span className={`text-xs truncate ${isLight ? "text-slate-700" : "text-white/70"}`}>{(m.file || "").split(/[/\\]/).pop()}</span>
                 <span className="text-[10px] text-white/40 ml-auto">I={m.instability.toFixed(2)} Ce={m.efferentCoupling} Ca={m.afferentCoupling}</span>
               </div>
             </div>

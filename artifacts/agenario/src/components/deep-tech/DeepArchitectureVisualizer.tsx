@@ -45,7 +45,7 @@ export function DeepArchitectureVisualizer({ issues, isLight }: { issues: any[],
       const x = 100 + (index % 4) * 220;
       const y = 200 + Math.floor(index / 4) * 150;
       
-      const fileName = filePath?.split('/').pop() || filePath;
+      const fileName = (filePath || "").split('/').pop() || filePath;
       
       initialNodes.push({
         id: filePath!,

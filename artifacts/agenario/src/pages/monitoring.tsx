@@ -78,6 +78,8 @@ export default function MonitoringPage() {
 
   useEffect(() => {
     if (!user) return;
+    
+    // Load initial monitoring data
     api.monitoring.overview()
       .then((data: any) => {
         setApps(data.apps ?? []);
@@ -85,6 +87,34 @@ export default function MonitoringPage() {
       })
       .catch(console.error)
       .finally(() => setDataLoading(false));
+
+    // Connect to real-time Server-Sent Events stream
+    const eventSource = new EventSource("/api/monitoring/stream", { withCredentials: true });
+    
+    eventSource.onmessage = (e) => {
+      try {
+        const event = JSON.parse(e.data);
+        // Refresh overview if a scan status changes, completes, or errors
+        if (event.phase === "complete" || event.status === "complete" || event.status === "error") {
+          api.monitoring.overview()
+            .then((data: any) => {
+              setApps(data.apps ?? []);
+              setTotalScans(data.totalScans ?? 0);
+            })
+            .catch(console.error);
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, [user]);
 
   if (loading || !user) return null;

@@ -54,7 +54,7 @@ runs:
             echo "Reality Score: $SCORE"
             
             # Print blockers if any
-            BLOCKERS=$(echo "$VERDICT_RESP" | grep -o '"blockers":\[[^]*]*\]' || echo "")
+            BLOCKERS=$(echo "$VERDICT_RESP" | grep -o '"blockers":\[[^]]*\]' || echo "")
             if [ ! -z "$BLOCKERS" ] && [ "$PASS" = "false" ]; then
               echo "Blockers found: $BLOCKERS"
             fi

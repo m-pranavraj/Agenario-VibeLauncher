@@ -146,7 +146,7 @@ function ConstraintRow({ c, isLight }: { c: ConstraintPayload; isLight: boolean 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className={`text-[10px] font-mono truncate ${isLight ? "text-slate-500" : "text-white/40"}`}>
-              {c.file.split("/").pop()}:{c.line}
+              {(c.file || "").split("/").pop()}:{c.line}
             </span>
             <ConditionBadge type={c.conditionType} />
             <BypassBadge type={c.bypassType} />

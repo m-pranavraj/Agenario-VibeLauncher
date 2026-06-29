@@ -74,7 +74,7 @@ function FindingRow({ finding, isLight }: { finding: CrossLanguageFinding; isLig
               {sevCfg.label}
             </span>
             <span className={`text-[9px] font-mono ${isLight ? "text-slate-500" : "text-white/40"}`}>
-              {finding.filePath.split("/").pop()}:{finding.lineNumber}
+              {(finding.filePath || '').split("/").pop()}:{finding.lineNumber}
             </span>
           </div>
           <div className={`text-[11px] font-medium truncate ${isLight ? "text-slate-700" : "text-white/70"}`}>
