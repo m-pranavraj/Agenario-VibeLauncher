@@ -8,7 +8,14 @@ interface FileExplorerProps {
   plan: string;
 }
 
-function getFileExplanation(filePath: string): { explanation: string; architecture: string; type: string } {
+function getFileExplanation(filePath: string | null | undefined): { explanation: string; architecture: string; type: string } {
+  if (!filePath) {
+    return {
+      type: "Source Code Module",
+      explanation: "Select a file to inspect its content.",
+      architecture: "Application Domain Logic"
+    };
+  }
   const parts = filePath.split('/');
   const name = parts[parts.length - 1];
   const ext = name.split('.').pop() || '';
