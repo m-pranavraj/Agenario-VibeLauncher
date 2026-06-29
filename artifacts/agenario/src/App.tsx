@@ -45,8 +45,12 @@ function Router() {
       <Route path="/scans/new" component={NewScanPage} />
       <Route path="/scan/new" component={NewScanPage} />
       <Route path="/scans/:id/progress" component={ScanProgressPage} />
-      <Route path="/scans/:id/:section" component={ScanResultsPage} />
-      <Route path="/scans/:id" component={ScanResultsPage} />
+      <Route path="/scans/:id/:section">
+        {(params) => <ScanResultsPage key={`${params.id}-${params.section}`} />}
+      </Route>
+      <Route path="/scans/:id">
+        {(params) => <ScanResultsPage key={`${params.id}-overview`} />}
+      </Route>
       <Route path="/pricing" component={PricingPage} />
       <Route path="/docs" component={DocsPage} />
       <Route path="/portfolio" component={PortfolioPage} />
