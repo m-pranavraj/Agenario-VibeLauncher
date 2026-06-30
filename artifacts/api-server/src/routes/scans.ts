@@ -369,7 +369,25 @@ router.get("/scans", async (req, res): Promise<void> => {
     const isCreator = viewingUser?.plan !== "free";
 
     const scans = await db
-      .select()
+      .select({
+        id: scansTable.id,
+        userId: scansTable.userId,
+        sourceType: scansTable.sourceType,
+        sourceInput: scansTable.sourceInput,
+        appDescription: scansTable.appDescription,
+        status: scansTable.status,
+        score: scansTable.score,
+        summary: scansTable.summary,
+        launchVerdict: scansTable.launchVerdict,
+        framework: scansTable.framework,
+        vibeTool: scansTable.vibeTool,
+        businessType: scansTable.businessType,
+        issueCounts: scansTable.issueCounts,
+        certId: scansTable.certId,
+        unlockedByAdmin: scansTable.unlockedByAdmin,
+        createdAt: scansTable.createdAt,
+        completedAt: scansTable.completedAt,
+      })
       .from(scansTable)
       .where(eq(scansTable.userId, userId))
       .orderBy(desc(scansTable.createdAt));
@@ -1555,7 +1573,28 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
       return;
     }
 
-    const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
+    const [scan] = await db
+      .select({
+        id: scansTable.id,
+        userId: scansTable.userId,
+        sourceType: scansTable.sourceType,
+        sourceInput: scansTable.sourceInput,
+        appDescription: scansTable.appDescription,
+        status: scansTable.status,
+        score: scansTable.score,
+        summary: scansTable.summary,
+        launchVerdict: scansTable.launchVerdict,
+        framework: scansTable.framework,
+        vibeTool: scansTable.vibeTool,
+        businessType: scansTable.businessType,
+        issueCounts: scansTable.issueCounts,
+        certId: scansTable.certId,
+        unlockedByAdmin: scansTable.unlockedByAdmin,
+        createdAt: scansTable.createdAt,
+        completedAt: scansTable.completedAt,
+      })
+      .from(scansTable)
+      .where(eq(scansTable.id, id));
 
     const sessionUserId = req.session?.userId ?? (req as any).userId;
     if (!scan) {
