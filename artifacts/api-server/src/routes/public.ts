@@ -1,11 +1,37 @@
 import { Router } from "express";
-import { db, scanIssuesTable, scansTable } from "@workspace/db";
+import { db, scanIssuesTable, scansTable, usersTable } from "@workspace/db";
 import { isNotNull, sql, eq, gte, and, desc } from "drizzle-orm";
 import { cacheMiddleware, TTL } from "../lib/cache.js";
 import { logger } from "../lib/logger.js";
 
 const router = Router();
 
+// Debug endpoint - shows current user and their scans count (auth required)
+router.get("/debug/user-scans", async (req, res) => {
+  const userId = req.session?.userId ?? (req as any).userId;
+  if (!userId) {
+    return res.json({ error: "Not authenticated" });
+  }
+
+  try {
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    const totalScans = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(scansTable);
+    const userScans = await db.select({ id: scansTable.id, status: scansTable.status, score: scansTable.score, userId: scansTable.userId }).from(scansTable).where(eq(scansTable.userId, userId));
+
+    return res.json({
+      sessionUserId: userId,
+      userFound: !!user,
+      userEmail: user?.email,
+      totalScansInDb: totalScans[0]?.count ?? 0,
+      userScans: userScans,
+    });
+  } catch (error) {
+    logger.error({ error }, "Debug endpoint error");
+    return res.status(500).json({ error: "Debug failed" });
+  }
+});
+
+// Public aggregated stats for the Landing Page Hero
 router.get("/public/stats", cacheMiddleware(TTL.ONE_MINUTE), async (req, res) => {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
