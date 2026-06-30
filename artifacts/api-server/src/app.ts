@@ -217,8 +217,7 @@ app.use(
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       sameSite: isProduction ? "none" : "lax",
-      // Remove hardcoded domain so the cookie works across any allowed Vercel frontend domain
-      // domain: isProduction ? ".agenario.tech" : undefined,
+      domain: isProduction ? ".agenario.tech" : undefined,
     },
   }),
 );

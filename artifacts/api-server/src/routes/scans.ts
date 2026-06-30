@@ -1792,8 +1792,29 @@ router.get("/scans/:id/verdict", async (req, res): Promise<void> => {
       return;
     }
 
-    const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
-    if (!scan || scan.userId !== req.session.userId) {
+    const [scan] = await db
+      .select({
+        id: scansTable.id,
+        userId: scansTable.userId,
+        sourceType: scansTable.sourceType,
+        sourceInput: scansTable.sourceInput,
+        appDescription: scansTable.appDescription,
+        status: scansTable.status,
+        score: scansTable.score,
+        summary: scansTable.summary,
+        launchVerdict: scansTable.launchVerdict,
+        framework: scansTable.framework,
+        vibeTool: scansTable.vibeTool,
+        businessType: scansTable.businessType,
+        issueCounts: scansTable.issueCounts,
+        certId: scansTable.certId,
+        unlockedByAdmin: scansTable.unlockedByAdmin,
+        createdAt: scansTable.createdAt,
+        completedAt: scansTable.completedAt,
+      })
+      .from(scansTable)
+      .where(eq(scansTable.id, id));
+    if (!scan || scan.userId !== req.session?.userId) {
       res.status(404).json({ error: "Scan not found" });
       return;
     }

@@ -5855,6 +5855,7 @@ export default function ScanResultsPage() {
 
   const [scan, setScan] = useState<ScanDetail | null>(null);
   const [scanLoading, setScanLoading] = useState(true);
+  const [scanError, setScanError] = useState<string | null>(null);
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
   const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("all");
   const [showAdvanced, setShowAdvanced] = useState(true);
@@ -5927,7 +5928,7 @@ export default function ScanResultsPage() {
     let active = true;
 
     const load = async () => {
-      const result = await api.scans.get(id).catch(() => null);
+      const result = await api.scans.get(id).catch((err) => { console.error("Scan load failed:", err); setScanError(err?.message || String(err)); return null; });
       if (!active) return;
       if (result) {
         if (result.status === "failed") {
@@ -5984,8 +5985,13 @@ export default function ScanResultsPage() {
   );
 
   if (!scan) return (
-    <div className={`min-h-screen ${t.page} flex items-center justify-center`}>
+    <div className={`min-h-screen ${t.page} flex flex-col items-center justify-center gap-4`}>
       <p className={`${isLight ? "text-gray-400" : "text-white/25"}`}>Report not found</p>
+      {scanError && (
+        <div className={`max-w-lg text-center ${isLight ? "bg-red-50 border-red-200 text-red-700" : "bg-red-950/30 border-red-500/20 text-red-400"} border rounded-xl p-4 text-xs font-mono`}>
+          {scanError}
+        </div>
+      )}
     </div>
   );
 
