@@ -6824,11 +6824,6 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* --- Pre-Launch Checklist ---------------------------------------- */}
-            {!activeAgent && (scan.issues ?? []).length > 0 && (
-              <PreLaunchChecklist scan={scan} />
-            )}
-
             {/* --- Confidence legend (T1-T5 evidence tier system) ------------------- */}
             <div
               className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-xl px-5 py-3`}
