@@ -1557,17 +1557,19 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
 
     const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
 
-    const sessionUserId = req.session.userId ?? (req as any).userId;
+    const sessionUserId = req.session?.userId ?? (req as any).userId;
     if (!scan) {
       res.status(404).json({ error: "Scan not found" });
       return;
     }
     // Allow access if: user owns scan, scan has no owner (legacy), or user is admin
-    const [currentUser] = await db.select().from(usersTable).where(eq(usersTable.id, sessionUserId));
-    const isAdmin = currentUser?.email && process.env["ADMIN_EMAIL"] && currentUser.email.toLowerCase() === process.env["ADMIN_EMAIL"].toLowerCase();
-    if (scan.userId && scan.userId !== sessionUserId && !isAdmin) {
-      res.status(404).json({ error: "Scan not found" });
-      return;
+    if (sessionUserId) {
+      const [currentUser] = await db.select().from(usersTable).where(eq(usersTable.id, sessionUserId));
+      const isAdmin = currentUser?.email && process.env["ADMIN_EMAIL"] && currentUser.email.toLowerCase() === process.env["ADMIN_EMAIL"].toLowerCase();
+      if (scan.userId && scan.userId !== sessionUserId && !isAdmin) {
+        res.status(404).json({ error: "Scan not found" });
+        return;
+      }
     }
 
     const issues = await db
