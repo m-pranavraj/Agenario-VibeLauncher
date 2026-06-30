@@ -1,7 +1,6 @@
 import express, { Router, type IRouter } from "express";
 import crypto from "crypto";
 import Razorpay from "razorpay";
-import Paddle from "paddle";
 import { eq, and } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import { coupons } from "@workspace/db/schema";
@@ -17,13 +16,25 @@ function getRazorpay(): Razorpay {
   return new Razorpay({ key_id, key_secret });
 }
 
-function getPaddle(): Paddle | null {
+async function createPaddleOrder(amount: number, currency: string, receipt: string, notes: Record<string, string>) {
   const apiKey = process.env["PADDLE_API_KEY"];
-  if (!apiKey) {
-    logger.warn("Paddle API key not configured");
-    return null;
+  if (!apiKey) throw new Error("Paddle API key not configured");
+  
+  const res = await fetch("https://api.paddle.com/2.0/orders", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({ amount, currency, receipt, notes }),
+  });
+  
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Paddle order creation failed: ${err}`);
   }
-  return new Paddle({ environment: "production", key: apiKey });
+  
+  return await res.json();
 }
 
 const PLAN_PRICES: Record<string, { amount: number; label: string }> = {
@@ -78,61 +89,53 @@ router.post("/billing/validate-coupon", async (req, res): Promise<void> => {
   }
 });
 
-router.post("/billing/paddle/create-order", async (req, res): Promise<void> => {
+router.post("/billing/create-order", async (req, res): Promise<void> => {
   if (!requireAuth(req, res)) return;
-  
+
   const parsed = CreateOrderBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  
+
   const { plan } = parsed.data;
   const planInfo = PLAN_PRICES[plan];
   if (!planInfo) {
     res.status(400).json({ error: "Invalid plan" });
     return;
   }
-  
+
   let finalAmount = planInfo.amount;
   let couponLabel = "";
-  
-  // Paddle coupon handling
+
   const rawCoupon = String(req.body?.coupon ?? "").trim().toUpperCase();
   if (rawCoupon) {
     try {
-      // This would integrate with Paddle's coupon validation API
-      // For demo, applying 20% discount as placeholder
-      finalAmount = Math.round(planInfo.amount * 0.8);
-      couponLabel = ` (Paddle Coupon)";
+      const [coupon] = await db
+        .select()
+        .from(coupons)
+        .where(and(eq(coupons.code, rawCoupon), eq(coupons.enabled, true)))
+        .limit(1);
+
+      if (coupon && (!coupon.expiresAt || new Date(coupon.expiresAt) > new Date())) {
+        finalAmount = Math.round(planInfo.amount * (1 - coupon.discount));
+        couponLabel = ` (${coupon.label})`;
+      }
     } catch (err) {
-      logger.error({ err, rawCoupon }, "Failed to validate Paddle coupon");
+      logger.error({ err, rawCoupon }, "Failed to validate coupon during order creation");
     }
   }
-  
-  try {
-    const order = await getPaddle()?.orders.create({
-      amount: finalAmount,
-      currency: "INR",
-      receipt: `agenario_${req.session.userId}_${Date.now()}`,
-      notes: {
-        userId: String(req.session.userId),
-        plan,
-        coupon: rawCoupon || "none",
-      },
-    });
-    
-    res.json({
-      orderId: order.id,
-      key: process.env.PADDLE_API_KEY,
-      amount: finalAmount,
-      currency: "INR",
-      planName: planInfo.label + couponLabel,
-    });
-  } catch (err) {
-    res.status(500).json({ error: "Could not create Paddle order" });
-  }
-});
+
+  const order = await getRazorpay().orders.create({
+    amount: finalAmount,
+    currency: "INR",
+    receipt: `agenario_${req.session.userId}_${Date.now()}`,
+    notes: {
+      userId: String(req.session.userId),
+      plan,
+      coupon: rawCoupon || "none",
+    },
+  });
 
   res.json({
     orderId: order.id,
@@ -143,68 +146,41 @@ router.post("/billing/paddle/create-order", async (req, res): Promise<void> => {
   });
 });
 
-router.post("/billing/paddle/verify", async (req, res): Promise<void> => {
+router.post("/billing/verify", async (req, res): Promise<void> => {
   if (!requireAuth(req, res)) return;
-  
-  const { paddleOrderId, paddlePaymentId, paddleSignature, plan } = req.body;
-  
-  const key_secret = process.env["PADDLE_WEBHOOK_SECRET"];
+
+  const parsed = VerifyPaymentBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const { razorpayOrderId, razorpayPaymentId, razorpaySignature, plan } = parsed.data;
+
+  const key_secret = process.env["RAZORPAY_KEY_SECRET"];
   if (!key_secret) {
     res.status(503).json({ error: "Payment not configured" });
     return;
   }
-  
   const expectedSignature = crypto
     .createHmac("sha256", key_secret)
-    .update(`${paddleOrderId}|${paddlePaymentId}`)
+    .update(`${razorpayOrderId}|${razorpayPaymentId}`)
     .digest("hex");
-  
-  if (expectedSignature !== paddleSignature) {
+
+  if (expectedSignature !== razorpaySignature) {
     res.status(400).json({ error: "Invalid payment signature" });
     return;
   }
-  
+
   const [user] = await db
     .update(usersTable)
     .set({ plan, updatedAt: new Date() })
     .where(eq(usersTable.id, req.session.userId!))
     .returning();
-  
-  req.log.info({ userId: user.id, plan }, "Plan upgraded");
-  
-  res.json({ success: true, plan: user.plan });
-});
 
-router.post("/billing/paddle/webhook", async (req, res): Promise<void> => {
-  const signature = req.headers["paddle-signature"];
-  const event = req.body;
-  
-  const key_secret = process.env["PADDLE_WEBHOOK_SECRET"];
-  if (!key_secret) {
-    res.status(503).json({ error: "Webhook not configured" });
-    return;
-  }
-  
-  const expectedSignature = crypto
-    .createHmac("sha256", key_secret)
-    .update(JSON.stringify(event))
-    .digest("hex");
-  
-  if (expectedSignature !== signature) {
-    res.status(400).json({ error: "Invalid webhook signature" });
-    return;
-  }
-  
-  if (event.event_name === "subscription_created") {
-    const userId = event.data.attributes.user_id;
-    const plan = "creator";
-    await db.update(usersTable)
-      .set({ plan, updatedAt: new Date() })
-      .where(eq(usersTable.id, userId));
-    req.log.info({ userId, plan }, "Plan upgraded via Paddle webhook");
-  }
-  
-  res.json({ success: true });
+  req.log.info({ userId: user.id, plan }, "Plan upgraded");
+
+  res.json({ success: true, plan: user.plan });
 });
 
 router.get("/billing/status", async (req, res): Promise<void> => {
