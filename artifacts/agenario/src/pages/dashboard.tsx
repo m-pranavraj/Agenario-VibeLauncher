@@ -139,7 +139,7 @@ export default function DashboardPage() {
             { label: "Security Score", value: avgScore != null ? `${avgScore}` : "—", sub: avgScore != null ? (avgScore >= 80 ? "Launch ready" : avgScore >= 60 ? "Needs fixes" : "Critical") : "Run a scan", icon: ShieldCheck, color: avgScore != null && avgScore >= 80 ? "emerald" : "amber" },
             { label: "Critical Issues", value: totalCritical, sub: totalCritical > 0 ? "Fix immediately" : "Clean", icon: XCircle, color: totalCritical > 0 ? "rose" : "emerald" },
             { label: "Projects", value: projects.length, sub: `${readyToLaunch} launch-ready`, icon: FileCode, color: "indigo" },
-            { label: "Scans Run", value: completedScans.length, sub: `${scans?.length ?? 0 - completedScans.length} running`, icon: Activity, color: "purple" },
+            { label: "Scans Run", value: completedScans.length, sub: `${(scans?.length ?? 0) - completedScans.length} running`, icon: Activity, color: "purple" },
           ].map((stat) => (
             <div key={stat.label} className={`p-5 rounded-2xl border ${isLight ? "bg-white border-slate-200" : "bg-[#0a0a0f] border-white/[0.06]"}`}>
               <div className="flex items-center gap-3 mb-3">
