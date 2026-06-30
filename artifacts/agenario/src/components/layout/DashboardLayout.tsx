@@ -28,10 +28,7 @@ import {
   TrendingUp,
   Telescope,
   Bot,
-  FileSearch,
   Shield,
-  Zap,
-  Palette,
   Route,
   Search,
   Wrench,
@@ -193,38 +190,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {/* ─── Deep Audits (Issue Categories) ───────────────────── */}
-          <Collapsible defaultOpen className="group/collapsible">
-            <SidebarGroup className="p-0">
-              <SidebarGroupLabel asChild className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 py-1.5 hover:bg-slate-100/50 dark:hover:bg-white/5 cursor-pointer transition-colors">
-                <CollapsibleTrigger className="flex w-full items-center justify-between">
-                  Issue Dimensions
-                  <ChevronDown className="h-3.5 w-3.5 transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                </CollapsibleTrigger>
-              </SidebarGroupLabel>
-              <CollapsibleContent>
-                <SidebarGroupContent className="mt-1 px-1">
-                  <SidebarMenu>
-                    {[
-                      { label: "Security Vulnerabilities", hash: "issues-security", color: "bg-rose-500", icon: Shield },
-                      { label: "Compliance & Safety", hash: "issues-compliance", color: "bg-amber-500", icon: FileSearch },
-                      { label: "Performance Sinks", hash: "issues-performance", color: "bg-blue-500", icon: Zap },
-                      { label: "UI / UX Bottlenecks", hash: "issues-uiux", color: "bg-emerald-500", icon: Palette },
-                    ].map((sub) => (
-                      <SidebarMenuItem key={sub.hash}>
-                        <SidebarMenuButton asChild isActive={activeSection === sub.hash} className={btnClass}>
-                          <button type="button" onClick={() => navigateTo(sub.hash)} className="flex items-center gap-2.5 w-full text-left">
-                            <sub.icon className={`h-3.5 w-3.5 shrink-0 ${sub.color.replace("bg-", "text-")}`} />
-                            <span className="font-medium text-xs truncate">{sub.label}</span>
-                          </button>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </CollapsibleContent>
-            </SidebarGroup>
-          </Collapsible>
+
 
           {/* ─── Deep Tech Analysis ────────────────────────────────── */}
           <Collapsible className="group/collapsible">

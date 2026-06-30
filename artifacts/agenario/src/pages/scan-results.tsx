@@ -6856,53 +6856,7 @@ export default function ScanResultsPage() {
               </div>
             </div>
 
-            {/* ——— Agent filter —————————————————————————————————————— */}
-            {agents.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setActiveAgent(null)}
-                  className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-                    !activeAgent
-                      ? isLight
-                        ? "bg-gray-100 border-gray-300 text-gray-900"
-                        : "bg-white/[0.1] border-white/20 text-white"
-                      : isLight
-                        ? "bg-white border-gray-200 text-gray-400 hover:text-gray-700"
-                        : "glass text-white/35 hover:text-white/60"
-                  }`}
-                >
-                  All Dimensions
-                </button>
-                {agents.map((agent) => {
-                  const Icon = AGENT_ICONS[agent] ?? Bot;
-                  const count = (scan.issues ?? []).filter(
-                    (i: any) => i.agentName === agent,
-                  ).length;
-                  return (
-                    <button
-                      key={agent}
-                      onClick={() =>
-                        setActiveAgent(agent === activeAgent ? null : agent)
-                      }
-                      data-testid={`filter-${agent}`}
-                      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-                        activeAgent === agent
-                          ? isLight
-                            ? "bg-gray-100 border-gray-300 text-gray-900"
-                            : "bg-white/[0.1] border-white/20 text-white"
-                          : isLight
-                            ? "bg-white border-gray-200 text-gray-400 hover:text-gray-700"
-                            : "glass text-white/35 hover:text-white/60"
-                      }`}
-                    >
-                      <Icon className="w-3 h-3" />
-                      {agent.replace(" Agent", "")}
-                      <span className="opacity-50">({count})</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+
 
             {/* ——— Verified Findings (Evidence Gallery) ————————————————————————————— */}
             {!activeAgent && (
@@ -7137,77 +7091,7 @@ export default function ScanResultsPage() {
         )}
 
         {/* ——— Pre-Launch Checklist Tab —————————————————————————————————— */}
-        {activeTab === "prelaunch" && (
-          <div className="space-y-6">
-            <div className={`rounded-2xl p-6 ${isLight ? "bg-white border border-gray-200" : "glass"}`}>
-              <h2 className={`font-bold text-lg mb-4 ${isLight ? "text-gray-900" : "text-white"}`}>Pre-Launch Checklist</h2>
-              {(() => {
-                const issues = scan?.issues ?? [];
-                const categories = ["security", "compliance", "performance", "uiux"];
-                const matchesCategory = (issue: any, cat: string) => {
-                  const issueCat = (issue.category || "").toLowerCase();
-                  const agentName = (issue.agentName || "").toLowerCase();
-                  const title = (issue.title || "").toLowerCase();
-                  const desc = (issue.description || "").toLowerCase();
-                  if (cat === "security") {
-                    return ["injection","auth","exposure","security-smell","mass-assign","path-traversal","ssti","xxe","open-redirect","log-injection","file-upload"].includes(issueCat)
-                      || agentName.includes("security") || agentName.includes("idor") || agentName.includes("access") || agentName.includes("taint")
-                      || title.includes("security") || title.includes("leak") || title.includes("cryptographic");
-                  }
-                  if (cat === "compliance") {
-                    return issueCat === "compliance" || issueCat === "regulatory" || issueCat.includes("compliance")
-                      || agentName.includes("compliance") || agentName.includes("safety")
-                      || desc.includes("compliance") || desc.includes("gdpr") || desc.includes("pci") || desc.includes("hipaa") || desc.includes("regulatory") || desc.includes("policy")
-                      || title.includes("compliance") || title.includes("policy");
-                  }
-                  if (cat === "performance") {
-                    return issueCat === "performance" || issueCat === "circular_dependency" || issueCat === "god_module" || issueCat === "high_instability"
-                      || agentName.includes("performance") || agentName.includes("architecture")
-                      || desc.includes("performance") || desc.includes("latency") || desc.includes("slow") || desc.includes("database query")
-                      || title.includes("performance") || title.includes("latency");
-                  }
-                  if (cat === "uiux") {
-                    return issueCat === "uiux" || issueCat === "wcag_violation" || issueCat === "cognitive_overload" || issueCat === "ai_boilerplate" || issueCat === "inconsistent_design"
-                      || agentName.includes("design") || agentName.includes("ui") || agentName.includes("ux")
-                      || desc.includes("design") || desc.includes("contrast") || desc.includes("wcag")
-                      || title.includes("ui") || title.includes("ux") || title.includes("contrast") || title.includes("accessibility");
-                  }
-                  return issueCat === cat;
-                };
-                const checklist = categories.map(cat => ({
-                  category: cat,
-                  count: issues.filter((i: any) => matchesCategory(i, cat)).length,
-                  severity: issues.filter((i: any) => matchesCategory(i, cat) && (i.severity === "critical" || i.severity === "high")).length,
-                }));
-                return (
-                  <div className="space-y-4">
-                    {checklist.map(item => (
-                      <div key={item.category} className={`flex items-center justify-between p-4 rounded-xl ${isLight ? "bg-gray-50 border border-gray-100" : "bg-white/[0.03] border border-white/[0.06]"}`}>
-                        <div>
-                          <span className={`font-semibold capitalize ${isLight ? "text-gray-800" : "text-white"}`}>{item.category}</span>
-                          <span className={`ml-2 text-xs ${isLight ? "text-gray-400" : "text-white/40"}`}>
-                            {item.severity > 0 ? `${item.severity} critical/high issues` : `${item.count} total issues`}
-                          </span>
-                        </div>
-                        <div className={`text-lg font-bold ${item.severity > 0 ? "text-red-500" : item.count > 0 ? "text-amber-500" : "text-green-500"}`}>
-                          {item.count === 0 ? "✓ Pass" : `${item.count} open`}
-                        </div>
-                      </div>
-                    ))}
-                    <div className={`mt-6 p-4 rounded-xl ${isLight ? "bg-indigo-50 border border-indigo-100" : "bg-indigo-500/[0.06] border border-indigo-500/20"}`}>
-                      <p className={`text-sm font-medium ${isLight ? "text-indigo-700" : "text-indigo-300"}`}>
-                        Overall Launch Verdict: {scan?.launchVerdict || "Pending"}
-                      </p>
-                      <p className={`text-xs mt-1 ${isLight ? "text-indigo-500" : "text-indigo-400/60"}`}>
-                         Score: {scan?.score ?? 0}/100 — {scan.score != null ? (scan.score >= 70 ? "Ready to launch" : scan.score >= 40 ? "Needs work" : "Not ready") : "Not scored yet"}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        )}
+        {activeTab === "prelaunch" && <PreLaunchChecklist scan={scan} />}
 
         {/* ——— Technical Cofounder Tab ———————————————————————————————————— */}
         {activeTab === "cofounder" && (
@@ -7252,6 +7136,7 @@ export default function ScanResultsPage() {
                   No scan data available. Run a scan first.
                 </div>
               )}
+              {(scan?.issues ?? []).length > 0 && <CofounderQAPanel scanId={scan.id} />}
             </div>
           </div>
         )}
