@@ -216,42 +216,36 @@ app.use(
     saveUninitialized: false,
     name: "agn_sid", // Don't use default 'connect.sid'
     cookie: {
-      // In production, Vercel → Render proxy chain requires SameSite=None + Secure.
-      // Domain is set to .agenario.tech so the cookie works on both www and bare domain.
-      secure: isProduction ? true : false,
+      // Vercel proxies /api/* → Render, so the browser always sees cookies from agenario.tech.
+      // NEVER set a domain: it will be inferred from the request origin automatically.
+      // SameSite=lax works because the proxy makes it same-site from the browser's POV.
+      // Setting domain=".agenario.tech" here would BREAK things because Set-Cookie comes
+      // from *.onrender.com and the browser would reject a mismatched domain attribute.
+      secure: isProduction,
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: isProduction ? "none" : "lax",
-      domain: isProduction ? ".agenario.tech" : undefined,
+      sameSite: "lax",
+      domain: undefined, // Always undefined — let the browser infer from request origin
     },
   }),
 );
 
-// Dynamically adjust cookie security and domain mapping based on hosting environment
+// Adjust cookie secure flag for localhost dev (never override domain — always keep undefined)
 app.use((req, res, next) => {
   if (req.session && req.session.cookie) {
     const host = req.headers.host || "";
     const hostname = req.hostname || "";
-    if (
+    const isLocalhost =
       host.includes("localhost") ||
       host.includes("127.0.0.1") ||
       hostname === "localhost" ||
-      hostname === "127.0.0.1"
-    ) {
+      hostname === "127.0.0.1";
+    if (isLocalhost) {
       req.session.cookie.secure = false;
-      req.session.cookie.domain = undefined;
       req.session.cookie.sameSite = "lax";
-    } else {
-      // In production, only assign .agenario.tech domain cookie restriction
-      // if the API endpoint itself is served on a subdomain of agenario.tech.
-      // If served on *.onrender.com or *.vercel.app, keep it as undefined so
-      // browsers accept the cookie for that hosting domain.
-      if (hostname.endsWith("agenario.tech")) {
-        req.session.cookie.domain = ".agenario.tech";
-      } else {
-        req.session.cookie.domain = undefined;
-      }
     }
+    // Always keep domain undefined — Vercel proxy makes Set-Cookie origin = agenario.tech
+    req.session.cookie.domain = undefined;
   }
   next();
 });

@@ -6,7 +6,9 @@ import { logger } from "../lib/logger.js";
 const router = Router();
 
 router.get("/admin/stats", async (req: any, res: any) => {
-  if (!req.session.userId) {
+  const userId = req.session?.userId ?? req.userId;
+  if (!userId) {
+    logger.warn({ hasSession: !!req.session, hasCookie: !!req.headers["cookie"] }, "[admin/stats] Not authenticated");
     return res.status(401).json({ error: "Not authenticated" });
   }
 
@@ -16,9 +18,10 @@ router.get("/admin/stats", async (req: any, res: any) => {
   }
 
   try {
-    const users = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
+    const users = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
     const me = users[0];
     if (!me || me.email.trim().toLowerCase() !== adminEmail.trim().toLowerCase()) {
+      logger.warn({ userId, email: me?.email, adminEmail }, "[admin/stats] Forbidden — email mismatch");
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -187,7 +190,8 @@ router.get("/admin/stats", async (req: any, res: any) => {
 });
 
 router.post("/admin/users/:id/update-plan", async (req: any, res: any) => {
-  if (!req.session.userId) {
+  const sessionUserId = req.session?.userId ?? req.userId;
+  if (!sessionUserId) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
@@ -197,14 +201,14 @@ router.post("/admin/users/:id/update-plan", async (req: any, res: any) => {
   }
 
   try {
-    const users = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
+    const users = await db.select().from(usersTable).where(eq(usersTable.id, sessionUserId)).limit(1);
     const me = users[0];
     if (!me || me.email.trim().toLowerCase() !== adminEmail.trim().toLowerCase()) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const userId = parseInt(req.params.id, 10);
-    if (isNaN(userId)) {
+    const targetUserId = parseInt(req.params.id, 10);
+    if (isNaN(targetUserId)) {
       return res.status(400).json({ error: "Invalid user ID" });
     }
 
@@ -218,7 +222,7 @@ router.post("/admin/users/:id/update-plan", async (req: any, res: any) => {
       updateData.scanLimit = scanLimit === "" || scanLimit === null ? null : parseInt(scanLimit, 10);
     }
 
-    await db.update(usersTable).set(updateData).where(eq(usersTable.id, userId));
+    await db.update(usersTable).set(updateData).where(eq(usersTable.id, targetUserId));
 
     return res.json({ success: true, message: "User plan updated successfully" });
   } catch (err) {
@@ -228,7 +232,8 @@ router.post("/admin/users/:id/update-plan", async (req: any, res: any) => {
 });
 
 router.delete("/admin/users/:id", async (req: any, res: any) => {
-  if (!req.session.userId) {
+  const sessionUserId = req.session?.userId ?? req.userId;
+  if (!sessionUserId) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
@@ -238,34 +243,34 @@ router.delete("/admin/users/:id", async (req: any, res: any) => {
   }
 
   try {
-    const users = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
+    const users = await db.select().from(usersTable).where(eq(usersTable.id, sessionUserId)).limit(1);
     const me = users[0];
     if (!me || me.email.trim().toLowerCase() !== adminEmail.trim().toLowerCase()) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const userId = parseInt(req.params.id, 10);
-    if (isNaN(userId)) {
+    const targetUserId = parseInt(req.params.id, 10);
+    if (isNaN(targetUserId)) {
       return res.status(400).json({ error: "Invalid user ID" });
     }
 
-    if (userId === me.id) {
+    if (targetUserId === me.id) {
       return res.status(400).json({ error: "Cannot delete your own admin account" });
     }
 
-    const userScans = await db.select({ id: scansTable.id }).from(scansTable).where(eq(scansTable.userId, userId));
+    const userScans = await db.select({ id: scansTable.id }).from(scansTable).where(eq(scansTable.userId, targetUserId));
     const scanIds = userScans.map((s) => s.id);
 
     if (scanIds.length > 0) {
       for (const scanId of scanIds) {
         await db.delete(scanIssuesTable).where(eq(scanIssuesTable.scanId, scanId));
       }
-      await db.delete(scansTable).where(eq(scansTable.userId, userId));
+      await db.delete(scansTable).where(eq(scansTable.userId, targetUserId));
     }
 
-    await db.delete(apiKeysTable).where(eq(apiKeysTable.userId, userId));
-    await db.delete(webhookSecretsTable).where(eq(webhookSecretsTable.userId, userId));
-    await db.delete(usersTable).where(eq(usersTable.id, userId));
+    await db.delete(apiKeysTable).where(eq(apiKeysTable.userId, targetUserId));
+    await db.delete(webhookSecretsTable).where(eq(webhookSecretsTable.userId, targetUserId));
+    await db.delete(usersTable).where(eq(usersTable.id, targetUserId));
 
     return res.json({ success: true, message: "User and all associated data deleted successfully" });
   } catch (err) {
@@ -275,7 +280,8 @@ router.delete("/admin/users/:id", async (req: any, res: any) => {
 });
 
 router.delete("/admin/scans/:id", async (req: any, res: any) => {
-  if (!req.session.userId) {
+  const sessionUserId = req.session?.userId ?? req.userId;
+  if (!sessionUserId) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
@@ -285,7 +291,7 @@ router.delete("/admin/scans/:id", async (req: any, res: any) => {
   }
 
   try {
-    const users = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
+    const users = await db.select().from(usersTable).where(eq(usersTable.id, sessionUserId)).limit(1);
     const me = users[0];
     if (!me || me.email.trim().toLowerCase() !== adminEmail.trim().toLowerCase()) {
       return res.status(403).json({ error: "Forbidden" });
@@ -307,7 +313,8 @@ router.delete("/admin/scans/:id", async (req: any, res: any) => {
 });
 
 router.post("/admin/scans/:id/toggle-pro", async (req: any, res: any) => {
-  if (!req.session.userId) {
+  const sessionUserId = req.session?.userId ?? req.userId;
+  if (!sessionUserId) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
@@ -317,7 +324,7 @@ router.post("/admin/scans/:id/toggle-pro", async (req: any, res: any) => {
   }
 
   try {
-    const users = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
+    const users = await db.select().from(usersTable).where(eq(usersTable.id, sessionUserId)).limit(1);
     const me = users[0];
     if (!me || me.email.trim().toLowerCase() !== adminEmail.trim().toLowerCase()) {
       return res.status(403).json({ error: "Forbidden" });
