@@ -155,6 +155,7 @@ export default function DashboardPage() {
                   <ScoreGauge score={avgScore} size="sm" />
                 )}
               </div>
+              <p className={`text-sm font-semibold mb-1 ${isLight ? "text-slate-700" : "text-white/70"}`}>{stat.label}</p>
               <p className={`text-2xl font-extrabold ${isLight ? "text-slate-900" : "text-white"}`}>{stat.value}</p>
               <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-white/40"}`}>{stat.sub}</p>
             </div>
