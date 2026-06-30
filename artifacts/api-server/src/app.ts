@@ -18,6 +18,7 @@ import { logger } from "./lib/logger.js";
 import { errorHandler } from "./lib/errors.js";
 import { enrichSession } from "./middlewares/auth.js";
 import { metricsMiddleware } from "./lib/metrics.js";
+import { seedFixTemplates } from "./lib/remediation/seeder.js";
 
 const { Pool } = pkg;
 
@@ -183,11 +184,15 @@ const PgStore = connectPgSimple(session);
 const pool = new Pool({ connectionString: process.env["DATABASE_URL"] });
 
 // Verify session table on startup
-pool.query(`
-  SELECT 1 FROM "session" LIMIT 1
-`).catch(() => {
-  logger.error("Session table 'session' does not exist in database — run DEPLOYMENT.md SQL to create it");
-});
+pool
+  .query('SELECT 1 FROM "session" LIMIT 1')
+  .then(() => {
+    seedFixTemplates();
+  })
+  .catch(() => {
+    logger.error("Session table 'session' does not exist in database — run DEPLOYMENT.md SQL to create it");
+    seedFixTemplates();
+  });
 
 app.use(
   session({
@@ -221,6 +226,24 @@ app.use(
     },
   }),
 );
+
+// Dynamically adjust cookie security for localhost/development environments
+app.use((req, res, next) => {
+  if (req.session && req.session.cookie) {
+    const host = req.headers.host || "";
+    if (
+      host.includes("localhost") ||
+      host.includes("127.0.0.1") ||
+      req.hostname === "localhost" ||
+      req.hostname === "127.0.0.1"
+    ) {
+      req.session.cookie.secure = false;
+      req.session.cookie.domain = undefined;
+      req.session.cookie.sameSite = "lax";
+    }
+  }
+  next();
+});
 
 // ── Auth enrichment (API key + webhook secret → session) ─────────────────
 app.use("/api", enrichSession);

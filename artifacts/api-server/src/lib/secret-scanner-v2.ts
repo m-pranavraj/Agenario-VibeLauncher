@@ -50,14 +50,14 @@ const PATTERNS: Pattern[] = [
   // ── Payment ─────────────────────────────────────────
   {
     name: "Stripe Live Secret Key",
-    regex: /sk_live_[0-9a-zA-Z]{24,}/,
+    regex: /sk_live_[0-9a-zA-Z_]{24,}/,
     risk: "critical",
     category: "payment",
     recommendation: "Remove from code immediately. Rotate in Stripe dashboard. Use STRIPE_SECRET_KEY env var.",
   },
   {
     name: "Stripe Test Secret Key",
-    regex: /sk_test_[0-9a-zA-Z]{24,}/,
+    regex: /sk_test_[0-9a-zA-Z_]{24,}/,
     risk: "high",
     category: "payment",
     recommendation: "Move to STRIPE_SECRET_KEY env var. Test keys can still be used to list customers/charges.",

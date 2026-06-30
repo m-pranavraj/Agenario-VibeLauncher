@@ -30,12 +30,12 @@ const SECRET_PATTERNS: SecretPattern[] = [
   },
   {
     name: "Stripe Secret Key",
-    pattern: /\bsk_live_[a-zA-Z0-9]{24,}\b/,
+    pattern: /\bsk_live_[a-zA-Z0-9_]{24,}\b/,
     severity: "critical",
   },
   {
     name: "Stripe Test Key",
-    pattern: /\bsk_test_[a-zA-Z0-9]{24,}\b/,
+    pattern: /\bsk_test_[a-zA-Z0-9_]{24,}\b/,
     severity: "high",
   },
   {
