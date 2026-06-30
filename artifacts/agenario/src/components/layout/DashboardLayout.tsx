@@ -29,6 +29,9 @@ import {
   Telescope,
   Bot,
   Shield,
+  FileSearch,
+  Zap,
+  Palette,
   Route,
   Search,
   Wrench,
@@ -186,6 +189,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* ─── Issue Dimensions ──────────────────────────────────── */}
+          <SidebarGroup className="p-0">
+            <SidebarGroupContent className="mt-1 px-1">
+              <SidebarMenu>
+                {[
+                  { label: "Security Vulnerabilities", hash: "issues-security", color: "text-rose-500", icon: Shield },
+                  { label: "Compliance & Safety", hash: "issues-compliance", color: "text-amber-500", icon: FileSearch },
+                  { label: "Performance Sinks", hash: "issues-performance", color: "text-blue-500", icon: Zap },
+                  { label: "UI / UX Bottlenecks", hash: "issues-uiux", color: "text-emerald-500", icon: Palette },
+                ].map((sub) => (
+                  <SidebarMenuItem key={sub.hash}>
+                    <SidebarMenuButton asChild isActive={activeSection === sub.hash} className={btnClass}>
+                      <button type="button" onClick={() => navigateTo(sub.hash)} className="flex items-center gap-3 w-full text-left">
+                        <sub.icon className={`h-4 w-4 shrink-0 ${sub.color}`} />
+                        <span className="font-medium text-sm">{sub.label}</span>
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
