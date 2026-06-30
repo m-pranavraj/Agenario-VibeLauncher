@@ -6829,10 +6829,19 @@ export default function ScanResultsPage() {
 
 
 {/* ——— Verified Findings (Evidence Gallery) — only on All Issues page */}
-                 {!activeCategory && !activeAgent && (
-                   <div className={`${isLight ? "bg-white border border-gray-200" : "glass border border-white/[0.07]"} rounded-2xl p-6 space-y-5 shadow-2xl`}>
-                   </div>
-                 )}
+            {!activeCategory && !activeAgent && (
+              <div className={`${isLight ? "bg-white border border-gray-200" : "glass border border-white/[0.07]"} rounded-2xl p-6 space-y-5 shadow-2xl`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck className="w-5 h-5 text-violet-400" />
+                    <div>
+                      <h2 className={`text-sm font-bold font-['Syne'] uppercase tracking-wider ${isLight ? "text-gray-900" : "text-white"}`}>
+                        Verified Findings Gallery
+                      </h2>
+                      <p className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/50"} mt-0.5`}>
+                        Evidence tier system: T1 (strongest) to T5 (advisory)
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -6844,13 +6853,43 @@ export default function ScanResultsPage() {
                     { id: "static", tier: "T4", label: "Static Signal", count: staticCount, color: "amber", desc: "Pattern match" },
                     { id: "ai_reasoning", tier: "T5", label: "AI Advisory", count: aiCount, color: "slate", desc: "LLM observation" }
                   ].map((item, idx) => {
-                    const colorMap: Record<string, { selText: string; selBorder: string; bg: string; text: string }> = {
-                      emerald: { selText: "text-emerald-300", selBorder: "border-emerald-500", bg: "bg-emerald-500/10", text: "text-emerald-400" },
-                      sky: { selText: "text-sky-300", selBorder: "border-sky-500", bg: "bg-sky-500/10", text: "text-sky-400" },
-                      violet: { selText: "text-violet-300", selBorder: "border-violet-500", bg: "bg-violet-500/10", text: "text-violet-400" },
-                      amber: { selText: "text-amber-300", selBorder: "border-amber-500", bg: "bg-amber-500/10", text: "text-amber-400" },
-                      slate: { selText: "text-slate-300", selBorder: "border-slate-500", bg: "bg-slate-500/10", text: "text-slate-400" },
-                    };
+const colorMap: Record<string, React.CSSProperties> = {
+  emerald: {
+    borderColor: 'border-emerald-500',
+    backgroundColor: 'bg-emerald-500/10',
+    textColor: 'text-emerald-400',
+    selectedBorder: 'border-emerald-500',
+    selectedText: 'text-emerald-300'
+  },
+  sky: {
+    borderColor: 'border-sky-500',
+    backgroundColor: 'bg-sky-500/10',
+    textColor: 'text-sky-400',
+    selectedBorder: 'border-sky-500',
+    selectedText: 'text-sky-300'
+  },
+  violet: {
+    borderColor: 'border-violet-500',
+    backgroundColor: 'bg-violet-500/10',
+    textColor: 'text-violet-400',
+    selectedBorder: 'border-violet-500',
+    selectedText: 'text-violet-300'
+  },
+  amber: {
+    borderColor: 'border-amber-500',
+    backgroundColor: 'bg-amber-500/10',
+    textColor: 'text-amber-400',
+    selectedBorder: 'border-amber-500',
+    selectedText: 'text-amber-300'
+  },
+  slate: {
+    borderColor: 'border-slate-500',
+    backgroundColor: 'bg-slate-500/10',
+    textColor: 'text-slate-400',
+    selectedBorder: 'border-slate-500',
+    selectedText: 'text-slate-300'
+  }
+};
                     const cc = colorMap[item.color] ?? colorMap.slate;
                     return (
                       <button
@@ -6860,8 +6899,8 @@ export default function ScanResultsPage() {
                           evidenceFilter === item.id
                             ? `${cc.selText} ${cc.selBorder}/30 ${cc.bg} shadow-inner font-bold`
                             : isLight
-                            ? "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-400"
-                            : "bg-white/[0.02] border-white/[0.04] text-white/35 hover:text-white/55 hover:bg-white/[0.04]"
+                              ? "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-400"
+                              : "bg-white/[0.02] border-white/[0.04] text-white/35 hover:text-white/55 hover:bg-white/[0.04]"
                         }`}
                       >
                         <span className={`text-[10px] font-bold ${evidenceFilter === item.id ? cc.selText : isLight ? "text-gray-500" : "text-white/50"}`}>{item.tier}</span>
@@ -6872,6 +6911,14 @@ export default function ScanResultsPage() {
                     );
                   })}
                 </div>
+
+                <div className={`text-[10px] ${isLight ? "text-gray-600" : "text-white/50"} p-3 rounded-lg border ${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.05]"}`}>
+                  {evidenceFilter === "runtime" && "T1 - Browser Runtime Proof: Active exploit proofs generated by executing Playwright browser automation and HTTP probes in our sandbox. Zero false positives."}
+                  {evidenceFilter === "static" && "T3 - Code Proven / T4 - Static Signal: Direct syntax, AST, or pattern matches flagged in source files."}
+                  {evidenceFilter === "ai_reasoning" && "T5 - AI Advisory: Architectural observations, structural gaps, or potential compliance failures inferred through security LLMs."}
+                </div>
+              </div>
+            )}
 
                 {/* Sub-label description for the active filter */}
                 <div className={`text-[10px] ${isLight ? "text-gray-600" : "text-white/50"} p-3 rounded-lg border ${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.05]"}`}>
