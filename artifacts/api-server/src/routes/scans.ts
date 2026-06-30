@@ -1663,7 +1663,21 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
       .where(eq(scanEngineResults.scanId, id));
 
     const proofs = await db
-      .select()
+      .select({
+        id: scanProofs.id,
+        type: scanProofs.type,
+        title: scanProofs.title,
+        severity: scanProofs.severity,
+        confidence: scanProofs.confidence,
+        url: scanProofs.url,
+        observed: scanProofs.observed,
+        impact: scanProofs.impact,
+        codeRef: scanProofs.codeRef,
+        screenshot: scanProofs.screenshot,
+        steps: scanProofs.steps,
+        engineName: scanProofs.engineName,
+        createdAt: scanProofs.createdAt,
+      })
       .from(scanProofs)
       .where(eq(scanProofs.scanId, id));
 
