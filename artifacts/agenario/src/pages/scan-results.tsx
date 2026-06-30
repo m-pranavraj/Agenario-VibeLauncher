@@ -5857,7 +5857,7 @@ export default function ScanResultsPage() {
   const [scanLoading, setScanLoading] = useState(true);
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
   const [evidenceFilter, setEvidenceFilter] = useState<"all" | "runtime" | "static" | "ai_reasoning">("all");
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(true);
 
   useEffect(() => {
     if (scan?.issues) {
