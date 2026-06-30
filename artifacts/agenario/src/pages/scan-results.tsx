@@ -6826,33 +6826,160 @@ export default function ScanResultsPage() {
 
 
 
-            {/* ——— All remaining findings ————————————————————————————— */}
-            {remaining.length > 0 && (
-              <div className="space-y-2.5">
-                <p
-                  className={`text-xs ${isLight ? "text-gray-400" : "text-white/20"} uppercase tracking-widest font-medium`}
-                >
-                  {activeAgent
-                    ? "All findings"
-                    : `All findings (${sortedIssues.length} total)`}
-                </p>
-                {(activeAgent ? sortedIssues : remaining).map((issue) =>
-                  issue.locked ? (
-                    <LockedIssueCard
-                      key={issue.id ?? issue.title}
-                      issue={issue}
-                    />
-                  ) : (
-                    <EvidenceCard
-                      key={issue.id}
-                      issue={issue}
-                      scanId={scan.id}
-                      isCreator={user.plan === "creator"}
-                    />
-                  ),
-                )}
-              </div>
-            )}
+            {/* ——— Category Sections ————————————————————————————— */}
+            {["security", "compliance", "performance", "uiux"].map((cat) => {
+              const catIssues = sortedIssues.filter((i: any) => {
+                const issueCat = (i.category || "").toLowerCase();
+                const agentName = (i.agentName || "").toLowerCase();
+                const desc = (i.description || "").toLowerCase();
+                const title = (i.title || "").toLowerCase();
+                
+                if (cat === "security") {
+                  return (
+                    issueCat === "injection" ||
+                    issueCat === "auth" ||
+                    issueCat === "exposure" ||
+                    issueCat === "security-smell" ||
+                    issueCat === "mass-assign" ||
+                    issueCat === "path-traversal" ||
+                    issueCat === "ssti" ||
+                    issueCat === "xxe" ||
+                    issueCat === "open-redirect" ||
+                    issueCat === "log-injection" ||
+                    issueCat === "file-upload" ||
+                    agentName.includes("security") ||
+                    agentName.includes("idor") ||
+                    agentName.includes("access") ||
+                    agentName.includes("taint") ||
+                    title.includes("security") ||
+                    title.includes("leak") ||
+                    title.includes("cryptographic")
+                  );
+                }
+                if (cat === "compliance") {
+                  return (
+                    issueCat === "compliance" ||
+                    issueCat === "regulatory" ||
+                    issueCat.includes("compliance") ||
+                    agentName.includes("compliance") ||
+                    agentName.includes("safety") ||
+                    desc.includes("compliance") ||
+                    desc.includes("gdpr") ||
+                    desc.includes("pci") ||
+                    desc.includes("hipaa") ||
+                    desc.includes("regulatory") ||
+                    desc.includes("policy") ||
+                    title.includes("compliance") ||
+                    title.includes("policy")
+                  );
+                }
+                if (cat === "performance") {
+                  return (
+                    issueCat === "performance" ||
+                    issueCat === "circular_dependency" ||
+                    issueCat === "god_module" ||
+                    issueCat === "high_instability" ||
+                    agentName.includes("performance") ||
+                    agentName.includes("architecture") ||
+                    desc.includes("performance") ||
+                    desc.includes("latency") ||
+                    desc.includes("slow") ||
+                    desc.includes("database query") ||
+                    title.includes("performance") ||
+                    title.includes("latency")
+                  );
+                }
+                if (cat === "uiux") {
+                  return (
+                    issueCat === "uiux" ||
+                    issueCat === "wcag_violation" ||
+                    issueCat === "cognitive_overload" ||
+                    issueCat === "ai_boilerplate" ||
+                    issueCat === "inconsistent_design" ||
+                    agentName.includes("design") ||
+                    agentName.includes("ui") ||
+                    agentName.includes("ux") ||
+                    desc.includes("design") ||
+                    desc.includes("contrast") ||
+                    desc.includes("wcag") ||
+                    title.includes("ui") ||
+                    title.includes("ux") ||
+                    title.includes("contrast") ||
+                    title.includes("accessibility")
+                  );
+                }
+                return false;
+              });
+              
+              if (catIssues.length === 0) return null;
+              
+              const categoryMeta: Record<string, { label: string; icon: any; color: string; description: string }> = {
+                security: {
+                  label: "Security Vulnerabilities",
+                  icon: ShieldAlert,
+                  color: "text-red-400",
+                  description: "Critical security flaws, injection risks, authentication bypasses, and exposure vulnerabilities"
+                },
+                compliance: {
+                  label: "Compliance & Safety",
+                  icon: Scale,
+                  color: "text-purple-400",
+                  description: "GDPR, PCI-DSS, HIPAA compliance gaps, regulatory violations, and policy breaches"
+                },
+                performance: {
+                  label: "Performance Sinks",
+                  icon: TrendingDown,
+                  color: "text-amber-400",
+                  description: "Latency bottlenecks, memory leaks, database query inefficiencies, and architectural debt"
+                },
+                uiux: {
+                  label: "UI/UX Bottlenecks",
+                  icon: Smartphone,
+                  color: "text-cyan-400",
+                  description: "Accessibility violations, contrast failures, cognitive overload, and design inconsistencies"
+                }
+              };
+              
+              const meta = categoryMeta[cat];
+              const criticalCount = catIssues.filter((i) => i.severity === "critical").length;
+              const highCount = catIssues.filter((i) => i.severity === "high").length;
+              const mediumCount = catIssues.filter((i) => i.severity === "medium").length;
+              const lowCount = catIssues.filter((i) => i.severity === "low").length;
+              
+              return (
+                <div key={cat} className={`rounded-2xl border ${isLight ? "bg-white border-gray-200" : "glass border-white/[0.07]"} overflow-hidden`}>
+                  <div className={`p-5 border-b ${isLight ? "border-gray-100" : "border-white/[0.06]"}`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isLight ? "bg-gray-50" : "bg-white/[0.04]"}`}>
+                          <meta.icon className={`w-5 h-5 ${meta.color}`} />
+                        </div>
+                        <div>
+                          <h3 className={`font-bold font-['Syne'] text-base ${isLight ? "text-gray-900" : "text-white"}`}>{meta.label}</h3>
+                          <p className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/40"} mt-0.5`}>{meta.description}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {criticalCount > 0 && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-red-500/15 text-red-400 border border-red-500/20">{criticalCount} Critical</span>}
+                        {highCount > 0 && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20">{highCount} High</span>}
+                        {mediumCount > 0 && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-yellow-500/15 text-yellow-500 border border-yellow-500/20">{mediumCount} Medium</span>}
+                        {lowCount > 0 && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-gray-500/15 text-gray-400 border border-gray-500/20">{lowCount} Low</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="divide-y divide-white/[0.04]">
+                    {catIssues.map((issue) => (
+                      <EvidenceCard
+                        key={issue.id}
+                        issue={issue}
+                        scanId={scan.id}
+                        isCreator={user.plan === "creator"}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
 
             {/* ——— Upgrade banner for locked issues —————————————————— */}
             {!activeAgent && (scan as any)._lockedIssueCount > 0 && (
