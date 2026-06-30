@@ -1313,7 +1313,8 @@ router.get("/scans/:id/progress", async (req, res): Promise<void> => {
   if (isNaN(id)) { res.status(400).json({ error: "Invalid scan id" }); return; }
 
   const [scan] = await db.select({ id: scansTable.id, userId: scansTable.userId, status: scansTable.status }).from(scansTable).where(eq(scansTable.id, id));
-  if (!scan || scan.userId !== req.session.userId) {
+  const sUserId = req.session.userId ?? (req as any).userId;
+  if (!scan || (scan.userId && scan.userId !== sUserId)) {
     res.status(404).json({ error: "Scan not found" }); return;
   }
 
@@ -1556,7 +1557,15 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
 
     const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
 
-    if (!scan || scan.userId !== req.session.userId) {
+    const sessionUserId = req.session.userId ?? (req as any).userId;
+    if (!scan) {
+      res.status(404).json({ error: "Scan not found" });
+      return;
+    }
+    // Allow access if: user owns scan, scan has no owner (legacy), or user is admin
+    const [currentUser] = await db.select().from(usersTable).where(eq(usersTable.id, sessionUserId));
+    const isAdmin = currentUser?.email && process.env["ADMIN_EMAIL"] && currentUser.email.toLowerCase() === process.env["ADMIN_EMAIL"].toLowerCase();
+    if (scan.userId && scan.userId !== sessionUserId && !isAdmin) {
       res.status(404).json({ error: "Scan not found" });
       return;
     }
