@@ -516,10 +516,11 @@ export default function PricingPage() {
             <ShieldCheck className="w-3.5 h-3.5 text-green-400/60" />
             Secure payments · Cancel anytime · Your code is never stored
           </div>
-          <p className={`flex items-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>
-            <CheckCircle2 className="w-3 h-3 text-green-400/60" />
-            Trusted by founders shipping to <span className="font-medium">56 countries</span>
-          </p>
+          <div className={`flex items-center gap-4 text-xs ${isLight ? "text-gray-400" : "text-white/25"}`}>
+            <Link href="/terms" className="hover:underline">Terms</Link>
+            <Link href="/privacy" className="hover:underline">Privacy</Link>
+            <Link href="/refunds" className="hover:underline">Refunds</Link>
+          </div>
         </div>
       </main>
     </div>
