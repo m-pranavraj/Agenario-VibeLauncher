@@ -6824,12 +6824,37 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            
+            {/* --- Confidence legend (T1-T5 evidence tier system) ------------------- */}
+            <div
+              className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-xl px-5 py-3`}
+            >
+              <div className="flex flex-wrap gap-2 items-center">
+                <span
+                  className={`${isLight ? "text-gray-400" : "text-white/20"} uppercase tracking-widest font-medium text-[10px] mr-1`}
+                >
+                  Evidence Tiers
+                </span>
+                {[
+                  { badge: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25", label: "T1 Browser Runtime" },
+                  { badge: "bg-sky-500/10 text-sky-400 border-sky-500/20", label: "T2 Runtime Verified" },
+                  { badge: "bg-violet-500/10 text-violet-400 border-violet-500/20", label: "T3 Code Proven" },
+                  { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20", label: "T4 Static Signal" },
+                  { badge: "bg-slate-500/10 text-slate-400 border-slate-500/20", label: "T5 AI Advisory" },
+                ].map((item) => (
+                  <span
+                    key={item.label}
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${item.badge}`}
+                  >
+                    {item.label}
+                  </span>
+                ))}
+              </div>
+            </div>
 
 
 
-{/* ——— Verified Findings (Evidence Gallery) — only on All Issues page */}
-            {!activeCategory && !activeAgent && (
+            {/* ——— Verified Findings (Evidence Gallery) ————————————————————————————— */}
+            {!activeAgent && (
               <div className={`${isLight ? "bg-white border border-gray-200" : "glass border border-white/[0.07]"} rounded-2xl p-6 space-y-5 shadow-2xl`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
                   <div className="flex items-center gap-2.5">
@@ -6853,43 +6878,13 @@ export default function ScanResultsPage() {
                     { id: "static", tier: "T4", label: "Static Signal", count: staticCount, color: "amber", desc: "Pattern match" },
                     { id: "ai_reasoning", tier: "T5", label: "AI Advisory", count: aiCount, color: "slate", desc: "LLM observation" }
                   ].map((item, idx) => {
-const colorMap: Record<string, React.CSSProperties> = {
-  emerald: {
-    borderColor: 'border-emerald-500',
-    backgroundColor: 'bg-emerald-500/10',
-    textColor: 'text-emerald-400',
-    selectedBorder: 'border-emerald-500',
-    selectedText: 'text-emerald-300'
-  },
-  sky: {
-    borderColor: 'border-sky-500',
-    backgroundColor: 'bg-sky-500/10',
-    textColor: 'text-sky-400',
-    selectedBorder: 'border-sky-500',
-    selectedText: 'text-sky-300'
-  },
-  violet: {
-    borderColor: 'border-violet-500',
-    backgroundColor: 'bg-violet-500/10',
-    textColor: 'text-violet-400',
-    selectedBorder: 'border-violet-500',
-    selectedText: 'text-violet-300'
-  },
-  amber: {
-    borderColor: 'border-amber-500',
-    backgroundColor: 'bg-amber-500/10',
-    textColor: 'text-amber-400',
-    selectedBorder: 'border-amber-500',
-    selectedText: 'text-amber-300'
-  },
-  slate: {
-    borderColor: 'border-slate-500',
-    backgroundColor: 'bg-slate-500/10',
-    textColor: 'text-slate-400',
-    selectedBorder: 'border-slate-500',
-    selectedText: 'text-slate-300'
-  }
-};
+                    const colorMap: Record<string, { selText: string; selBorder: string; bg: string; text: string }> = {
+                      emerald: { selText: "text-emerald-300", selBorder: "border-emerald-500", bg: "bg-emerald-500/10", text: "text-emerald-400" },
+                      sky: { selText: "text-sky-300", selBorder: "border-sky-500", bg: "bg-sky-500/10", text: "text-sky-400" },
+                      violet: { selText: "text-violet-300", selBorder: "border-violet-500", bg: "bg-violet-500/10", text: "text-violet-400" },
+                      amber: { selText: "text-amber-300", selBorder: "border-amber-500", bg: "bg-amber-500/10", text: "text-amber-400" },
+                      slate: { selText: "text-slate-300", selBorder: "border-slate-500", bg: "bg-slate-500/10", text: "text-slate-400" },
+                    };
                     const cc = colorMap[item.color] ?? colorMap.slate;
                     return (
                       <button
@@ -6899,8 +6894,8 @@ const colorMap: Record<string, React.CSSProperties> = {
                           evidenceFilter === item.id
                             ? `${cc.selText} ${cc.selBorder}/30 ${cc.bg} shadow-inner font-bold`
                             : isLight
-                              ? "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-400"
-                              : "bg-white/[0.02] border-white/[0.04] text-white/35 hover:text-white/55 hover:bg-white/[0.04]"
+                            ? "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-400"
+                            : "bg-white/[0.02] border-white/[0.04] text-white/35 hover:text-white/55 hover:bg-white/[0.04]"
                         }`}
                       >
                         <span className={`text-[10px] font-bold ${evidenceFilter === item.id ? cc.selText : isLight ? "text-gray-500" : "text-white/50"}`}>{item.tier}</span>
@@ -6912,6 +6907,7 @@ const colorMap: Record<string, React.CSSProperties> = {
                   })}
                 </div>
 
+                {/* Sub-label description for the active filter */}
                 <div className={`text-[10px] ${isLight ? "text-gray-600" : "text-white/50"} p-3 rounded-lg border ${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.05]"}`}>
                   {evidenceFilter === "runtime" && "T1 - Browser Runtime Proof: Active exploit proofs generated by executing Playwright browser automation and HTTP probes in our sandbox. Zero false positives."}
                   {evidenceFilter === "static" && "T3 - Code Proven / T4 - Static Signal: Direct syntax, AST, or pattern matches flagged in source files."}
@@ -6919,14 +6915,6 @@ const colorMap: Record<string, React.CSSProperties> = {
                 </div>
               </div>
             )}
-
-                {/* Sub-label description for the active filter */}
-                <div className={`text-[10px] ${isLight ? "text-gray-600" : "text-white/50"} p-3 rounded-lg border ${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/[0.05]"}`}>
-                  {evidenceFilter === "runtime" && "T1 - Browser Runtime Proof: Active exploit proofs generated by executing Playwright browser automation and HTTP probes in our sandbox. Zero false positives."}
-                  {evidenceFilter === "static" && "T3 - Code Proven / T4 - Static Signal: Direct syntax, AST, or pattern matches flagged in source files."}
-{evidenceFilter === "ai_reasoning" && "T5 - AI Advisory: Architectural observations, structural gaps, or potential compliance failures inferred through security LLMs."}
-                </div>
-              )}
 
             {/* ——— All remaining findings ————————————————————————————— */}
             {remaining.length > 0 && (
@@ -6956,16 +6944,16 @@ const colorMap: Record<string, React.CSSProperties> = {
               </div>
             )}
 
-            {/* ——— Upgrade banner for locked issues — only on All Issues */}
-            {!activeCategory && !activeAgent && (scan as any)._lockedIssueCount > 0 && (
+            {/* ——— Upgrade banner for locked issues —————————————————— */}
+            {!activeAgent && (scan as any)._lockedIssueCount > 0 && (
               <UpgradeBanner
                 count={(scan as any)._lockedIssueCount as number}
                 isLight={isLight}
               />
             )}
 
-            {/* ——— Exploit Terminal for critical IDOR/auth issues — only on All Issues */}
-            {!activeCategory && !activeAgent &&
+            {/* ——— Exploit Terminal for critical IDOR/auth issues — */}
+            {!activeAgent &&
               sortedIssues.some(
                 (i) =>
                   !i.locked &&
@@ -7025,8 +7013,8 @@ const colorMap: Record<string, React.CSSProperties> = {
               </div>
             )}
 
-            {/* ——— Technical Co-Founder Q&A — only on All Issues */}
-            {!activeCategory && !activeAgent && scan.status === "completed" && (
+            {/* ——— Technical Co-Founder Q&A ————————————————————————— */}
+            {!activeAgent && scan.status === "completed" && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -7035,68 +7023,10 @@ const colorMap: Record<string, React.CSSProperties> = {
                 <CofounderQAPanel scanId={scan.id} />
               </motion.div>
             )}
+          </>
         )}
 
-        {/* ——— Evidence Tiers Tab ———————————————————————————————————————— */}
-        {activeTab === "evidence" && (
-          <div className="space-y-6">
-            <div className={`rounded-2xl p-6 ${isLight ? "bg-white border border-gray-200" : "glass"}`}>
-              <h2 className={`font-bold text-lg mb-4 ${isLight ? "text-gray-900" : "text-white"}`}>Evidence Tiers</h2>
-              <p className={`text-sm mb-6 ${isLight ? "text-gray-500" : "text-white/50"}`}>
-                Evidence tier system: T1 (strongest) to T5 (advisory)
-              </p>
-              <div className="grid grid-cols-5 gap-3 mb-8">
-                {[
-                  { tier: "T1", label: "Browser Runtime", color: "bg-emerald-500", count: 0 },
-                  { tier: "T2", label: "Runtime Verified", color: "bg-sky-500", count: 0 },
-                  { tier: "T3", label: "Code Proven", color: "bg-violet-500", count: 0 },
-                  { tier: "T4", label: "Static Signal", color: "bg-amber-500", count: 0 },
-                  { tier: "T5", label: "AI Advisory", color: "bg-slate-500", count: 0 },
-                ].map((t) => {
-                  const actualCount = (scan?.issues ?? []).filter((i: any) => {
-                    const src = i.sourceEvidence || "";
-                    const evLevel = i.evidenceLevel || "";
-                    if (t.tier === "T1") return src === "runtime" || src === "playwright" || evLevel === "Verified Exploit";
-                    if (t.tier === "T2") return src === "http" || evLevel === "Verified Code Risk";
-                    if (t.tier === "T3") return src === "static" || src === "code_proven" || evLevel === "Likely Risk";
-                    if (t.tier === "T4") return (src !== "ai_reasoning" && (evLevel === "Advisory" || src.includes("pattern") || src === "deep_scan" || src === "compliance_provenance" || src === "pecg_analysis")) || (!evLevel && !src);
-                    if (t.tier === "T5") return src === "ai_reasoning";
-                    return false;
-                  }).length;
-                  return (
-                    <div key={t.tier} className={`rounded-xl p-4 text-center ${isLight ? "bg-gray-50 border border-gray-100" : "bg-white/[0.03] border border-white/[0.06]"}`}>
-                      <div className={`w-8 h-8 rounded-full ${t.color} mx-auto mb-2 flex items-center justify-center text-white font-bold text-xs`}>{t.tier}</div>
-                      <div className={`text-2xl font-bold ${isLight ? "text-gray-900" : "text-white"}`}>{actualCount}</div>
-                      <div className={`text-[10px] mt-1 ${isLight ? "text-gray-400" : "text-white/40"}`}>{t.label}</div>
-                    </div>
-                  );
-                })}
-              </div>
-              {(scan?.issues ?? []).length > 0 ? (
-                <div className="space-y-2">
-                  <h3 className={`font-semibold text-sm ${isLight ? "text-gray-700" : "text-white/70"}`}>Issues by Evidence Level</h3>
-                  {(scan.issues ?? []).slice(0, 10).map((issue: any, i: number) => {
-                    const src = issue.sourceEvidence || "";
-                    const evLevel = issue.evidenceLevel || "";
-                    const tierColor = src === "runtime" || evLevel === "Verified Exploit" ? "bg-emerald-500" : src === "http" || evLevel === "Verified Code Risk" ? "bg-sky-500" : src === "static" || evLevel === "Likely Risk" ? "bg-violet-500" : src === "ai_reasoning" ? "bg-slate-500" : "bg-amber-500";
-                    const tierLabel = src === "runtime" || evLevel === "Verified Exploit" ? "T1" : src === "http" || evLevel === "Verified Code Risk" ? "T2" : src === "static" || evLevel === "Likely Risk" ? "T3" : src === "ai_reasoning" ? "T5" : "T4";
-                    return (
-                      <div key={i} className={`flex items-center gap-3 p-2 rounded-lg ${isLight ? "hover:bg-gray-50" : "hover:bg-white/[0.03]"}`}>
-                        <span className={`w-5 h-5 rounded-full ${tierColor} flex items-center justify-center text-white text-[9px] font-bold`}>{tierLabel}</span>
-                        <span className={`text-sm flex-1 ${isLight ? "text-gray-700" : "text-white/70"}`}>{issue.title || issue.description}</span>
-                        <span className={`text-[10px] ${isLight ? "text-gray-400" : "text-white/40"}`}>{issue.severity}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className={`text-center py-8 ${isLight ? "text-gray-400" : "text-white/30"}`}>
-                  No issues found — your app passed all checks in this dimension.
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+
 
         {/* ——— Pre-Launch Checklist Tab —————————————————————————————————— */}
         {activeTab === "prelaunch" && <PreLaunchChecklist scan={scan} />}
