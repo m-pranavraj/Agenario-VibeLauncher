@@ -227,19 +227,30 @@ app.use(
   }),
 );
 
-// Dynamically adjust cookie security for localhost/development environments
+// Dynamically adjust cookie security and domain mapping based on hosting environment
 app.use((req, res, next) => {
   if (req.session && req.session.cookie) {
     const host = req.headers.host || "";
+    const hostname = req.hostname || "";
     if (
       host.includes("localhost") ||
       host.includes("127.0.0.1") ||
-      req.hostname === "localhost" ||
-      req.hostname === "127.0.0.1"
+      hostname === "localhost" ||
+      hostname === "127.0.0.1"
     ) {
       req.session.cookie.secure = false;
       req.session.cookie.domain = undefined;
       req.session.cookie.sameSite = "lax";
+    } else {
+      // In production, only assign .agenario.tech domain cookie restriction
+      // if the API endpoint itself is served on a subdomain of agenario.tech.
+      // If served on *.onrender.com or *.vercel.app, keep it as undefined so
+      // browsers accept the cookie for that hosting domain.
+      if (hostname.endsWith("agenario.tech")) {
+        req.session.cookie.domain = ".agenario.tech";
+      } else {
+        req.session.cookie.domain = undefined;
+      }
     }
   }
   next();
