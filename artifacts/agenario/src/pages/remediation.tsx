@@ -128,21 +128,56 @@ function DiffViewer({ original, patched }: { original: string; patched: string }
   );
 }
 
+function generateFixPrompt(issue: any): string {
+  return `## Manual Fix Instructions: ${issue.title || "Security Issue"}
+
+**Severity:** ${issue.severity || "medium"}
+**Category:** ${issue.category || "security"}
+**Description:** ${issue.description || "No description available"}
+
+### Recommended Fix Steps:
+
+1. **Locate the affected code** at ${issue.filePath || "the relevant source file"} ${issue.lineNumber ? `(line ${issue.lineNumber})` : ""}
+2. **Identify the vulnerability:** ${issue.description || "Review the code for the issue described above"}
+3. **Apply the fix:**
+   - Review the code around ${issue.filePath || "the affected area"}
+   - Implement proper validation/sanitization/access control as needed
+   - Follow secure coding practices for ${issue.category || "this vulnerability type"}
+4. **Verify the fix:**
+   - Run existing tests to ensure no regressions
+   - Test the specific endpoint/functionality manually
+   - Consider edge cases and input variations
+5. **Commit and deploy** after verification
+
+### Reference:
+${issue.codeRef ? `Code reference: ${issue.codeRef}` : ""}
+${issue.observed ? `Observed behavior: ${issue.observed}` : ""}
+${issue.impact ? `Impact: ${issue.impact}` : ""}`;
+}
+
 function FixCard({
   fix,
-  scanId,
+  issue,
   onApply,
   onRollback,
 }: {
   fix: ScanFix;
-  scanId: string;
+  issue?: any;
   onApply: (fixId: string) => void;
   onRollback: (fixId: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [promptCopied, setPromptCopied] = useState(false);
   const isLight = useIsLight();
   const st = STATUS_CONFIG[fix.status] ?? STATUS_CONFIG.pending!;
   const StatusIcon = st.icon;
+
+  const copyPrompt = async () => {
+    const prompt = generateFixPrompt(issue || { title: fix.explanation });
+    await navigator.clipboard.writeText(prompt);
+    setPromptCopied(true);
+    setTimeout(() => setPromptCopied(false), 2000);
+  };
 
   return (
     <div className={`border rounded-2xl overflow-hidden transition-all ${isLight ? "bg-white border-gray-200" : "bg-white/[0.02] border-white/5"}`}>
@@ -158,12 +193,20 @@ function FixCard({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold text-white/80">Fix #{fix.id.slice(0, 8)}</span>
+            <span className="text-xs font-semibold text-white/80">{issue?.title || `Fix #${fix.id.slice(0, 8)}`}</span>
             <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded border ${fix.strategy === "ai" ? "bg-violet-500/10 text-violet-400 border-violet-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"}`}>
               {fix.strategy}
             </span>
+            {issue?.severity && (
+              <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${
+                issue.severity === "critical" ? "bg-red-500/20 text-red-400" :
+                issue.severity === "high" ? "bg-orange-500/20 text-orange-400" :
+                issue.severity === "medium" ? "bg-amber-500/20 text-amber-400" :
+                "bg-blue-500/20 text-blue-400"
+              }`}>{issue.severity}</span>
+            )}
           </div>
-          <p className="text-xs text-white/40 truncate mt-0.5">{fix.explanation || "No explanation yet"}</p>
+          <p className="text-xs text-white/40 truncate mt-0.5">{fix.explanation || issue?.description || "No explanation yet"}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className={`flex items-center gap-1.5 text-xs ${st.color}`}>
@@ -177,6 +220,13 @@ function FixCard({
       {/* Expanded content */}
       {expanded && (
         <div className="px-4 pb-4 space-y-4 border-t border-white/5 pt-4">
+          {issue?.description && (
+            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+              <p className="text-xs text-white/60 leading-relaxed">{issue.description}</p>
+              {issue.filePath && <p className="text-[10px] text-white/30 mt-2 font-mono">File: {issue.filePath}{issue.lineNumber ? `:${issue.lineNumber}` : ""}</p>}
+            </div>
+          )}
+
           {fix.explanation && (
             <div className="text-xs text-white/60 leading-relaxed">{fix.explanation}</div>
           )}
@@ -191,11 +241,30 @@ function FixCard({
             <DiffViewer original={fix.originalCode} patched={fix.patchedCode} />
           )}
 
+          {/* Failed fix — show manual prompt */}
+          {fix.status === "failed" && (
+            <div className="p-4 rounded-xl bg-violet-500/5 border border-violet-500/10 space-y-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <span className="text-xs font-bold text-amber-400">Auto-fix unavailable — manual fix required</span>
+              </div>
+              <p className="text-xs text-white/50 leading-relaxed">
+                This issue is complex or the code snippet wasn't available for automated patching. 
+                Use the prompt below to fix it manually in your codebase.
+              </p>
+              <button
+                onClick={copyPrompt}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold transition-all"
+              >
+                {promptCopied ? <><CheckCheck className="w-3.5 h-3.5" /> Copied!</> : <><Code2 className="w-3.5 h-3.5" /> Copy Fix Prompt</>}
+              </button>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex items-center gap-2 flex-wrap pt-2">
             {fix.status === "ready" && (
               <button
-                id={`apply-fix-${fix.id}`}
                 onClick={() => onApply(fix.id)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-600/20"
               >
@@ -205,7 +274,6 @@ function FixCard({
             )}
             {fix.status === "applied" && (
               <button
-                id={`rollback-fix-${fix.id}`}
                 onClick={() => onRollback(fix.id)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600/20 border border-amber-500/20 hover:bg-amber-600/30 text-amber-400 text-xs font-bold transition-all"
               >
@@ -215,7 +283,6 @@ function FixCard({
             )}
             {fix.patchedCode && (
               <button
-                id={`copy-fix-${fix.id}`}
                 onClick={() => navigator.clipboard.writeText(fix.patchedCode)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/10 hover:border-white/20 text-white/60 text-xs font-medium transition-all"
               >
@@ -225,7 +292,6 @@ function FixCard({
             )}
             {fix.diff && (
               <button
-                id={`download-fix-${fix.id}`}
                 onClick={() => {
                   const blob = new Blob([fix.diff], { type: "text/plain" });
                   const a = document.createElement("a");
@@ -237,6 +303,15 @@ function FixCard({
               >
                 <Download className="w-3.5 h-3.5" />
                 Download .patch
+              </button>
+            )}
+            {fix.status === "failed" && issue && (
+              <button
+                onClick={copyPrompt}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/10 hover:border-white/20 text-white/60 text-xs font-medium transition-all"
+              >
+                {promptCopied ? <CheckCheck className="w-3.5 h-3.5" /> : <Code2 className="w-3.5 h-3.5" />}
+                {promptCopied ? "Copied!" : "Copy Prompt"}
               </button>
             )}
           </div>
@@ -325,6 +400,7 @@ export default function RemediationPage() {
 
   const fixes: ScanFix[] = data?.fixes ?? [];
   const scanIssues: any[] = (scanData as any)?.issues ?? [];
+  const issueMap = new Map(scanIssues.map((i: any) => [i.id, i]));
   const readyCount = fixes.filter(f => f.status === "ready").length;
   const appliedCount = fixes.filter(f => f.status === "applied").length;
   const failedCount = fixes.filter(f => f.status === "failed").length;
@@ -482,7 +558,7 @@ export default function RemediationPage() {
               <FixCard
                 key={fix.id}
                 fix={fix}
-                scanId={scanId}
+                issue={issueMap.get(fix.issueId!)}
                 onApply={(fixId) => applyMutation.mutate(fixId)}
                 onRollback={(fixId) => rollbackMutation.mutate(fixId)}
               />

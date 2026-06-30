@@ -6824,49 +6824,15 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* --- Confidence legend (T1-T5 evidence tier system) ------------------- */}
-            <div
-              className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-xl px-5 py-3`}
-            >
-              <div className="flex flex-wrap gap-2 items-center">
-                <span
-                  className={`${isLight ? "text-gray-400" : "text-white/20"} uppercase tracking-widest font-medium text-[10px] mr-1`}
-                >
-                  Evidence Tiers
-                </span>
-                {[
-                  { badge: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25", label: "T1 Browser Runtime" },
-                  { badge: "bg-sky-500/10 text-sky-400 border-sky-500/20", label: "T2 Runtime Verified" },
-                  { badge: "bg-violet-500/10 text-violet-400 border-violet-500/20", label: "T3 Code Proven" },
-                  { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20", label: "T4 Static Signal" },
-                  { badge: "bg-slate-500/10 text-slate-400 border-slate-500/20", label: "T5 AI Advisory" },
-                ].map((item) => (
-                  <span
-                    key={item.label}
-                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${item.badge}`}
-                  >
-                    {item.label}
-                  </span>
-                ))}
-              </div>
-            </div>
+            
 
 
 
-            {/* ——— Verified Findings (Evidence Gallery) ————————————————————————————— */}
-            {!activeAgent && (
-              <div className={`${isLight ? "bg-white border border-gray-200" : "glass border border-white/[0.07]"} rounded-2xl p-6 space-y-5 shadow-2xl`}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
-                  <div className="flex items-center gap-2.5">
-                    <ShieldCheck className="w-5 h-5 text-violet-400" />
-                    <div>
-                      <h2 className={`text-sm font-bold font-['Syne'] uppercase tracking-wider ${isLight ? "text-gray-900" : "text-white"}`}>
-                        Verified Findings Gallery
-                      </h2>
-                      <p className={`text-[10px] ${isLight ? "text-gray-500" : "text-white/50"} mt-0.5`}>
-                        Evidence tier system: T1 (strongest) to T5 (advisory)
-                      </p>
-                    </div>
+{/* ——— Verified Findings (Evidence Gallery) — only on All Issues page */}
+                 {!activeCategory && !activeAgent && (
+                   <div className={`${isLight ? "bg-white border border-gray-200" : "glass border border-white/[0.07]"} rounded-2xl p-6 space-y-5 shadow-2xl`}>
+                   </div>
+                 )}
                   </div>
                 </div>
 
@@ -6944,16 +6910,16 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* ——— Upgrade banner for locked issues —————————————————— */}
-            {!activeAgent && (scan as any)._lockedIssueCount > 0 && (
+            {/* ——— Upgrade banner for locked issues — only on All Issues */}
+            {!activeCategory && !activeAgent && (scan as any)._lockedIssueCount > 0 && (
               <UpgradeBanner
                 count={(scan as any)._lockedIssueCount as number}
                 isLight={isLight}
               />
             )}
 
-            {/* ——— Exploit Terminal for critical IDOR/auth issues — */}
-            {!activeAgent &&
+            {/* ——— Exploit Terminal for critical IDOR/auth issues — only on All Issues */}
+            {!activeCategory && !activeAgent &&
               sortedIssues.some(
                 (i) =>
                   !i.locked &&
@@ -7013,8 +6979,8 @@ export default function ScanResultsPage() {
               </div>
             )}
 
-            {/* ——— Technical Co-Founder Q&A ————————————————————————— */}
-            {!activeAgent && scan.status === "completed" && (
+            {/* ——— Technical Co-Founder Q&A — only on All Issues */}
+            {!activeCategory && !activeAgent && scan.status === "completed" && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -7043,12 +7009,13 @@ export default function ScanResultsPage() {
                   { tier: "T5", label: "AI Advisory", color: "bg-slate-500", count: 0 },
                 ].map((t) => {
                   const actualCount = (scan?.issues ?? []).filter((i: any) => {
-                    const level = i.evidenceLevel || i.sourceEvidence || "";
-                    if (t.tier === "T1") return level === "Verified Exploit" || level === "runtime";
-                    if (t.tier === "T2") return level === "Verified Code Risk" || level === "http";
-                    if (t.tier === "T3") return level === "Likely Risk" || level === "static";
-                    if (t.tier === "T4") return level === "Advisory" || level?.includes("pattern");
-                    if (t.tier === "T5") return level === "ai_reasoning" || !level;
+                    const src = i.sourceEvidence || "";
+                    const evLevel = i.evidenceLevel || "";
+                    if (t.tier === "T1") return src === "runtime" || src === "playwright" || evLevel === "Verified Exploit";
+                    if (t.tier === "T2") return src === "http" || evLevel === "Verified Code Risk";
+                    if (t.tier === "T3") return src === "static" || src === "code_proven" || evLevel === "Likely Risk";
+                    if (t.tier === "T4") return (src !== "ai_reasoning" && (evLevel === "Advisory" || src.includes("pattern") || src === "deep_scan" || src === "compliance_provenance" || src === "pecg_analysis")) || (!evLevel && !src);
+                    if (t.tier === "T5") return src === "ai_reasoning";
                     return false;
                   }).length;
                   return (
@@ -7064,9 +7031,10 @@ export default function ScanResultsPage() {
                 <div className="space-y-2">
                   <h3 className={`font-semibold text-sm ${isLight ? "text-gray-700" : "text-white/70"}`}>Issues by Evidence Level</h3>
                   {(scan.issues ?? []).slice(0, 10).map((issue: any, i: number) => {
-                    const level = issue.evidenceLevel || issue.sourceEvidence || "static";
-                    const tierColor = level === "Verified Exploit" || level === "runtime" ? "bg-emerald-500" : level === "Verified Code Risk" || level === "http" ? "bg-sky-500" : level === "Likely Risk" || level === "static" ? "bg-violet-500" : level === "Advisory" || level?.includes("pattern") ? "bg-amber-500" : "bg-slate-500";
-                    const tierLabel = level === "Verified Exploit" || level === "runtime" ? "T1" : level === "Verified Code Risk" || level === "http" ? "T2" : level === "Likely Risk" || level === "static" ? "T3" : level === "Advisory" || level?.includes("pattern") ? "T4" : "T5";
+                    const src = issue.sourceEvidence || "";
+                    const evLevel = issue.evidenceLevel || "";
+                    const tierColor = src === "runtime" || evLevel === "Verified Exploit" ? "bg-emerald-500" : src === "http" || evLevel === "Verified Code Risk" ? "bg-sky-500" : src === "static" || evLevel === "Likely Risk" ? "bg-violet-500" : src === "ai_reasoning" ? "bg-slate-500" : "bg-amber-500";
+                    const tierLabel = src === "runtime" || evLevel === "Verified Exploit" ? "T1" : src === "http" || evLevel === "Verified Code Risk" ? "T2" : src === "static" || evLevel === "Likely Risk" ? "T3" : src === "ai_reasoning" ? "T5" : "T4";
                     return (
                       <div key={i} className={`flex items-center gap-3 p-2 rounded-lg ${isLight ? "hover:bg-gray-50" : "hover:bg-white/[0.03]"}`}>
                         <span className={`w-5 h-5 rounded-full ${tierColor} flex items-center justify-center text-white text-[9px] font-bold`}>{tierLabel}</span>

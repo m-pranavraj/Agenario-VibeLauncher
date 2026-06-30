@@ -33,6 +33,9 @@ import IssueChecklistPage from "@/pages/issue-checklist";
 import RoadmapPage from "@/pages/roadmap";
 import TestWriterPage from "@/pages/test-writer";
 import EvidenceTiersPage from "@/pages/evidence-tiers";
+import TermsPage from "@/pages/terms";
+import PrivacyPage from "@/pages/privacy";
+import RefundsPage from "@/pages/refunds";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -74,6 +77,9 @@ function Router() {
       <Route path="/roadmap" component={RoadmapPage} />
       <Route path="/integrations" component={IntegrationsPage} />
       <Route path="/api-keys" component={ApiKeysPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/refunds" component={RefundsPage} />
       <Route component={NotFound} />
     </Switch>
   );

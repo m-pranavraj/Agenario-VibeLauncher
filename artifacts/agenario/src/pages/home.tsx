@@ -981,7 +981,9 @@ export default function Home() {
             <div className={`flex items-center gap-5 text-xs ${t.bodyDim}`}>
               <Link href="/pricing" className="hover:opacity-70 transition-opacity">Pricing</Link>
               <Link href="/docs" className="hover:opacity-70 transition-opacity">Docs</Link>
-              <Link href="/careers" className="hover:opacity-70 transition-opacity">Careers</Link>
+              <Link href="/terms" className="hover:opacity-70 transition-opacity">Terms</Link>
+              <Link href="/privacy" className="hover:opacity-70 transition-opacity">Privacy</Link>
+              <Link href="/refunds" className="hover:opacity-70 transition-opacity">Refunds</Link>
               <a href="mailto:support@agenario.tech" className="hover:opacity-70 transition-opacity">Contact</a>
             </div>
           </div>
