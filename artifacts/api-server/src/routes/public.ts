@@ -240,7 +240,7 @@ router.get("/public/cert/:certId/badge", async (req, res) => {
   }
 });
 
-// ── Public Scan Gallery (scans with unlocked status) ───────────────────────────
+// ── Public Scan Gallery (completed scans with real data) ────────────────────────
 // Phase 0.3 — Real scan visibility, no fake data
 router.get("/public/scans", cacheMiddleware(TTL.ONE_MINUTE), async (req, res) => {
   try {
@@ -249,7 +249,7 @@ router.get("/public/scans", cacheMiddleware(TTL.ONE_MINUTE), async (req, res) =>
     const framework = req.query.framework as string | undefined;
     const vibeTool = req.query.vibeTool as string | undefined;
 
-    const conditions = [eq(scansTable.unlockedByAdmin, true)];
+    const conditions = [eq(scansTable.status, "completed")];
     if (framework) {
       conditions.push(eq(scansTable.framework, framework));
     }
@@ -282,9 +282,12 @@ router.get("/public/scans", cacheMiddleware(TTL.ONE_MINUTE), async (req, res) =>
       createdAt: s.createdAt.toISOString(),
     }));
 
+    // Get totals for stats
+    const totalScans = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(scansTable).where(eq(scansTable.status, "completed"));
+
     res.json({
       scans: formattedScans,
-      total: formattedScans.length,
+      total: totalScans[0]?.count ?? 0,
     });
   } catch (error) {
     logger.error({ error }, "Failed to fetch public scans");
