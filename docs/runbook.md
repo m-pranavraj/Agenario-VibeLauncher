@@ -67,3 +67,66 @@ Configure the following variables in your `.env` file:
 ### 3. Sandbox Ineligible Errors
 - **Issue:** Sandbox reports "Ineligible" status for zip/github scans.
 - **Fix:** Check that the repository contains a `package.json` with a valid `start` script, or is recognized as a supported web framework (Next.js, Vite, Express, Remix).
+
+### 4. Rate Limit Too Strict
+- **Issue:** Getting 429 errors on auth or scan endpoints.
+- **Fix:** The default limits are: 200 req/15min global, 20 auth/15min, 30 scans/hr. Adjust in `app.ts` or set `RATE_LIMIT_UNAUTHENTICATED=500` and `RATE_LIMIT_USER=100`.
+
+### 5. Session Cookie Not Persisting
+- **Issue:** User logged out after refresh.
+- **Fix:** In production, `SameSite=None; Secure` cookies are required. Verify `NODE_ENV=production` is set and `SESSION_SECRET` is a 64-char hex string.
+
+---
+
+## Production Deployment
+
+### Render Deployment
+```bash
+# 1. Set build command:
+pnpm run build:vercel
+
+# 2. Set start command:
+node --loader ts-node/esm artifacts/api-server/src/server.ts
+
+# 3. Required env vars:
+DATABASE_URL, SESSION_SECRET, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, FRONTEND_URL
+```
+
+### Database Backup & Restore
+```bash
+# Backup (production):
+pg_dump -h host -U user agenario > agenario-backup-$(date +%Y%m%d).sql
+
+# Restore:
+psql -h host -U user agenario < agenario-backup.sql
+```
+
+### Health Check Endpoints
+- `GET /api/health` — Basic health check
+- `GET /api/health/deep` — Full health check with DB/SMS status (requires implementation)
+
+### Scaling Guidelines
+- **CPU**: Each concurrent scan uses ~500MB RAM and 0.5 CPU cores
+- **Memory**: Allocate 2GB RAM minimum per instance for Playwright browser pool
+- **Database**: Enable connection pooling (PgBouncer) for >100 concurrent users
+
+---
+
+## Incident Response
+
+### Security Vulnerability Reported
+1. Validate the finding against the user's scan report
+2. If confirmed, create private security advisory via GitHub
+3. Patch within 24 hours, deploy immediately
+4. Notify affected users via email if scan data exposed
+
+### PII Exposure in Logs
+1. Run `git log -S "exposed_value"` to check git history
+2. Rotate affected secrets immediately
+3. Filter logs to remove sensitive entries
+4. Add pattern to `.envfilter` in logger.js to prevent future leaks
+
+### Scan Queue Backlog
+1. Check `SELECT * FROM scans WHERE status = 'running'` for stuck jobs
+2. Restart workers: `pkill -f 'scanQueue'` or redeploy
+3. Clear stuck locks: `DELETE FROM scan_engine_results WHERE scan_id IN (SELECT id FROM scans WHERE status = 'running' AND completed_at < NOW() - INTERVAL '30 minutes')`

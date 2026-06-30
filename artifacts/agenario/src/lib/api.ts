@@ -904,6 +904,14 @@ export const api = {
   public: {
     stats: () => request<{ scansDone: number; issuesReproduced: number; fixesGenerated: number; proofsGenerated: number; screenshotsCaptured: string }>("/public/stats"),
     cert: (certId: string) => request<ScanDetail & { certId: string; source: string; score: number; verdict: string; completedAt: string; criticalIssues: number; totalIssues: number }>(`/public/cert/${certId}`),
+    scans: (params?: { framework?: string; vibeTool?: string; limit?: number; offset?: number }) => {
+      const q = new URLSearchParams();
+      if (params?.framework) q.set("framework", params.framework);
+      if (params?.vibeTool) q.set("vibeTool", params.vibeTool);
+      if (params?.limit) q.set("limit", params.limit.toString());
+      if (params?.offset) q.set("offset", params.offset.toString());
+      return request<{ scans: Array<any>; total: number }>(`/public/scans?${q.toString()}`);
+    },
   },
   intelligence: {
     failures: (issueTitle: string) => request<{

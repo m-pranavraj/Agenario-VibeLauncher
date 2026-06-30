@@ -37,6 +37,18 @@ async function createPaddleOrder(amount: number, currency: string, receipt: stri
   return await res.json();
 }
 
+function verifyPaddleWebhook(body: string, signature: string, secret: string): boolean {
+  if (!signature) return false;
+  const expectedSignature = crypto
+    .createHmac("sha256", secret)
+    .update(body, "utf8")
+    .digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(signature, "utf8"),
+    Buffer.from(expectedSignature, "utf8")
+  );
+}
+
 const PLAN_PRICES: Record<string, { amount: number; label: string }> = {
   creator: { amount: 29900, label: "Creator Plan — ₹299/mo" },
   enterprise: { amount: 0, label: "Enterprise Plan" },

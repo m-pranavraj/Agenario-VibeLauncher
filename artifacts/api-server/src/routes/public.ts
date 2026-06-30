@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, scanIssuesTable, scansTable } from "@workspace/db";
-import { isNotNull, sql, eq, gte } from "drizzle-orm";
+import { isNotNull, sql, eq, gte, and, desc } from "drizzle-orm";
 import { cacheMiddleware, TTL } from "../lib/cache.js";
 import { logger } from "../lib/logger.js";
 
@@ -236,6 +236,58 @@ router.get("/public/cert/:certId/badge", async (req, res) => {
     res.send(svg);
   } catch (error) {
     console.error("Failed to generate badge:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// ── Public Scan Gallery (scans with unlocked status) ───────────────────────────
+// Phase 0.3 — Real scan visibility, no fake data
+router.get("/public/scans", cacheMiddleware(TTL.ONE_MINUTE), async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+    const offset = parseInt(req.query.offset as string) || 0;
+    const framework = req.query.framework as string | undefined;
+    const vibeTool = req.query.vibeTool as string | undefined;
+
+    const conditions = [eq(scansTable.unlockedByAdmin, true)];
+    if (framework) {
+      conditions.push(eq(scansTable.framework, framework));
+    }
+    if (vibeTool) {
+      conditions.push(eq(scansTable.vibeTool, vibeTool));
+    }
+
+    const scans = await db
+      .select({
+        id: scansTable.id,
+        certId: scansTable.certId,
+        sourceType: scansTable.sourceType,
+        sourceInput: scansTable.sourceInput,
+        score: scansTable.score,
+        launchVerdict: scansTable.launchVerdict,
+        framework: scansTable.framework,
+        vibeTool: scansTable.vibeTool,
+        businessType: scansTable.businessType,
+        issueCounts: scansTable.issueCounts,
+        createdAt: scansTable.createdAt,
+      })
+      .from(scansTable)
+      .where(and(...conditions))
+      .orderBy(desc(scansTable.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const formattedScans = scans.map((s) => ({
+      ...s,
+      createdAt: s.createdAt.toISOString(),
+    }));
+
+    res.json({
+      scans: formattedScans,
+      total: formattedScans.length,
+    });
+  } catch (error) {
+    logger.error({ error }, "Failed to fetch public scans");
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
