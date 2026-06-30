@@ -396,6 +396,8 @@ router.get("/scans", async (req, res): Promise<void> => {
       scans.map((s) => {
         const base: Record<string, unknown> = {
           ...s,
+          // Legacy scans may have NULL status - treat as completed if score exists, pending otherwise
+          status: s.status ?? (s.score !== null ? "completed" : "pending"),
           createdAt: s.createdAt.toISOString(),
           completedAt: s.completedAt?.toISOString() ?? null,
         };

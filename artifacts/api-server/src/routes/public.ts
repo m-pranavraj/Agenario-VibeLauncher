@@ -6,19 +6,19 @@ import { logger } from "../lib/logger.js";
 
 const router = Router();
 
-// Public aggregated stats for the Landing Page Hero
-// Phase 6.1 — Cached for 60s to avoid hammering DB on every page load
-// Phase 0.3 — Only real counts, no fake padding numbers
 router.get("/public/stats", cacheMiddleware(TTL.ONE_MINUTE), async (req, res) => {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    // Legacy scans may have NULL status - treat as completed if score exists
+    const statusCondition = sql`${scansTable.status} = 'completed' OR (${scansTable.status} IS NULL AND ${scansTable.score} IS NOT NULL)`;
 
     const [totalScans, totalIssues, fixesGenerated, proofsGenerated, scansThisMonth] = await Promise.all([
       db.select({ count: sql`count(*)`.mapWith(Number) }).from(scansTable),
       db.select({ count: sql`count(*)`.mapWith(Number) }).from(scanIssuesTable),
       db.select({ count: sql`count(*)`.mapWith(Number) }).from(scanIssuesTable).where(isNotNull(scanIssuesTable.autoFixCode)),
       db.select({ count: sql`count(*)`.mapWith(Number) }).from(scanIssuesTable).where(isNotNull(scanIssuesTable.reproductionSteps)),
-      db.select({ count: sql`count(*)`.mapWith(Number) }).from(scansTable).where(gte(scansTable.createdAt, thirtyDaysAgo)),
+      db.select({ count: sql`count(*)`.mapWith(Number) }).from(scansTable).where(and(gte(scansTable.createdAt, thirtyDaysAgo), statusCondition)),
     ]);
 
     res.json({
@@ -26,7 +26,7 @@ router.get("/public/stats", cacheMiddleware(TTL.ONE_MINUTE), async (req, res) =>
       issuesReproduced: totalIssues[0]?.count ?? 0,
       fixesGenerated: fixesGenerated[0]?.count ?? 0,
       proofsGenerated: proofsGenerated[0]?.count ?? 0,
-      scansThisMonth: scansThisMonth[0]?.count ?? 0, // Used by pricing page social proof
+      scansThisMonth: scansThisMonth[0]?.count ?? 0,
     });
   } catch (error) {
     logger.error({ error }, "Failed to fetch public stats");
@@ -249,7 +249,7 @@ router.get("/public/scans", cacheMiddleware(TTL.ONE_MINUTE), async (req, res) =>
     const framework = req.query.framework as string | undefined;
     const vibeTool = req.query.vibeTool as string | undefined;
 
-    const conditions = [eq(scansTable.status, "completed")];
+    const conditions = [sql`${scansTable.status} = 'completed' OR (${scansTable.status} IS NULL AND ${scansTable.score} IS NOT NULL)`];
     if (framework) {
       conditions.push(eq(scansTable.framework, framework));
     }
@@ -283,7 +283,7 @@ router.get("/public/scans", cacheMiddleware(TTL.ONE_MINUTE), async (req, res) =>
     }));
 
     // Get totals for stats
-    const totalScans = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(scansTable).where(eq(scansTable.status, "completed"));
+    const totalScans = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(scansTable).where(sql`${scansTable.status} = 'completed' OR (${scansTable.status} IS NULL AND ${scansTable.score} IS NOT NULL)`);
 
     res.json({
       scans: formattedScans,
