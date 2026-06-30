@@ -508,6 +508,11 @@ router.post("/auth/update-password", async (req, res): Promise<void> => {
 });
 
   // ── Google OAuth Routes ───────────────────────────────────────────────────
+const getFrontendUrl = () => {
+  const url = process.env.FRONTEND_URL || "https://agenario.tech";
+  return url.replace(/\/$/, "");
+};
+
 router.get("/auth/google", (req, res) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const redirectUri = process.env.GOOGLE_REDIRECT_URI || "https://agenario.tech/api/auth/google/callback";
@@ -531,7 +536,7 @@ router.get("/auth/google", (req, res) => {
 router.get("/auth/google/callback", async (req, res): Promise<void> => {
   const code = typeof req.query.code === "string" ? req.query.code : "";
   if (!code) {
-    res.redirect("/login?error=Google auth callback failed (no code received)");
+    res.redirect(`${getFrontendUrl()}/login?error=Google auth callback failed (no code received)`);
     return;
   }
 
@@ -541,7 +546,7 @@ router.get("/auth/google/callback", async (req, res): Promise<void> => {
 
   if (!clientId || !clientSecret) {
     console.error("[GOOGLE AUTH] Missing Client credentials in env.");
-    res.redirect("/login?error=Server OAuth misconfiguration");
+    res.redirect(`${getFrontendUrl()}/login?error=Server OAuth misconfiguration`);
     return;
   }
 
@@ -562,7 +567,7 @@ router.get("/auth/google/callback", async (req, res): Promise<void> => {
     if (!tokenResp.ok) {
       const tokenErr = await tokenResp.text();
       console.error("[GOOGLE AUTH] Token exchange failed:", tokenErr);
-      res.redirect("/login?error=Token exchange failed");
+      res.redirect(`${getFrontendUrl()}/login?error=Token exchange failed`);
       return;
     }
 
@@ -576,7 +581,7 @@ router.get("/auth/google/callback", async (req, res): Promise<void> => {
     if (!userinfoResp.ok) {
       const userinfoErr = await userinfoResp.text();
       console.error("[GOOGLE AUTH] Userinfo fetch failed:", userinfoErr);
-      res.redirect("/login?error=Failed to retrieve user profile");
+      res.redirect(`${getFrontendUrl()}/login?error=Failed to retrieve user profile`);
       return;
     }
 
@@ -609,23 +614,23 @@ router.get("/auth/google/callback", async (req, res): Promise<void> => {
     req.session.regenerate((err) => {
       if (err) {
         logger.error({ err }, "[GOOGLE AUTH] Session regeneration failed");
-        res.redirect("/login?error=Session error");
+        res.redirect(`${getFrontendUrl()}/login?error=Session error`);
         return;
       }
       req.session.userId = user.id;
       req.session.save((saveErr) => {
         if (saveErr) {
           logger.error({ err: saveErr }, "[GOOGLE AUTH] Session save failed");
-          res.redirect("/login?error=Session save error");
+          res.redirect(`${getFrontendUrl()}/login?error=Session save error`);
           return;
         }
-        res.redirect("/dashboard");
+        res.redirect(`${getFrontendUrl()}/dashboard`);
       });
     });
 
   } catch (err) {
     console.error("[GOOGLE AUTH] Fatal authentication error:", err);
-    res.redirect("/login?error=OAuth internal error");
+    res.redirect(`${getFrontendUrl()}/login?error=OAuth internal error`);
   }
 });
 
