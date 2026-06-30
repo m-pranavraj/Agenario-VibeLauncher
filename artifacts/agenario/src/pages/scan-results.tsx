@@ -7099,6 +7099,7 @@ export default function ScanResultsPage() {
                     if (t.tier === "T2") return level === "Verified Code Risk" || level === "http";
                     if (t.tier === "T3") return level === "Likely Risk" || level === "static";
                     if (t.tier === "T4") return level === "Advisory" || level?.includes("pattern");
+                    if (t.tier === "T5") return level === "ai_reasoning" || !level;
                     return false;
                   }).length;
                   return (
@@ -7115,8 +7116,8 @@ export default function ScanResultsPage() {
                   <h3 className={`font-semibold text-sm ${isLight ? "text-gray-700" : "text-white/70"}`}>Issues by Evidence Level</h3>
                   {(scan.issues ?? []).slice(0, 10).map((issue: any, i: number) => {
                     const level = issue.evidenceLevel || issue.sourceEvidence || "static";
-                    const tierColor = level === "Verified Exploit" ? "bg-emerald-500" : level === "Verified Code Risk" ? "bg-sky-500" : level === "Likely Risk" ? "bg-violet-500" : "bg-amber-500";
-                    const tierLabel = level === "Verified Exploit" ? "T1" : level === "Verified Code Risk" ? "T2" : level === "Likely Risk" ? "T3" : "T4";
+                    const tierColor = level === "Verified Exploit" || level === "runtime" ? "bg-emerald-500" : level === "Verified Code Risk" || level === "http" ? "bg-sky-500" : level === "Likely Risk" || level === "static" ? "bg-violet-500" : level === "Advisory" || level?.includes("pattern") ? "bg-amber-500" : "bg-slate-500";
+                    const tierLabel = level === "Verified Exploit" || level === "runtime" ? "T1" : level === "Verified Code Risk" || level === "http" ? "T2" : level === "Likely Risk" || level === "static" ? "T3" : level === "Advisory" || level?.includes("pattern") ? "T4" : "T5";
                     return (
                       <div key={i} className={`flex items-center gap-3 p-2 rounded-lg ${isLight ? "hover:bg-gray-50" : "hover:bg-white/[0.03]"}`}>
                         <span className={`w-5 h-5 rounded-full ${tierColor} flex items-center justify-center text-white text-[9px] font-bold`}>{tierLabel}</span>
@@ -7143,10 +7144,40 @@ export default function ScanResultsPage() {
               {(() => {
                 const issues = scan?.issues ?? [];
                 const categories = ["security", "compliance", "performance", "uiux"];
+                const matchesCategory = (issue: any, cat: string) => {
+                  const issueCat = (issue.category || "").toLowerCase();
+                  const agentName = (issue.agentName || "").toLowerCase();
+                  const title = (issue.title || "").toLowerCase();
+                  const desc = (issue.description || "").toLowerCase();
+                  if (cat === "security") {
+                    return ["injection","auth","exposure","security-smell","mass-assign","path-traversal","ssti","xxe","open-redirect","log-injection","file-upload"].includes(issueCat)
+                      || agentName.includes("security") || agentName.includes("idor") || agentName.includes("access") || agentName.includes("taint")
+                      || title.includes("security") || title.includes("leak") || title.includes("cryptographic");
+                  }
+                  if (cat === "compliance") {
+                    return issueCat === "compliance" || issueCat === "regulatory" || issueCat.includes("compliance")
+                      || agentName.includes("compliance") || agentName.includes("safety")
+                      || desc.includes("compliance") || desc.includes("gdpr") || desc.includes("pci") || desc.includes("hipaa") || desc.includes("regulatory") || desc.includes("policy")
+                      || title.includes("compliance") || title.includes("policy");
+                  }
+                  if (cat === "performance") {
+                    return issueCat === "performance" || issueCat === "circular_dependency" || issueCat === "god_module" || issueCat === "high_instability"
+                      || agentName.includes("performance") || agentName.includes("architecture")
+                      || desc.includes("performance") || desc.includes("latency") || desc.includes("slow") || desc.includes("database query")
+                      || title.includes("performance") || title.includes("latency");
+                  }
+                  if (cat === "uiux") {
+                    return issueCat === "uiux" || issueCat === "wcag_violation" || issueCat === "cognitive_overload" || issueCat === "ai_boilerplate" || issueCat === "inconsistent_design"
+                      || agentName.includes("design") || agentName.includes("ui") || agentName.includes("ux")
+                      || desc.includes("design") || desc.includes("contrast") || desc.includes("wcag")
+                      || title.includes("ui") || title.includes("ux") || title.includes("contrast") || title.includes("accessibility");
+                  }
+                  return issueCat === cat;
+                };
                 const checklist = categories.map(cat => ({
                   category: cat,
-                  count: issues.filter((i: any) => (i.category || "").toLowerCase() === cat).length,
-                  severity: issues.filter((i: any) => (i.category || "").toLowerCase() === cat && (i.severity === "critical" || i.severity === "high")).length,
+                  count: issues.filter((i: any) => matchesCategory(i, cat)).length,
+                  severity: issues.filter((i: any) => matchesCategory(i, cat) && (i.severity === "critical" || i.severity === "high")).length,
                 }));
                 return (
                   <div className="space-y-4">

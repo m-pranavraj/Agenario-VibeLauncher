@@ -34,6 +34,7 @@ import {
   Palette,
   Route,
   Search,
+  Wrench,
 } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { useAuth } from "@/hooks/use-auth";
@@ -180,6 +181,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={activeSection === "remediate"} className={btnClass}>
+                    <button type="button" onClick={() => navigateTo("remediate")} className="flex items-center gap-3 w-full text-left">
+                      <Wrench className="h-4 w-4 shrink-0 text-amber-500" />
+                      <span className="font-medium text-sm">Remediate</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -281,6 +290,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarGroupContent>
           </SidebarGroup>
 
+          {/* ─── Pre-Launch Checklist ────────────────────────────── */}
+          <SidebarGroup className="p-0">
+            <SidebarGroupLabel className="text-[10px] font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider px-3">
+              Launch
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="mt-1 px-1">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={activeSection === "prelaunch"} className={btnClass}>
+                    <button type="button" onClick={() => navigateTo("prelaunch")} className="flex items-center gap-3 w-full text-left">
+                      <Route className="h-4 w-4 shrink-0 text-emerald-500" />
+                      <span className="font-medium text-sm">Pre-Launch Checklist</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
           {/* ─── Launch Impact & Reality ───────────────────────────── */}
           <Collapsible className="group/collapsible">
             <SidebarGroup className="p-0">
@@ -294,7 +322,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <SidebarGroupContent className="mt-1 px-1">
                   <SidebarMenu>
                     {[
-                      { label: "Pre-Launch Checklist", hash: "prelaunch", icon: Route },
                       { label: "Revenue Intelligence", hash: "impact-revenue", icon: TrendingUp },
                       { label: "Product Hunt Readiness", hash: "impact-producthunt", icon: Telescope },
                       { label: "Product Reality Narrative", hash: "reality", icon: Search },

@@ -49,6 +49,10 @@ function Router() {
       <Route path="/scans/new" component={NewScanPage} />
       <Route path="/scan/new" component={NewScanPage} />
       <Route path="/scans/:id/progress" component={ScanProgressPage} />
+      <Route path="/scans/:id/remediate" component={RemediationPage} />
+      <Route path="/scans/:id/issues" component={IssueChecklistPage} />
+      <Route path="/scans/:id/tests" component={TestWriterPage} />
+      <Route path="/scans/:id/evidence" component={EvidenceTiersPage} />
       <Route path="/scans/:id/:section">
         {(params) => <ScanResultsPage key={`${params.id}-${params.section}`} />}
       </Route>
@@ -67,10 +71,6 @@ function Router() {
       <Route path="/admin" component={AdminPage} />
       <Route path="/cert/:id" component={CertPage} />
       <Route path="/report/:id" component={ReportPage} />
-      <Route path="/scans/:id/remediate" component={RemediationPage} />
-      <Route path="/scans/:id/issues" component={IssueChecklistPage} />
-      <Route path="/scans/:id/tests" component={TestWriterPage} />
-      <Route path="/scans/:id/evidence" component={EvidenceTiersPage} />
       <Route path="/roadmap" component={RoadmapPage} />
       <Route path="/integrations" component={IntegrationsPage} />
       <Route path="/api-keys" component={ApiKeysPage} />

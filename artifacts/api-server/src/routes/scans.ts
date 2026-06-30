@@ -1696,7 +1696,7 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
         observed: p.observed,
         impact: p.impact,
         screenshot: p.screenshot,
-        videoUrl: p.videoUrl,
+        videoUrl: (p as any).videoUrl,
         codeRef: p.codeRef,
       }));
     }
