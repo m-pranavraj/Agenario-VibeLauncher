@@ -4,7 +4,7 @@ import { useRoute, Link } from "wouter";
 import {
   Shield, Loader2, AlertTriangle, CheckCircle2, XCircle, Clock,
   ChevronRight, Zap, GitBranch, Download, RotateCcw, ArrowLeft, ArrowRight,
-  Sparkles, Code2, Play, CheckCheck, Lock, Crown
+  Sparkles, Code2, Play, CheckCheck, Lock, Crown, Bug
 } from "lucide-react";
 import { useIsLight } from "@/hooks/use-is-light";
 import { useToast } from "@/hooks/use-toast";
@@ -262,10 +262,34 @@ export default function RemediationPage() {
     queryFn: () => fetch(`/api/scans/${scanId}/remediate`).then(r => r.ok ? r.json() : Promise.reject()),
     enabled: !!scanId,
     refetchInterval: (d) => {
-      // Auto-refresh while fixes are still generating
       const fixes: ScanFix[] = (d as any)?.fixes ?? [];
       const hasActive = fixes.some(f => f.status === "pending" || f.status === "generating" || f.status === "testing");
       return hasActive ? 3000 : false;
+    },
+  });
+
+  const { data: scanData } = useQuery({
+    queryKey: ["/api/scans", scanId],
+    queryFn: () => fetch(`/api/scans/${scanId}`).then(r => r.ok ? r.json() : Promise.reject()),
+    enabled: !!scanId,
+  });
+
+  const generateMutation = useMutation({
+    mutationFn: async (issueIds: number[]) => {
+      const res = await fetch(`/api/scans/${scanId}/remediate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ issueIds, strategy: "hybrid" }),
+      });
+      if (!res.ok) throw new Error("Failed to start fix generation");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Fix Generation Started", description: "AI is analyzing and generating patches.", duration: 3000 });
+      queryClient.invalidateQueries({ queryKey: ["/api/scans/remediate", scanId] });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to start fix generation", variant: "destructive" });
     },
   });
 
@@ -300,6 +324,7 @@ export default function RemediationPage() {
   });
 
   const fixes: ScanFix[] = data?.fixes ?? [];
+  const scanIssues: any[] = (scanData as any)?.issues ?? [];
   const readyCount = fixes.filter(f => f.status === "ready").length;
   const appliedCount = fixes.filter(f => f.status === "applied").length;
   const failedCount = fixes.filter(f => f.status === "failed").length;
@@ -391,17 +416,59 @@ export default function RemediationPage() {
           </div>
         )}
 
-        {/* Empty state */}
+        {/* Empty state — show issues & allow fix generation */}
         {fixes.length === 0 && (
-          <div className={`py-20 text-center rounded-2xl border ${isLight ? "bg-white border-gray-200" : "bg-white/[0.02] border-white/5"}`}>
-            <Code2 className="w-12 h-12 text-white/10 mx-auto mb-4" />
-            <p className="text-white/40 text-sm">No fixes generated yet.</p>
-            <p className="text-xs text-white/20 mt-1">Return to your scan results and click "Fix" on any issue to get started.</p>
-            <Link href={`/scans/${scanId}`}>
-              <button className="mt-6 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-all">
-                Go to Scan Results
-              </button>
-            </Link>
+          <div className={`rounded-2xl border ${isLight ? "bg-white border-gray-200" : "bg-white/[0.02] border-white/5"}`}>
+            {scanIssues.length > 0 ? (
+              <div className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-white/50 uppercase tracking-widest">Issues to Fix ({scanIssues.length})</h2>
+                  <button
+                    onClick={() => generateMutation.mutate(scanIssues.map((i: any) => i.id).filter(Boolean))}
+                    disabled={generateMutation.isPending}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-all disabled:opacity-50"
+                  >
+                    {generateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                    Generate Fixes for All
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {scanIssues.map((issue: any, i: number) => (
+                    <div key={issue.id || i} className={`flex items-center justify-between p-3 rounded-xl ${isLight ? "bg-gray-50" : "bg-white/[0.03]"}`}>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Bug className="w-4 h-4 shrink-0 text-white/30" />
+                        <span className="text-sm text-white/70 truncate">{issue.title || issue.description}</span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                          issue.severity === "critical" ? "bg-red-500/20 text-red-400" :
+                          issue.severity === "high" ? "bg-orange-500/20 text-orange-400" :
+                          issue.severity === "medium" ? "bg-amber-500/20 text-amber-400" :
+                          "bg-blue-500/20 text-blue-400"
+                        }`}>{issue.severity}</span>
+                        <button
+                          onClick={() => generateMutation.mutate([issue.id])}
+                          disabled={generateMutation.isPending}
+                          className="text-[10px] px-3 py-1 rounded-lg bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 transition-all disabled:opacity-40"
+                        >
+                          Fix
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="py-20 text-center">
+                <Code2 className="w-12 h-12 text-white/10 mx-auto mb-4" />
+                <p className="text-white/40 text-sm">No issues found to remediate.</p>
+                <Link href={`/scans/${scanId}`}>
+                  <button className="mt-6 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-all">
+                    Go to Scan Results
+                  </button>
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
