@@ -6,6 +6,22 @@ import { logger } from "../lib/logger.js";
 
 const router = Router();
 
+// Debug endpoint - shows ALL scans count (no auth required)
+router.get("/debug/total-scans", async (_req, res) => {
+  try {
+    const totalScans = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(scansTable);
+    const allScans = await db.select({ id: scansTable.id, userId: scansTable.userId, status: scansTable.status, score: scansTable.score }).from(scansTable).limit(10);
+
+    return res.json({
+      totalScansInDb: totalScans[0]?.count ?? 0,
+      sampleScans: allScans,
+    });
+  } catch (error) {
+    logger.error({ error }, "Debug endpoint error");
+    return res.status(500).json({ error: "Debug failed: " + (error as Error)?.message });
+  }
+});
+
 // Debug endpoint - shows current user and their scans count (auth required)
 router.get("/debug/user-scans", async (req, res) => {
   const userId = req.session?.userId ?? (req as any).userId;
