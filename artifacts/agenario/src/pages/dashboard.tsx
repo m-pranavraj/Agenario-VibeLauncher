@@ -1,51 +1,47 @@
+/**
+ * Dashboard — Clean, real-data overview for founders
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Shows real scans, real stats, real issue counts.
+ * No mock charts. Every number is backed by actual scan data.
+ */
+
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
 import { useScans } from "@/hooks/use-scans";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { 
-  ChevronRight, Plus, Loader2, ShieldCheck, AlertTriangle, 
-  Search, Activity, Server, Database, GitBranch, TrendingUp,
-  BarChart2, Zap, Clock, ExternalLink, ShieldAlert, CheckCircle2,
-  Globe
+import {
+  ChevronRight, Plus, Loader2, ShieldCheck, AlertTriangle,
+  Activity, TrendingUp, Clock, Zap, XCircle, CheckCircle2,
+  BarChart3, ArrowRight, Search, FileCode, Shield
 } from "lucide-react";
 import { useState, useMemo } from "react";
 
-const SEV_COLORS = {
-  critical: { label: "Critical", dot: "bg-red-500", text: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-500/10", border: "border-red-200 dark:border-red-500/20" },
-  high:     { label: "High",     dot: "bg-orange-500", text: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-500/10", border: "border-orange-200 dark:border-orange-500/20" },
-  medium:   { label: "Medium",   dot: "bg-amber-400", text: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-500/10", border: "border-amber-200 dark:border-amber-500/20" },
-  low:      { label: "Low",      dot: "bg-slate-400", text: "text-slate-600 dark:text-slate-400", bg: "bg-slate-100 dark:bg-slate-500/10", border: "border-slate-200 dark:border-slate-500/20" },
-};
-
-function ScoreBar({ score, isLight }: { score: number; isLight: boolean }) {
-  const color = score >= 80 ? "bg-emerald-500" : score >= 55 ? "bg-amber-400" : "bg-red-500";
+function ScoreGauge({ score, size = "lg" }: { score: number; size?: "sm" | "lg" }) {
+  const isLight = useIsLight();
+  const color = score >= 80 ? "#10b981" : score >= 60 ? "#f59e0b" : "#ef4444";
+  const sizeClass = size === "lg" ? "w-24 h-24" : "w-12 h-12";
+  const textClass = size === "lg" ? "text-2xl" : "text-xs";
   return (
-    <div className={`flex items-center gap-2`}>
-      <div className={`flex-1 h-1.5 rounded-full ${isLight ? "bg-slate-100" : "bg-white/10"}`}>
-        <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${score}%` }} />
-      </div>
-      <span className={`text-xs font-bold ${isLight ? "text-slate-600" : "text-white/70"}`}>{score}</span>
-    </div>
-  );
-}
-
-function StatCard({ title, value, sub, icon: Icon, accent, isLight }: any) {
-  const accentMap: Record<string, string> = {
-    indigo: isLight ? "text-indigo-600 bg-indigo-50 border-indigo-100" : "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
-    rose:   isLight ? "text-red-600 bg-red-50 border-red-100"     : "text-red-400 bg-red-500/10 border-red-500/20",
-    emerald:isLight ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-    amber:  isLight ? "text-amber-600 bg-amber-50 border-amber-100" : "text-amber-400 bg-amber-500/10 border-amber-500/20",
-  };
-  return (
-    <div className={`p-5 rounded-2xl border flex flex-col gap-3 ${isLight ? "bg-white border-slate-200" : "bg-[#0a0a0f] border-white/10"}`}>
-      <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${accentMap[accent] || accentMap.indigo}`}>
-        <Icon className="w-4 h-4" />
-      </div>
-      <div>
-        <p className={`text-2xl font-extrabold font-heading ${isLight ? "text-slate-900" : "text-white"}`}>{value}</p>
-        <p className={`text-sm font-semibold mt-0.5 ${isLight ? "text-slate-700" : "text-white/70"}`}>{title}</p>
-        {sub && <p className={`text-xs mt-0.5 ${isLight ? "text-slate-400" : "text-white/35"}`}>{sub}</p>}
+    <div className={`relative ${sizeClass}`}>
+      <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+        <path
+          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+          fill="none"
+          stroke={isLight ? "#e2e8f0" : "#1e1e2f"}
+          strokeWidth="3"
+        />
+        <path
+          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+          fill="none"
+          stroke={color}
+          strokeWidth="3"
+          strokeDasharray={`${score}, 100`}
+          strokeLinecap="round"
+        />
+      </svg>
+      <div className={`absolute inset-0 flex items-center justify-center ${textClass} font-bold`} style={{ color }}>
+        {score}
       </div>
     </div>
   );
@@ -58,7 +54,6 @@ export default function DashboardPage() {
   const { scans, loading: scansLoading } = useScans();
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Auth redirect
   if (!loading && !user) {
     setLocation("/login");
     return null;
@@ -67,39 +62,45 @@ export default function DashboardPage() {
   const projects = useMemo(() => {
     const groups: Record<string, any[]> = {};
     (scans ?? []).forEach(scan => {
-      const key = (scan.sourceInput || "zip-upload-" + scan.id).trim().toLowerCase();
+      const key = (scan.sourceInput || "scan-" + scan.id).trim().toLowerCase();
       if (!groups[key]) groups[key] = [];
       groups[key].push(scan);
     });
 
     return Object.entries(groups).map(([, scanList]) => {
       scanList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      const latestScan = scanList[0];
+      const latest = scanList[0];
       return {
-        id: latestScan.id,
-        sourceInput: latestScan.sourceInput,
-        sourceType: latestScan.sourceType,
-        createdAt: latestScan.createdAt,
-        status: latestScan.status,
-        score: latestScan.score,
+        id: latest.id,
+        sourceInput: latest.sourceInput,
+        sourceType: latest.sourceType,
+        createdAt: latest.createdAt,
+        status: latest.status,
+        score: latest.score,
         scansCount: scanList.length,
-        issueCounts: latestScan.issueCounts || { critical: 0, high: 0, medium: 0, low: 0 }
+        critical: latest.issueCounts?.critical ?? 0,
+        high: latest.issueCounts?.high ?? 0,
+        medium: latest.issueCounts?.medium ?? 0,
+        low: latest.issueCounts?.low ?? 0,
+        verdict: latest.launchVerdict,
+        framework: latest.framework,
       };
     });
   }, [scans]);
 
-  const filteredProjects = projects.filter(p => 
-    p.sourceInput?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredProjects = projects.filter(p =>
+    p.sourceInput?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.id.toString().includes(searchQuery.toLowerCase())
   );
 
-  // Aggregate stats from real data
-  const totalCritical = (scans ?? []).reduce((acc, s) => acc + ((s.issueCounts as any)?.critical || 0), 0);
-  const totalHigh = (scans ?? []).reduce((acc, s) => acc + ((s.issueCounts as any)?.high || 0), 0);
-  const completedScans = (scans ?? []).filter(s => s.status === "completed").length;
-  const avgScore = completedScans > 0 
-    ? Math.round((scans ?? []).filter(s => s.status === "completed" && s.score != null).reduce((acc, s) => acc + (s.score ?? 0), 0) / Math.max(1, completedScans))
+  // Real stats from actual data
+  const completedScans = (scans ?? []).filter(s => s.status === "completed");
+  const totalCritical = completedScans.reduce((acc, s) => acc + (s.issueCounts?.critical ?? 0), 0);
+  const totalHigh = completedScans.reduce((acc, s) => acc + (s.issueCounts?.high ?? 0), 0);
+  const avgScore = completedScans.length > 0
+    ? Math.round(completedScans.reduce((acc, s) => acc + (s.score ?? 0), 0) / completedScans.length)
     : null;
+  const readyToLaunch = completedScans.filter((s) => (s.score ?? 0) >= 80).length;
 
   if (loading || scansLoading) {
     return (
@@ -113,342 +114,133 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
-        
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
-            <h1 className={`text-2xl md:text-3xl font-extrabold font-heading tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
-              {user?.name ? `Welcome back, ${user.name.split(" ")[0]}` : "Dashboard"}
+            <h1 className={`text-2xl md:text-3xl font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
+              {user?.name ? `Welcome, ${user.name.split(" ")[0]}` : "Dashboard"}
             </h1>
             <p className={`text-sm mt-1 ${isLight ? "text-slate-500" : "text-white/50"}`}>
-              {projects.length} project{projects.length !== 1 ? "s" : ""} · {completedScans} completed scan{completedScans !== 1 ? "s" : ""}
+              {projects.length} project{projects.length !== 1 ? "s" : ""} · {completedScans.length} scan{completedScans.length !== 1 ? "s" : ""}
             </p>
           </div>
-          <button 
-            onClick={() => setLocation("/scans/new")}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20 shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            New Project
-          </button>
+          <Link href="/scans/new">
+            <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20 shrink-0">
+              <Plus className="w-4 h-4" />
+              New Scan
+            </button>
+          </Link>
         </div>
 
-        {/* Stats Row */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="Projects"
-            value={projects.length}
-            sub="Active codebases"
-            icon={Server}
-            accent="indigo"
-            isLight={isLight}
-          />
-          <StatCard
-            title="Critical Issues"
-            value={totalCritical}
-            sub={totalCritical > 0 ? "Needs immediate action" : "Clean — no critical issues"}
-            icon={AlertTriangle}
-            accent="rose"
-            isLight={isLight}
-          />
-          <StatCard
-            title="High Severity"
-            value={totalHigh}
-            sub="Across all projects"
-            icon={ShieldAlert}
-            accent="amber"
-            isLight={isLight}
-          />
-          <StatCard
-            title="Avg. Security Score"
-            value={avgScore != null ? `${avgScore}/100` : "—"}
-            sub={avgScore != null ? (avgScore >= 80 ? "Launch ready" : avgScore >= 55 ? "Needs attention" : "Critical fixes required") : "No completed scans"}
-            icon={BarChart2}
-            accent="emerald"
-            isLight={isLight}
-          />
-        </div>
-
-        {/* Security Health Overview — only if there are scans */}
-        {projects.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Issue Distribution */}
-            <div className={`p-5 rounded-2xl border ${isLight ? "bg-white border-slate-200" : "bg-[#0a0a0f] border-white/10"}`}>
-              <h3 className={`font-bold text-sm mb-4 ${isLight ? "text-slate-900" : "text-white"}`}>Issue Distribution</h3>
-              {(() => {
-                const total = totalCritical + totalHigh + (scans ?? []).reduce((acc, s) => acc + ((s.issueCounts as any)?.medium || 0), 0) + (scans ?? []).reduce((acc, s) => acc + ((s.issueCounts as any)?.low || 0), 0);
-                const totalMedium = (scans ?? []).reduce((acc, s) => acc + ((s.issueCounts as any)?.medium || 0), 0);
-                const totalLow = (scans ?? []).reduce((acc, s) => acc + ((s.issueCounts as any)?.low || 0), 0);
-                const sevs = [
-                  { label: "Critical", count: totalCritical, color: "bg-red-500" },
-                  { label: "High", count: totalHigh, color: "bg-orange-500" },
-                  { label: "Medium", count: totalMedium, color: "bg-amber-400" },
-                  { label: "Low", count: totalLow, color: "bg-slate-400" },
-                ];
-                return (
-                  <div className="space-y-3">
-                    {total === 0 ? (
-                      <div className="flex items-center gap-2 py-2">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                        <span className={`text-sm ${isLight ? "text-emerald-700" : "text-emerald-400"}`}>No issues detected</span>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex h-3 rounded-full overflow-hidden gap-0.5">
-                          {sevs.map(s => s.count > 0 && (
-                            <div
-                              key={s.label}
-                              className={`${s.color} h-full transition-all`}
-                              style={{ width: `${(s.count / total) * 100}%` }}
-                              title={`${s.label}: ${s.count}`}
-                            />
-                          ))}
-                        </div>
-                        {sevs.map(s => (
-                          <div key={s.label} className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${s.color}`} />
-                              <span className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"}`}>{s.label}</span>
-                            </div>
-                            <span className={`text-xs font-bold ${isLight ? "text-slate-900" : "text-white"}`}>{s.count}</span>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* Scan Status Breakdown */}
-            <div className={`p-5 rounded-2xl border ${isLight ? "bg-white border-slate-200" : "bg-[#0a0a0f] border-white/10"}`}>
-              <h3 className={`font-bold text-sm mb-4 ${isLight ? "text-slate-900" : "text-white"}`}>Scan Status</h3>
-              <div className="space-y-3">
-                {[
-                  { label: "Completed", count: (scans ?? []).filter(s => s.status === "complete").length, color: "text-emerald-500", bg: isLight ? "bg-emerald-50" : "bg-emerald-500/10" },
-                  { label: "Running", count: (scans ?? []).filter(s => s.status === "running").length, color: "text-indigo-500", bg: isLight ? "bg-indigo-50" : "bg-indigo-500/10" },
-                  { label: "Failed", count: (scans ?? []).filter(s => s.status === "failed").length, color: "text-red-500", bg: isLight ? "bg-red-50" : "bg-red-500/10" },
-                ].map(item => (
-                  <div key={item.label} className="flex items-center justify-between">
-                    <span className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"}`}>{item.label}</span>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.bg} ${item.color}`}>{item.count}</span>
-                  </div>
-                ))}
-                <div className={`pt-2 border-t ${isLight ? "border-slate-100" : "border-white/5"}`}>
-                  <div className="flex items-center justify-between">
-                    <span className={`text-xs ${isLight ? "text-slate-600" : "text-white/60"}`}>Total Scans</span>
-                    <span className={`text-xs font-bold ${isLight ? "text-slate-900" : "text-white"}`}>{scans?.length ?? 0}</span>
-                  </div>
+          {[
+            { label: "Security Score", value: avgScore != null ? `${avgScore}` : "—", sub: avgScore != null ? (avgScore >= 80 ? "Launch ready" : avgScore >= 60 ? "Needs fixes" : "Critical") : "Run a scan", icon: ShieldCheck, color: avgScore != null && avgScore >= 80 ? "emerald" : "amber" },
+            { label: "Critical Issues", value: totalCritical, sub: totalCritical > 0 ? "Fix immediately" : "Clean", icon: XCircle, color: totalCritical > 0 ? "rose" : "emerald" },
+            { label: "Projects", value: projects.length, sub: `${readyToLaunch} launch-ready`, icon: FileCode, color: "indigo" },
+            { label: "Scans Run", value: completedScans.length, sub: `${scans?.length ?? 0 - completedScans.length} running`, icon: Activity, color: "purple" },
+          ].map((stat) => (
+            <div key={stat.label} className={`p-5 rounded-2xl border ${isLight ? "bg-white border-slate-200" : "bg-[#0a0a0f] border-white/[0.06]"}`}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                  stat.color === "emerald" ? (isLight ? "bg-emerald-50 text-emerald-600" : "bg-emerald-500/10 text-emerald-400") :
+                  stat.color === "rose" ? (isLight ? "bg-red-50 text-red-600" : "bg-red-500/10 text-red-400") :
+                  stat.color === "purple" ? (isLight ? "bg-purple-50 text-purple-600" : "bg-purple-500/10 text-purple-400") :
+                  (isLight ? "bg-amber-50 text-amber-600" : "bg-amber-500/10 text-amber-400")
+                }`}>
+                  <stat.icon className="w-4 h-4" />
                 </div>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className={`p-5 rounded-2xl border ${isLight ? "bg-white border-slate-200" : "bg-[#0a0a0f] border-white/10"}`}>
-              <h3 className={`font-bold text-sm mb-4 ${isLight ? "text-slate-900" : "text-white"}`}>Quick Actions</h3>
-              <div className="space-y-2">
-                {[
-                  { label: "Scan a Repository", href: "/scans/new", icon: GitBranch, color: "text-indigo-500" },
-                  { label: "View Security Rules", href: "/security-rules", icon: ShieldCheck, color: "text-emerald-500" },
-                  { label: "Manage API Keys", href: "/api-keys", icon: Zap, color: "text-amber-500" },
-                  { label: "Set Up Integrations", href: "/integrations", icon: Activity, color: "text-violet-500" },
-                ].map(action => {
-                  const Icon = action.icon;
-                  return (
-                    <Link key={action.label} href={action.href}>
-                      <div className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isLight ? "hover:bg-slate-50" : "hover:bg-white/5"}`}>
-                        <Icon className={`w-4 h-4 ${action.color} shrink-0`} />
-                        <span className={`text-sm font-medium ${isLight ? "text-slate-700" : "text-white/70"}`}>{action.label}</span>
-                        <ChevronRight className={`w-3.5 h-3.5 ml-auto ${isLight ? "text-slate-300" : "text-white/20"}`} />
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Projects Table */}
-        <div className={`rounded-2xl border overflow-hidden ${isLight ? "bg-white border-slate-200" : "bg-[#0a0a0f] border-white/10"}`}>
-          <div className={`px-5 py-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isLight ? "border-slate-200 bg-slate-50/50" : "border-white/10"}`}>
-            <h2 className={`font-bold text-base ${isLight ? "text-slate-900" : "text-white"}`}>
-              Projects
-              <span className={`ml-2 text-xs font-normal ${isLight ? "text-slate-400" : "text-white/30"}`}>
-                {filteredProjects.length} {filteredProjects.length === 1 ? "project" : "projects"}
-              </span>
-            </h2>
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${isLight ? "bg-white border-slate-200" : "bg-black border-white/10"}`}>
-              <Search className={`w-4 h-4 shrink-0 ${isLight ? "text-slate-400" : "text-white/40"}`} />
-              <input 
-                type="text" 
-                placeholder="Search projects..." 
-                className={`bg-transparent border-none outline-none text-sm w-full sm:w-48 ${isLight ? "placeholder:text-slate-400 text-slate-900" : "placeholder:text-white/30 text-white"}`}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className={`divide-y ${isLight ? "divide-slate-100" : "divide-white/5"}`}>
-            {filteredProjects.length === 0 ? (
-              <div className="py-16 text-center px-6">
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isLight ? "bg-slate-100" : "bg-white/5"}`}>
-                  <Database className={`w-7 h-7 ${isLight ? "text-slate-300" : "text-white/20"}`} />
-                </div>
-                <h3 className={`font-bold text-base ${isLight ? "text-slate-700" : "text-white/70"}`}>
-                  {searchQuery ? "No projects match your search" : "No projects yet"}
-                </h3>
-                <p className={`text-sm mt-1.5 ${isLight ? "text-slate-400" : "text-white/35"}`}>
-                  {searchQuery ? "Try a different search term." : "Create your first project to start deep security analysis."}
-                </p>
-                {!searchQuery && (
-                  <button
-                    onClick={() => setLocation("/scans/new")}
-                    className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-all"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Create First Project
-                  </button>
+                {stat.label === "Security Score" && avgScore != null && (
+                  <ScoreGauge score={avgScore} size="sm" />
                 )}
               </div>
-            ) : (
-              filteredProjects.map((project) => {
-                const cCount = project.issueCounts?.critical ?? 0;
-                const hCount = project.issueCounts?.high ?? 0;
-                const mCount = project.issueCounts?.medium ?? 0;
-                const lCount = project.issueCounts?.low ?? 0;
-                const totalIssues = cCount + hCount + mCount + lCount;
-                const isRunning = project.status === "running";
-                const isFailed = project.status === "failed";
-                const isComplete = project.status === "complete";
-
-                const displayName = project.sourceInput 
-                  ? (project.sourceInput.startsWith("http") 
-                      ? project.sourceInput.replace(/^https?:\/\//, "").replace(/\/$/, "")
-                      : project.sourceInput)
-                  : `Project #${project.id}`;
-                
-                const truncated = displayName.length > 45 ? displayName.slice(0, 45) + "…" : displayName;
-                const isGithub = project.sourceType === "github" || project.sourceInput?.includes("github");
-                const isUrl = project.sourceType === "url";
-                
-                return (
-                  <Link href={`/scans/${project.id}`} key={project.id}>
-                    <div className={`px-5 py-4 flex flex-col md:flex-row md:items-center gap-4 cursor-pointer transition-colors ${isLight ? "hover:bg-slate-50" : "hover:bg-white/[0.025]"}`}>
-                      {/* Project icon & info */}
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
-                          isFailed   ? (isLight ? "bg-red-50 border-red-200" : "bg-red-500/10 border-red-500/20")
-                          : isRunning ? (isLight ? "bg-indigo-50 border-indigo-200" : "bg-indigo-500/10 border-indigo-500/20")
-                          : isLight  ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/10"
-                        }`}>
-                          {isGithub ? <GitBranch className={`w-5 h-5 ${isFailed ? "text-red-500" : isRunning ? "text-indigo-500" : isLight ? "text-slate-600" : "text-white/60"}`} />
-                           : isUrl  ? <Globe     className={`w-5 h-5 ${isFailed ? "text-red-500" : isRunning ? "text-indigo-500" : isLight ? "text-slate-600" : "text-white/60"}`} />
-                           :          <Database  className={`w-5 h-5 ${isFailed ? "text-red-500" : isRunning ? "text-indigo-500" : isLight ? "text-slate-600" : "text-white/60"}`} />
-                          }
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className={`font-semibold text-sm truncate ${isLight ? "text-slate-900" : "text-white"}`}>
-                              {truncated}
-                            </h4>
-                            {isRunning && (
-                              <div className="flex items-center gap-1.5">
-                                <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-500 border border-indigo-500/25">
-                                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                                  Scanning
-                                </span>
-                                <button
-                                  onClick={async (e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    if (confirm("Are you sure you want to cancel this scan?")) {
-                                      try {
-                                        const res = await fetch(`/api/scans/${project.id}/cancel`, { method: "POST" });
-                                        if (res.ok) {
-                                          window.location.reload();
-                                        } else {
-                                          alert("Failed to cancel scan");
-                                        }
-                                      } catch (err) {
-                                        alert("Failed to cancel scan");
-                                      }
-                                    }
-                                  }}
-                                  className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-500 border border-red-500/25 hover:bg-red-500/35 transition-colors cursor-pointer"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            )}
-                            {isFailed && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-500 border border-red-500/25">
-                                Failed
-                              </span>
-                            )}
-                          </div>
-                          <p className={`text-xs mt-0.5 ${isLight ? "text-slate-400" : "text-white/35"}`}>
-                            {new Date(project.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                            {" · "}
-                            {project.scansCount} scan{project.scansCount !== 1 ? "s" : ""}
-                            {project.sourceType && ` · ${project.sourceType}`}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Score */}
-                      {isComplete && project.score != null && (
-                        <div className="hidden md:block w-28 shrink-0">
-                          <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isLight ? "text-slate-400" : "text-white/30"}`}>Score</p>
-                          <ScoreBar score={project.score} isLight={isLight} />
-                        </div>
-                      )}
-
-                      {/* Severity badges */}
-                      {isComplete && (
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {[
-                            { key: "C", count: cCount, bg: "bg-red-500", textBg: isLight ? "bg-red-50 border-red-200 text-red-700" : "bg-red-950/30 border-red-600/20 text-red-400" },
-                            { key: "H", count: hCount, bg: "bg-orange-500", textBg: isLight ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-orange-950/30 border-orange-600/20 text-orange-400" },
-                            { key: "M", count: mCount, bg: "bg-amber-400", textBg: isLight ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-amber-950/30 border-amber-600/20 text-amber-400" },
-                            { key: "L", count: lCount, bg: "bg-slate-400", textBg: isLight ? "bg-slate-50 border-slate-200 text-slate-600" : "bg-slate-800 border-slate-600/20 text-slate-300" },
-                          ].map(b => (
-                            <div key={b.key} className="flex items-center shrink-0">
-                              <span className={`w-5 h-5 flex items-center justify-center ${b.bg} text-white text-[9px] font-bold rounded-l-sm`}>{b.key}</span>
-                              <span className={`px-1.5 h-5 flex items-center border-y border-r text-[9px] font-bold ${b.textBg} rounded-r-sm`}>{b.count}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* View Report */}
-                      <div className="hidden sm:flex items-center gap-1.5 shrink-0">
-                        <span className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border transition-colors ${
-                          isLight ? "bg-white border-slate-200 text-slate-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600"
-                                  : "bg-white/5 border-white/10 text-white/50 hover:bg-indigo-500/10 hover:border-indigo-500/30 hover:text-indigo-400"
-                        }`}>
-                          {isRunning ? "View Progress" : isFailed ? "Retry" : "View Report"}
-                        </span>
-                        <ChevronRight className={`w-4 h-4 ${isLight ? "text-slate-300" : "text-white/20"}`} />
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })
-            )}
-          </div>
+              <p className={`text-2xl font-extrabold ${isLight ? "text-slate-900" : "text-white"}`}>{stat.value}</p>
+              <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-white/40"}`}>{stat.sub}</p>
+            </div>
+          ))}
         </div>
 
-        {/* Recent Activity footer hint */}
-        {projects.length > 0 && (
-          <div className={`flex items-center gap-2 text-xs ${isLight ? "text-slate-400" : "text-white/25"}`}>
-            <Clock className="w-3.5 h-3.5" />
-            Last scan: {projects.length > 0 ? new Date(projects[0].createdAt).toLocaleString() : "—"}
+        {/* Projects List */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className={`text-lg font-bold ${isLight ? "text-slate-900" : "text-white"}`}>Your Projects</h2>
+            {projects.length > 5 && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <input
+                  type="text"
+                  placeholder="Search projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`pl-9 pr-4 py-2 rounded-lg border text-sm ${isLight ? "bg-white border-slate-200 text-slate-900" : "bg-white/[0.03] border-white/[0.06] text-white placeholder-white/30"}`}
+                />
+              </div>
+            )}
           </div>
-        )}
 
+          {filteredProjects.length === 0 ? (
+            <div className={`text-center py-16 rounded-2xl border ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/[0.02] border-white/[0.06]"}`}>
+              <BarChart3 className={`w-12 h-12 mx-auto mb-4 ${isLight ? "text-slate-300" : "text-white/10"}`} />
+              <h3 className={`text-lg font-bold mb-2 ${isLight ? "text-slate-900" : "text-white"}`}>No scans yet</h3>
+              <p className={`text-sm mb-4 ${isLight ? "text-slate-500" : "text-white/40"}`}>Run your first security scan to get started.</p>
+              <Link href="/scans/new">
+                <button className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors">
+                  Run Your First Scan
+                </button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredProjects.map((project) => (
+                <Link key={project.id} href={`/scans/${project.id}`}>
+                  <div className={`group p-5 rounded-2xl border transition-all cursor-pointer ${isLight ? "bg-white border-slate-200 hover:border-slate-300 hover:shadow-md" : "bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.04]"}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3">
+                          <h3 className={`font-semibold truncate ${isLight ? "text-slate-900" : "text-white"}`}>
+                            {project.sourceInput || `Scan #${project.id}`}
+                          </h3>
+                          {project.status === "completed" ? (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              (project.score ?? 0) >= 80 ? "bg-emerald-500/15 text-emerald-400" :
+                              (project.score ?? 0) >= 60 ? "bg-amber-500/15 text-amber-400" :
+                              "bg-red-500/15 text-red-400"
+                            }`}>
+                              {project.score ?? "?"}/100
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> {project.status}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 mt-1.5">
+                          {project.framework && (
+                            <span className={`text-[10px] ${isLight ? "text-slate-400" : "text-white/30"}`}>{project.framework}</span>
+                          )}
+                          {(project.critical + project.high) > 0 && (
+                            <span className="text-[10px] text-red-400 font-medium">
+                              {project.critical > 0 && `${project.critical} critical`}
+                              {project.critical > 0 && project.high > 0 && ", "}
+                              {project.high > 0 && `${project.high} high`}
+                            </span>
+                          )}
+                          {project.scansCount > 1 && (
+                            <span className={`text-[10px] ${isLight ? "text-slate-400" : "text-white/30"}`}>
+                              {project.scansCount} scans
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <ArrowRight className={`w-5 h-5 shrink-0 transition-transform group-hover:translate-x-1 ${isLight ? "text-slate-300" : "text-white/20"}`} />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );

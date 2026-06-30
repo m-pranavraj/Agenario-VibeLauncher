@@ -64,7 +64,8 @@ import { runAdvancedInjectionScanner, runAuthHardeningScanner } from "../lib/adv
 import { analyzeScanFindings, fuseEvidence, type FusionResult, type EvidenceSource } from "../lib/dempster-shafer.js";
 import { runDeepTechAnalysis, type DeepTechReport } from "../lib/deep-tech-orchestrator.js";
 import { runRealityCheckWithCSG } from "../lib/reality-check/csg-reality.js";
-import type { ProductRealityReport } from "../lib/reality-check/index.js";
+import type { ProductRealityReport } from "../lib/product-reality.js";
+import type { MockupReport } from "../lib/mockup-detector.js";
 import { computeMarketReadiness, computeTrafficLightVerdict, type MarketReadinessTracker, type GreenLightVerdict } from "../lib/market-readiness.js";
 import type { UnderApproximationResult } from "../lib/under-approximation.js";
 import type { AIContextMetrics } from "../lib/probabilistic-confidence.js";
@@ -82,6 +83,8 @@ import { runGraphResilienceScorer } from "../lib/graph-resilience-scorer.js";
 import { runAsyncResilienceChecker } from "../lib/async-resilience-checker.js";
 import { runRewardLoopDetector } from "../lib/reward-loop-detector.js";
 import { runMemoryOperationCounter } from "../lib/memory-operation-counter.js";
+import { runProductRealityEngine } from "../lib/product-reality.js";
+import { runMockupDetector } from "../lib/mockup-detector.js";
 
 const router: IRouter = Router();
 
@@ -431,6 +434,7 @@ async function runAnalysisPipeline(opts: {
   let abstractConfidence: any = null;
   let aiConsensus: any[] = [];
   let productReality: ProductRealityReport | null = null;
+  let mockupFindings: MockupReport | null = null;
   let marketReadiness: MarketReadinessTracker | null = null;
   let greenLightVerdict: GreenLightVerdict | null = null;
   let csg: ReturnType<typeof buildCSG> | null = null;
@@ -556,13 +560,11 @@ async function runAnalysisPipeline(opts: {
       if (abstractConfidenceResult) abstractConfidence = abstractConfidenceResult;
       if (aiConsensusResult.length > 0) aiConsensus = aiConsensusResult;
 
-      try {
-        emit("reality-check", "Running Product Reality Check (CSG-powered)...", 13);
-        productReality = runRealityCheckWithCSG(keyFiles ?? [], pkg);
-        logger.info({ scanId, realityScore: productReality.score, mockups: productReality.mockupFindings.length, features: productReality.featureTruths.length }, "Reality Check complete");
-      } catch (err) {
-        logger.warn({ err, scanId }, "Reality Check failed — continuing");
-      }
+      // Product Reality & Mockup Detection
+      emit("reality-check", "Running Product Reality Check...", 13);
+      productReality = runProductRealityEngine(keyFiles ?? []);
+      mockupFindings = runMockupDetector(keyFiles ?? []);
+      logger.info({ scanId, realityScore: productReality?.realityScore, mockups: mockupFindings?.totalFindings, features: productReality?.totalFeatures }, "Product Reality complete");
 
       // ── 13 Deep Tech Engines ──────────────────────────────────────────
       emit("deep-tech-13", "Running 13 Deep Tech Engines...", 14);
@@ -580,7 +582,7 @@ async function runAnalysisPipeline(opts: {
       asyncResilience = runAsyncResilienceChecker(keyFiles ?? []);
       rewardLoop = runRewardLoopDetector(keyFiles ?? []);
       memoryOps = runMemoryOperationCounter(keyFiles ?? []);
-      
+
       const allPillarFindings = [
         ...vibeTaint.findings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: f.category ?? "security" })),
         ...regGraph.findings.map((f: any) => ({ id: f.id, severity: f.severity, filePath: f.filePath, category: (f as any).category ?? "security" })),
@@ -1185,7 +1187,7 @@ async function runAnalysisPipeline(opts: {
    try {
      emit("market-readiness", "Computing Market Readiness Pipeline + Traffic-Light Verdict...", 95);
      marketReadiness = computeMarketReadiness(keyFiles ?? [], csg!, finalScore, issueCounts, (deploySafe ?? null) ? (deploySafe as any).blockersCount ?? 0 : 0);
-     greenLightVerdict = computeTrafficLightVerdict(finalScore, issueCounts, (deploySafe ?? null) ? (deploySafe as any).blockersCount ?? 0 : 0, marketReadiness, productReality?.score ?? 100);
+      greenLightVerdict = computeTrafficLightVerdict(finalScore, issueCounts, (deploySafe ?? null) ? (deploySafe as any).blockersCount ?? 0 : 0, marketReadiness, productReality?.realityScore ?? 100);
      logger.info({ scanId, stage: marketReadiness.stage, verdict: greenLightVerdict.color }, "Market Readiness + Traffic-Light complete");
    } catch (err) {
      logger.warn({ err, scanId }, "Market Readiness / Traffic-Light failed — continuing");
@@ -1266,6 +1268,8 @@ async function runAnalysisPipeline(opts: {
     await saveEngineResult(scanId, "asyncResilience", asyncResilience ?? null);
     await saveEngineResult(scanId, "rewardLoop", rewardLoop ?? null);
     await saveEngineResult(scanId, "memoryOps", memoryOps ?? null);
+    await saveEngineResult(scanId, "productReality", productReality ?? null);
+    await saveEngineResult(scanId, "mockupFindings", mockupFindings ?? null);
 
     if (proofEvidence.length > 0) {
       await saveScanProofs(scanId, proofEvidence);

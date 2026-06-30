@@ -14,7 +14,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { CheckCircle2, XCircle, Loader2, ArrowLeft, Play, FileCode, AlertTriangle, Clock, CheckCheck, Terminal, Lock, Crown } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, ArrowLeft, ArrowRight, Play, FileCode, AlertTriangle, Clock, CheckCheck, Terminal, Lock, Crown } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -34,7 +34,7 @@ export default function TestWriterPage() {
   const { user, loading: authLoading } = useAuth();
 
   if (authLoading) return <LoadingScreen />;
-  if (user.plan !== "creator" && user.plan !== "enterprise") return <UpgradeScreen />;
+  if (!user || (user.plan !== "creator" && user.plan !== "enterprise")) return <UpgradeScreen />;
 
   const { data: scan, isLoading } = useQuery({
     queryKey: ["/api/scans", params?.id],

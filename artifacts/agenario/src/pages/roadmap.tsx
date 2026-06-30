@@ -10,6 +10,7 @@
  */
 
 import { useState } from "react";
+import { useRoute, Link } from "wouter";
 import { CheckCircle2, XCircle, AlertTriangle, Clock, ArrowRight, Shield, Cpu, Eye, Zap, FileCheck, Lock, Globe, Activity, Crown, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -126,7 +127,7 @@ export default function RoadmapPage() {
   const { user, loading: authLoading } = useAuth();
 
   if (authLoading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-violet-500" /></div>;
-  if (user.plan !== "creator" && user.plan !== "enterprise") return <UpgradeScreen />;
+  if (!user || (user.plan !== "creator" && user.plan !== "enterprise")) return <UpgradeScreen />;
 
   return (
     <div className="min-h-screen bg-[#050505] text-white">

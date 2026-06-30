@@ -1,11 +1,4 @@
-/**
- * FounderView — Simplified scan report for non-technical users
- * ─────────────────────────────────────────────────────────────────────────────
- * Shows only what matters: score, what's broken, what to do about it.
- * No jargon. No 40+ engine tables. Just plain English.
- *
- * Technical users can toggle to "Full Report" for the deep dive.
- */
+import { FounderSummary } from "./FounderSummary";
 
 import { useState } from "react";
 import { Link } from "wouter";
@@ -31,71 +24,110 @@ export function FounderView({ scan, isLight, onNavigate }: FounderViewProps) {
   const low = issues.filter((i: any) => i.severity === "low");
   const score = scan?.score ?? 0;
 
-  const verdict = score >= 80 ? "ready" : score >= 60 ? "needs-work" : "not-ready";
-  const verdictConfig = {
+  // Product Reality data from real engine
+  const productReality = scan?.productReality;
+  const mockupFindings = scan?.mockupFindings;
+  const realityScore = productReality?.realityScore ?? 100;
+  const totalFeatures = productReality?.totalFeatures ?? 0;
+  const verifiedFeatures = productReality?.verifiedFeatures ?? 0;
+  const partialFeatures = productReality?.partialFeatures ?? 0;
+  const mockFeatures = productReality?.mockFeatures ?? 0;
+  const brokenFlows = productReality?.brokenFlows ?? 0;
+  const deploymentBlockers = productReality?.deploymentBlockers ?? [];
+
+  // Combined verdict: score + reality + deployment blockers
+  const effectiveVerdict = deploymentBlockers.length > 0 ? "blocked" : (score >= 80 ? "ready" : score >= 60 ? "needs-work" : "not-ready");
+  const effectiveConfig = {
     "ready": { label: "Ready to Launch", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", icon: CheckCircle2 },
     "needs-work": { label: "Needs Some Fixes", color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", icon: AlertTriangle },
     "not-ready": { label: "Not Ready Yet", color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", icon: XCircle },
+    "blocked": { label: "Launch Blocked", color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", icon: XCircle },
   };
-  const v = verdictConfig[verdict as keyof typeof verdictConfig];
+  const v = effectiveConfig[effectiveVerdict as keyof typeof effectiveConfig];
 
   return (
     <div className="space-y-6">
-      {/* ── Score Card ─────────────────────────────────────────── */}
-      <div className={`rounded-2xl p-8 border text-center ${v.bg}`}>
-        <div className="flex items-center justify-center gap-3 mb-3">
-          <v.icon className={`w-8 h-8 ${v.color}`} />
-          <h2 className={`text-2xl font-bold font-['Syne'] ${v.color}`}>{v.label}</h2>
-        </div>
-        <div className={`text-6xl font-extrabold font-['Syne'] mb-2 ${v.color}`}>
-          {score}<span className="text-2xl text-white/40">/100</span>
-        </div>
-        <p className="text-sm text-white/50 max-w-md mx-auto">
-          {verdict === "ready" && "Your app passes all critical checks. Safe to share with users."}
-          {verdict === "needs-work" && "A few issues to fix before launch. Nothing blocking, but worth addressing."}
-          {verdict === "not-ready" && "Critical issues found. Fix these before sharing with users."}
-        </p>
-      </div>
+      {/* ── Founder Summary: "Should I launch?" ─────────────────── */}
+      <FounderSummary scan={scan} isLight={isLight} />
 
-      {/* ── Quick Actions ──────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {critical.length > 0 && (
-          <button
-            onClick={() => onNavigate("issues")}
-            className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/15 transition-colors text-left"
-          >
-            <XCircle className="w-5 h-5 text-red-400 shrink-0" />
-            <div>
-              <div className="text-sm font-semibold text-red-400">{critical.length} Critical</div>
-              <div className="text-[10px] text-white/40">Fix these first</div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-red-400/50 ml-auto" />
-          </button>
-        )}
-        <button
-          onClick={() => onNavigate("remediate")}
-          className="flex items-center gap-3 p-4 rounded-xl bg-violet-500/10 border border-violet-500/20 hover:bg-violet-500/15 transition-colors text-left"
-        >
-          <Sparkles className="w-5 h-5 text-violet-400 shrink-0" />
-          <div>
-            <div className="text-sm font-semibold text-violet-400">AI Fix</div>
-            <div className="text-[10px] text-white/40">Auto-fix issues</div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-violet-400/50 ml-auto" />
-        </button>
-        <Link href={`/report/${scan?.id}`}>
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/15 transition-colors text-left cursor-pointer">
-            <FileText className="w-5 h-5 text-sky-400 shrink-0" />
-            <div>
-              <div className="text-sm font-semibold text-sky-400">Share Report</div>
-              <div className="text-[10px] text-white/40">Public certificate</div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-sky-400/50 ml-auto" />
-          </div>
-        </Link>
-      </div>
+      {/* ── Product Reality Score ─────────────────────────────── */}
+      {totalFeatures > 0 && (
+        <div className={`rounded-2xl p-6 ${isLight ? "bg-white border border-gray-200" : "bg-white/[0.02] border border-white/[0.06]"}`}>
+          <h3 className={`text-sm font-bold font-['Syne'] uppercase tracking-wider mb-4 ${isLight ? "text-gray-900" : "text-white"}`}>
+            Product Reality Score
+          </h3>
 
-      {/* ── What We Found ──────────────────────────────────────── */}
+          <div className="text-center mb-4">
+            <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full border-4 ${
+              realityScore >= 80 ? "border-emerald-500/50" : realityScore >= 50 ? "border-amber-500/50" : "border-red-500/50"
+            }`}>
+              <span className={`text-2xl font-extrabold font-['Syne'] ${
+                realityScore >= 80 ? "text-emerald-400" : realityScore >= 50 ? "text-amber-400" : "text-red-400"
+              }`}>{realityScore}%</span>
+            </div>
+            <p className="text-xs text-white/40 mt-2">How much of your app actually works</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="text-center p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+              <div className="text-lg font-bold text-emerald-400">{verifiedFeatures}</div>
+              <div className="text-[10px] text-white/40">Fully Working</div>
+            </div>
+            <div className="text-center p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
+              <div className="text-lg font-bold text-amber-400">{partialFeatures}</div>
+              <div className="text-[10px] text-white/40">Partial</div>
+            </div>
+            <div className="text-center p-3 rounded-xl bg-red-500/5 border border-red-500/10">
+              <div className="text-lg font-bold text-red-400">{mockFeatures}</div>
+              <div className="text-[10px] text-white/40">Mockups Only</div>
+            </div>
+            <div className="text-center p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+              <div className="text-lg font-bold text-white/60">{brokenFlows}</div>
+              <div className="text-[10px] text-white/40">Broken Flows</div>
+            </div>
+          </div>
+
+          {/* Feature Truth Breakdown */}
+          {productReality?.features && productReality.features.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-white/50 mb-2">Feature Truth Check</h4>
+              {productReality.features.map((feature: any) => (
+                <div key={feature.slug} className={`flex items-center justify-between p-2 rounded-lg border ${
+                  feature.confidence >= 80 ? "border-emerald-500/10 bg-emerald-500/[0.03]" :
+                  feature.confidence >= 40 ? "border-amber-500/10 bg-amber-500/[0.03]" :
+                  "border-red-500/10 bg-red-500/[0.03]"
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-4 h-4 flex items-center justify-center text-xs ${
+                      feature.confidence >= 80 ? "text-emerald-400" :
+                      feature.confidence >= 40 ? "text-amber-400" : "text-red-400"
+                    }`}>
+                      {feature.confidence >= 80 ? "✓" : feature.confidence >= 40 ? "◐" : "✗"}
+                    </span>
+                    <span className={`text-xs font-medium ${isLight ? "text-gray-800" : "text-white"}`}>{feature.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[9px]">
+                    <span className={feature.frontend ? "text-emerald-400" : "text-white/20"}>UI</span>
+                    <span className={feature.api ? "text-emerald-400" : "text-white/20"}>API</span>
+                    <span className={feature.database ? "text-emerald-400" : "text-white/20"}>DB</span>
+                    <span className={feature.persistence ? "text-emerald-400" : "text-white/20"}>Save</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Mockup Findings Summary */}
+          {mockupFindings && mockupFindings.totalFindings > 0 && (
+            <div className="mt-4 p-3 rounded-lg bg-amber-500/5 border border-amber-500/10">
+              <p className="text-xs text-amber-400 font-medium">
+                ⚠️ {mockupFindings.totalFindings} potential mockup pattern(s) detected
+              </p>
+              <p className="text-[10px] text-white/40 mt-1">{mockupFindings.summary}</p>
+            </div>
+          )}
+        </div>
+      )}
       <div className={`rounded-2xl p-6 ${isLight ? "bg-white border border-gray-200" : "bg-white/[0.02] border border-white/[0.06]"}`}>
         <h3 className={`text-sm font-bold font-['Syne'] uppercase tracking-wider mb-4 ${isLight ? "text-gray-900" : "text-white"}`}>
           What We Found

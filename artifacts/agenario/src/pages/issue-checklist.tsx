@@ -34,7 +34,7 @@ export default function IssueChecklistPage() {
   const { user, loading: authLoading } = useAuth();
 
   if (authLoading) return <LoadingScreen />;
-  if (user.plan !== "creator" && user.plan !== "enterprise") return <UpgradeScreen />;
+  if (!user || (user.plan !== "creator" && user.plan !== "enterprise")) return <UpgradeScreen />;
 
   const { data: scan, isLoading } = useQuery<ScanDetail>({
     queryKey: ["/api/scans", params?.id],

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import {
   Shield, Loader2, AlertTriangle, CheckCircle2, XCircle, Clock,
-  ChevronRight, Zap, GitBranch, Download, RotateCcw, ArrowLeft,
+  ChevronRight, Zap, GitBranch, Download, RotateCcw, ArrowLeft, ArrowRight,
   Sparkles, Code2, Play, CheckCheck, Lock, Crown
 } from "lucide-react";
 import { useIsLight } from "@/hooks/use-is-light";
@@ -255,7 +255,7 @@ export default function RemediationPage() {
   const { user, loading: authLoading } = useAuth();
 
   if (authLoading) return <div className={`min-h-screen flex items-center justify-center ${isLight ? "bg-white" : "bg-[#0A0A0A]"}`}><Loader2 className="w-8 h-8 animate-spin text-violet-500" /></div>;
-  if (user.plan !== "creator" && user.plan !== "enterprise") return <UpgradeScreen isLight={isLight} />;
+  if (!user || (user.plan !== "creator" && user.plan !== "enterprise")) return <UpgradeScreen isLight={isLight} />;
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["/api/scans/remediate", scanId],
