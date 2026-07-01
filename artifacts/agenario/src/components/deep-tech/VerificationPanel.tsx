@@ -493,62 +493,18 @@ export function VerificationPanel({ scan: rawScan, activeSection }: Props) {
     
     return {
       ...rawScan,
-      vibeTaint: rawScan.vibeTaint ?? {
-        dfgNodesConstructed: Math.max(145, numIssues * 24 + 45),
-        taintPathsDetected: Math.max(2, numIssues * 2),
-        sanitizedPaths: Math.max(12, numIssues * 4 + 12),
-        implicitFlows: Math.max(1, Math.round(numIssues / 2)),
-        taintScore: Math.max(45, 100 - numIssues * 4),
-        insight: `VibeTaint tracked ${Math.max(145, numIssues * 24 + 45)} source → sink paths. Found ${Math.max(2, numIssues * 2)} unsanitized taint paths.`,
-      },
-      crossLanguageTaint: rawScan.crossLanguageTaint ?? {
-        stats: {
-          totalBoundaries: Math.max(14, numIssues * 2 + 5),
-          activeTaintPaths: Math.max(1, numIssues),
-          sanitizedBoundaries: Math.max(8, numIssues * 2 + 2),
-          structuralIssues: Math.max(0, Math.round(numIssues / 3)),
-        },
-        findings: [],
-        scanDate: new Date().toISOString(),
-      },
-      babelEngine: rawScan.babelEngine ?? {
-        polyglotScore: 92,
-        stats: { totalNodes: 24500, parsingDurationMs: 145 },
-      },
-      topologicalAnalysis: rawScan.topologicalAnalysis ?? {
-        ltlVerifications: [
-          { property: "G(Login -> F(TokenCreated))", verified: true, stateSpaceSize: 450, timeMs: 12 },
-          { property: "G(AuthFailed -> F(Lockout))", verified: true, stateSpaceSize: 890, timeMs: 24 },
-          { property: "G(PaymentRequested -> F(ReceiptLogged))", verified: true, stateSpaceSize: 1200, timeMs: 45 },
-        ],
-        vulnerabilities: [],
-      },
+      vibeTaint: rawScan.vibeTaint ?? null,
+      crossLanguageTaint: rawScan.crossLanguageTaint ?? null,
+      babelEngine: rawScan.babelEngine ?? null,
+      topologicalAnalysis: rawScan.topologicalAnalysis ?? null,
       entropyLeaks: rawScan.entropyLeaks ?? rawScan.thermodynamicEntropy ?? null,
       astMerkle: rawScan.astMerkle ?? null,
-      constraintSolver: rawScan.constraintSolver ?? {
-        constraintBypasses: [],
-        totalBypasses: 0,
-      },
-      underApproximation: rawScan.underApproximation ?? {
-        reachableBugs: [],
-        totalReachable: 0,
-        underApproxTimeMs: 180,
-      },
-      abstractConfidence: rawScan.abstractConfidence ?? {
-        abstractScore: 89,
-        unprovedAssertionsCount: 0,
-      },
-      deploySafe: rawScan.deploySafe ?? {
-        blockersCount: 0,
-        warningsCount: Math.max(1, Math.round(numIssues / 2)),
-      },
-      failSafe: rawScan.failSafe ?? {
-        resilienceScore: 85,
-      },
-      obsCover: rawScan.obsCover ?? {
-        opacityPercent: 82,
-        coveragePercent: 88,
-      },
+      constraintSolver: rawScan.constraintSolver ?? null,
+      underApproximation: rawScan.underApproximation ?? null,
+      abstractConfidence: rawScan.abstractConfidence ?? null,
+      deploySafe: rawScan.deploySafe ?? null,
+      failSafe: rawScan.failSafe ?? null,
+      obsCover: rawScan.obsCover ?? null,
       uxCognitiveFlow: rawScan.uxCognitiveFlow ?? rawScan.cogFlow ?? null,
       promptTrace: rawScan.promptTrace ?? null,
       dempsterShafer: rawScan.dempsterShafer ?? null,
@@ -570,7 +526,6 @@ export function VerificationPanel({ scan: rawScan, activeSection }: Props) {
       kardashevLatency: rawScan.kardashevLatency ?? null,
       agiAlignment: rawScan.agiAlignment ?? null,
       tensorPayloadSignature: rawScan.tensorPayloadSignature ?? null,
-      // New engines (may not exist in old scans)
       tensorFeature: rawScan.tensorFeature ?? null,
       complexityDrift: rawScan.complexityDrift ?? null,
       circularDeps: rawScan.circularDeps ?? null,

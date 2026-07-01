@@ -54,3 +54,6 @@ Thumbs.db
 .cache/
 .local/
 .env
+
+# BOB workspace memory
+.bob/

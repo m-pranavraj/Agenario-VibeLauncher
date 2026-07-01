@@ -22,6 +22,8 @@ import { FileExplorer } from "@/components/dashboard/FileExplorer";
 import { Folder } from "lucide-react";
 import { RevenueIntelligenceSection } from "@/components/intelligence/RevenueIntelligenceSection";
 import { ConfidenceContractView } from "@/components/intelligence/ConfidenceContractView";
+import { IntelligenceHeroSection } from "@/components/report/IntelligenceHeroSection";
+import { IssueBreakdownChart } from "@/components/report/IssueBreakdownChart";
 import {
   ArrowLeft,
   Copy,
@@ -6790,6 +6792,7 @@ export default function ScanResultsPage() {
             {showAdvanced ? (
               <>
                 <ExecutiveOverview scan={scan} isLight={isLight} />
+                <IssueBreakdownChart scan={scan} isLight={isLight} />
                 <StickyLaunchAlertBanner scan={scan} />
                 <LaunchGateBanner scan={scan} isLight={isLight} />
                 <LockedInsightsPanel scan={scan} plan={user.plan} />
@@ -6930,6 +6933,8 @@ export default function ScanResultsPage() {
         {/* --- Intelligence Tab ---------------------------------------------- */}
         {activeTab === "intelligence" && (
           <>
+            <IntelligenceHeroSection scan={scan} isLight={isLight} />
+
             {/* --- Launch Impact Calculator - Creator only ------------ */}
             {scan.launchImpact && (
               <motion.div
