@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 import { db, apiKeysTable, webhookSecretsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { verifyAuthToken } from "../lib/auth-token.js";
 
 export interface AuthenticatedRequest extends Request {
   userId?: number;
@@ -58,6 +59,11 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
     return;
   }
 
+  if (req.userId) {
+    next();
+    return;
+  }
+
   const authHeader = req.headers["authorization"];
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7).trim();
@@ -66,6 +72,16 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
       return;
     }
 
+    // ── Try signed auth token first (fast, no DB) ──────────────────────────
+    const tokenUserId = verifyAuthToken(token);
+    if (tokenUserId !== null) {
+      req.userId = tokenUserId;
+      req.session.userId = tokenUserId;
+      req.session.save(() => next());
+      return;
+    }
+
+    // ── Fall back to API key lookup ────────────────────────────────────────
     const resolved = await resolveApiKey(token);
     if (!resolved) {
       res.status(401).json({ error: "Invalid or revoked API key" });
@@ -96,6 +112,7 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
 }
 
 export async function enrichSession(req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> {
+  // ── 1. Already have userId in session (cookie-based auth) ─────────────
   if (req.session?.userId) {
     req.userId = req.session.userId;
     next();
@@ -105,7 +122,20 @@ export async function enrichSession(req: AuthenticatedRequest, _res: Response, n
   const authHeader = req.headers["authorization"];
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7).trim();
+
     if (token.length >= 16) {
+      // ── 2. Try signed auth token (localStorage-based, no DB hit) ────────
+      const tokenUserId = verifyAuthToken(token);
+      if (tokenUserId !== null) {
+        req.userId = tokenUserId;
+        req.session.userId = tokenUserId;
+        // Save to session so subsequent cookie-based requests also work
+        await new Promise<void>((resolve) => req.session.save(() => resolve()));
+        next();
+        return;
+      }
+
+      // ── 3. Fall back to API key lookup ───────────────────────────────────
       const resolved = await resolveApiKey(token);
       if (resolved) {
         req.session.userId = resolved.userId;
@@ -115,7 +145,8 @@ export async function enrichSession(req: AuthenticatedRequest, _res: Response, n
     }
   }
 
-  if (!req.session?.userId) {
+  if (!req.session?.userId && !req.userId) {
+    // ── 4. Try webhook secret ────────────────────────────────────────────
     const webhookSecret = req.headers["x-webhook-secret"] as string | undefined;
     if (webhookSecret) {
       const resolved = await resolveWebhookSecret(webhookSecret);

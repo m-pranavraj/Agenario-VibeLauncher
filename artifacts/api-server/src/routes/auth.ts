@@ -9,6 +9,7 @@ import {
   RegisterUserBody,
   LoginUserBody,
 } from "@workspace/api-zod";
+import { signAuthToken } from "../lib/auth-token.js";
 const router: IRouter = Router();
 
 // ── Generate 6-digit OTP ──────────────────────────────────────────────────
@@ -222,6 +223,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         email: user.email,
         name: user.name,
         plan: user.plan,
+        token: signAuthToken(user.id), // ← JWT-style token for localStorage auth
         isAdmin: process.env.ADMIN_EMAIL ? user.email.trim().toLowerCase() === process.env.ADMIN_EMAIL.trim().toLowerCase() : false,
         createdAt: user.createdAt.toISOString(),
       });
@@ -271,6 +273,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
         email: user.email,
         name: user.name,
         plan: user.plan,
+        token: signAuthToken(user.id), // ← token for localStorage-based auth
         isAdmin: process.env.ADMIN_EMAIL ? user.email.trim().toLowerCase() === process.env.ADMIN_EMAIL.trim().toLowerCase() : false,
         createdAt: user.createdAt.toISOString(),
       });
@@ -308,6 +311,7 @@ router.get("/auth/me", async (req, res): Promise<void> => {
     email: user.email,
     name: user.name,
     plan: user.plan,
+    token: signAuthToken(user.id), // ← refresh token on /me so client can update localStorage
     isAdmin: process.env.ADMIN_EMAIL ? user.email.trim().toLowerCase() === process.env.ADMIN_EMAIL.trim().toLowerCase() : false,
     createdAt: user.createdAt.toISOString(),
   });
@@ -610,7 +614,8 @@ router.get("/auth/google/callback", async (req, res): Promise<void> => {
       logger.info({ email }, "[GOOGLE AUTH] Logged in existing user");
     }
 
-    // 4. Save to session
+    // 4. Save to session AND generate auth token for localStorage
+    const authToken = signAuthToken(user.id);
     req.session.regenerate((err) => {
       if (err) {
         logger.error({ err }, "[GOOGLE AUTH] Session regeneration failed");
@@ -624,7 +629,9 @@ router.get("/auth/google/callback", async (req, res): Promise<void> => {
           res.redirect(`${getFrontendUrl()}/login?error=Session save error`);
           return;
         }
-        res.redirect(`${getFrontendUrl()}/dashboard`);
+        // Include token in redirect so frontend can persist it in localStorage
+        // This ensures auth works even if the session cookie is stripped by the Vercel proxy
+        res.redirect(`${getFrontendUrl()}/dashboard?token=${encodeURIComponent(authToken)}`);
       });
     });
 

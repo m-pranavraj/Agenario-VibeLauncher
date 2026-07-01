@@ -7,9 +7,38 @@ const getApiUrl = () => {
 };
 
 const BASE = getApiUrl();
+const TOKEN_KEY = "agn_token";
+
+// ── Token helpers ─────────────────────────────────────────────────────────
+export function getStoredToken(): string | null {
+  try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
+}
+export function setStoredToken(token: string | null): void {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch { /* ignore */ }
+}
+export function clearStoredToken(): void {
+  try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
+}
 
 // Track ongoing auth refresh to avoid duplicate /auth/me calls
 let refreshingAuth: Promise<any> | null = null;
+
+function buildHeaders(options: RequestInit): Record<string, string> {
+  const base: Record<string, string> =
+    options.body instanceof FormData || options.body instanceof URLSearchParams
+      ? {}
+      : { "Content-Type": "application/json" };
+
+  // Always attach the auth token if we have one — this is the primary auth path
+  // through Vercel's proxy (cookies may be stripped, headers are always forwarded)
+  const token = getStoredToken();
+  if (token) base["Authorization"] = `Bearer ${token}`;
+
+  return { ...base, ...(options.headers as Record<string, string> ?? {}) };
+}
 
 async function request<T>(
   path: string,
@@ -18,20 +47,29 @@ async function request<T>(
   const res = await fetch(`${BASE}${path}`, {
     ...options,
     credentials: "include",
-    headers: {
-      ...(options.headers ?? {}),
-      ...(options.body instanceof FormData || options.body instanceof URLSearchParams ? {} : { "Content-Type": "application/json" }),
-    },
+    headers: buildHeaders(options),
   });
 
   const data = await res.json().catch(() => ({}));
+
+  // If server returned a new token, persist it (happens on login/register/me)
+  if ((data as any)?.token) {
+    setStoredToken((data as any).token);
+  }
 
   if (!res.ok) {
     // On 401, try refreshing auth state once before giving up
     if (res.status === 401 && path !== "/auth/me") {
       if (!refreshingAuth) {
-        refreshingAuth = fetch(`${BASE}/auth/me`, { credentials: "include" })
+        refreshingAuth = fetch(`${BASE}/auth/me`, {
+          credentials: "include",
+          headers: buildHeaders({}),
+        })
           .then((r) => r.json())
+          .then((d) => {
+            if (d?.token) setStoredToken(d.token);
+            return d;
+          })
           .catch(() => null)
           .finally(() => { refreshingAuth = null; });
       }
@@ -40,12 +78,10 @@ async function request<T>(
         const retry = await fetch(`${BASE}${path}`, {
           ...options,
           credentials: "include",
-          headers: {
-            ...(options.headers ?? {}),
-            ...(options.body instanceof FormData || options.body instanceof URLSearchParams ? {} : { "Content-Type": "application/json" }),
-          },
+          headers: buildHeaders(options),
         });
         const retryData = await retry.json().catch(() => ({}));
+        if ((retryData as any)?.token) setStoredToken((retryData as any).token);
         if (retry.ok) return retryData as T;
         throw new Error((retryData as { error?: string }).error ?? `HTTP ${retry.status}`);
       }
