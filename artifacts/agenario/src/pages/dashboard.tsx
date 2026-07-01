@@ -13,7 +13,8 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
   ChevronRight, Plus, Loader2, ShieldCheck, AlertTriangle,
   Activity, TrendingUp, Clock, Zap, XCircle, CheckCircle2,
-  BarChart3, ArrowRight, Search, FileCode, Shield
+  BarChart3, ArrowRight, Search, FileCode, Shield, Fingerprint,
+  ShieldAlert, ShieldOff, Globe, CreditCard
 } from "lucide-react";
 import { useState, useMemo } from "react";
 
@@ -262,6 +263,66 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* CSG Advanced Outputs */}
+        {(() => {
+          const advancedScans = (scans ?? []).filter(s => {
+            const data = s as any;
+            return data.crossLanguageTaint || data.vibeTaint || data.thermodynamicEntropy || data.constraintSolver ||
+                   data.shadowApiFindings || data.digitalTwin || data.rootCause || data.revenueIntelligence ||
+                   data.predictiveIntel || data.productReality;
+          });
+
+          if (advancedScans.length === 0) return null;
+
+          const latest = advancedScans[0];
+          const csgCounts = {
+            taint: (latest as any).crossLanguageTaint?.findings?.length + (latest as any).vibeTaint?.findings?.length || 0,
+            entropy: (latest as any).thermodynamicEntropy?.entropyLeaks?.length || 0,
+            bypass: (latest as any).constraintSolver?.bypasses?.length || 0,
+            shadow: (latest as any).shadowApiFindings?.orphanedRoutes?.length || 0,
+            chaos: (latest as any).digitalTwin?.chaosResults?.filter((c: any) => !c.graceful).length || 0,
+            rootCause: (latest as any).rootCause?.chains?.length || 0,
+            revenue: (latest as any).revenueIntelligence?.leaks?.length || 0,
+          };
+
+          const totalFindings = Object.values(csgCounts).reduce((a: number, b: any) => a + b, 0);
+
+          const cards = [
+            { label: "Taint Flows", count: csgCounts.taint, icon: Fingerprint, color: "text-cyan-400", desc: "Cross-boundary & intra-language taint paths" },
+            { label: "Entropy Leaks", count: csgCounts.entropy, icon: ShieldAlert, color: "text-amber-400", desc: "High-entropy secret/key emissions" },
+            { label: "Bypasses", count: csgCounts.bypass, icon: ShieldOff, color: "text-rose-400", desc: "Constraint bypass & logic flaws" },
+            { label: "Shadow APIs", count: csgCounts.shadow, icon: Globe, color: "text-violet-400", desc: "Orphaned & undocumented endpoints" },
+            { label: "Resilience", count: csgCounts.chaos, icon: Activity, color: "text-red-400", desc: "Chaos failures under injection" },
+            { label: "Revenue Leaks", count: csgCounts.revenue, icon: CreditCard, color: "text-emerald-400", desc: "Estimated monthly impact" },
+          ];
+
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Fingerprint className="w-5 h-5 text-violet-500" />
+                <h2 className={`text-lg font-bold ${isLight ? "text-slate-900" : "text-white"}`}>Advanced CSG Analysis</h2>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${isLight ? "bg-violet-50 text-violet-600" : "bg-violet-500/15 text-violet-400"}`}>
+                  {totalFindings} findings
+                </span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                {cards.map((card) => (
+                  <Link key={card.label} href={`/scans/${latest.id}?section=advanced`}>
+                    <div className={`p-4 rounded-xl border cursor-pointer transition-all hover:translate-y-[-2px] ${isLight ? "bg-white border-slate-200 hover:border-slate-300 shadow-sm" : "bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12]"}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <card.icon className={`w-4 h-4 ${card.color}`} />
+                        <span className={`text-xs font-bold ${isLight ? "text-slate-900" : "text-white"}`}>{card.count}</span>
+                      </div>
+                      <p className={`text-xs font-semibold ${isLight ? "text-slate-700" : "text-white/70"}`}>{card.label}</p>
+                      <p className={`text-[10px] mt-0.5 ${isLight ? "text-slate-400" : "text-white/40"}`}>{card.desc}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </DashboardLayout>
   );

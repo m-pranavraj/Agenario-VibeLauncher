@@ -343,6 +343,273 @@ function scoreToTextColor(score: number | null): string {
   return "text-red-500";
 }
 
+function buildCategorizedCsgIssues(scan: ScanDetail): any[] {
+  const issues: any[] = [];
+  const add = (opts: any) => {
+    const id = opts.id || `csg-${issues.length}-${Date.now()}`;
+    issues.push({
+      id,
+      scanId: scan.id,
+      agentName: opts.agentName || "CSG Engine",
+      severity: opts.severity || "medium",
+      title: opts.title,
+      description: opts.description || "",
+      fixPrompt: opts.fixPrompt || "Review the flagged pattern and apply the recommended remediation.",
+      confidence: opts.confidence ?? 70,
+      evidence: opts.evidence || null,
+      locked: false,
+      promptUnlocked: true,
+      category: opts.category || "security",
+      sourceEvidence: opts.sourceEvidence || "ai_reasoning",
+      findingId: opts.findingId || id,
+      filePath: opts.filePath || null,
+      lineNumber: opts.lineNumber || 0,
+      codeSnippet: opts.codeSnippet || null,
+      impactStatement: opts.impactStatement || null,
+      reproductionSteps: opts.reproductionSteps || null,
+      blastRadius: opts.blastRadius || null,
+      autoFixCode: opts.autoFixCode || null,
+      routePath: opts.routePath || null,
+      functionName: opts.functionName || null,
+      retestResult: "needs_fix",
+      evidenceLevel: opts.evidenceLevel || "Advisory",
+      videoUrl: null,
+      retestStatus: "pending",
+    });
+  };
+
+
+  if ((scan as any).crossLanguageTaint?.findings?.length) {
+    (scan as any).crossLanguageTaint.findings.forEach((f: any) => {
+      add({
+        title: `Cross-boundary taint: ${f.title || f.type || "Untrusted data crosses language boundary"}`,
+        category: "security",
+        severity: f.severity === "critical" ? "critical" : f.severity === "high" ? "high" : "medium",
+        agentName: "CSG Cross-Lang Taint",
+        findingId: f.id || `clt-${issues.length}`,
+        filePath: f.filePath,
+        lineNumber: f.lineNumber,
+        description: f.description || "Data from one language/runtime reached another without verified sanitization.",
+        fixPrompt: "Add explicit serialization/sanitization at the cross-language boundary.",
+        blastRadius: f.taintChain ? { impactedRoutes: [f.routePair].filter(Boolean) } : null,
+        sourceEvidence: "static",
+        evidenceLevel: "Advisory",
+      });
+    });
+  }
+
+  if ((scan as any).vibeTaint?.findings?.length) {
+    (scan as any).vibeTaint.findings.forEach((f: any) => {
+      add({
+        title: `Taint path: ${f.title || f.type || "Sensitive source reaches sink unsanitized"}`,
+        category: "security",
+        severity: f.severity || "high",
+        agentName: "CSG VibeTaint",
+        findingId: f.id || `vt-${issues.length}`,
+        filePath: f.filePath,
+        lineNumber: f.lineNumber,
+        description: f.description || "Intra-language taint analysis found an unsanitized source-to-sink path.",
+        fixPrompt: "Insert validation/escaping at the sink or mark the path as sanitized with proof.",
+        blastRadius: { impactedRoutes: [f.routePath].filter(Boolean) },
+        sourceEvidence: "static",
+        evidenceLevel: "Advisory",
+      });
+    });
+  }
+
+  if ((scan as any).thermodynamicEntropy?.entropyLeaks?.length) {
+    (scan as any).thermodynamicEntropy.entropyLeaks.forEach((e: any, idx: number) => {
+      add({
+        title: `Entropy leak: ${e.patternType || e.issue || "High-entropy output detected"}`,
+        category: "security",
+        severity: e.severity === "critical" ? "critical" : "high",
+        agentName: "CSG Entropy",
+        findingId: `ent-${idx}`,
+        filePath: e.file,
+        lineNumber: e.line,
+        description: e.issue || "Channel emitted high-entropy data consistent with secrets/keys.",
+        fixPrompt: "Rotate the exposed credential, move it to a secret manager, and redact logs.",
+        sourceEvidence: "static",
+        evidenceLevel: "Advisory",
+      });
+    });
+  }
+
+  if ((scan as any).constraintSolver?.bypasses?.length) {
+    (scan as any).constraintSolver.bypasses.forEach((b: any, idx: number) => {
+      add({
+        title: `Constraint bypass: ${b.conditionType || "Logic bypass"}`,
+        category: "security",
+        severity: "high",
+        agentName: "CSG Constraint Solver",
+        findingId: `cs-${idx}`,
+        description: b.constraint || "Path constraint can be bypassed, invalidating security assumptions.",
+        fixPrompt: `Tighten the guard condition. Payload: ${b.payload || ""}`,
+        sourceEvidence: "ai_reasoning",
+        evidenceLevel: "Advisory",
+      });
+    });
+  }
+
+  if ((scan as any).shadowApiFindings?.orphanedRoutes?.length) {
+    (scan as any).shadowApiFindings.orphanedRoutes.forEach((r: any, idx: number) => {
+      add({
+        title: `Shadow API: ${r.route || r}`,
+        category: "security",
+        severity: r.risk === "high" ? "high" : "medium",
+        agentName: "CSG Shadow API Radar",
+        findingId: `shadow-${idx}`,
+        description: "Undocumented or orphaned endpoint discovered outside the declared API surface.",
+        fixPrompt: "Document the route, apply auth/validation, or remove it.",
+        routePath: r.route,
+        sourceEvidence: "static",
+        evidenceLevel: "Advisory",
+      });
+    });
+  }
+
+  if (Array.isArray((scan as any).complianceResults)) {
+    (scan as any).complianceResults.forEach((c: any) => {
+      if (c.findings?.length) {
+        c.findings.forEach((f: string, idx: number) => {
+          add({
+            title: `Compliance: ${f}`,
+            category: "compliance",
+            severity: "medium",
+            agentName: `CSG ${c.framework || "Compliance"}`,
+            findingId: `comp-${idx}`,
+            description: f,
+            fixPrompt: `Update controls to satisfy ${c.framework || "framework"} requirements.`,
+            sourceEvidence: "ai_reasoning",
+            evidenceLevel: "Advisory",
+          });
+        });
+      }
+    });
+  }
+
+  if ((scan as any).packageVulns?.findings?.length) {
+    (scan as any).packageVulns.findings.forEach((p: any, idx: number) => {
+      add({
+        title: `Dependency risk: ${p.name || p.cveId || `Package #${idx}`}`,
+        category: "security",
+        severity: p.highestSeverity === "critical" ? "critical" : p.highestSeverity === "high" ? "high" : "medium",
+        agentName: "CSG Supply Chain",
+        findingId: `pkg-${idx}`,
+        filePath: p.name,
+        description: p.description || "Vulnerable dependency detected in manifest.",
+        fixPrompt: p.fixVersion ? `Upgrade to ${p.fixVersion}` : "Patch or replace the dependency.",
+        sourceEvidence: "static",
+        evidenceLevel: "Advisory",
+      });
+    });
+  }
+
+  if ((scan as any).secretScanResults?.findings?.length) {
+    (scan as any).secretScanResults.findings.forEach((s: any, idx: number) => {
+      add({
+        title: `Secret exposure: ${s.name || s.category || "Credential"}`,
+        category: "security",
+        severity: "critical",
+        agentName: "CSG Secret Scanner",
+        findingId: `sec-${idx}`,
+        filePath: s.filePath,
+        lineNumber: s.lineNumber,
+        description: s.recommendation || "Hardcoded secret or credential found in source.",
+        fixPrompt: "Revoke the exposed credential and move it to a secrets manager.",
+        sourceEvidence: "static",
+        evidenceLevel: "Advisory",
+      });
+    });
+  }
+
+  if ((scan as any).revenueIntelligence?.leaks?.length) {
+    (scan as any).revenueIntelligence.leaks.forEach((l: any, idx: number) => {
+      add({
+        title: `Revenue leak: ${l.title || l.category || "Revenue impact"}`,
+        category: "compliance",
+        severity: "high",
+        agentName: "CSG Revenue Intelligence",
+        findingId: `rev-${idx}`,
+        description: l.description || l.impactLabel || "Business logic flaw with estimated monthly revenue impact.",
+        fixPrompt: l.fix || "Fix the billing/payment flow and add regression tests.",
+        sourceEvidence: "ai_reasoning",
+        evidenceLevel: "Advisory",
+      });
+    });
+  }
+
+  if ((scan as any).predictiveIntel?.forecasts?.length) {
+    (scan as any).predictiveIntel.forecasts.forEach((f: any, idx: number) => {
+      add({
+        title: `Predictive risk: ${f.metric || f.label || "Signal"}`,
+        category: "performance",
+        severity: "medium",
+        agentName: "CSG Predictive Intel",
+        findingId: `pred-${idx}`,
+        description: f.detail || "Metric trend suggests future reliability or performance degradation.",
+        fixPrompt: f.trendLabel === "Degrading" ? "Address the rising metric before it becomes incident-grade." : "Monitor and retain current safeguards.",
+        sourceEvidence: "ai_reasoning",
+        evidenceLevel: "Advisory",
+      });
+    });
+  }
+
+  if ((scan as any).digitalTwin?.chaosResults?.length) {
+    (scan as any).digitalTwin.chaosResults.forEach((c: any, idx: number) => {
+      if (!c.graceful) {
+        add({
+          title: `Chaos failure: ${c.service || c.scenario || "Resilience probe"}`,
+          category: "performance",
+          severity: c.severity === "critical" ? "critical" : "high",
+          agentName: "CSG Digital Twin",
+          findingId: `dt-${idx}`,
+          description: c.impact || "Chaos probe showed degraded behavior under failure injection.",
+          fixPrompt: "Harden fallback paths, retries, and circuit breakers.",
+          sourceEvidence: "runtime",
+          evidenceLevel: "Advisory",
+        });
+      }
+    });
+  }
+
+  if ((scan as any).rootCause?.chains?.length) {
+    (scan as any).rootCause.chains.forEach((chain: any, idx: number) => {
+      add({
+        title: `Root cause: ${chain.issueTitle || "Causal chain"}`,
+        category: "security",
+        severity: "high",
+        agentName: "CSG Root Cause",
+        findingId: `rc-${idx}`,
+        description: chain.summary || "Multi-hop causal chain identified from symptom to origin.",
+        fixPrompt: chain.fixPR ? "Apply the linked fix PR and verify the causal chain is broken." : "Break the causal chain at the origin layer.",
+        sourceEvidence: "ai_reasoning",
+        evidenceLevel: "Advisory",
+      });
+    });
+  }
+
+  if ((scan as any).productReality?.deploymentChecks?.length) {
+    (scan as any).productReality.deploymentChecks.forEach((c: any, idx: number) => {
+      if (!c.passed) {
+        add({
+          title: `Reality gap: ${c.check || c.category || "Deployment check"}`,
+          category: "uiux",
+          severity: c.severity === "critical" ? "critical" : c.severity === "high" ? "high" : "medium",
+          agentName: "CSG Product Reality",
+          findingId: `pr-${idx}`,
+          description: c.detail || "Claimed capability is not backed by verified runtime behavior.",
+          fixPrompt: c.fixPrompt || "Implement the missing capability or update the claim.",
+          sourceEvidence: "runtime",
+          evidenceLevel: "Advisory",
+        });
+      }
+    });
+  }
+
+  return issues;
+}
+
 interface FeatureEngineCardProps {
   title: string;
   icon: ElementType;
@@ -6438,10 +6705,12 @@ export default function ScanResultsPage() {
       : categoryFiltered.filter(
           (i: any) => (i.sourceEvidence ?? "ai_reasoning") === evidenceFilter,
         );
+  const csgIssues = buildCategorizedCsgIssues(scan);
+  const allIssues = [...filteredIssues, ...csgIssues];
   const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
   
   // Sort by Evidence Quality first, then severity
-  const sortedIssues = [...filteredIssues].sort((a, b) => {
+  const sortedIssues = [...allIssues].sort((a, b) => {
     const qa = a.evidenceQuality ?? 40;
     const qb = b.evidenceQuality ?? 40;
     if (qa !== qb) return qb - qa; // Higher quality first
@@ -6452,13 +6721,13 @@ export default function ScanResultsPage() {
   const topThree = sortedIssues.slice(0, 3);
   const remaining = sortedIssues.slice(3);
 
-  const runtimeCount = agentFiltered.filter(
+  const runtimeCount = [...agentFiltered, ...csgIssues].filter(
     (i: any) => i.sourceEvidence === "runtime",
   ).length;
-  const staticCount = agentFiltered.filter(
+  const staticCount = [...agentFiltered, ...csgIssues].filter(
     (i: any) => i.sourceEvidence === "static",
   ).length;
-  const aiCount = agentFiltered.filter(
+  const aiCount = [...agentFiltered, ...csgIssues].filter(
     (i: any) => !i.sourceEvidence || i.sourceEvidence === "ai_reasoning",
   ).length;
 
