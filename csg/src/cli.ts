@@ -1,160 +1,215 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, mkdirSync } from 'node:fs';
+import { join, resolve, extname } from 'node:path';
+import { Command } from 'commander';
 import { CombinedSemanticGraph } from './index.js';
+import type { ParseResult } from './types.js';
+import { createRuleEngine } from './analysis/rules/index.js';
+import { toSarif } from './serialization/sarif.js';
+import { toHtml } from './serialization/html-report.js';
+import { AutoPwnGenerator, ExploitWriter } from './analysis/autopwn/exploit-generator.js';
 
-const args = process.argv.slice(2);
-const showHelp = args.includes('--help') || args.includes('-h') || args.length === 0;
+const program = new Command();
 
-const usage = `
-CSG Analysis Toolkit v2.0 — 10-Dimension Code Analysis
+program
+  .name('csg')
+  .description('Agenario CSG — 10-Dimension Code Analysis Toolkit')
+  .version('2.0.0');
 
-Usage:
-  csg <command> [options]
+program
+  .command('scan')
+  .description('Parse source files and build the semantic graph')
+  .option('--src <dir>', 'Source directory to scan', './src')
+  .option('--output <file>', 'Write JSON report to file')
+  .option('--json', 'Output as JSON')
+  .action(async (opts) => {
+    const csg = new CombinedSemanticGraph();
+    scanDir(csg, opts.src);
+    csg.build();
+    const s = csg.summary();
+    if (opts.json || opts.output) {
+      const out = JSON.stringify(s, null, 2);
+      if (opts.output) { writeFileSync(opts.output, out, 'utf-8'); console.log(`Written to ${opts.output}`); }
+      else console.log(out);
+    } else {
+      console.log(`\n[CSG Scan] ${resolve(opts.src)}`);
+      console.log(`  Files: ${s.files} | AST Nodes: ${s.astNodes} | Functions: ${s.functions}`);
+      console.log(`  CFG Blocks: ${s.cfgBlocks} | Routes: ${s.routes} | Imports: ${s.imports}`);
+      console.log(`  Call Sites: ${s.callSites} | Cycles: ${s.cycles} | Unresolved Calls: ${s.unresolvedCalls}`);
+    }
+  });
 
-Commands:
-  scan         Parse source files and build the semantic graph
-  infra        DeploySafe — scan Dockerfiles, CI/CD, K8s manifests
-  resilience   FailSafe — analyze try/catch & resilience patterns
-  observability ObsCover — trace telemetry coverage
-  cognitive    CogFlow — measure cognitive complexity
-  architecture ArchScan — detect circular deps & Martin's metrics
-  deps         Time-Aware Dependency Calculus — npm registry decay
-  reality      RealityCheck — detect mockups, hardcoded data, stubs, placeholders
-  all          Run all analysis commands
+program
+  .command('agenario')
+  .description('Run Agenario rule engine across all 4 pillars (343+ rules)')
+  .option('--src <dir>', 'Source directory to scan', './src')
+  .option('--categories <cats>', 'Comma-separated categories to run (e.g., security-injection,ux-accessibility)')
+  .option('--output <file>', 'Write JSON report to file')
+  .option('--sarif <file>', 'Write SARIF report to file (GitHub Code Scanning)')
+  .option('--html <file>', 'Write HTML report to file')
+  .option('--autopwn', 'Generate Auto-Pwn exploits')
+  .option('--autopwn-dir <dir>', 'Auto-Pwn output directory', 'autopwn-output')
+  .option('--severity-threshold <level>', 'Minimum severity: critical|high|medium|low|info', 'low')
+  .action(async (opts) => {
+    const csg = new CombinedSemanticGraph();
+    scanDir(csg, opts.src);
+    csg.build();
+    const graph = csg.getGraph()!;
 
-Options:
-  --src <dir>       Source directory to scan (default: ./src)
-  --infra <dir>     Infrastructure directory to scan
-  --package-json    Path(s) to package.json for dep analysis
-  --output <file>   Write JSON report to file
-  --help, -h        Show this help
+    const engine = createRuleEngine();
+    const parsed = (csg as any).parsed as ParseResult[];
 
-Examples:
-  csg scan --src ./myapp/src
-  csg infra --infra ./
-  csg reality --src ./src
-  csg all --src ./src --infra ./deploy --package-json ./package.json
-`;
+    const categories = opts.categories ? opts.categories.split(',').map((s: string) => s.trim()) : undefined;
+    const report = await engine.execute(parsed, graph, categories ? { categories } : undefined);
+    const { findings, totalFindings, totalRules, bySeverity, byCategory } = report;
 
-async function main() {
-  if (showHelp) {
-    console.log(usage);
-    process.exit(0);
-  }
+    console.log(`\n[Agenario Scan] ${resolve(opts.src)}`);
+    console.log(`  Total Findings: ${totalFindings}  |  Total Rules: ${totalRules}`);
+    console.log(`  By Severity: ${Object.entries(bySeverity).map(([k, v]) => `${k}=${v}`).join(', ')}`);
+    console.log(`  By Category: ${Object.entries(byCategory).map(([k, v]) => `${k}=${v}`).join(', ')}`);
 
-  const command = args[0];
-  const srcDir = getArg('--src') || './src';
-  const infraDir = getArg('--infra') || srcDir;
-  const pkgJsonPaths = getArgs('--package-json') || [];
-  const outputFile = getArg('--output');
+    const thresholdLevels: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+    const threshold = thresholdLevels[opts.severityThreshold] ?? 3;
+    const filtered = findings.filter(f => (thresholdLevels[f.severity] ?? 4) <= threshold);
 
-  const csg = new CombinedSemanticGraph();
-
-  const results: Record<string, any> = {};
-
-  try {
-    if (command === 'scan' || command === 'all') {
-      console.log(`\n[1/6] Building Combined Semantic Graph from: ${resolve(srcDir)}`);
-      scanDir(csg, srcDir);
-      csg.build();
-      printSummary(csg);
-      results.graph = csg.summary();
+    if (opts.output) {
+      writeFileSync(opts.output, JSON.stringify({ totalFindings, totalRules, bySeverity, byCategory, findings }, null, 2), 'utf-8');
+      console.log(`\nJSON report → ${resolve(opts.output)}`);
     }
 
-    if (command === 'infra' || command === 'all') {
-      console.log(`\n[2/6] DeploySafe — Infrastructure Scan`);
-      const infraReport = csg.scanInfrastructure(infraDir);
-      printInfraReport(infraReport);
-      results.deploySafe = infraReport;
+    if (opts.sarif) {
+      writeFileSync(opts.sarif, toSarif(report), 'utf-8');
+      console.log(`SARIF report → ${resolve(opts.sarif)}`);
     }
 
-    if (command === 'resilience' || command === 'all') {
-      console.log(`\n[3/6] FailSafe — Resilience Analysis`);
-      if (!csg.getGraph()) { scanDir(csg, srcDir); csg.build(); }
-      const fsReport = csg.analyzeResilience();
-      printFailSafeReport(fsReport);
-      results.failSafe = fsReport;
+    if (opts.html) {
+      writeFileSync(opts.html, toHtml(report), 'utf-8');
+      console.log(`HTML report → ${resolve(opts.html)}`);
     }
 
-    if (command === 'observability' || command === 'all') {
-      console.log(`\n[4/6] ObsCover — Observability Matrix`);
-      if (!csg.getGraph()) { scanDir(csg, srcDir); csg.build(); }
-      const obsReport = csg.analyzeObservability();
-      printObsCoverReport(obsReport);
-      results.obsCover = obsReport;
+    if (opts.autopwn) {
+      const autopwn = new AutoPwnGenerator();
+      const writer = new ExploitWriter();
+      const allFormats: Array<'curl' | 'supertest' | 'playwright' | 'python' | 'bash' | 'httpie'> =
+        ['curl', 'supertest', 'playwright', 'python', 'bash', 'httpie'];
+      const exploits = autopwn.generateAll(filtered, allFormats);
+      const count = writer.writeAll(exploits, opts.autopwnDir);
+      console.log(`Auto-Pwn: ${count} exploit files → ${resolve(opts.autopwnDir)}/`);
     }
 
-    if (command === 'cognitive' || command === 'all') {
-      console.log(`\n[5/6] CogFlow — Cognitive Load Profiler`);
-      if (!csg.getGraph()) { scanDir(csg, srcDir); csg.build(); }
-      const cogReport = csg.analyzeCognitiveLoad();
-      printCogFlowReport(cogReport);
-      results.cogFlow = cogReport;
-    }
-
-    if (command === 'architecture' || command === 'all') {
-      console.log(`\n[5b/6] ArchScan — Architectural Smell Detection`);
-      if (!csg.getGraph()) { scanDir(csg, srcDir); csg.build(); }
-      const archReport = csg.analyzeArchitecture();
-      printArchScanReport(archReport);
-      results.archScan = archReport;
-    }
-
-    if (command === 'deps' || command === 'all') {
-      console.log(`\n[6/6] Time-Aware Dependency Calculus`);
-      if (pkgJsonPaths.length === 0) {
-        pkgJsonPaths.push(join(process.cwd(), 'package.json'));
+    if (filtered.length > 0 && !opts.output && !opts.sarif && !opts.html) {
+      console.log('\n  Top Findings:');
+      for (const f of filtered.slice(0, 15)) {
+        console.log(`    [${f.severity.padEnd(8)}] ${f.title}`);
+        console.log(`           ${f.file}:${f.line}`);
       }
-      const depsReport = await csg.analyzeDependencyDecay(pkgJsonPaths);
-      printDepsReport(depsReport);
-      results.timeAwareDeps = depsReport;
+      if (filtered.length > 15) console.log(`    ... and ${filtered.length - 15} more`);
     }
+  });
 
-    if (command === 'reality' || command === 'all') {
-      console.log(`\n[7/7] RealityCheck — Mockup & Hardcoded Detection`);
-      const mockReport = csg.analyzeMockups(srcDir);
-      printRealityCheckReport(mockReport);
-      results.realityCheck = mockReport;
+program
+  .command('infra')
+  .description('DeploySafe — scan Dockerfiles, CI/CD, K8s manifests')
+  .option('--infra <dir>', 'Infrastructure directory', './')
+  .action(async (opts) => {
+    const csg = new CombinedSemanticGraph();
+    console.log(`\n[Infra Scan] ${resolve(opts.infra)}`);
+    const r = csg.scanInfrastructure(opts.infra);
+    console.log(`  Score: ${r.score}/100 | Docker: ${r.dockerfileIssues} | CI/CD: ${r.cicdIssues} | Secrets: ${r.secretExposures}`);
+  });
+
+program
+  .command('resilience')
+  .description('FailSafe — analyze try/catch & resilience patterns')
+  .option('--src <dir>', 'Source directory', './src')
+  .action(async (opts) => {
+    const csg = new CombinedSemanticGraph();
+    scanDir(csg, opts.src); csg.build();
+    const r = csg.analyzeResilience();
+    console.log(`\n[FailSafe] Score: ${r.score}/100`);
+    console.log(`  Try/Catch: ${r.tryCatchBlocks.length} | Empty: ${r.emptyCatchCount} | No Logging: ${r.missingLoggingCount}`);
+  });
+
+program
+  .command('deps')
+  .description('Time-Aware Dependency Calculus — npm registry decay')
+  .option('--package-json <paths...>', 'Path(s) to package.json')
+  .action(async (opts) => {
+    const csg = new CombinedSemanticGraph();
+    const paths = opts.packageJson && opts.packageJson.length > 0
+      ? opts.packageJson : [join(process.cwd(), 'package.json')];
+    const r = await csg.analyzeDependencyDecay(paths);
+    console.log(`\n[Deps] Score: ${r.score}/100 | Deprecated: ${r.deprecatedCount} | Stale: ${r.staleCount} | Vulnerable: ${r.vulnerableCount}`);
+  });
+
+program
+  .command('reality')
+  .description('RealityCheck — detect mockups, hardcoded data, stubs, placeholders')
+  .option('--src <dir>', 'Source directory', './src')
+  .action(async (opts) => {
+    const csg = new CombinedSemanticGraph();
+    const r = csg.analyzeMockups(opts.src);
+    console.log(`\n[RealityCheck] Score: ${r.score}/100`);
+    console.log(`  Mock Data: ${r.mockDataCount} | Stubs: ${r.stubFunctionCount} | Dummy Auth: ${r.dummyAuthCount}`);
+  });
+
+program
+  .command('all')
+  .description('Run all analysis commands')
+  .option('--src <dir>', 'Source directory', './src')
+  .option('--infra <dir>', 'Infrastructure directory')
+  .option('--package-json <paths...>', 'Path(s) to package.json')
+  .option('--output <file>', 'Write JSON report')
+  .option('--sarif <file>', 'Write SARIF report')
+  .option('--html <file>', 'Write HTML report')
+  .option('--autopwn', 'Generate Auto-Pwn exploits')
+  .action(async (opts) => {
+    const srcDir = opts.src;
+    const infraDir = opts.infra || srcDir;
+    const csg = new CombinedSemanticGraph();
+    scanDir(csg, srcDir);
+    csg.build();
+    const graph = csg.getGraph()!;
+
+    console.log(`\n[CSG] ${resolve(srcDir)}`);
+    const s = csg.summary();
+    console.log(`  Files: ${s.files} | AST Nodes: ${s.astNodes} | Functions: ${s.functions}`);
+
+    const engine = createRuleEngine();
+    const parsed = (csg as any).parsed as ParseResult[];
+    const report = await engine.execute(parsed, graph);
+
+    console.log(`\n[Agenario] Findings: ${report.totalFindings} | Rules: ${report.totalRules}`);
+    console.log(`  ${Object.entries(report.bySeverity).map(([k, v]) => `${k}=${v}`).join(', ')}`);
+
+    const results: Record<string, unknown> = {
+      graphSummary: s,
+      agenario: { totalFindings: report.totalFindings, totalRules: report.totalRules, bySeverity: report.bySeverity, byCategory: report.byCategory },
+    };
+
+    if (opts.output) {
+      writeFileSync(opts.output, JSON.stringify({ ...results, findings: report.findings }, null, 2), 'utf-8');
+      console.log(`JSON → ${resolve(opts.output)}`);
     }
-
-    if (outputFile) {
-      writeFileSync(outputFile, JSON.stringify(results, null, 2), 'utf-8');
-      console.log(`\nReport written to: ${resolve(outputFile)}`);
+    if (opts.sarif) {
+      writeFileSync(opts.sarif, toSarif(report), 'utf-8');
+      console.log(`SARIF → ${resolve(opts.sarif)}`);
     }
-
-    if (command !== 'all' && !['scan','infra','resilience','observability','cognitive','architecture','deps','reality'].includes(command)) {
-      console.error(`Unknown command: ${command}`);
-      console.log(usage);
-      process.exit(1);
+    if (opts.html) {
+      writeFileSync(opts.html, toHtml(report), 'utf-8');
+      console.log(`HTML → ${resolve(opts.html)}`);
     }
-
-    console.log('\nDone.');
-  } catch (err: any) {
-    console.error(`Error: ${err.message}`);
-    process.exit(1);
-  }
-}
-
-function getArg(name: string): string | undefined {
-  const idx = args.indexOf(name);
-  return idx !== -1 && idx + 1 < args.length ? args[idx + 1] : undefined;
-}
-
-function getArgs(name: string): string[] {
-  const results: string[] = [];
-  let idx = args.indexOf(name);
-  while (idx !== -1 && idx + 1 < args.length) {
-    const v = args[idx + 1];
-    if (v.startsWith('--')) break;
-    results.push(v);
-    idx = args.indexOf(name, idx + 1);
-  }
-  return results;
-}
+    if (opts.autopwn) {
+      const autopwn = new AutoPwnGenerator();
+      const writer = new ExploitWriter();
+      const allFormats: Array<'curl' | 'supertest' | 'playwright' | 'python' | 'bash' | 'httpie'> =
+        ['curl', 'supertest', 'playwright', 'python', 'bash', 'httpie'];
+      const exploits = autopwn.generateAll(report.findings, allFormats);
+      const count = writer.writeAll(exploits, 'autopwn-output');
+      console.log(`Auto-Pwn: ${count} files → autopwn-output/`);
+    }
+  });
 
 function scanDir(csg: CombinedSemanticGraph, dir: string) {
-  const { readdirSync, statSync } = require('node:fs');
-  const { extname } = require('node:path');
   const exts = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.mts', '.cts']);
   function walk(d: string) {
     let entries: string[];
@@ -171,95 +226,4 @@ function scanDir(csg: CombinedSemanticGraph, dir: string) {
   walk(dir);
 }
 
-function printSummary(csg: CombinedSemanticGraph) {
-  const s = csg.summary();
-  console.log(`  Files: ${s.files} | AST Nodes: ${s.astNodes} | Functions: ${s.functions}`);
-  console.log(`  CFG Blocks: ${s.cfgBlocks} | Routes: ${s.routes} | Imports: ${s.imports}`);
-  console.log(`  Call Sites: ${s.callSites} | Cycles: ${s.cycles} | Unresolved Calls: ${s.unresolvedCalls}`);
-}
-
-function printInfraReport(r: any) {
-  console.log(`  Score: ${r.score}/100 | Docker: ${r.dockerfileIssues} | CI/CD: ${r.cicdIssues} | Secrets: ${r.secretExposures}`);
-  for (const f of r.findings) {
-    const icon = f.severity === 'critical' ? '🔴' : f.severity === 'high' ? '🟠' : f.severity === 'medium' ? '🟡' : '⚪';
-    console.log(`  ${icon} [${f.ruleId}] ${f.message} (${f.file}:${f.line})`);
-    console.log(`     Fix: ${f.remediation}`);
-  }
-}
-
-function printFailSafeReport(r: any) {
-  console.log(`  Score: ${r.score}/100 | Try/Catch: ${r.tryCatchBlocks.length} | Empty: ${r.emptyCatchCount} | No Logging: ${r.missingLoggingCount}`);
-  for (const t of r.tryCatchBlocks) {
-    const issues: string[] = [];
-    if (t.hasEmptyCatch) issues.push('EMPTY CATCH');
-    if (!t.hasLoggedError) issues.push('NO LOGGING');
-    if (!t.hasRetry && t.surroundingApiCall) issues.push('NO RETRY');
-    if (!t.hasTimeout && t.surroundingApiCall) issues.push('NO TIMEOUT');
-    if (issues.length > 0) {
-      console.log(`  ⚠  ${t.file}:${t.line} [${issues.join(', ')}] ${t.surroundingApiCall ? '→ ' + t.surroundingApiCall : ''}`);
-    }
-  }
-}
-
-function printObsCoverReport(r: any) {
-  console.log(`  Debt Score: ${r.observabilityDebtScore}/100 | Covered: ${r.coveredPct}%`);
-  console.log(`  Total: ${r.totalBlocks} | Covered: ${r.coveredBlocks} | Partial: ${r.partialBlocks} | Uncovered: ${r.uncoveredBlocks}`);
-  for (const a of r.recommendedActions) console.log(`  → ${a}`);
-}
-
-function printCogFlowReport(r: any) {
-  console.log(`  Score: ${r.score}/100 | Max: ${r.maxComplexity} | Avg: ${r.avgComplexity} | High/Extreme: ${r.totalHighComplexity}`);
-  for (const f of r.functions.filter((f: any) => f.category === 'high' || f.category === 'extreme')) {
-    console.log(`  ⚠  ${f.functionName} (${f.file}:${f.line}) — ${f.complexity} pts [${f.category}]`);
-  }
-}
-
-function printArchScanReport(r: any) {
-  console.log(`  Score: ${r.score}/100 | Trend: ${r.instabilityTrend}`);
-  console.log(`  Circular Deps: ${r.circularDependencies.length} | Hotspots: ${r.hotSpots.length}`);
-  for (const c of r.circularDependencies) {
-    console.log(`  🔄 Cycle: ${c.cycle.join(' → ')}`);
-  }
-  for (const h of r.hotSpots.slice(0, 10)) {
-    console.log(`  🔥 ${h.file} I=${h.instability} D=${h.distance}`);
-  }
-}
-
-function printDepsReport(r: any) {
-  console.log(`  Score: ${r.score}/100 | Total: ${r.totalDeps} | Deprecated: ${r.deprecatedCount} | Stale: ${r.staleCount} | Vulnerable: ${r.vulnerableCount}`);
-  console.log(`  Mean Decay: ${r.meanDecayDays}d | Mean Maintainers: ${r.meanMaintainers}`);
-  for (const p of r.packages.filter((p: any) => p.deprecated || p.daysSinceLastPublish > 365 || p.openVulnerabilities > 0)) {
-    const reasons: string[] = [];
-    if (p.deprecated) reasons.push('DEPRECATED');
-    if (p.daysSinceLastPublish > 365) reasons.push(`${p.daysSinceLastPublish}d stale`);
-    if (p.openVulnerabilities > 0) reasons.push(`${p.openVulnerabilities} vulns`);
-    console.log(`  ⚠  ${p.name}@${p.currentVersion} [${reasons.join(', ')}]`);
-  }
-}
-
-function printRealityCheckReport(r: any) {
-  console.log(`  Score: ${r.score}/100 | Files: ${r.totalFilesScanned}`);
-  console.log(`  Mock Data: ${r.mockDataCount} | Fake Endpoints: ${r.fakeEndpointCount} | Stubs: ${r.stubFunctionCount}`);
-  console.log(`  Dummy Auth: ${r.dummyAuthCount} | Hardcoded Env: ${r.hardcodedEnvCount}`);
-  if (r.productRealityNarrative) {
-    console.log(`\n  Product Reality: ${r.productRealityNarrative}`);
-  }
-  if (r.topRecommendations && r.topRecommendations.length > 0) {
-    console.log(`\n  Top Fix Recommendations:`);
-    for (const rec of r.topRecommendations) {
-      console.log(`    → ${rec}`);
-    }
-  }
-  const sevOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
-  const sorted = [...(r.findings || [])].sort((a: any, b: any) => (sevOrder[a.severity] ?? 99) - (sevOrder[b.severity] ?? 99));
-  for (const f of sorted.slice(0, 30)) {
-    const icon = f.severity === 'critical' ? '🔴' : f.severity === 'high' ? '🟠' : f.severity === 'medium' ? '🟡' : '⚪';
-    console.log(`  ${icon} [${f.severity}] ${f.pattern} — ${f.file}:${f.line} (${(f.confidence * 100).toFixed(0)}% confidence)`);
-    if (f.fixPrompt) console.log(`     Fix: ${f.fixPrompt.slice(0, 150)}`);
-  }
-  if (r.findings && r.findings.length > 30) {
-    console.log(`  ... and ${r.findings.length - 30} more findings`);
-  }
-}
-
-main();
+program.parse(process.argv);

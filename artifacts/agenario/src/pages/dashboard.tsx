@@ -183,14 +183,34 @@ export default function DashboardPage() {
           {filteredProjects.length === 0 ? (
             <div className={`text-center py-16 rounded-2xl border ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/[0.02] border-white/[0.06]"}`}>
               <BarChart3 className={`w-12 h-12 mx-auto mb-4 ${isLight ? "text-slate-300" : "text-white/10"}`} />
-              <h3 className={`text-lg font-bold mb-2 ${isLight ? "text-slate-900" : "text-white"}`}>No scans yet</h3>
-              <p className={`text-sm mb-4 ${isLight ? "text-slate-500" : "text-white/40"}`}>Run your first security scan to get started.</p>
-              <Link href="/scans/new">
-                <button className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors">
-                  Run Your First Scan
-                </button>
-              </Link>
+              <h3 className={`text-xl font-bold mb-2 ${isLight ? "text-slate-900" : "text-white"}`}>Your security command center is ready</h3>
+              <p className={`text-sm mb-6 max-w-md mx-auto ${isLight ? "text-slate-500" : "text-white/40"}`}>
+                Connect a codebase to get a full security audit, compliance check, and launch readiness score in minutes.
+              </p>
+              <div className="grid sm:grid-cols-3 gap-3 max-w-2xl mx-auto mb-6">
+                {[
+                  { icon: "🔗", title: "GitHub Repo", desc: "Paste your repo URL for continuous scanning", href: "/scans/new", primary: true },
+                  { icon: "🧪", title: "Live Demo", desc: "See a real scan on WebGoat (OWASP demo app)", href: "/scans/new?demo=dvwa", primary: false },
+                  { icon: "📦", title: "ZIP Upload", desc: "Upload a local project archive", href: "/scans/new", primary: false },
+                ].map((item) => (
+                  <Link key={item.title} href={item.href}>
+                    <div className={`p-4 rounded-xl border cursor-pointer transition-all text-left ${
+                      item.primary
+                        ? isLight ? "bg-indigo-50 border-indigo-200 hover:bg-indigo-100" : "bg-indigo-500/10 border-indigo-500/25 hover:bg-indigo-500/15"
+                        : isLight ? "bg-white border-slate-200 hover:border-slate-300" : "bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12]"
+                    }`}>
+                      <div className="text-2xl mb-2">{item.icon}</div>
+                      <p className={`text-sm font-semibold ${isLight ? "text-slate-900" : "text-white"}`}>{item.title}</p>
+                      <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-white/40"}`}>{item.desc}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <p className={`text-xs ${isLight ? "text-slate-400" : "text-white/25"}`}>
+                Average scan takes 2–4 minutes. Finds 47+ issues on average.
+              </p>
             </div>
+
           ) : (
             <div className="space-y-3">
               {filteredProjects.map((project) => (

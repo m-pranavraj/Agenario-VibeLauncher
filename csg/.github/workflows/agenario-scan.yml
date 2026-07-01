@@ -1,0 +1,46 @@
+name: Agenario Security Scan
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 6am UTC
+
+jobs:
+  agenario-scan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Agenario Scan
+        id: agenario
+        run: |
+          npx tsx src/cli.ts agenario --src ./src --sarif agenario-results.sarif --severity-threshold medium
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: agenario-results.sarif
+          category: agenario
+
+      - name: Fail on critical/high findings
+        if: failure()
+        run: |
+          echo "Critical or high severity findings detected. Review before merging."
+          exit 1

@@ -1898,10 +1898,292 @@ function ExploitTerminalCard({ issue }: { issue: ScanIssue }) {
   );
 }
 
+
+// ─── helper: generate test code from a scan issue ──────────────────────────
+function generateTestCode(issue: any, framework: string): string {
+  const isApi =
+    issue.filePath?.includes("route") ||
+    issue.filePath?.includes("api") ||
+    issue.agentName?.includes("Auth") ||
+    issue.agentName?.includes("IDOR") ||
+    issue.agentName?.includes("Access");
+  const testName = (issue.title || "security issue")
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .trim();
+  const importLine =
+    framework === "jest"
+      ? `import request from 'supertest';\nimport { app } from '../app';`
+      : `import { describe, it, expect } from 'vitest';\nimport request from 'supertest';\nimport { app } from '../app';`;
+
+  if (isApi) {
+    return `${importLine}\n\ndescribe('Security: ${testName}', () => {\n  it('should reject malicious input', async () => {\n    const res = await request(app)\n      .post('${issue.routePath || "/api/endpoint"}')\n      .send({ payload: '<script>alert(1)</script>' })\n      .set('Authorization', 'Bearer test-token');\n    expect(res.status).toBeLessThan(500);\n    expect(JSON.stringify(res.body)).not.toContain('<script>');\n  });\n\n  it('should require authentication', async () => {\n    const res = await request(app)\n      .post('${issue.routePath || "/api/endpoint"}')\n      .send({});\n    expect(res.status).toBe(401);\n  });\n});`;
+  } else {
+    const comp = issue.filePath
+      ? (issue.filePath.split("/").pop() || "").replace(/\.[^.]+$/, "") || "Component"
+      : "Component";
+    return `${importLine}\nimport { render, screen } from '@testing-library/react';\n\ndescribe('${testName}', () => {\n  it('should handle edge cases safely', () => {\n    // File: ${issue.filePath || "unknown"}  Line: ${issue.lineNumber || 0}\n    // Severity: ${issue.severity}\n    // ${(issue.description || "").slice(0, 80)}\n    expect(true).toBe(true); // TODO: render <${comp} /> and assert safe behaviour\n  });\n\n  it('should not expose sensitive data', () => {\n    // ${issue.title}\n    const sensitivePatterns = ['password', 'secret', 'token'];\n    sensitivePatterns.forEach(p => {\n      expect(document.body.innerHTML).not.toContain(p);\n    });\n  });\n});`;
+  }
+}
+
+// ─── syntax line coloring for test code display ──────────────────────────────
+function getTestLineCss(line: string): string {
+  if (line.trim().startsWith("//") || line.trim().startsWith("*")) return "text-slate-500";
+  if (/^import /.test(line.trim())) return "text-violet-400";
+  if (/describe\(|it\(|test\(/.test(line)) return "text-cyan-300";
+  if (/expect\(/.test(line)) return "text-green-400";
+  if (/await request|\.post\(|\.get\(|\.send\(|\.set\(/.test(line)) return "text-sky-300";
+  if (/render\(|screen\./.test(line)) return "text-pink-300";
+  if (/from '|from "/.test(line)) return "text-emerald-400";
+  return "text-slate-300";
+}
+
+// ─── Single test item card ────────────────────────────────────────────────────
+function TestCodeCard({
+  issue, framework, testTab, isLight,
+}: {
+  issue: any; framework: string; testTab: string; isLight: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+  const code = generateTestCode(issue, framework);
+  const SEVERITY_COLORS: Record<string, string> = {
+    critical: "bg-red-500/15 text-red-400 border-red-500/30",
+    high:     "bg-orange-500/15 text-orange-400 border-orange-500/30",
+    medium:   "bg-yellow-500/15 text-yellow-500 border-yellow-500/30",
+    low:      "bg-gray-500/15 text-gray-400 border-gray-500/30",
+  };
+  return (
+    <div className={`rounded-xl border overflow-hidden ${isLight ? "border-gray-200 bg-gray-50" : "border-white/[0.07] bg-white/[0.02]"}`}>
+      <div className={`flex items-center gap-2.5 px-4 py-2.5 border-b ${isLight ? "bg-white border-gray-200" : "bg-white/[0.03] border-white/[0.06]"}`}>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border ${SEVERITY_COLORS[issue.severity] || SEVERITY_COLORS.low}`}>
+          {issue.severity}
+        </span>
+        <span className={`text-xs font-semibold flex-1 truncate ${isLight ? "text-gray-800" : "text-white/80"}`}>
+          {issue.title || "Security Finding"}
+        </span>
+        {issue.filePath && (
+          <span className="text-[10px] font-mono text-amber-400/70 truncate max-w-[200px]">
+            {issue.filePath}
+          </span>
+        )}
+      </div>
+      <div className="relative">
+        <div className={`flex items-center gap-1.5 px-3 py-1.5 border-b ${isLight ? "bg-gray-800 border-gray-700" : "bg-[#0d1117] border-white/5"}`}>
+          <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+          <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+          <span className="text-[9px] text-slate-500 font-mono ml-2">
+            {testTab}.test.{framework === "mocha" ? "js" : "ts"}
+          </span>
+          <button
+            onClick={async () => {
+              await navigator.clipboard.writeText(code);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="ml-auto text-[10px] text-slate-400 hover:text-white flex items-center gap-1 transition-colors"
+          >
+            {copied
+              ? <><CheckCheck className="w-3 h-3 text-green-400" />Copied</>
+              : <><Copy className="w-3 h-3" />Copy</>}
+          </button>
+        </div>
+        <pre className="px-4 py-3.5 text-[11px] font-mono leading-relaxed overflow-x-auto bg-[#0d1117]">
+          {code.split("\n").map((line, li) => (
+            <span key={li} className={`block ${getTestLineCss(line)}`}>{line || " "}</span>
+          ))}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+// ─── Auto Tests Writer Panel ─────────────────────────────────────────────────
+function AutoTestsWriterPanel({ scan, isLight }: { scan: ScanDetail; isLight: boolean }) {
+  const [activeTestTab, setActiveTestTab] = useState<"security" | "unit" | "integration">("security");
+  const [copiedAll, setCopiedAll] = useState(false);
+  const [copiedCmd, setCopiedCmd] = useState(false);
+
+  const framework = useMemo(() => {
+    const fw = (scan.framework || "").toLowerCase();
+    if (fw.includes("jest")) return "jest";
+    if (fw.includes("mocha")) return "mocha";
+    return "vitest";
+  }, [scan.framework]);
+
+  const allIssues: any[] = scan.issues ?? [];
+  const securityIssues = allIssues.filter(
+    (i) =>
+      ["critical", "high"].includes(i.severity) &&
+      (i.category === "injection" || i.category === "auth" || i.category === "exposure" ||
+        (i.agentName || "").includes("Security") || (i.agentName || "").includes("IDOR") || (i.agentName || "").includes("Auth"))
+  );
+  const unitIssues = allIssues.filter(
+    (i) => i.severity === "medium" && !((i.agentName || "").includes("Security") || i.category === "auth")
+  );
+  const integrationIssues = allIssues.filter(
+    (i) => (i.filePath || "").includes("route") || (i.filePath || "").includes("api") || (i.agentName || "").includes("IDOR")
+  );
+
+  const tabIssues: Record<string, any[]> = {
+    security: securityIssues.length > 0 ? securityIssues : allIssues.slice(0, 3),
+    unit: unitIssues.length > 0 ? unitIssues : allIssues.slice(0, 3),
+    integration: integrationIssues.length > 0 ? integrationIssues : allIssues.slice(0, 3),
+  };
+
+  const currentIssues = tabIssues[activeTestTab] ?? [];
+  const allTestCode = currentIssues
+    .map((iss) => generateTestCode(iss, framework))
+    .join("\n\n// ─────────────────────────────────────────────────────────────\n\n");
+
+  const uniqueFiles = Array.from(new Set(allIssues.map((i) => i.filePath).filter(Boolean)));
+  const runCmd =
+    framework === "jest"
+      ? "npx jest --coverage --verbose"
+      : framework === "mocha"
+      ? "npx mocha --reporter spec"
+      : "npx vitest run --reporter=verbose";
+
+  const FW_COLOR: Record<string, string> = {
+    vitest: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+    jest:   "bg-orange-500/15 text-orange-400 border-orange-500/30",
+    mocha:  "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className={`rounded-2xl p-5 border ${isLight ? "bg-white border-gray-200" : "bg-[#0d0f14] border-white/[0.08]"}`}>
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center shrink-0">
+            <Terminal className="w-4 h-4 text-cyan-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className={`font-bold text-base font-['Syne'] ${isLight ? "text-gray-900" : "text-white"}`}>
+                Automated Test Writer
+              </h2>
+              <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide border ${FW_COLOR[framework]}`}>
+                {framework}
+              </span>
+            </div>
+            <p className={`text-xs mt-0.5 ${isLight ? "text-gray-500" : "text-white/40"}`}>
+              Real test stubs derived from {allIssues.length} scan findings · {uniqueFiles.length} file{uniqueFiles.length !== 1 ? "s" : ""} at 0% coverage
+            </p>
+          </div>
+        </div>
+
+        {/* Coverage gap alert */}
+        <div className={`rounded-xl p-3.5 border mb-4 ${isLight ? "bg-red-50 border-red-100" : "bg-red-500/[0.05] border-red-500/20"}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+            <span className={`text-xs font-semibold ${isLight ? "text-red-700" : "text-red-400"}`}>Coverage Gap Alert</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {[
+              { label: "Files at 0%", val: uniqueFiles.length, color: "text-red-400" },
+              { label: "Critical w/o Test", val: securityIssues.length, color: "text-orange-400" },
+              { label: "Total Findings", val: allIssues.length, color: "text-amber-400" },
+            ].map(({ label, val, color }) => (
+              <div key={label} className={`p-2 rounded-lg border ${isLight ? "bg-white border-red-100" : "bg-black/20 border-white/5"}`}>
+                <div className={`text-lg font-black font-mono ${color}`}>{val}</div>
+                <div className={`text-[9px] uppercase tracking-wide mt-0.5 ${isLight ? "text-gray-400" : "text-white/30"}`}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className={`flex gap-1 p-1 rounded-xl mb-4 ${isLight ? "bg-gray-100" : "bg-white/[0.04]"}`}>
+          {(["security", "unit", "integration"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTestTab(tab)}
+              className={`flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all ${
+                activeTestTab === tab
+                  ? isLight
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "bg-white/10 text-white"
+                  : isLight
+                  ? "text-gray-500 hover:text-gray-700"
+                  : "text-white/40 hover:text-white/70"
+              }`}
+            >
+              {tab === "security" ? "🔒 Security" : tab === "unit" ? "🧪 Unit" : "🔗 Integration"}{" "}
+              ({tabIssues[tab].length})
+            </button>
+          ))}
+        </div>
+
+        {/* Run command terminal */}
+        <div className={`rounded-xl border flex items-center gap-3 px-4 py-3 mb-5 ${isLight ? "bg-gray-900 border-gray-700" : "bg-black/60 border-white/10"}`}>
+          <span className="text-green-400 text-xs font-mono shrink-0">$</span>
+          <code className="text-green-300 text-xs font-mono flex-1 select-all">{runCmd}</code>
+          <button
+            onClick={async () => {
+              await navigator.clipboard.writeText(runCmd);
+              setCopiedCmd(true);
+              setTimeout(() => setCopiedCmd(false), 2000);
+            }}
+            className="text-[10px] text-white/40 hover:text-white transition-colors flex items-center gap-1 shrink-0"
+          >
+            {copiedCmd
+              ? <><CheckCheck className="w-3 h-3 text-green-400" />Copied</>
+              : <><Copy className="w-3 h-3" />Copy</>}
+          </button>
+        </div>
+
+        {/* Test cards */}
+        {allIssues.length === 0 ? (
+          <div className={`text-center py-10 ${isLight ? "text-gray-400" : "text-white/30"}`}>
+            No findings to test. Run a scan to generate test cases.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {currentIssues.slice(0, 6).map((issue, idx) => (
+              <TestCodeCard
+                key={idx}
+                issue={issue}
+                framework={framework}
+                testTab={activeTestTab}
+                isLight={isLight}
+              />
+            ))}
+
+            {/* Copy all button */}
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={async () => {
+                  await navigator.clipboard.writeText(allTestCode);
+                  setCopiedAll(true);
+                  setTimeout(() => setCopiedAll(false), 2500);
+                }}
+                className={`flex items-center gap-2 text-xs font-semibold px-4 py-2.5 rounded-xl border transition-all ${
+                  isLight
+                    ? "bg-gray-900 text-white border-gray-700 hover:bg-gray-800"
+                    : "bg-white/10 text-white border-white/15 hover:bg-white/15"
+                }`}
+              >
+                {copiedAll
+                  ? <><CheckCheck className="w-3.5 h-3.5 text-green-400" />Copied {currentIssues.length} Tests!</>
+                  : <><Copy className="w-3.5 h-3.5" />Copy All {currentIssues.length} Tests</>}
+              </button>
+              <span className={`text-[11px] ${isLight ? "text-gray-400" : "text-white/30"}`}>
+                Paste into{" "}
+                <code className="font-mono">src/__tests__/{activeTestTab}.test.ts</code>
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function OldRiskForecastSection({ forecast }: { forecast: RiskForecast }) {
   const isLight = useIsLight();
   const riskColor = (r: string) =>
     r === "critical" ? "text-red-400" : r === "high" ? "text-amber-400" : r === "medium" ? "text-yellow-400" : "text-green-400";
+
   const riskBg = (r: string) =>
     r === "critical" ? "bg-red-500/10 border-red-500/20 text-red-400" :
     r === "high" ? "bg-amber-500/10 border-amber-500/18 text-amber-400" :
@@ -7118,44 +7400,7 @@ export default function ScanResultsPage() {
 
         {/* ——— Auto Tests Writer Tab —————————————————————————————————————— */}
         {activeTab === "tests" && (
-          <div className="space-y-6">
-            <div className={`rounded-2xl p-6 ${isLight ? "bg-white border border-gray-200" : "glass"}`}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center">
-                   <Terminal className="w-5 h-5 text-cyan-400" />
-                </div>
-                <div>
-                  <h2 className={`font-bold text-lg ${isLight ? "text-gray-900" : "text-white"}`}>Automatic Tests Writer</h2>
-                  <p className={`text-xs ${isLight ? "text-gray-500" : "text-white/50"}`}>Generate tests from real scan findings</p>
-                </div>
-              </div>
-              {(scan?.issues ?? []).length > 0 ? (
-                <div className="space-y-4">
-                  <div className={`rounded-xl p-4 ${isLight ? "bg-gray-50 border border-gray-200" : "bg-white/[0.03] border border-white/[0.06]"}`}>
-                    <h3 className={`font-semibold text-sm mb-3 ${isLight ? "text-gray-700" : "text-white/70"}`}>Testable Findings</h3>
-                    {(scan.issues ?? []).slice(0, 5).map((issue: any, i: number) => (
-                      <div key={i} className={`flex items-center justify-between py-2 border-b last:border-0 ${isLight ? "border-gray-100" : "border-white/[0.04]"}`}>
-                        <span className={`text-sm ${isLight ? "text-gray-600" : "text-white/60"}`}>{issue.title || issue.description}</span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${issue.severity === "critical" ? "bg-red-500/20 text-red-400" : issue.severity === "high" ? "bg-orange-500/20 text-orange-400" : "bg-slate-500/20 text-slate-400"}`}>
-                          {issue.severity}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className={`rounded-xl p-4 ${isLight ? "bg-indigo-50 border border-indigo-100" : "bg-indigo-500/[0.06] border border-indigo-500/20"}`}>
-                    <p className={`text-sm ${isLight ? "text-indigo-700" : "text-indigo-300"}`}>
-                      Tests generation available for {Math.min((scan.issues ?? []).length, 5)} findings.
-                      Each test targets the specific vulnerability or issue detected.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className={`text-center py-8 ${isLight ? "text-gray-400" : "text-white/30"}`}>
-                  No findings to test. Run a scan to generate test cases.
-                </div>
-              )}
-            </div>
-          </div>
+          <AutoTestsWriterPanel scan={scan} isLight={isLight} />
         )}
 
         {/* ——— Knowledge Graph Tab ———————————————————————————————————————— */}

@@ -1,0 +1,76 @@
+name: 'Agenario Code Scan'
+description: 'Run Agenario 4-pillar rule engine (Security, Performance, UX, Compliance) on your codebase'
+author: 'Agenario'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  source:
+    description: 'Source directory to scan'
+    required: false
+    default: './src'
+  severity-threshold:
+    description: 'Minimum severity to report (critical|high|medium|low|info)'
+    required: false
+    default: 'low'
+  fail-on:
+    description: 'Fail the build on (critical|high|medium|low)'
+    required: false
+    default: 'critical'
+  output-sarif:
+    description: 'Output SARIF file path'
+    required: false
+    default: 'agenario-results.sarif'
+  output-html:
+    description: 'Output HTML report path'
+    required: false
+    default: ''
+  generate-autopwn:
+    description: 'Generate Auto-Pwn exploits'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run Agenario scan
+      shell: bash
+      run: |
+        npx tsx ${{ github.action_path }}/../src/cli.ts agenario \
+          --src ${{ inputs.source }} \
+          --severity-threshold ${{ inputs.severity-threshold }} \
+          --sarif ${{ inputs.output-sarif }} \
+          ${{ inputs.output-html && format('--html {0}', inputs.output-html) }} \
+          ${{ inputs.generate-autopwn == 'true' && '--autopwn' || '' }}
+
+    - name: Upload SARIF to GitHub Code Scanning
+      if: inputs.output-sarif != ''
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.output-sarif }}
+        category: agenario
+
+    - name: Check severity threshold
+      shell: bash
+      run: |
+        if [ -f "${{ inputs.output-sarif }}" ]; then
+          FAIL_LEVEL="${{ inputs.fail-on }}"
+          case "$FAIL_LEVEL" in
+            critical) LEVEL=0;;
+            high) LEVEL=1;;
+            medium) LEVEL=2;;
+            low) LEVEL=3;;
+            *) LEVEL=99;;
+          esac
+          ERROR_COUNT=$(node -e "
+            const s = require('fs').readFileSync('${{ inputs.output-sarif }}','utf8');
+            const r = JSON.parse(s);
+            let errors = r.runs[0].results.filter(x => x.level === 'error').length;
+            console.log(errors);
+          ")
+          if [ "$ERROR_COUNT" -gt 0 ] && [ "$LEVEL" -le 0 ]; then
+            echo "❌ $ERROR_COUNT critical findings found. Failing build."
+            exit 1
+          fi
+        fi

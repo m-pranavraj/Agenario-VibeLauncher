@@ -5,6 +5,7 @@ import { Shield, ExternalLink, Loader2, Target, CheckCircle2, AlertTriangle, Shi
 import { api } from "@/lib/api";
 import { useIsLight } from "@/hooks/use-is-light";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CertBadge } from "@/components/CertBadge";
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { FileExplorer } from "@/components/dashboard/FileExplorer";
 import { ConfidenceContractView } from "@/components/intelligence/ConfidenceContractView";
@@ -31,7 +32,6 @@ export default function CertPage() {
 
   const currentUrl = typeof window !== "undefined" ? window.location.href : "";
   const reportUrl = currentUrl.replace("/cert/", "/report/");
-  const badgeUrl = currentUrl.replace("/cert/", "/api/public/cert/") + "/badge";
 
   const copyLink = useCallback(async () => {
     await navigator.clipboard.writeText(currentUrl);
@@ -121,9 +121,11 @@ export default function CertPage() {
           </div>
 
           {/* Badge Preview */}
-          <div className={`flex justify-center mb-8`}>
-            <img src={badgeUrl} alt="Agenario Logo" className="h-6" />
-          </div>
+          {cert && (
+            <div className={`flex justify-center mb-8`}>
+              <CertBadge score={cert.score} valid={isValid} certId={cert.certId} />
+            </div>
+          )}
 
           {/* Details Grid */}
           <div className={`rounded-2xl border p-6 mb-8 ${isLight ? "bg-gray-50/50 border-gray-200" : "bg-white/5 border-white/5"}`}>
@@ -205,7 +207,7 @@ export default function CertPage() {
           <div className={`rounded-2xl border p-4 mb-8 ${isLight ? "bg-gray-50/50 border-gray-200" : "bg-white/5 border-white/5"}`}>
             <div className={`text-xs uppercase tracking-wider mb-2 font-semibold ${isLight ? "text-gray-400" : "text-white/30"}`}>Embed Badge</div>
             <code className={`text-xs font-mono block p-3 rounded-xl border ${isLight ? "bg-white border-gray-200 text-gray-600" : "bg-black/40 border-white/5 text-white/50"}`}>
-              {`[![Agenario Security Audit](${badgeUrl})](${currentUrl})`}
+              {`[![Agenario Security Audit](${currentUrl})](${reportUrl})`}
             </code>
           </div>
 
