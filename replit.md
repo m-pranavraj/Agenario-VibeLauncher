@@ -49,13 +49,13 @@ AI-powered production review board for vibe-coded apps. Multi-dimensional analys
 - Contract-first API: OpenAPI spec → Orval generates Zod schemas + React Query hooks; server validates with those same Zod schemas
 - Sessions stored in PostgreSQL (`session` table created manually via SQL, not `createTableIfMissing` — the latter fails after esbuild bundling because it can't find `table.sql`)
 - 10 analysis dimensions run in parallel via `Promise.all` — security, compliance, revenue, performance, UX, reliability, data, observability, AI quality, founder blind spots
-- Free plan: 5 scans/month enforced server-side; Creator/Enterprise: unlimited scans
+- Free plan: 2 scans/month enforced server-side; Creator: 12 scans/month; Enterprise: custom/unlimited
 - Razorpay webhook-free: payment verified client-side via HMAC SHA256 signature check on `/api/billing/verify`
 - Creator plan: ₹299/mo (29900 paise); Enterprise: custom via email
 
 ## Product
 
-Users submit a GitHub repo, ZIP, URL, or description. Agenario runs multi-dimensional analysis (never reveals internal agent count or names in UI) across security, compliance (GDPR/OWASP/PCI-DSS), revenue intelligence, performance, UX, reliability, data integrity, observability, AI code quality, and founder blind spots. Returns a 0–100 readiness score, board-memo style executive summary, top 3 action plan, and 1-click fix prompts. Free tier: 5 scans/month. Creator: ₹299/mo unlimited. Enterprise: custom. Privacy: code never stored.
+Users submit a GitHub repo, ZIP, URL, or description. Agenario runs multi-dimensional analysis (never reveals internal agent count or names in UI) across security, compliance (GDPR/OWASP/PCI-DSS), revenue intelligence, performance, UX, reliability, data integrity, observability, AI code quality, and founder blind spots. Returns a 0–100 readiness score, board-memo style executive summary, top 3 action plan, and 1-click fix prompts. Free tier: 2 scans/month. Creator: ₹299/mo with 12 scans/month. Enterprise: custom. Privacy: code never stored.
 
 ## User preferences
 

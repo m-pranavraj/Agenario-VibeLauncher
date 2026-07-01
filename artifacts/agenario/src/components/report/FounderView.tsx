@@ -79,7 +79,7 @@ export function FounderView({ scan, isLight, onNavigate }: FounderViewProps) {
             </div>
             <div className="text-center p-3 rounded-xl bg-red-500/5 border border-red-500/10">
               <div className="text-lg font-bold text-red-400">{mockFeatures}</div>
-              <div className="text-[10px] text-white/40">Mockups Only</div>
+              <div className="text-[10px] text-white/40">Reality Gaps Only</div>
             </div>
             <div className="text-center p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
               <div className="text-lg font-bold text-white/60">{brokenFlows}</div>
@@ -117,11 +117,11 @@ export function FounderView({ scan, isLight, onNavigate }: FounderViewProps) {
             </div>
           )}
 
-          {/* Mockup Findings Summary */}
+          {/* Reality Gaps Summary */}
           {mockupFindings && mockupFindings.totalFindings > 0 && (
             <div className="mt-4 p-3 rounded-lg bg-amber-500/5 border border-amber-500/10">
               <p className="text-xs text-amber-400 font-medium">
-                ⚠️ {mockupFindings.totalFindings} potential mockup pattern(s) detected
+                ⚠️ {mockupFindings.totalFindings} potential reality gap pattern(s) detected
               </p>
               <p className="text-[10px] text-white/40 mt-1">{mockupFindings.summary}</p>
             </div>

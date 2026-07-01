@@ -13,6 +13,7 @@ import { ingestZipFile, cleanupZip } from "../lib/zip-ingestion.js";
 import { detectFramework, detectVibeTool, detectBusinessType } from "../lib/detector.js";
 import { scanDirectory, type StaticFinding } from "../lib/scanner.js";
 import { runProofEngine } from "../lib/proof-engine.js";
+import { runUrlDeepAudit } from "../lib/url-deep-audit.js";
 import { runPlaywrightBrowserProofs } from "../lib/playwright-proof.js";
 import { runGithubboxSandbox, type SandboxRunResult } from "../lib/sandbox-runner.js";
 import { runShadowApiRadar } from "../lib/shadow-api-radar.js";
@@ -820,6 +821,54 @@ async function runAnalysisPipeline(opts: {
   const sandboxLiveUrl =
     sandboxResult?.meta.status === "completed" ? sandboxResult.meta.localUrl : undefined;
 
+  // ── URL Deep Audit (for URL source type) ────────────────────────
+  let urlDeepAudit: Awaited<ReturnType<typeof runUrlDeepAudit>> | null = null;
+  if (sourceType === "url" && sourceInput) {
+    emit("url-deep-audit", "Running HTTP security headers & response analysis...", 50);
+    try {
+      urlDeepAudit = await runUrlDeepAudit(sourceInput);
+      if (urlDeepAudit) {
+        await saveEngineResult(scanId, "urlDeepAudit", {
+          findings: urlDeepAudit.findings,
+          headersAnalyzed: urlDeepAudit.headersAnalyzed,
+          endpointsScanned: urlDeepAudit.endpointsScanned,
+          responseLeaks: urlDeepAudit.responseLeaks,
+          authEndpoints: urlDeepAudit.authEndpoints,
+          securityScore: Math.max(0, 100 - urlDeepAudit.findings.filter((f) => f.severity === "critical" || f.severity === "high").length * 15),
+        });
+        const urlAuditFindings = urlDeepAudit.findings.map((f) => ({
+          scanId,
+          agentName: "URL Deep Audit",
+          severity: f.severity,
+          title: f.title,
+          description: f.description,
+          fixPrompt: f.endpoint 
+            ? `Review security configuration for ${f.endpoint}. Apply proper authentication and rate limiting.`
+            : `Review security headers and response sanitization for ${sourceInput}.`,
+          confidence: f.confidence,
+          evidence: f.evidence ?? null,
+          filePath: null,
+          lineNumber: null,
+          codeSnippet: null,
+          impactStatement: f.category === "security" 
+            ? `Public exposure risk on ${sourceInput}` 
+            : null,
+          retestResult: "needs_fix" as const,
+          sourceEvidence: "runtime" as const,
+          findingId: f.id,
+          functionName: null,
+          routePath: null,
+          reproductionSteps: null,
+          blastRadius: null,
+        }));
+        staticIssueRows.push(...urlAuditFindings);
+        logger.info({ scanId, urlFindings: urlAuditFindings.length }, "URL Deep Audit findings persisted");
+      }
+    } catch (err) {
+      logger.warn({ err, scanId }, "URL Deep Audit failed — continuing");
+    }
+  }
+
   // ── Run core agents + proof engine in parallel ────────────────
   // Each leg is individually guarded — no single failure can kill the scan.
   emit("ai-agents", "Running 15 AI agents in parallel...", 25);
@@ -1207,7 +1256,7 @@ async function runAnalysisPipeline(opts: {
    try {
      emit("market-readiness", "Computing Market Readiness Pipeline + Traffic-Light Verdict...", 95);
      marketReadiness = computeMarketReadiness(keyFiles ?? [], csg!, finalScore, issueCounts, (deploySafe ?? null) ? (deploySafe as any).blockersCount ?? 0 : 0);
-      greenLightVerdict = computeTrafficLightVerdict(finalScore, issueCounts, (deploySafe ?? null) ? (deploySafe as any).blockersCount ?? 0 : 0, marketReadiness, productReality?.realityScore ?? 100);
+      greenLightVerdict = computeTrafficLightVerdict(finalScore, issueCounts, (deploySafe ?? null) ? (deploySafe as any).blockersCount ?? 0 : 0, marketReadiness, productReality?.realityScore ?? 0);
      logger.info({ scanId, stage: marketReadiness.stage, verdict: greenLightVerdict.color }, "Market Readiness + Traffic-Light complete");
    } catch (err) {
      logger.warn({ err, scanId }, "Market Readiness / Traffic-Light failed — continuing");
@@ -1842,7 +1891,7 @@ router.get("/scans/:id/verdict", async (req, res): Promise<void> => {
 
     const criticalCount = issues.filter(i => i.severity === "critical").length;
     const highCount = issues.filter(i => i.severity === "high").length;
-    const score = scan.score ?? 100;
+    const score = scan.score ?? 0;
 
     const blockers: string[] = [];
     if (criticalCount > 0) blockers.push(`${criticalCount} critical issue(s) detected`);

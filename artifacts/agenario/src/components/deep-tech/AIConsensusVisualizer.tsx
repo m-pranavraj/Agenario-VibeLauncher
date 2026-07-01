@@ -217,7 +217,7 @@ export function AIConsensusVisualizer({ data }: { data: AIConsensusData | null |
           <Info className="w-3 h-3" />
           <span className="font-semibold">Methodology</span>
         </div>
-        Each finding is independently scored by three simulated agents: Security (injection/auth/exposure), Compliance (GDPR/PCI/PII), and Revenue (direct revenue impact, support cost). Dempster-Shafer combines their belief masses into a consensus verdict.
+        Each finding is independently scored by three specialist passes: Security (injection/auth/exposure), Compliance (GDPR/PCI/PII), and Revenue (direct revenue impact, support cost). Dempster-Shafer combines their belief masses into a consensus verdict.
       </div>
     </motion.div>
   );

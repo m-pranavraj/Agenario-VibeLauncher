@@ -76,7 +76,7 @@ export function RealityCheckVisualizer({ data }: { data: RealityCheckData }) {
             <BrainCircuit className="w-5 h-5" />
           </div>
           <div>
-            <h3 className={`font-bold font-['Syne'] text-base ${isLight ? "text-slate-800" : "text-white"}`}>RealityCheck — Mockup & Hardcoded Detection</h3>
+            <h3 className={`font-bold font-['Syne'] text-base ${isLight ? "text-slate-800" : "text-white"}`}>RealityCheck — Hardcoded & Non-functional Detection</h3>
             <p className={`text-[10px] ${isLight ? "text-slate-400" : "text-white/30"}`}>{data.totalFilesScanned} files scanned — {data.findings?.length || 0} findings</p>
           </div>
         </div>

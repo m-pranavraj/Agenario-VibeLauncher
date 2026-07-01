@@ -191,7 +191,6 @@ export default function DashboardPage() {
               <div className="grid sm:grid-cols-3 gap-3 max-w-2xl mx-auto mb-6">
                 {[
                   { icon: "🔗", title: "GitHub Repo", desc: "Paste your repo URL for continuous scanning", href: "/scans/new", primary: true },
-                  { icon: "🧪", title: "Live Demo", desc: "See a real scan on WebGoat (OWASP demo app)", href: "/scans/new?demo=dvwa", primary: false },
                   { icon: "📦", title: "ZIP Upload", desc: "Upload a local project archive", href: "/scans/new", primary: false },
                 ].map((item) => (
                   <Link key={item.title} href={item.href}>

@@ -8,7 +8,7 @@ import { describe, it, expect } from "vitest";
 // ── Replicate tier gate logic for testing ─────────────────────────────────────
 const PLAN_LIMITS = {
   free: { scansPerMonth: 2, maxIssues: 10, deepScan: false, playwright: false },
-  creator: { scansPerMonth: 25, maxIssues: 100, deepScan: true, playwright: true },
+  creator: { scansPerMonth: 12, maxIssues: 100, deepScan: true, playwright: true },
   enterprise: { scansPerMonth: Infinity, maxIssues: Infinity, deepScan: true, playwright: true },
 };
 
@@ -74,9 +74,9 @@ describe("TierGate — Free plan", () => {
 });
 
 describe("TierGate — Creator plan", () => {
-  it("allows up to 25 scans per month", () => {
-    expect(checkTierGate("creator", 24, "scan").allowed).toBe(true);
-    expect(checkTierGate("creator", 25, "scan").allowed).toBe(false);
+  it("allows up to 12 scans per month", () => {
+    expect(checkTierGate("creator", 11, "scan").allowed).toBe(true);
+    expect(checkTierGate("creator", 12, "scan").allowed).toBe(false);
   });
 
   it("allows deep scan", () => {
@@ -88,7 +88,7 @@ describe("TierGate — Creator plan", () => {
   });
 
   it("suggests enterprise when creator limit reached", () => {
-    const result = checkTierGate("creator", 25, "scan");
+    const result = checkTierGate("creator", 12, "scan");
     expect(result.upgradeRequired).toBe("enterprise");
   });
 });

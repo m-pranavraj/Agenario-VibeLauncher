@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { useLocation, useSearch } from "wouter";
+import { useState, useRef } from "react";
+import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Github, Globe, FileArchive, Upload, Loader2, ArrowRight,
@@ -68,22 +68,6 @@ export default function NewScanPage() {
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [isDemo, setIsDemo] = useState(false);
-
-  // Pre-fill for demo mode (?demo=dvwa from landing page CTA)
-  const searchStr = useSearch();
-  useEffect(() => {
-    const params = new URLSearchParams(searchStr);
-    if (params.get("demo")) {
-      setIsDemo(true);
-      setSourceType("github");
-      setInputValue("https://github.com/WebGoat/WebGoat");
-      setFramework("other");
-      setBusinessType("saas");
-      setVibeTool("none");
-      setProjectName("WebGoat Demo Scan");
-    }
-  }, [searchStr]);
 
   // Whether any input is ready
   const hasInput = sourceType === "zip" ? !!selectedFile : inputValue.length > 5;
@@ -156,29 +140,12 @@ export default function NewScanPage() {
           </div>
         )}
 
-        {/* Demo mode banner */}
-        {isDemo && (
-          <div className={`flex items-start gap-3 p-4 rounded-xl border ${
-            isLight ? "bg-violet-50 border-violet-200 text-violet-800" : "bg-violet-500/10 border-violet-500/25 text-violet-300"
-          }`}>
-            <span className="text-lg shrink-0">🧪</span>
-            <div>
-              <p className="text-sm font-semibold">Live Demo Scan — No Code Required</p>
-              <p className={`text-xs mt-0.5 ${isLight ? "text-violet-600" : "text-violet-400"}`}>
-                We've pre-filled a real vulnerable open-source app (<strong>WebGoat</strong> by OWASP) so you can see exactly what Agenario finds.
-                Hit <strong>Start Scan</strong> to run a full analysis and see the real results — SQL injections, auth gaps, GDPR violations and more.
-              </p>
-            </div>
-          </div>
-        )}
-
-
-        <div className={`rounded-2xl border divide-y ${isLight ? "bg-white border-slate-200 divide-slate-100" : "bg-[#0a0a0f] border-white/10 divide-white/[0.06]"}`}>
+        <div className={`rounded-2xl border divide-y ${isLight ? "bg-white border-slate-200 divide-slate-100" : "bg-[#0a0a0f] border-white/10 divide-white/6"}`}>
 
           {/* ── SECTION 1: Project Name ─────────────────────── */}
           <div className="p-6 space-y-3">
             <label className={`block text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-400" : "text-white/35"}`}>
-              Project Name <span className={`lowercase normal-case font-normal ${isLight ? "text-slate-300" : "text-white/20"}`}>(optional)</span>
+              Project Name <span className={`font-normal not-italic ${isLight ? "text-slate-300" : "text-white/20"}`}>(optional)</span>
             </label>
             <input
               type="text"
@@ -227,7 +194,7 @@ export default function NewScanPage() {
                   className={`p-6 border-2 border-dashed rounded-xl text-center cursor-pointer transition-colors ${
                     isLight
                       ? selectedFile ? "border-indigo-400 bg-indigo-50" : "border-slate-300 bg-slate-50 hover:bg-slate-100"
-                      : selectedFile ? "border-indigo-500/50 bg-indigo-500/10" : "border-white/10 bg-black hover:bg-white/[0.03]"
+                      : selectedFile ? "border-indigo-500/50 bg-indigo-500/10" : "border-white/10 bg-black hover:bg-white/3"
                   }`}
                 >
                   <input type="file" ref={fileInputRef} className="hidden" accept=".zip" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />

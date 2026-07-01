@@ -340,11 +340,11 @@ export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
           </div>
         </div>
 
-        {/* Card 2: Mockup & Dead code cleaner */}
+        {/* Card 2: Reality gaps & dead code cleaner */}
         <div className={`p-5 rounded-2xl border ${isLight ? "bg-white border-slate-200 shadow-sm" : "bg-white/[0.02] border-white/10"}`}>
           <div className="flex items-center gap-2 mb-3">
             <Trash2 className="w-4 h-4 text-red-400 animate-pulse" />
-            <h3 className={`text-xs font-bold uppercase tracking-wider font-['Syne'] ${isLight ? "text-slate-700" : "text-slate-300"}`}>Mockup Detector & Cleanups</h3>
+            <h3 className={`text-xs font-bold uppercase tracking-wider font-['Syne'] ${isLight ? "text-slate-700" : "text-slate-300"}`}>Reality Gap Detector & Cleanups</h3>
           </div>
           <div className="space-y-3">
             <div className="flex items-center gap-3">
@@ -352,7 +352,7 @@ export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
                 <div className="text-base font-black text-red-400 font-heading">
                   {scan.productReality?.mockupFindings?.length ?? 0}
                 </div>
-                <div className="text-[9px] opacity-45 uppercase">Mocks</div>
+                <div className="text-[9px] opacity-45 uppercase">Gaps</div>
               </div>
               <div className={`text-center p-2 rounded-xl border min-w-[70px] ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/5"}`}>
                 <div className="text-base font-black text-amber-400 font-heading">
@@ -371,10 +371,10 @@ export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
             {/* Unnecessary file cleanup suggestion */}
             <div className="text-[10px] leading-relaxed p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-amber-300">
               <span className="font-bold">Cleanup Suggestion: </span>
-              {scan.cleanupReport?.summary || "No critical dead code or dummy mockup paths detected. Codebase hygiene score is excellent."}
+              {scan.cleanupReport?.summary || "No critical dead code or hardcoded paths detected. Codebase hygiene score is excellent."}
             </div>
 
-            {/* Scrollable list of mockup and cleanup files */}
+            {/* Scrollable list of reality gap and cleanup files */}
             {((scan.cleanupReport?.findings && scan.cleanupReport.findings.length > 0) || 
               (scan.productReality?.mockupFindings && scan.productReality.mockupFindings.length > 0)) ? (
               <div className="mt-4 pt-3.5 border-t border-dashed border-white/10 space-y-2 max-h-[180px] overflow-y-auto pr-1">
@@ -385,16 +385,16 @@ export function FileExplorer({ scan, isLight, plan }: FileExplorerProps) {
                   </span>
                 </div>
                 
-                {/* Mockup Findings */}
+                {/* Reality Gap Findings */}
                 {scan.productReality?.mockupFindings?.map((mock: any, idx: number) => {
                   const promptText = `Refactor the mocked data pattern in ${mock.filePath} line ${mock.line || 1} to use a dynamic database query or live API controller: "${mock.pattern || "dummy mock data"}".`;
                   return (
                     <div key={`mock-${idx}`} className={`p-2.5 rounded-xl border text-[10px] space-y-1.5 ${isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-red-500/[0.02] border-red-500/10 text-slate-300"}`}>
                       <div className="flex justify-between items-center">
                         <span className="font-mono font-bold text-red-400 truncate max-w-[155px]" title={mock.filePath}>{mock.filePath}</span>
-                        <span className="text-[8px] uppercase font-bold text-red-400 bg-red-500/15 border border-red-500/25 px-1.5 rounded-md">Mock Pattern</span>
+                        <span className="text-[8px] uppercase font-bold text-red-400 bg-red-500/15 border border-red-500/25 px-1.5 rounded-md">Reality Gap</span>
                       </div>
-                      <p className="opacity-70 leading-normal text-[9px]">{mock.description || `Mockup pattern "${mock.pattern}" detected on line ${mock.line || 1}.`}</p>
+                      <p className="opacity-70 leading-normal text-[9px]">{mock.description || `Reality gap pattern "${mock.pattern}" detected on line ${mock.line || 1}.`}</p>
                       
                       <div className="space-y-1 mt-1 pt-1.5 border-t border-white/5">
                         <div className="flex items-center justify-between">

@@ -1262,7 +1262,7 @@ export function VerificationPanel({ scan: rawScan, activeSection }: Props) {
             actionItems: !scan.productReality ? ["Engine not connected - configure pipeline"] : (scan.productReality.score ?? 0) < 70 ? ["Fix mocked/broken features before launch", "Connect all API endpoints to real backends"] : null,
          },
          {
-           title: "RealityCheck — Mockup & Hardcoded Detection",
+           title: "RealityCheck — Hardcoded & Non-functional Detection",
            shortName: "RCK",
            icon: BrainCircuit,
            color: "pink",

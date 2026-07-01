@@ -127,7 +127,7 @@ const PRICING = [
     launchBadge: "🚀 Launch Offer",
     period: "/mo",
     desc: "Full intelligence for indie founders",
-    features: ["12 scans per month", "All analysis dimensions", "Architecture review", "Compliance checks", "Priority analysis queue"],
+    features: ["12 scans per month", "All 10 analysis dimensions", "Architecture review", "Compliance checks", "Priority analysis queue"],
     cta: "Upgrade to Creator",
     href: "/pricing",
     highlight: true,
@@ -456,66 +456,42 @@ export default function Home() {
               </motion.div>
             </motion.div>
 
-            {/* Dashboard mockup */}
+            {/* Live product summary */}
             <motion.div
               initial={{ opacity: 0, x: 30, y: 10 }}
               animate={{ opacity: 1, x: 0, y: 0 }}
               transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className={`relative rounded-2xl p-6 shadow-2xl overflow-hidden ${t.card} ${!isLight ? "aurora-card aurora-card-intense" : ""}`}
             >
-              {!isLight && <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.05] via-transparent to-blue-500/[0.04] pointer-events-none rounded-2xl" />}
-              {isLight && <div className="absolute inset-0 bg-gradient-to-br from-pink-500/[0.04] via-transparent to-violet-500/[0.03] pointer-events-none rounded-2xl" />}
+              {!isLight && <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-blue-500/4 pointer-events-none rounded-2xl" />}
+              {isLight && <div className="absolute inset-0 bg-gradient-to-br from-pink-500/4 via-transparent to-violet-500/3 pointer-events-none rounded-2xl" />}
               <div className="relative z-10 space-y-5">
-                <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b ${isLight ? "border-pink-100/60" : "border-white/[0.07]"}`}>
+                <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b ${isLight ? "border-pink-100/60" : "border-white/7"}`}>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <Github className={`w-3.5 h-3.5 ${t.bodyDim}`} />
-                      <span className={`text-xs ${t.bodyDim}`}>main/my-saas-app</span>
+                      <ShieldCheck className={`w-3.5 h-3.5 ${t.bodyDim}`} />
+                      <span className={`text-xs ${t.bodyDim}`}>Real scans, real evidence</span>
                     </div>
-                    <h3 className={`font-heading font-bold ${t.h2}`}>Launch Readiness Report</h3>
-                  </div>
-                  <div className="text-left sm:text-right">
-                    <div className="text-3xl font-heading font-bold text-green-500">76<span className={`text-sm ${t.bodyDim}`}>/100</span></div>
-                    <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-0.5">Launch with Caution</p>
+                    <h3 className={`font-heading font-bold ${t.h2}`}>What the engine actually returns</h3>
                   </div>
                 </div>
 
-                <div className="space-y-2.5">
+                <div className="grid sm:grid-cols-3 gap-3">
                   {[
-                    { severity: "CRITICAL", title: "Stripe key exposed in client bundle",  bg: isLight ? "bg-red-50 border-red-200/60"  : "bg-red-500/[0.08] border-red-500/25",   badge: isLight ? "bg-red-100 text-red-700"   : "bg-red-500/15 text-red-400"   },
-                    { severity: "HIGH",     title: "No GDPR consent banner present",       bg: isLight ? "bg-amber-50 border-amber-200/60" : "bg-amber-500/[0.07] border-amber-500/20", badge: isLight ? "bg-amber-100 text-amber-700" : "bg-amber-500/12 text-amber-400" },
-                    { severity: "MEDIUM",   title: "Checkout missing loading state",       bg: isLight ? "bg-gray-50 border-gray-200/60" : "bg-white/[0.03] border-white/[0.07]",  badge: isLight ? "bg-gray-100 text-gray-600"  : "bg-white/8 text-white/50"     },
-                  ].map((item, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: 12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.6 + i * 0.12 }}
-                      className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-4 py-3 rounded-xl border ${item.bg}`}
-                    >
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide shrink-0 ${item.badge}`}>{item.severity}</span>
-                      <span className={`text-sm flex-1 break-words min-w-0 w-full ${t.body}`}>{item.title}</span>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
-                  {[
-                    { label: "3 issues", sub: "Security",   color: "text-red-500"    },
-                    { label: "2 issues", sub: "Compliance", color: "text-amber-500"  },
-                    { label: "Clean",    sub: "Revenue",    color: "text-green-500"  },
-                  ].map((s, i) => (
-                    <div key={i} className={`rounded-xl p-3 text-center ${t.card}`}>
-                      <p className={`text-sm font-bold ${s.color}`}>{s.label}</p>
-                      <p className={`text-[10px] mt-0.5 ${t.bodyDim}`}>{s.sub}</p>
+                    { title: "Inputs", desc: "GitHub repo, ZIP upload, or live URL" },
+                    { title: "Analysis", desc: "Static scan, deep engines, and product reality checks" },
+                    { title: "Outputs", desc: "Score, evidence, fixes, and review-ready findings" },
+                  ].map((item) => (
+                    <div key={item.title} className={`rounded-xl p-4 border ${isLight ? "bg-white border-pink-100/70" : "bg-white/3 border-white/8"}`}>
+                      <div className={`text-sm font-semibold ${t.h2}`}>{item.title}</div>
+                      <p className={`text-xs mt-1.5 ${t.body}`}>{item.desc}</p>
                     </div>
                   ))}
                 </div>
 
-                <button className={`w-full flex items-center justify-center gap-2 text-xs font-semibold py-2.5 rounded-xl transition-all ${isLight ? "bg-violet-50 border border-violet-200/60 text-violet-700 hover:bg-violet-100" : "bg-violet-500/[0.1] border border-violet-500/20 text-violet-300 hover:bg-violet-500/[0.18]"}`}>
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Generate 1-Click Fix Prompts
-                </button>
+                <div className={`rounded-xl px-4 py-3 border ${isLight ? "bg-pink-50 border-pink-100/70" : "bg-white/3 border-white/8"}`}>
+                  <p className={`text-xs ${t.body}`}>{stats ? `${stats.scansDone.toLocaleString()} live scans recorded` : "Live scan totals load from the API."}</p>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -526,8 +502,8 @@ export default function Home() {
           <div className="max-w-4xl mx-auto px-6">
             <div className="grid grid-cols-2 gap-8 text-center max-w-2xl mx-auto">
               {[
-                { value: stats?.scansDone || 1432, suffix: "", label: "Live Scans Conducted", color: "text-violet-500" },
-                { value: stats?.issuesReproduced || 6942, suffix: "", label: "Critical Issues Detected", color: "text-pink-500" },
+                { value: stats?.scansDone ?? null, suffix: "", label: "Live Scans Conducted", color: "text-violet-500" },
+                { value: stats?.issuesReproduced ?? null, suffix: "", label: "Critical Issues Detected", color: "text-pink-500" },
               ].map((stat, i) => (
                 <motion.div
                   key={i}
@@ -537,7 +513,7 @@ export default function Home() {
                   transition={{ delay: i * 0.08, duration: 0.5 }}
                 >
                   <div className={`text-4xl md:text-5xl font-heading font-black counter-glow ${stat.color}`}>
-                    <AnimatedCounter target={stat.value} suffix={stat.suffix} />
+                    {stat.value == null ? "—" : <AnimatedCounter target={stat.value} suffix={stat.suffix} />}
                   </div>
                   <div className={`text-sm font-semibold mt-2 ${t.bodyDim}`}>{stat.label}</div>
                 </motion.div>

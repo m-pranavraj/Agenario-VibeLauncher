@@ -116,213 +116,41 @@ import { useIsLight } from "@/hooks/use-is-light";
 import { toast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DeepArchitectureVisualizer } from "@/components/deep-tech/DeepArchitectureVisualizer";
-import { DeploySafeVisualizer } from "@/components/deep-tech/DeploySafeVisualizer";
-import { FailSafeVisualizer } from "@/components/deep-tech/FailSafeVisualizer";
-import { ObsCoverVisualizer } from "@/components/deep-tech/ObsCoverVisualizer";
-import { CogFlowVisualizer } from "@/components/deep-tech/CogFlowVisualizer";
-import { ArchScanVisualizer } from "@/components/deep-tech/ArchScanVisualizer";
-import { TimeAwareDepsVisualizer } from "@/components/deep-tech/TimeAwareDepsVisualizer";
-import { RealityCheckVisualizer } from "@/components/deep-tech/RealityCheckVisualizer";
-import {
-  api,
-  type ScanDetail,
-  type ScanIssue,
-  type ComplianceResult,
-  type RiskForecast,
-  type RevenueIntelligence,
-  type ProofEvidence,
-  type RegressionDiff,
-  type BenchmarkData,
-  type LaunchDNA,
-  type ShadowApiFindings,
-  type LaunchReplayStep,
-  type DigitalTwinResult,
-  type PredictiveIntelResult,
-  type RootCauseResult,
-} from "@/lib/api";
-import { motion } from "framer-motion";
-import { DempsterShaferVisualizer } from "@/components/deep-tech/DempsterShaferVisualizer";
-import { EntropyLeakVisualizer } from "@/components/deep-tech/EntropyLeakVisualizer";
-import { ConstraintSolverVisualizer } from "@/components/deep-tech/ConstraintSolverVisualizer";
-import type { DempsterShaferResult } from "@/lib/api";
-import { RtIfcGraphVisualizer } from "@/components/deep-tech/RtIfcGraphVisualizer";
-import { AbstractInterpretationRadar } from "@/components/deep-tech/AbstractInterpretationRadar";
-import { StructuralAnalysisVisualizer } from "@/components/deep-tech/StructuralAnalysisVisualizer";
-import { CrossLanguageTaintVisualizer } from "@/components/deep-tech/CrossLanguageTaintVisualizer";
-import { ProductRealityVisualizer } from "@/components/deep-tech/ProductRealityVisualizer";
-import { AIConsensusVisualizer } from "@/components/deep-tech/AIConsensusVisualizer";
-import { UnderApproximationVisualizer } from "@/components/deep-tech/UnderApproximationVisualizer";
-import { VerificationPanel } from "@/components/deep-tech/VerificationPanel";
-import { DeepTech13Section } from "@/components/deep-tech/DeepTech13Section";
+function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
+  const isLight = useIsLight();
+  const issues = (scan.issues ?? []).filter((issue: any) => !issue.locked);
 
+  if (issues.length === 0) return null;
 
-// Theme-agnostic severity styles - work on both light and dark backgrounds.
-// The app uses JS-conditional `isLight ? "..." : "..."` everywhere, NOT Tailwind
-// dark: prefix (incompatible with this Tailwind v4 + next-themes class setup).
-const SEVERITY_CONFIG = {
-  critical: {
-    color: "text-red-500",
-    bg: "bg-red-500/[0.08] border-red-400/25",
-    badge: "bg-red-500/15 text-red-600",
-    dot: "bg-red-500",
-  },
-  high: {
-    color: "text-amber-500",
-    bg: "bg-amber-500/[0.07] border-amber-400/22",
-    badge: "bg-amber-500/15 text-amber-700",
-    dot: "bg-amber-500",
-  },
-  medium: {
-    color: "text-yellow-600",
-    bg: "bg-yellow-500/[0.06] border-yellow-400/20",
-    badge: "bg-yellow-500/15 text-yellow-700",
-    dot: "bg-yellow-500",
-  },
-  low: {
-    color: "text-gray-400",
-    bg: "bg-gray-400/[0.05] border-gray-300/25",
-    badge: "bg-gray-100 text-gray-500",
-    dot: "bg-gray-400",
-  },
-};
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}
+    >
+      <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/5"} flex items-center gap-3`}>
+        <ListChecks className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm flex-1`}>Pre-Launch Checklist</h2>
+      </div>
 
-function getConfidenceStyle(c: number, isLight: boolean): {
-  label: string;
-  color: string;
-  badge: string;
-  icon: ElementType;
-} {
-  if (c >= 99)
-    return {
-      label: `${c}% - Browser Runtime Proof`,
-      color: "text-green-400",
-      badge: "bg-green-500/15 text-green-400 border border-green-500/25",
-      icon: CheckCircle2,
-    };
-  if (c >= 90)
-    return {
-      label: `${c}% - HTTP Runtime Proof`,
-      color: "text-green-400",
-      badge: "bg-green-500/10 text-green-400 border border-green-500/20",
-      icon: Info,
-    };
-  if (c >= 75)
-    return {
-      label: `${c}% - Static Code Evidence`,
-      color: "text-sky-400",
-      badge: "bg-sky-500/10 text-sky-400 border border-sky-500/20",
-      icon: Info,
-    };
-  if (c >= 60)
-    return {
-      label: `${c}% - Pattern Match`,
-      color: "text-amber-400",
-      badge: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
-      icon: Zap,
-    };
-  return {
-    label: `${c}% - AI Reasoning`,
-    color: isLight ? "text-gray-500" : "text-white/35",
-    badge: isLight ? "bg-gray-100 text-gray-500 border border-gray-200" : "bg-white/[0.05] text-white/35 border border-white/[0.08]",
-    icon: Circle,
-  };
+      <div className="p-6 space-y-3">
+        {issues.slice(0, 8).map((issue: any) => (
+          <div key={issue.id} className={`flex items-start gap-3 rounded-xl border p-3 ${isLight ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/8"}`}>
+            <CheckCheck className={`w-4 h-4 mt-0.5 ${isLight ? "text-green-500" : "text-green-400"}`} />
+            <div className="min-w-0">
+              <p className={`text-sm font-medium ${isLight ? "text-gray-800" : "text-white/85"}`}>{issue.title}</p>
+              <p className={`text-xs mt-0.5 ${isLight ? "text-gray-500" : "text-white/40"}`}>{issue.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
 }
 
-const AGENT_ICONS: Record<string, React.FC<{ className?: string }>> = {
-  "Security & Access Control": Lock,
-  "Compliance & Regulatory": Scale,
-  "Revenue & Business Logic": CreditCard,
-  "Performance & Scalability": Zap,
-  "User Experience & Conversion": Eye,
-  "Reliability & Error Handling": Activity,
-  "Data Integrity & Architecture": Database,
-  "Observability & Launch Readiness": Fingerprint,
-  "AI Code Quality": Bot,
-  "Founder Blind Spots": Cpu,
-  "IDOR & Access Control Agent": Lock,
-  "Auth & Session Agent": Shield,
-  "Payments & Billing Agent": CreditCard,
-  "Input & Validation Agent": Search,
-  "File & Upload Agent": Upload,
-  "UX Flow Agent": Eye,
-  "Performance Agent": Zap,
-  "Reliability & Observability Agent": Activity,
-  "Cleanup & Architecture Agent": Layers,
-  "AI Smell Agent": Bot,
-  "Mobile & PWA Audit": Smartphone,
-  "i18n & Accessibility Deep Scan": Globe,
-  "Supply Chain Security": Package,
-  "Cloud Cost Efficiency": Cloud,
-  "Competitive Gap Analysis": Target,
-  "Business Logic Attack Lab": ShieldAlert,
-};
-
-const VERDICT_CONFIG = {
-  ready: {
-    label: "Ready to Launch",
-    sublabel: "Strong production readiness across all dimensions",
-    icon: CheckCircle2,
-    color: "text-green-400",
-    bg: "border-green-500/15 bg-green-500/[0.04]",
-    scoreColor: "text-green-400",
-  },
-  caution: {
-    label: "Launch with Caution",
-    sublabel: "Address critical and high-severity items before going live",
-    icon: AlertTriangle,
-    color: "text-amber-400",
-    bg: "border-amber-500/15 bg-amber-500/[0.04]",
-    scoreColor: "text-amber-400",
-  },
-  "do-not-launch": {
-    label: "Do Not Launch",
-    sublabel:
-      "Critical issues pose serious security, compliance, or revenue risk",
-    icon: XCircle,
-    color: "text-red-400",
-    bg: "border-red-500/15 bg-red-500/[0.04]",
-    scoreColor: "text-red-400",
-  },
-  needs_work: {
-    label: "Needs Work",
-    sublabel: "Several issues require attention before production deployment",
-    icon: AlertTriangle,
-    color: "text-amber-400",
-    bg: "border-amber-500/15 bg-amber-500/[0.04]",
-    scoreColor: "text-amber-400",
-  },
-};
-
-const COMPLIANCE_COLORS: Record<string, string> = {
-  GDPR: "text-blue-400",
-  "OWASP Top 10": "text-red-400",
-  "PCI-DSS": "text-green-400",
-  HIPAA: "text-purple-400",
-  "SOC 2": "text-amber-400",
-  "WCAG 2.1": "text-cyan-400",
-  CCPA: "text-orange-400",
-  "ISO 27001": "text-violet-400",
-};
-
-function getLineColor(color: string): string {
-  const map: Record<string, string> = {
-    cyan: "#06b6d4",
-    violet: "#8b5cf6",
-    fuchsia: "#d946ef",
-    emerald: "#10b981",
-    blue: "#3b82f6",
-    orange: "#f97316",
-    yellow: "#eab308",
-    purple: "#a855f7",
-    pink: "#ec4899",
-    red: "#ef4444",
-    green: "#22c55e",
-    teal: "#14b8a6",
-    indigo: "#6366f1",
-  };
-  return map[color] || map.cyan;
+function StickyLaunchAlertBanner() {
+  return null;
 }
-
 function computeEngineStatus(score: number | null, hasData: boolean): string {
   if (!hasData) return "missing";
   if (score === null) return "missing";
@@ -2927,9 +2755,7 @@ function SandboxProofsSection({
 
       <div className="p-6 space-y-4">
         {proofs.length === 0 ? (
-          /* --- No proofs: placeholder + explanation --- */
           <div className="space-y-4">
-            {/* Demo screenshot placeholder */}
             <div className="relative rounded-xl overflow-hidden border border-dashed border-violet-500/20 bg-gradient-to-br from-violet-500/[0.04] to-indigo-500/[0.04]">
               <div className={`flex items-center gap-2 px-4 py-2.5 border-b ${isLight ? "border-gray-100 bg-gray-50" : "border-white/[0.05] bg-black/20"}`}>
                 <div className="flex gap-1.5">
@@ -2940,7 +2766,6 @@ function SandboxProofsSection({
                 <div className={`flex-1 h-4 rounded-md mx-4 ${isLight ? "bg-gray-200" : "bg-white/[0.07]"}`} />
                 <Camera className={`w-3 h-3 ${isLight ? "text-gray-300" : "text-white/20"}`} />
               </div>
-              {/* Mock screenshot content (blurred placeholder) */}
               <div className="relative h-40 flex items-center justify-center px-6 py-4 select-none">
                 <div className="absolute inset-0 grid grid-cols-3 gap-2 p-4 blur-sm opacity-40 pointer-events-none">
                   {[...Array(6)].map((_, i) => (
@@ -4263,11 +4088,11 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
       className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
       <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} flex items-center gap-3`}>
         <Network className="w-4 h-4 text-violet-400" />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm flex-1`}>Digital Twin Simulation</h2>
+        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm flex-1`}>Digital Twin Analysis</h2>
         <div className="flex items-center gap-3 text-xs"
           >
           {(data.simulatedUserCount ?? 0) > 0 && (
-            <span className={`${isLight ? "text-gray-400" : "text-white/25"}`}>{data.simulatedUserCount!.toLocaleString()} simulated paths</span>
+            <span className={`${isLight ? "text-gray-400" : "text-white/25"}`}>{data.simulatedUserCount!.toLocaleString()} computed paths</span>
           )}
           <span className="px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 font-semibold">
             {data.twinConfidenceScore}/100 confidence
@@ -4380,7 +4205,7 @@ function DigitalTwinPanel({ data, isCreator }: { data: DigitalTwinResult; isCrea
             </div>
           )}
           {isCreator && data.attackSimulations.length === 0 && (
-            <div className={`px-6 py-6 text-center ${isLight ? "text-gray-400" : "text-white/25"} text-sm`}>No attack simulations available</div>
+            <div className={`px-6 py-6 text-center ${isLight ? "text-gray-400" : "text-white/25"} text-sm`}>No attack vectors available</div>
           )}
           <div className="divide-y divide-white/[0.04]">
             {data.attackSimulations.map((a: any, i: any) => (
@@ -4766,168 +4591,6 @@ function CleanupFindingRow({ finding: f }: { finding: NonNullable<ScanDetail["cl
   );
 }
 
-// --- Pre-Launch Checklist -------------------------------------------------------------------------------
-function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
-  const isLight = useIsLight();
-  const storageKey = `checklist-${scan.id}`;
-  const [checked, setChecked] = useState<Record<number, boolean>>(() => {
-    try { return JSON.parse(localStorage.getItem(storageKey) ?? "{}"); } catch { return {}; }
-  });
-  const [copied, setCopied] = useState(false);
-
-  const unlockedIssues = (scan.issues ?? []).filter((i: any) => !i.locked);
-  if (unlockedIssues.length === 0) return null;
-
-  const groups: Array<{ label: string; color: string; dot: string; items: typeof unlockedIssues }> = [
-    { label: "Critical - Fix before launch", color: "text-red-400", dot: "bg-red-500", items: unlockedIssues.filter((i) => i.severity === "critical") },
-    { label: "High - Fix this week", color: "text-amber-400", dot: "bg-amber-500", items: unlockedIssues.filter((i) => i.severity === "high") },
-    { label: "Medium - Fix this month", color: "text-yellow-400", dot: "bg-yellow-500", items: unlockedIssues.filter((i) => i.severity === "medium") },
-    { label: "Low - When time allows", color: "text-white/35", dot: "bg-white/20", items: unlockedIssues.filter((i) => i.severity === "low") },
-  ].filter((g) => g.items.length > 0);
-
-  const total = unlockedIssues.length;
-  const done = Object.values(checked).filter(Boolean).length;
-  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-
-  const toggle = (id: number) => {
-    const next = { ...checked, [id]: !checked[id] };
-    setChecked(next);
-    localStorage.setItem(storageKey, JSON.stringify(next));
-  };
-
-  const copyMarkdown = async () => {
-    const lines = [`# Pre-Launch Checklist - ${scan.sourceInput}`, `Score: ${scan.score ?? "??"}/100`, ""];
-    for (const g of groups) {
-      lines.push(`## ${g.label}`);
-      for (const item of g.items) {
-        lines.push(`- [${checked[item.id] ? "x" : " "}] **${item.title}** - ${item.description.slice(0, 120)}…`);
-      }
-      lines.push("");
-    }
-    await navigator.clipboard.writeText(lines.join("\n"));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-      className={`${isLight ? "bg-white border border-gray-200" : "glass"} rounded-2xl overflow-hidden`}>
-      <div className={`px-6 py-4 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"} flex items-center gap-3`}>
-        <ListChecks className={`w-4 h-4 ${isLight ? "text-gray-400" : "text-white/30"}`} />
-        <h2 className={`${isLight ? "text-gray-900" : "text-white"} font-bold font-['Syne'] text-sm flex-1`}
-          >Pre-Launch Checklist</h2>
-        <span className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"}`}>
-        {done}/{total} resolved</span>
-        <button onClick={copyMarkdown}
-          className={`flex items-center gap-1.5 text-xs ${isLight ? "text-gray-400" : "text-white/25"} hover:text-white/60 border ${isLight ? "border-gray-200" : "border-white/[0.07]"} hover:border-white/15 px-3 py-1.5 rounded-lg transition-all`}
-          >
-          {copied ? <><CheckCheck className="w-3 h-3 text-green-400" />Copied!</> : <><Copy className="w-3 h-3" />Copy MD</>}
-        </button>
-      </div>
-
-      {/* Progress bar */}
-      <div className={`px-6 py-3 border-b ${isLight ? "border-gray-200" : "border-white/[0.05]"}`}>
-        <div className="flex items-center gap-3">
-          <div className={`flex-1 h-1.5 ${isLight ? "bg-gray-100" : "bg-white/[0.05]"} rounded-full overflow-hidden`}>
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${pct === 100 ? "bg-green-500" : pct >= 50 ? "bg-amber-500" : "bg-red-500"}`}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <span className={`text-xs font-bold ${pct === 100 ? "text-green-400" : isLight ? "text-gray-500" : "text-white/40"}`}>{pct}%</span>
-          {pct === 100 && <span className="text-xs text-green-400 font-semibold">Launch ready! 🚀</span>}
-        </div>
-      </div>
-
-      <div className="divide-y divide-white/[0.04]">
-        {groups.map((g) => (
-          <div key={g.label} className="px-6 py-4">
-            <div className="flex items-center gap-2 mb-3">
-              <span className={`w-1.5 h-1.5 rounded-full ${g.dot}`} />
-              <span className={`text-[11px] font-bold uppercase tracking-wide ${g.color}`}>{g.label}</span>
-            </div>
-            <div className="space-y-2">
-              {g.items.map((item: any) => (
-                <label key={item.id} className="flex items-start gap-3 cursor-pointer group">
-                  <div className={`w-4 h-4 mt-0.5 rounded shrink-0 border flex items-center justify-center transition-all ${
-                    checked[item.id]
-                      ? "bg-green-500 border-green-500"
-                      : "bg-white/[0.04] border-white/[0.12] group-hover:border-white/25"
-                  }`}
-                    onClick={() => toggle(item.id)}>
-                    {checked[item.id] && <CheckCheck className={`w-2.5 h-2.5 ${isLight ? "text-gray-900" : "text-white"}`} />}
-                  </div>
-                  <div className="flex-1 min-w-0"
-          >
-                    <p className={`text-sm font-medium transition-colors ${checked[item.id] ? (isLight ? "text-gray-400 line-through" : "text-white/25 line-through") : (isLight ? "text-gray-700" : "text-white/75")}`}>
-                      {item.title}
-                    </p>
-                    <p className={`text-xs ${isLight ? "text-gray-400" : "text-white/30"} mt-0.5 leading-relaxed line-clamp-2`}>{item.description}</p>
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-function StickyLaunchAlertBanner({ scan }: { scan: ScanDetail }) {
-  const isLight = useIsLight();
-  const [dismissed, setDismissed] = useState(false);
-  const critCount = scan.issueCounts?.critical ?? 0;
-  const hasRevenueLeak =
-    scan.revenueIntelligence &&
-    scan.revenueIntelligence.overallRevenueRisk !== "low";
-
-  return null; // Disabled sticky launch alert banner per user request
-  const isRevAlert = critCount === 0 && hasRevenueLeak;
-
-  return (
-    <motion.div
-      initial={{ y: 80, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 1.5, duration: 0.4 }}
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-4"
-          >
-      <div className={`rounded-2xl px-5 py-3.5 backdrop-blur-xl flex items-center gap-4 shadow-2xl border ${
-        isRevAlert ? "bg-amber-950/90 border-amber-500/30" : "bg-red-950/90 border-red-500/30"
-      }`}>
-        <AlertTriangle className={`w-5 h-5 shrink-0 ${isRevAlert ? "text-amber-400" : "text-red-400"}`} />
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
-        
-            {isRevAlert ? "⚠️ Revenue Alert" : "⚠️ Launch Security Alert"}
-          </p>
-          <p className={`text-xs mt-0.5 truncate ${isRevAlert ? "text-amber-300/70" : "text-red-300/70"}`}>
-            {isRevAlert
-              ? `${scan.revenueIntelligence?.estimatedMonthlyImpact ?? "Potential revenue loss"} at risk`
-              : `${critCount} critical blocker${critCount !== 1 ? "s" : ""} - fix before going live`}
-          </p>
-        </div>
-        <button 
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className={`shrink-0 flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-all ${
-            isRevAlert
-              ? `bg-amber-500/80 hover:bg-amber-500 ${isLight ? "text-gray-900" : "text-white"} border border-amber-400/30`
-              : `bg-red-500/80 hover:bg-red-500 ${isLight ? "text-gray-900" : "text-white"} border border-red-400/30`
-          }`}
-        >
-          View Issues
-        </button>
-        <button
-          onClick={() => setDismissed(true)}
-          className={`shrink-0 w-7 h-7 rounded-lg ${isLight ? "bg-gray-100" : "bg-white/[0.07]"} hover:bg-white/[0.12] flex items-center justify-center transition-colors ${isLight ? "text-gray-500" : "text-white/40"} hover:text-white`}
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </motion.div>
-  );
-}
-
 function LockedInsightsPanel({ scan, plan }: { scan: ScanDetail; plan: string }) {
   const isLight = useIsLight();
   const isCreator = plan === "creator" || plan === "enterprise";
@@ -4945,9 +4608,9 @@ function LockedInsightsPanel({ scan, plan }: { scan: ScanDetail; plan: string })
     IconCmp: DollarSign,
   });
   if (scan.digitalTwin) items.push({
-    label: "Digital Twin Simulation",
+    label: "Digital Twin Analysis",
     detail: scan.digitalTwin.simulatedUserCount > 0
-      ? `${scan.digitalTwin.simulatedUserCount.toLocaleString()} simulated execution paths`
+      ? `${scan.digitalTwin.simulatedUserCount.toLocaleString()} computed execution paths`
       : `${scan.digitalTwin.journeys.length} journeys · ${scan.digitalTwin.attackSimulations.length} attack vectors`,
     IconCmp: Globe,
   });
@@ -7065,7 +6728,7 @@ export default function ScanResultsPage() {
           <div className="space-y-6">
             <div className="flex items-center gap-2 mb-2">
               <Users className="w-5 h-5 text-violet-500 animate-pulse" />
-              <h2 className={`text-xl font-extrabold font-heading ${isLight ? "text-slate-900" : "text-white"}`}>Product Reality & Mockup Verification</h2>
+              <h2 className={`text-xl font-extrabold font-heading ${isLight ? "text-slate-900" : "text-white"}`}>Product Reality & Reality Checks</h2>
             </div>
             
             {scan.cofounderNarrative && scan.cofounderNarrative.length > 20 && (
@@ -7161,7 +6824,7 @@ export default function ScanResultsPage() {
         {/* --- Advanced Tab ---------------------------------------------------- */}
         {activeTab === "advanced" && (
           <>
-            {/* --- Digital Twin Simulation - Creator only --------------- */}
+            {/* --- Digital Twin Analysis - Creator only --------------- */}
             {scan.digitalTwin && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -7171,8 +6834,8 @@ export default function ScanResultsPage() {
                 <CreatorGate
                   isLight={isLight}
                   plan={user.plan}
-                  feature="Digital Twin Simulation"
-                  preview="Virtual user journeys, chaos engineering probes, and attack vector simulations across your app"
+                  feature="Digital Twin Analysis"
+                  preview="Virtual user journeys, chaos probes, and attack vector analysis across your app"
                 >
                   <DigitalTwinPanel
                     data={scan.digitalTwin}

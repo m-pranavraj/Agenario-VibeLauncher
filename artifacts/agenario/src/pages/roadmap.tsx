@@ -56,7 +56,7 @@ const PLANNED_COMPONENTS: Component[] = [
   { name: "WebGPU Tensor Hashing", status: "planned", description: "GPU-accelerated AST feature hashing (CPU version already built)", tech: "WebGPU compute shaders", gap: "GPU access required — not available on 512MB Render" },
   { name: "ZK-SNARK Proofs (snarkjs)", status: "planned", description: "Real zero-knowledge proofs of code properties", tech: "snarkjs + circom circuits", gap: "Circuit design needed per property" },
   { name: "SMT Solver Integration (Z3)", status: "planned", description: "Formal verification of code paths via SAT solving (DPLL engine already built)", tech: "z3-solver WASM", gap: "WASM bundle + constraint extraction" },
-  { name: "BFT Chaos Simulation", status: "planned", description: "Simulate module failures and measure cascade effects", tech: "Graph algorithms + Monte Carlo", gap: "Not yet implemented" },
+  { name: "BFT Chaos Analysis", status: "planned", description: "Analyze module failures and measure cascade effects", tech: "Graph algorithms + Monte Carlo", gap: "Not yet implemented" },
 ];
 
 const ROADMAP_PHASES = [
@@ -91,7 +91,7 @@ const ROADMAP_PHASES = [
     items: [
       "WebGPU tensor hashing for large codebases",
       "SMT solver integration (Z3 WASM) for path verification",
-      "BFT chaos simulation on module graph",
+      "BFT chaos analysis on module graph",
       "Real ZK-SNARK proofs via snarkjs (circuit per property)",
       "Abstract interpretation confidence scoring",
     ],

@@ -329,7 +329,7 @@ export function ProductRealityVisualizer({ data, className = "" }: { data: Produ
         <div className="space-y-2 mt-3">
           <button onClick={() => setShowMockups(!showMockups)} className={`flex items-center gap-2 text-xs font-semibold w-full ${isLight ? "text-slate-700 hover:text-slate-900" : "text-white/70 hover:text-white"}`}>
             <EyeOff className="w-4 h-4 text-red-400" />
-            Mockup / Fake Data Findings ({data.mockupFindings.length})
+            Reality Gaps / Fake Data Findings ({data.mockupFindings.length})
             {showMockups ? <ChevronUp className="w-3.5 h-3.5 ml-auto text-white/30" /> : <ChevronDown className="w-3.5 h-3.5 ml-auto text-white/30" />}
           </button>
           <AnimatePresence>
@@ -339,7 +339,7 @@ export function ProductRealityVisualizer({ data, className = "" }: { data: Produ
                   {data.mockupFindings.length === 0 ? (
                     <div className={`p-4 rounded-lg text-center ${isLight ? "bg-green-50 text-green-700" : "bg-green-500/5 text-green-300"}`}>
                       <CheckCircle2 className="w-5 h-5 mx-auto mb-1" />
-                      <p className="text-xs">No mock data or fake APIs detected</p>
+                      <p className="text-xs">No fake APIs or hardcoded data detected</p>
                     </div>
                   ) : data.mockupFindings.map(f => <MockupRow key={f.id} finding={f} isLight={isLight} />)}
                 </div>

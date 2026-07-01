@@ -43,7 +43,7 @@ export function FounderSummary({ scan, isLight }: FounderSummaryProps) {
     reasons.push({ text: `${issue.title}${location}`, severity: "critical" });
   }
 
-  // From mockup patterns
+  // From reality gaps
   if (mockupFindings?.totalFindings > 0) {
     const highMockups = mockupFindings.findings.filter((f: any) => f.severity === "high").length;
     if (highMockups > 0) {

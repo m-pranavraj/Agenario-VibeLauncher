@@ -172,7 +172,7 @@ export function runProductRealityEngine(keyFiles: Array<{ path: string; content:
     ? Math.round(
         features.reduce((sum, f) => sum + f.confidence, 0) / totalFeatures
       )
-    : 100;
+    : 0;
 
   // Deployment blockers
   const deploymentBlockers: string[] = [];
@@ -192,7 +192,9 @@ export function runProductRealityEngine(keyFiles: Array<{ path: string; content:
   } else if (realityScore >= 40) {
     summary = `${mockFeatures} of ${totalFeatures} features appear to be mockups. UI exists but backend, database, or persistence is missing.`;
   } else {
-    summary = `Mostly mockup. Only ${Math.round(realityScore)}% of features have real implementations. Significant backend work needed before launch.`;
+    summary = totalFeatures === 0
+      ? "No real feature paths were detected from the provided code context."
+      : `Mostly mockup. Only ${Math.round(realityScore)}% of features have real implementations. Significant backend work needed before launch.`;
   }
 
   logger.info({ realityScore, totalFeatures, verified: verifiedFeatures, mock: mockFeatures }, "Product Reality Engine complete");

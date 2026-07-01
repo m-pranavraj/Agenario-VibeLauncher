@@ -142,7 +142,7 @@ export function ReportSidebar({ scanId, activeTab, issueCount, hasRuntimeProofs,
       {/* Footer */}
       <div className="absolute bottom-0 left-0 right-0 px-4 py-3 border-t border-white/[0.06] bg-[#050505]">
         <div className="text-[9px] text-white/20 text-center">
-          No mockups. No hardcoded data.
+          No reality gaps. No hardcoded data.
           <br />
           Real verifiers only.
         </div>

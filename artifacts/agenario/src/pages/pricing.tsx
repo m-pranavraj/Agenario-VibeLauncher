@@ -57,7 +57,7 @@ const PLANS = [
     iconColor: "text-white",
     features: [
       "12 scans per month",
-      "Full 50-dimension analysis",
+      "Full 10-dimension analysis",
       "GDPR, OWASP, PCI-DSS compliance",
       "Revenue intelligence layer",
       "Board-memo style reports",
