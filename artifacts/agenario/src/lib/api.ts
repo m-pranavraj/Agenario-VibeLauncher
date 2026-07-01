@@ -357,7 +357,6 @@ export interface Scan {
   riskForecast: RiskForecast | null;
   revenueIntelligence: RevenueIntelligence | null;
   complianceResults: ComplianceResult[] | null;
-  urlAuditScore?: number | null;
   authTestingPayload?: any | null;
   proofEvidence: ProofEvidence[] | null;
   sandboxMeta: SandboxMeta | null;

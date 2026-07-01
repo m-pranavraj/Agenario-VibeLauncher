@@ -6097,81 +6097,6 @@ function SectionLabel({ label, icon: Icon, isLight }: { label: string; icon?: El
   );
 }
 
-function UrlSurfaceAuditPanel({ scan, isLight }: { scan: any, isLight: boolean }) {
-  const [locked, setLocked] = useState(true);
-  const score = scan.urlAuditScore || 42;
-  const t = {
-    page: isLight ? "bg-[#fdf4f8] text-gray-900" : "bg-[#050505] text-white",
-    card: isLight ? "bg-white shadow-[0_4px_24px_rgba(0,0,0,0.03)] border-slate-200" : "bg-black/40 border-white/10",
-    textMuted: isLight ? "text-slate-500" : "text-white/40",
-  };
-
-  return (
-    <div className={`min-h-screen pb-32 pt-20 ${t.page}`}>
-      <nav className={`fixed top-0 w-full z-50 border-b ${isLight ? "border-pink-100/70 bg-white/90" : "border-white/[0.06] bg-[#050505]/80"} backdrop-blur-2xl`}>
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 -ml-1">
-            <img src="/logo.png" alt="Agenario" className="w-8 h-8 rounded-xl object-cover object-left" />
-            <div className="flex items-center gap-1.5">
-              <span className={`font-heading font-bold text-lg tracking-tight ${isLight ? "text-gray-900" : "text-white"}`}>Agenario</span>
-              <span className="px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.2)] select-none">
-                Beta
-              </span>
-            </div>
-          </Link>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-          </div>
-        </div>
-      </nav>
-
-      <div className="max-w-4xl mx-auto px-6 mt-12 space-y-8">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-extrabold font-['Syne'] tracking-tight">URL Surface Audit Complete</h1>
-          <p className={t.textMuted}>Target: {scan.sourceInput}</p>
-        </div>
-
-        <div className={`rounded-3xl border ${t.card} p-8 flex flex-col md:flex-row items-center gap-8`}>
-          <div className="flex-1 space-y-6">
-            <div>
-              <div className="text-sm uppercase tracking-widest font-bold mb-2 opacity-50">Surface Risk Score</div>
-              <div className="text-6xl font-black font-['Syne'] flex items-baseline gap-2">
-                {score} <span className="text-2xl font-bold opacity-30">/ 100</span>
-              </div>
-            </div>
-            <p className="text-sm leading-relaxed opacity-70">
-              We performed a black-box surface scan of {scan.sourceInput}. While we found several public exposure risks,
-              a true audit requires source code access to verify if these surface signals lead to exploitable vulnerabilities.
-            </p>
-          </div>
-          <div className="w-full md:w-64 space-y-3">
-            <div className={`p-4 rounded-xl border ${isLight ? "bg-amber-50 border-amber-200" : "bg-amber-500/10 border-amber-500/20"}`}>
-              <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${isLight ? "text-amber-800" : "text-amber-400"}`}>Identified Risks</div>
-              <div className={`text-2xl font-bold ${isLight ? "text-amber-900" : "text-amber-300"}`}>4 Potential</div>
-            </div>
-          </div>
-        </div>
-
-        {locked ? (
-          <div className={`relative rounded-3xl border ${t.card} overflow-hidden p-10 flex flex-col items-center justify-center text-center`}>
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50 pointer-events-none" />
-            <Lock className="w-12 h-12 mb-4 text-violet-500" />
-            <h2 className="text-2xl font-bold font-['Syne'] mb-2 z-10">Deep Analysis Required</h2>
-            <p className={`${t.textMuted} max-w-lg mb-8 z-10`}>
-              URL scanning only catches surface-level misconfigurations. To uncover critical logic flaws, IDOR, and injection vectors, link your repository.
-            </p>
-            <Link href="/scans/new" className="z-10">
-              <button className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg shadow-violet-500/25 flex items-center gap-2">
-                <Github className="w-5 h-5" /> Analyze GitHub Repository
-              </button>
-            </Link>
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
 function LaunchGateBanner({ scan, isLight }: { scan: any, isLight: boolean }) {
   const issues = scan.issues || [];
   const blockingIssues = issues.filter(
@@ -6586,14 +6511,6 @@ export default function ScanResultsPage() {
           </div>
         </div>
       </div>
-    );
-  }
-
-  if (scan.sourceType === "url") {
-    return (
-      <DashboardLayout>
-        <UrlSurfaceAuditPanel scan={scan} isLight={isLight} />
-      </DashboardLayout>
     );
   }
 
