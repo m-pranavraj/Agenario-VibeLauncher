@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Check, Zap, ArrowLeft, Loader2, ShieldCheck, Building2, Mail, Tag, X, CheckCircle2, ChevronDown } from "lucide-react";
+import { Check, Zap, ArrowLeft, Loader2, ShieldCheck, Building2, Mail, Tag, X, CheckCircle2, ChevronDown, Globe } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsLight } from "@/hooks/use-is-light";
@@ -103,6 +103,26 @@ export default function PricingPage() {
   const isLight = useIsLight();
   const { user, refresh } = useAuth();
   const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paddleSessionId = params.get("paddle_session_id");
+    if (paddleSessionId) {
+      (async () => {
+        try {
+          const result = await api.billing.paddle.verify(paddleSessionId);
+          if (result.success) {
+            await refresh();
+            setSuccess("creator");
+          }
+        } catch (err) {
+          console.error("Paddle session verify error:", err);
+        }
+        window.history.replaceState({}, "", "/pricing");
+      })();
+    }
+  }, []);
+
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -146,11 +166,26 @@ export default function PricingPage() {
     setCouponError("");
   };
 
-  const handleUpgrade = async (planId: string, amount: number | null | undefined) => {
+  const handleUpgrade = async (planId: string, amount: number | null | undefined, paymentMethod?: "razorpay" | "paddle") => {
     if (!user) { setLocation("/register"); return; }
     if (planId === "free" || planId === user.plan) return;
     if (planId === "enterprise" || amount == null) {
       window.open("mailto:support@agenario.tech?subject=Enterprise Plan Inquiry", "_blank");
+      return;
+    }
+
+    if (paymentMethod === "paddle") {
+      setLoadingPlan("creator_paddle");
+      try {
+        const checkout = await api.billing.paddle.checkout(planId);
+        if (checkout.checkoutUrl) {
+          window.location.href = checkout.checkoutUrl;
+        }
+      } catch (err) {
+        console.error("Paddle checkout error:", err);
+      } finally {
+        setLoadingPlan(null);
+      }
       return;
     }
 
@@ -435,9 +470,7 @@ export default function PricingPage() {
                   </div>
                 )}
 
-                <button
-                  onClick={() => handleUpgrade(plan.id, isCreator ? displayAmount : plan.amount)}
-                  disabled={isCurrent || isLoading || plan.id === "free"}
+                <div
                   data-testid={`button-plan-${plan.id}`}
                   className={`w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                     isCurrent
@@ -445,18 +478,46 @@ export default function PricingPage() {
                       : plan.id === "free"
                         ? isLight ? "bg-gray-100 text-gray-400 cursor-default" : "bg-white/[0.04] border border-white/[0.08] text-white/25 cursor-default"
                         : plan.highlight
-                          ? isLight ? "bg-white text-violet-600 hover:bg-white/90" : "bg-white text-black hover:bg-white/90"
-                          : isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white/[0.07] border border-white/[0.12] text-white hover:bg-white/[0.12]"
+                          ? isLight ? "bg-violet-600 text-white hover:bg-violet-500" : "bg-white text-black hover:bg-white/90"
+                          : isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white/[0.07] border border-white/[0.12] text-white hover:text-white hover:bg-white/[0.12]"
                   }`}
                 >
-                  {isLoading
+                  {isLoading || loadingPlan === "creator_paddle"
                     ? <Loader2 className="w-4 h-4 animate-spin" />
                     : isCurrent
                       ? "Current Plan"
                       : plan.id === "enterprise"
                         ? <><Mail className="w-4 h-4" />{plan.cta}</>
-                        : plan.cta}
-                </button>
+                        : isCreator
+                          ? (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleUpgrade(plan.id, isCreator ? displayAmount : plan.amount, "razorpay")}
+                                  disabled={isCurrent || isLoading}
+                                  className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                                    plan.highlight
+                                      ? isLight ? "bg-white text-violet-600 hover:bg-white/90" : "bg-white text-black hover:bg-white/90"
+                                      : isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white/[0.07] border border-white/[0.12] text-white hover:text-white hover:bg-white/[0.12]"
+                                  }`}
+                                >
+                                  Pay INR ₹{Math.round((couponResult?.valid ? couponResult.finalAmount : 29900) / 100)}
+                                </button>
+                                <button
+                                  onClick={() => handleUpgrade(plan.id, displayAmount, "paddle")}
+                                  disabled={isCurrent || loadingPlan === "creator_paddle"}
+                                  className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                                    plan.highlight
+                                      ? isLight ? "bg-white/20 border border-white/30 text-white hover:bg-white/30" : "bg-white/10 border border-white/20 text-white hover:bg-white/20"
+                                      : isLight ? "bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" : "bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 hover:bg-indigo-500/20"
+                                  }`}
+                                >
+                                  <Globe className="w-3.5 h-3.5 inline mr-1" />
+                                  Pay USD $5
+                                </button>
+                              </div>
+                            )
+                  : plan.cta}
+                </div>
               </motion.div>
             );
           })}
