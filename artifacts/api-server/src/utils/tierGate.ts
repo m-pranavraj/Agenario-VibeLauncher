@@ -5,6 +5,9 @@
  * Enterprise: unlimited, all content unlocked
  */
 
+import { eq, and, gte, ne, sql } from "drizzle-orm";
+import { db, usersTable, scansTable, scanEngineResults } from "@workspace/db";
+
 function extractFileHint(evidence: string): string | null {
   const match = evidence.match(/([a-zA-Z0-9_\-./]+\.(ts|js|jsx|tsx|py|go|rb|java|php|env|yaml|yml|json|sh))/);
   if (!match) return null;
@@ -28,12 +31,69 @@ export const PLAN_LIMITS: Record<string, number> = {
   enterprise: Infinity,
 };
 
+export const FREE_TIER_VISIBILITY: Record<string, { visible: string; locked: string }> = {
+  issues: { visible: "First 3 findings fully visible. Issues 4-5 show partial details. Issues 6+ fully locked.", locked: "3+ additional findings locked. Upgrade to view all." },
+  remediation: { visible: "Not included in Free plan.", locked: "Remediation & AI fix generation locked. Upgrade to Creator." },
+  autoTests: { visible: "Not included in Free plan.", locked: "Automated test writer locked. Upgrade to Creator." },
+  cofounder: { visible: "Not included in Free plan.", locked: "Tech Co-Founder mode locked. Upgrade to Creator." },
+  revenueIntel: { visible: "First 2 revenue leaks visible.", locked: "Additional revenue intelligence locked." },
+  secretScan: { visible: "First secret finding visible.", locked: "Secret scan details locked." },
+  shadowApi: { visible: "Shadow API count visible.", locked: "Shadow API route details locked. Upgrade to view." },
+  digitalTwin: { visible: "Digital twin overview visible.", locked: "Attack simulations locked." },
+  predictiveIntel: { visible: "Summary visible.", locked: "Predictive narrative locked." },
+  packageVulns: { visible: "First package vulnerability visible.", locked: "Package vulnerability details locked." },
+};
+
+export async function checkRescanLimit(user: { id: number; plan: string; scanLimit?: number | null }, res: any): Promise<boolean> {
+  const limit = user.scanLimit ?? PLAN_LIMITS[user.plan];
+  if (limit === Infinity || !limit) return true;
+
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+
+  const [regularScanCount] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(scansTable)
+    .where(and(
+      eq(scansTable.userId, user.id),
+      ne(scansTable.status, "failed"),
+      gte(scansTable.createdAt, monthStart),
+    ));
+
+  const [rescanCountResult] = await db
+    .select({ count: sql<number>`count(DISTINCT ${scanEngineResults.scanId})` })
+    .from(scanEngineResults)
+    .innerJoin(scansTable, eq(scansTable.id, scanEngineResults.scanId))
+    .where(and(
+      eq(scansTable.userId, user.id),
+      eq(scanEngineResults.engineName, "rescanDiff"),
+      gte(scanEngineResults.createdAt, monthStart),
+    ));
+
+  const totalUsed = (regularScanCount?.count ?? 0) + (rescanCountResult?.count ?? 0);
+  if (totalUsed >= limit) {
+    const planLabel = user.plan === "free" ? "Free" : "Creator";
+    const upgradeHint = user.plan === "free"
+      ? " Upgrade to Creator for 12 scans/month."
+      : " Upgrade to Enterprise for unlimited scans.";
+    res.status(403).json({
+      error: `${planLabel} plan limit reached (${limit} scans/month, including rescans).${upgradeHint}`,
+    });
+    return false;
+  }
+
+  return true;
+}
+
 export function applyTierGate(
   data: Record<string, unknown>,
   plan: string,
 ): Record<string, unknown> {
   if (data["unlockedByAdmin"] === true) return data;
   if (plan !== "free") return data;
+
+  // ── Add a summary of locked sections for frontend display ─────
+  const lockedSections: string[] = [];
 
   // ── Issues: first 3 fully unlocked, issues 4-5 fix-prompt visible but
   //    description/evidence locked, issues 6+ fully locked ──────────────
@@ -210,6 +270,37 @@ export function applyTierGate(
       })),
     };
   }
+
+  // ── Creator-only fields: hide on free tier ─────────────────────
+  const creatorGateFields: Array<{ key: string; message: string; section: string }> = [
+    { key: "remediationResults", message: "🔒 Upgrade to Creator to unlock AI remediation results", section: "remediation" },
+    { key: "autoTestResults", message: "🔒 Upgrade to Creator to unlock auto-test results", section: "autoTests" },
+    { key: "cofounderMode", message: "🔒 Upgrade to Creator to unlock Tech Co-Founder mode", section: "cofounder" },
+    { key: "testWriterResults", message: "🔒 Upgrade to Creator to unlock Test Writer results", section: "autoTests" },
+  ];
+  for (const field of creatorGateFields) {
+    if (field.key in data) {
+      data[field.key] = field.message;
+      lockedSections.push(field.section);
+    }
+  }
+
+  // ── Track all locked sections for frontend banner ──────────────
+  if (Array.isArray(data["issues"])) {
+    const issues = data["issues"] as Array<Record<string, unknown>>;
+    const lockedCount = issues.filter(i => i["locked"] === true).length;
+    if (lockedCount > 0) lockedSections.push("issues");
+  }
+  const revIntel = data["revenueIntelligence"] as Record<string, unknown> | null | undefined;
+  if (revIntel && revIntel["_lockedLeakCount"]) lockedSections.push("revenueIntel");
+  if (data["shadowApiFindings"] && (data["shadowApiFindings"] as any)["_lockedRouteCount"]) lockedSections.push("shadowApi");
+  if (data["secretScanResults"] && (data["secretScanResults"] as any)["_lockedFindingCount"]) lockedSections.push("secretScan");
+  if (data["packageVulns"] && (data["packageVulns"] as any)["_lockedCount"]) lockedSections.push("packageVulns");
+  if (data["digitalTwin"] && (data["digitalTwin"] as any)["_lockedAttackCount"]) lockedSections.push("digitalTwin");
+
+  data["_lockedSections"] = [...new Set(lockedSections)];
+  data["_freeTierVisibility"] = FREE_TIER_VISIBILITY;
+  data["_upgradePrompt"] = "🔒 Upgrade to Creator (₹299/mo) to unlock all features including remediation, auto-tester, and Tech Co-Founder mode.";
 
   return data;
 }

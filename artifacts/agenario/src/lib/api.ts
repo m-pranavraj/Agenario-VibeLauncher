@@ -707,6 +707,10 @@ export interface Scan {
     authEndpoints?: string[];
     securityScore?: number;
   } | null;
+  remediationResults?: any | null;
+  autoTestResults?: any | null;
+  cofounderMode?: any | null;
+  testWriterResults?: any | null;
   createdAt: string;
   completedAt: string | null;
 }
@@ -845,6 +849,17 @@ export interface RazorpayOrder {
   planName: string;
 }
 
+export interface PaddleCheckoutResult {
+  checkoutUrl: string;
+  sessionId: string;
+}
+
+export interface PaddleVerifyResult {
+  success: boolean;
+  plan?: string;
+  message?: string;
+}
+
 export interface PortfolioApp {
   scanId: number;
   source: string;
@@ -885,8 +900,13 @@ export const api = {
       request<{ status: string }>(`/scans/${scanId}/issues/${issueId}/retest`, { method: "POST" }),
     ask: (scanId: number, question: string) =>
       request<{ answer: string }>(`/scans/${scanId}/ask`, { method: "POST", body: JSON.stringify({ question }) }),
-    rescan: (scanId: number) =>
-      request<{ scanId: number; status: string }>(`/scans/${scanId}/rescan`, { method: "POST" }),
+    rescan: (scanId: number, options?: { changedFiles?: string[] }) =>
+      request<{ scanId: number; status: string; newFindings?: number; resolvedFindings?: number; previousScore?: number; score?: number; id?: number }>(`/scans/${scanId}/rescan`, {
+        method: "POST",
+        body: options ? JSON.stringify(options) : undefined,
+      }),
+    verifyChanges: (scanId: number) =>
+      request<{ changedFiles: Array<{ path: string; status: "added" | "modified" | "deleted" }>; totalFiles: number; previousScore: number }>(`/scans/${scanId}/verify-changes`, { method: "GET" }),
     export: (scanId: number, format: "json" | "html" | "certification" | "investor" | "agency" | "zip" = "json") =>
       `${BASE}/scans/${scanId}/export?format=${format}`,
     exportBlob: async (scanId: number, format: "json" | "html" | "certification" | "investor" | "agency" | "zip" = "json"): Promise<Blob> => {
@@ -937,6 +957,18 @@ export const api = {
       }),
     status: () =>
       request<{ plan: string; razorpayCustomerId: string | null }>("/billing/status"),
+    paddle: {
+      checkout: (planId: string) =>
+        request<PaddleCheckoutResult>("/billing/paddle/checkout", {
+          method: "POST",
+          body: JSON.stringify({ plan: planId }),
+        }),
+      verify: (sessionId: string) =>
+        request<PaddleVerifyResult>("/billing/paddle/verify", {
+          method: "POST",
+          body: JSON.stringify({ sessionId }),
+        }),
+    },
   },
   monitoring: {
     portfolio: () => request<{ portfolio: PortfolioApp[] }>("/monitoring/portfolio"),

@@ -118,12 +118,16 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { DeepArchitectureVisualizer } from "@/components/deep-tech/DeepArchitectureVisualizer";
 import { api, type ScanDetail, type ScanIssue, type RiskForecast, type ComplianceResult, type RevenueIntelligence, type ProofEvidence, type RegressionDiff, type BenchmarkData, type LaunchDNA, type LaunchReplayStep, type ShadowApiFindings, type DigitalTwinResult, type PredictiveIntelResult, type RootCauseResult, type DempsterShaferResult } from "@/lib/api";
 import { motion } from "framer-motion";
-import { AbstractInterpretationRadar } from "@/components/deep-tech/AbstractInterpretationRadar";
-import { RtIfcGraphVisualizer } from "@/components/deep-tech/RtIfcGraphVisualizer";
-import { AIConsensusVisualizer } from "@/components/deep-tech/AIConsensusVisualizer";
-import { ProductRealityVisualizer } from "@/components/deep-tech/ProductRealityVisualizer";
-import { RealityCheckVisualizer } from "@/components/deep-tech/RealityCheckVisualizer";
-import { VerificationPanel } from "@/components/deep-tech/VerificationPanel";
+import {AbstractInterpretationRadar} from "@/components/deep-tech/AbstractInterpretationRadar";
+import {RtIfcGraphVisualizer} from "@/components/deep-tech/RtIfcGraphVisualizer";
+import {AIConsensusVisualizer} from "@/components/deep-tech/AIConsensusVisualizer";
+import {ProductRealityVisualizer} from "@/components/deep-tech/ProductRealityVisualizer";
+import {RealityCheckVisualizer} from "@/components/deep-tech/RealityCheckVisualizer";
+import {VerificationPanel} from "@/components/deep-tech/VerificationPanel";
+import {TaintFlowVisualizer} from "@/components/report/TaintFlowVisualizer";
+import {CSGNodeGraph} from "@/components/report/CSGNodeGraph";
+import {MermaidComplianceDiagram} from "@/components/report/MermaidComplianceDiagram";
+import { RescanWithVerification } from "@/components/deep-tech/RescanWithVerification";
 
 const SEVERITY_CONFIG = {
   critical: { color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", badge: "bg-red-500/15 text-red-500 border-red-500/25", icon: XCircle, label: "Critical" },
@@ -7217,6 +7221,17 @@ export default function ScanResultsPage() {
         )}
 
 
+
+        {/* ——— Rescan & Verification Section ——————————————————————————————— */}
+        {activeTab === "overview" && (
+          <div className="my-6">
+            <div className="flex items-center gap-2 mb-3">
+              <RefreshCw className="w-4 h-4 text-blue-400" />
+              <h3 className={`text-sm font-bold font-['Syne'] ${isLight ? "text-gray-900" : "text-white"}`}>Rescan & Change Verification</h3>
+            </div>
+            <RescanWithVerification scanId={scan.id} sourceInput={scan.sourceInput} />
+          </div>
+        )}
 
         {/* --- Privacy footer ------------------------------------------------- */}
         <div className="flex items-center gap-2 justify-center py-4">

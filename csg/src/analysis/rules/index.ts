@@ -9,11 +9,14 @@ import { JWTNoneAlgorithmRule, JWTKeyConfusionRule, JWTWeakSecretRule, InsecureR
 import { PrototypePollutionMergeRule, PrototypePollutionSetterRule, MassAssignmentORMRule, InsecureDeserializationYamlRule, InsecureDeserializationJSONRule, EvalFunctionConstructorRule, TypeJugglingRule, DeepCloneProtoPollutionRule, ObjectAssignPollutionRule, DeserializationEvalRule, PickleDeserializationRule, LodashDefaultsPollutionRule, TypeJugglingArrayRule, GraphQLMassAssignmentRule, SymbolKeyedPollutionRule, ErrorPrepareStackTraceRule, URLPrototypePollutionRule, ProxyPrototypeBypassRule, RegExpPrototypePollutionRule, ArrayFlattenPollutionRule, BinaryDeserializationRule, LDAPDeserializationRule, LoosePasswordCompareRule, ObjectIsTypeCoercionRule, MongoSetMassAssignmentRule, VMRunInThisContextRule, ReducePrototypePollutionRule, PrismaMassAssignmentRule, ExoticJSONParserPollutionRule, DefineGetterSetterPollutionRule } from './security/memory-object-rules.js';
 import { SSRFetchRule, SSRFDNSRebindingRule, SSRFRedirectRule, TOCTOURaceConditionRule, CORSCredentialLeakRule, OpenRedirectRule, SSRFBlindOOBRule, SSRFPDFGeneratorRule, RequestSmugglingRule, HostHeaderInjectionRule, HTTPMethodTamperingRule, CachePoisoningUnkeyedRule, WebSocketOriginRule, GraphQLIntrospectionRule, GRPCReflectionRule } from './security/networking-logic-rules.js';
 
-/* ─── Pillar 1: Security (Modern Extensions: ~40 new techniques) ── */
+/* ─── Pillar 1: Security (Modern Extensions: ~60 new techniques) ── */
 import { CORSWildcardOriginRule, GraphQLIntrospectionProdRule, MissingRateLimitingRule, OpenAPISpecExposureRule, JWTRefreshTokenRotationRule, APIKeyInURLRule, MissingHelmetSecurityHeadersRule, HostHeaderValidationRule, BodyParserSizeLimitRule, GraphQLDepthLimitRule, APIVersioningMissingRule, SSRFViaFetchRule, MissingHSTSRule } from './security/api-security-rules.js';
 import { HardcodedS3BucketRule, IAMOverprivilegedRoleRule, EnvFileInRepoRule, DockerSockMountRule, HardcodedDBConnectionStringRule, PublicS3ACLRule, InsecureK8sConfigRule, ECRImageTagLatestRule, CloudRoleAssumableByAllRule, KMSKeyNoRotationRule, LambdaExposedRule } from './security/cloud-infra-rules.js';
 import { DependencyConfusionRule, YarnNpmMixedLockRule, InsecurePackageSourceRule, NpmScriptInjectionRule, OutdatedDependencyRule } from './security/supply-chain-rules.js';
 import { LLMPromptInjectionRule, LLMOutputValidationRule, AISecretLeakRule, AICodeExecutionRule } from './security/ai-ml-rules.js';
+import { WeakPasswordPolicyRule, IdentityAccountLockoutRule, IdentityMFARule, SessionTimeoutMissingRule, IdentityJWTNoExpirationRule, OAuthStateMissingRule, InsecureCookieConfigRule, CAPTCHAMissingRule, MissingCSPRule, InsecureDirectObjectReferenceRule, MassAssignmentRule, BrokenAuthorizationRule, GraphQLBatchAttackRule, WebSocketCSRFRule, CachePoisoningRule } from './security/identity-rules.js';
+import { HardcodedPrivateKeyRule, UnvalidatedWeb3CallRule, ReentrancyRiskRule, UncheckedTokenApprovalRule, FrontRunningRiskRule, FlashLoanAttackSurfaceRule, WeakRandomnessRule, MissingAccessControlRule, DelegateCallRiskRule, PhishingDetectionRule } from './security/blockchain-web3-rules.js';
+import { HardcodedDeviceCredentialsRule, InsecureFirmwareUpdateRule, InsecureMQTTRule, InsecureBluetoothConfigRule, MissingDeviceIdentityRule, InsecureCoAPRule, OTAUpdateNoRollbackRule, SideChannelTimingRule } from './security/iot-embedded-rules.js';
 
 /* ─── Pillar 2: Performance ────────────────────────────────────── */
 import { NPlusOneQueryRule, MissingIndexRule, CartesianProductJoinRule, LargeInClauseRule, MissingCompositeIndexRule, ImplicitTypeCastRule, GraphQLDataloaderMissRule, MissingPaginationRule, DeepNestedLoopRule, SelectStarRule, MissingBatchInsertRule, RawSQLConcatenationRule, MissingPoolTimeoutRule, LikeLeadingWildcardRule, MissingOffsetPaginationRule, UnindexedFilterColumnRule, ORConditionNoIndexMergeRule, OrderByExpressionRule, LargeInListRule, ImplicitCrossJoinRule, SubqueryToJoinRule, MissingQueryTimeoutRule, CountStarWithoutApproxRule, FunctionOnColumnRule, DeepNestedWhereRule } from './performance/algorithmic-rules.js';
@@ -23,6 +26,9 @@ import { SyncBlockingRule, PromiseWaterfallRule, BundleBloatRule, LargeJSONMainT
 /* ─── Pillar 2: Performance (Modern Extensions: ~5 new techniques) ── */
 import { WaterfallAPICallsRule, LargeBundleSizeRule, UnmemoizedComponentRule, ImageWithoutDimensionsRule, MissingLoadingOptimizationRule } from './performance/modern-perf-rules.js';
 
+/* ─── Pillar 2: Performance (Advanced Network/Rendering Optimization: ~15 techniques) ── */
+import { HTTP2NotEnabledRule, MissingConnectionPoolingRule, MissingCDNConfigRule, MissingCacheHeadersRule, MissingResourceHintsRule, BundleNotOptimizedRule, MissingTreeShakingRule, MissingImageOptimizationRule, MissingGzipCompressionRule, MissingFontOptimizationRule, MissingSSRStreamingRule, MissingServiceWorkerRule, LongTaskMainThreadRule, MissingCriticalCSSRule, MissingLazyHydrationRule } from './performance/network-optimization-rules.js';
+
 /* ─── Pillar 3: UX/UI ──────────────────────────────────────────── */
 import { ClickableDivNoKeyboardRule, MissingAltTextRule, IconButtonNoLabelRule, MissingFocusTrapRule, MissingInputLabelRule, MissingAriaLandmarksRule, LowColorContrastRule, LogicalFocusOrderRule, MissingSkipLinkRule, MissingFormErrorAnnouncementRule, SmallTouchTargetRule, MissingHeadingHierarchyRule, MissingHtmlLangRule, MissingAriaExpandedRule, MissingAriaCurrentRule, AutoplayNoControlsRule, IframeMissingTitleRule, MissingTableHeaderScopeRule, MissingVideoCaptionsRule, MissingAudioTranscriptRule, MissingAbbreviationExpansionRule, MissingTableCaptionRule, MissingFigureCaptionRule, MissingFieldsetLegendRule, MissingCharCounterRule, MissingAccessibleEmojiRule, MissingFocusVisibleRule, MissingListSemanticsRule, MissingDescriptionListRule, MissingTextSpacingSupportRule, MissingZoomSupportRule, MissingTouchTargetSpacingRule } from './ux/accessibility-rules.js';
 import { SilentCatchRule, NavigationDeadEndRule, CumulativeLayoutShiftRule, FirstInputDelayRule, MissingLoadingStateRule, MissingEmptyStateRule, MissingConfirmationDialogRule, MissingUndoRule, MissingFormValidationRule, InfiniteScrollNoIndicatorRule, ToastNoAutoDismissRule, ModalNoCloseButtonRule, SearchWithoutDebounceRule, MissingDocumentTitleRule, MultiStepNoProgressRule, UnsavedChangesPromptRule, MissingSkeletonLoaderRule, MissingLazyLoadingRule, MissingStateTransitionRule, FontLoadingFOUTRule, MissingProgressiveLoadingRule, MissingOptimisticUpdateRule, MissingPullToRefreshRule, MissingSwipeGestureRule, MissingOfflineIndicatorRule, MissingRetryOnErrorRule, MissingBackNavigationHandlerRule, MissingDeepLinkRule, MissingClipboardFeedbackRule, MissingDragDropFeedbackRule, MissingSearchHistoryRule, MissingAutocompleteRule, MissingIdleSessionTimeoutRule, MissingTabSyncRule, MissingBeforeInstallPromptRule, MissingKeyboardNavigationGridRule, MissingAccessibilityAnnouncementRule, MissingImageZoomRule, MissingPushNotificationPermissionRule, MissingCameraMicFallbackRule, MissingFileUploadProgressRule, MissingDataExportProgressRule, MissingCharLimitIndicatorRule, MissingPasswordStrengthIndicatorRule, MissingInputMaskRule, MissingAutoSaveIndicatorRule, MissingLongPressContextMenuRule, MissingKeyboardDismissOnScrollRule, MissingPullToRefreshDataRule, MissingEmptySearchStateRule, MissingNetworkErrorStateRule, MissingFirstRunExperienceRule, MissingHapticFeedbackRule, MissingSafeAreaRule, MissingDarkModeSupportRule } from './ux/interaction-rules.js';
@@ -30,12 +36,18 @@ import { SilentCatchRule, NavigationDeadEndRule, CumulativeLayoutShiftRule, Firs
 /* ─── Pillar 3: UX/UI (Modern Extensions: ~5 new techniques) ──────── */
 import { MissingReducedMotionRule, MissingColorSchemeMetaRule, MissingTouchTargetSizeRule, MissingFontSizeResponsiveRule, MissingInputModeMobileRule } from './ux/modern-ux-rules.js';
 
+/* ─── Pillar 3: UX/UI (Advanced Mobile Native/Internationalization: ~13 techniques) ── */
+import { MissingTouchFeedbackRule, MissingSafeAreaHandlingRule, MissingDynamicTypeSupportRule, MissingMobileGesturesRule, MissingViewportMetaRule, MissingTapTargetSizingRule, MobileDarkModeSupportRule, MissingOrientationLockRule, MobileHapticFeedbackRule, MobilePullToRefreshRule, MissingBottomNavSupportRule, MissingiOSPullingEffectRule, MissingInternationalizationRule } from './ux/mobile-native-rules.js';
+
 /* ─── Pillar 4: Compliance ──────────────────────────────────────── */
 import { PIILeakageToLogRule, PIIInResponseRule, CookieConsentValidationRule, RightToErasureRule, MissingDataRetentionRule, PIIInCustomHeadersRule, MissingCookieBannerRule, PIIInQueryParamsRule, MissingPrivacyPolicyRule, MissingDSAREndpointRule, PIIInErrorResponseRule, PIIInSSRRule, MissingSameSiteCookieRule, PIIInFileExportRule, MissingDataProcessingRecordRule, MissingDataClassificationRule, MissingConsentPreferenceStorageRule, MissingPersonalDataExportFormatRule, MissingPIIEncryptionAtRestRule, MissingPseudoAnonymizationRule, MissingCookiePreferencesRule, MissingDataMappingRule, MissingConsentRecordKeepingRule, MissingThirdPartyDataSharingDisclosureRule, MissingAgeGateRule, MissingSensitiveDataMaskingRule, MissingPrivacyNoticeLinkRule, MissingUserDataAccessDashboardRule, MissingBiometricConsentRule, MissingLocationConsentRule } from './compliance/privacy-rules.js';
 import { MissingAuditTrailRule, MissingDataEncryptionRule, MissingHealthCheckRule, CreditCardInLogsRule, CrossBorderDataTransferRule, MissingPHIAccessLogRule, CardDataInTransitRule, MissingCSPHeaderRule, MissingSecurityHeadersRule, SensitiveEndpointRateLimitRule, MissingAPIVersioningRule, MissingDataBackupRule, MissingCorsRestrictionRule, MissingAccountLockoutRule, MissingDataPortabilityRule, MissingPasswordPolicyRule, MissingBreachNotificationRule, MissingConsentWithdrawalRule, MissingDataMinimizationRule, MissingDataPurgeRule, MissingProcessorRegisterRule, MissingVulnerabilityScanRule, MissingDependencyAuditRule, MissingSecretScanningRule, MissingAccessReviewRule, MissingSessionTimeoutRule, MissingMFARule, MissingLoginAttemptTrackingRule, MissingHIPAAAuthorizationRule, MissingPCIComplianceCheckRule, MissingSOC2MonitoringRule, MissingDisasterRecoveryRule, MissingChangeManagementRule, MissingVendorAssessmentRule, MissingEmployeeTrainingLogRule, MissingThirdPartyAccessLogRule, MissingDataRetentionPolicyHeaderRule, MissingIncidentResponsePlanRule } from './compliance/framework-rules.js';
 
 /* ─── Pillar 4: Compliance (Modern Extensions: ~8 new techniques) ─── */
 import { MissingAccessibilityStatementRule, MissingCookieConsentPreferencesRule, MissingPrivacyPolicyURule, MissingTermsOfServiceRule, MissingDataDeletionEndpointRule, MissingDataExportEndpointRule, MissingAgeVerificationRule, MissingSMTPAuthRule } from './compliance/modern-compliance-rules.js';
+
+/* ─── Pillar 4: Compliance (Advanced Industry-Specific/Data Governance: ~14 techniques) ── */
+import { MissingHIPAAAuthControlsRule, MissingPCIDSSCardDataRule, MissingSOC2AuditLoggingRule, MissingGDPRConsentStorageRule, MissingCCPARule, MissingDataBreachNotificationRule, MissingDataRetentionScheduleRule, IndustryDataProcessingRecordRule, MissingPseudonymizationRule, MissingCookieConsentPreferencesRule as MissingCookieConsentGranularRule, MissingThirdPartyDataSharingRule, MissingDSARAutomationRule, MissingDataMinimizationCheckRule, MissingPrivacyByDesignRule } from './compliance/industry-specific-rules.js';
 
 export function createRuleRegistry(): RuleRegistry {
   const registry = new RuleRegistry();
@@ -215,6 +227,45 @@ export function createRuleRegistry(): RuleRegistry {
   registry.register(new AISecretLeakRule());
   registry.register(new AICodeExecutionRule());
 
+  // ── SECURITY MODERN EXTENSIONS: Identity/Auth (techniques 184-198) ──
+  registry.register(new WeakPasswordPolicyRule());
+  registry.register(new IdentityAccountLockoutRule());
+  registry.register(new IdentityMFARule());
+  registry.register(new SessionTimeoutMissingRule());
+  registry.register(new IdentityJWTNoExpirationRule());
+  registry.register(new OAuthStateMissingRule());
+  registry.register(new InsecureCookieConfigRule());
+  registry.register(new CAPTCHAMissingRule());
+  registry.register(new MissingCSPRule());
+  registry.register(new InsecureDirectObjectReferenceRule());
+  registry.register(new MassAssignmentRule());
+  registry.register(new BrokenAuthorizationRule());
+  registry.register(new GraphQLBatchAttackRule());
+  registry.register(new WebSocketCSRFRule());
+  registry.register(new CachePoisoningRule());
+
+  // ── SECURITY MODERN EXTENSIONS: Blockchain/Web3 (techniques 199-208) ──
+  registry.register(new HardcodedPrivateKeyRule());
+  registry.register(new UnvalidatedWeb3CallRule());
+  registry.register(new ReentrancyRiskRule());
+  registry.register(new UncheckedTokenApprovalRule());
+  registry.register(new FrontRunningRiskRule());
+  registry.register(new FlashLoanAttackSurfaceRule());
+  registry.register(new WeakRandomnessRule());
+  registry.register(new MissingAccessControlRule());
+  registry.register(new DelegateCallRiskRule());
+  registry.register(new PhishingDetectionRule());
+
+  // ── SECURITY MODERN EXTENSIONS: IoT/Embedded (techniques 209-216) ──
+  registry.register(new HardcodedDeviceCredentialsRule());
+  registry.register(new InsecureFirmwareUpdateRule());
+  registry.register(new InsecureMQTTRule());
+  registry.register(new InsecureBluetoothConfigRule());
+  registry.register(new MissingDeviceIdentityRule());
+  registry.register(new InsecureCoAPRule());
+  registry.register(new OTAUpdateNoRollbackRule());
+  registry.register(new SideChannelTimingRule());
+
   /* ═══════════════════════════════════════════════════════════════
      PILLAR 2: PERFORMANCE (75 base + ~5 modern = ~80 techniques)
      ═══════════════════════════════════════════════════════════════ */
@@ -304,6 +355,23 @@ export function createRuleRegistry(): RuleRegistry {
   registry.register(new UnmemoizedComponentRule());
   registry.register(new ImageWithoutDimensionsRule());
   registry.register(new MissingLoadingOptimizationRule());
+
+  // ── PERFORMANCE ADVANCED: Network/Rendering Optimization (techniques 217-231) ──
+  registry.register(new HTTP2NotEnabledRule());
+  registry.register(new MissingConnectionPoolingRule());
+  registry.register(new MissingCDNConfigRule());
+  registry.register(new MissingCacheHeadersRule());
+  registry.register(new MissingResourceHintsRule());
+  registry.register(new BundleNotOptimizedRule());
+  registry.register(new MissingTreeShakingRule());
+  registry.register(new MissingImageOptimizationRule());
+  registry.register(new MissingGzipCompressionRule());
+  registry.register(new MissingFontOptimizationRule());
+  registry.register(new MissingSSRStreamingRule());
+  registry.register(new MissingServiceWorkerRule());
+  registry.register(new LongTaskMainThreadRule());
+  registry.register(new MissingCriticalCSSRule());
+  registry.register(new MissingLazyHydrationRule());
 
   /* ═══════════════════════════════════════════════════════════════
      PILLAR 3: UX/UI (62 base + ~5 modern = ~67 techniques)
@@ -407,6 +475,21 @@ export function createRuleRegistry(): RuleRegistry {
   registry.register(new MissingFontSizeResponsiveRule());
   registry.register(new MissingInputModeMobileRule());
 
+  // ── UX ADVANCED: Mobile Native & i18n (techniques 232-244) ──
+  registry.register(new MissingTouchFeedbackRule());
+  registry.register(new MissingSafeAreaHandlingRule());
+  registry.register(new MissingDynamicTypeSupportRule());
+  registry.register(new MissingMobileGesturesRule());
+  registry.register(new MissingViewportMetaRule());
+  registry.register(new MissingTapTargetSizingRule());
+  registry.register(new MobileDarkModeSupportRule());
+  registry.register(new MissingOrientationLockRule());
+  registry.register(new MobileHapticFeedbackRule());
+  registry.register(new MobilePullToRefreshRule());
+  registry.register(new MissingBottomNavSupportRule());
+  registry.register(new MissingiOSPullingEffectRule());
+  registry.register(new MissingInternationalizationRule());
+
   /* ═══════════════════════════════════════════════════════════════
      PILLAR 4: COMPLIANCE (68 base + ~8 modern = ~76 techniques)
      ═══════════════════════════════════════════════════════════════ */
@@ -494,6 +577,22 @@ export function createRuleRegistry(): RuleRegistry {
   registry.register(new MissingDataExportEndpointRule());
   registry.register(new MissingAgeVerificationRule());
   registry.register(new MissingSMTPAuthRule());
+
+  // ── COMPLIANCE ADVANCED: Industry-Specific & Data Governance (techniques 245-258) ──
+  registry.register(new MissingHIPAAAuthControlsRule());
+  registry.register(new MissingPCIDSSCardDataRule());
+  registry.register(new MissingSOC2AuditLoggingRule());
+  registry.register(new MissingGDPRConsentStorageRule());
+  registry.register(new MissingCCPARule());
+  registry.register(new MissingDataBreachNotificationRule());
+  registry.register(new MissingDataRetentionScheduleRule());
+  registry.register(new IndustryDataProcessingRecordRule());
+  registry.register(new MissingPseudonymizationRule());
+  registry.register(new MissingCookieConsentGranularRule());
+  registry.register(new MissingThirdPartyDataSharingRule());
+  registry.register(new MissingDSARAutomationRule());
+  registry.register(new MissingDataMinimizationCheckRule());
+  registry.register(new MissingPrivacyByDesignRule());
 
   return registry;
 }
