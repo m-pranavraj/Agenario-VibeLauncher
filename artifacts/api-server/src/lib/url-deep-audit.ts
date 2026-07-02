@@ -179,6 +179,90 @@ export async function runUrlDeepAudit(url: string): Promise<UrlDeepAuditResult |
 
     logger.info({ url, findings: findings.length, headersAnalyzed, endpointsScanned }, "URL deep audit complete");
 
+    // ── Additional Active Probes for Security ─────────────────────
+    // Test for clickjacking vulnerability (X-Frame-Options bypass)
+    const clickjackTest = response.headers.get("x-frame-options");
+    if (!clickjackTest && !response.headers.get("content-security-policy")?.includes("frame-ancestors")) {
+      findings.push({
+        id: "clickjacking-risk",
+        severity: "high",
+        category: "security",
+        title: "Clickjacking Risk - Missing Frame Protection",
+        description: "No X-Frame-Options or CSP frame-ancestors header found. The site could be embedded in malicious iframes.",
+        confidence: 90,
+      });
+    }
+
+    // Test for error handling with malformed input
+    const injectionTests = ["?id=<script>", "?q=' OR '1'='1", "?search={{7*7}}"];
+    for (const test of injectionTests) {
+      try {
+        const injUrl = normalizedUrl + test;
+        const injResp = await fetch(injUrl, { method: "GET", signal: AbortSignal.timeout(5000) });
+        const injText = await injResp.text();
+        
+        if (test.includes("<script>") && injText.toLowerCase().includes("<script>")) {
+          findings.push({
+            id: "xss-reflected",
+            severity: "critical",
+            category: "security",
+            title: "Reflected XSS Vulnerability",
+            description: "User input is reflected in the response without proper sanitization",
+            confidence: 85,
+            endpoint: injUrl,
+          });
+        }
+        if (test.includes("OR") && (injText.includes("SQL") || injText.includes("syntax error") || injText.includes("Warning"))) {
+          findings.push({
+            id: "sqli-error-disclosure",
+            severity: "critical",
+            category: "security",
+            title: "SQL Error Disclosure",
+            description: "Database errors are exposed to users, indicating SQL injection risk",
+            confidence: 85,
+            endpoint: injUrl,
+          });
+        }
+        if (test.includes("{{7*") && /49/.test(injText)) {
+          findings.push({
+            id: "ssti-vulnerable",
+            severity: "critical",
+            category: "security",
+            title: "Server-Side Template Injection",
+            description: "{{7*7}} evaluates to 49 - SSTI vulnerability detected",
+            confidence: 95,
+            endpoint: injUrl,
+          });
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Performance checks
+    const timing = response.headers.get("server-timing");
+    const cacheControl = response.headers.get("cache-control");
+    if (!cacheControl || !cacheControl.includes("max-age")) {
+      findings.push({
+        id: "cache-control-missing",
+        severity: "medium",
+        category: "performance",
+        title: "Missing Cache Control",
+        description: "No cache policy set - assets will be re-downloaded on every visit",
+        confidence: 80,
+      });
+    }
+
+    const csp = response.headers.get("content-security-policy");
+    if (!csp) {
+      findings.push({
+        id: "csp-missing",
+        severity: "medium",
+        category: "security",
+        title: "Content Security Policy Missing",
+        description: "No CSP header - XSS and data injection attacks harder to prevent",
+        confidence: 80,
+      });
+    }
+
     return {
       findings,
       headersAnalyzed,

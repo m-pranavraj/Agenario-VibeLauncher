@@ -690,6 +690,23 @@ export interface Scan {
     topBlockers: string[];
     readyToHunt: boolean;
   } | null;
+  urlDeepAudit?: {
+    findings: Array<{
+      id: string;
+      severity: "critical" | "high" | "medium" | "low" | "info";
+      category: "security" | "compliance" | "performance" | "uiux";
+      title: string;
+      description: string;
+      confidence: number;
+      endpoint?: string;
+      evidence?: string;
+    }>;
+    headersAnalyzed: number;
+    endpointsScanned: number;
+    responseLeaks?: string[];
+    authEndpoints?: string[];
+    securityScore?: number;
+  } | null;
   createdAt: string;
   completedAt: string | null;
 }
