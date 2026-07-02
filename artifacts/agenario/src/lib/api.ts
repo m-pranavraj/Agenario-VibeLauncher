@@ -898,6 +898,22 @@ export const api = {
       return res.blob();
     },
   },
+  remediation: {
+    list: (scanId: number) => request<{ fixes: any[]; batchStatus: string | null }>(`/scans/${scanId}/remediate`),
+    generate: (scanId: number, data: { issueIds: number[]; strategy?: "ai" | "rule" | "hybrid"; autoApply?: boolean; createPr?: boolean }) =>
+      request<{ batchId: string; totalIssues: number; status: string }>(`/scans/${scanId}/remediate`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    apply: (scanId: number, fixId: string) =>
+      request<{ success: boolean; message: string }>(`/scans/${scanId}/remediate/${fixId}/apply`, { method: "POST" }),
+    rollback: (scanId: number, fixId: string) =>
+      request<{ success: boolean; message: string }>(`/scans/${scanId}/remediate/${fixId}/rollback`, { method: "POST" }),
+    get: (scanId: number, fixId: string) =>
+      request<{ fix: any }>(`/scans/${scanId}/remediate/${fixId}`),
+    stats: () => request<{ totalFixes: number; applied: number; successRate: number; byStatus: Record<string, number> }>("/remediation/stats"),
+    history: () => request<{ fixes: any[] }>("/remediation/history"),
+  },
   billing: {
     createOrder: (plan: string, coupon?: string) =>
       request<RazorpayOrder>("/billing/create-order", {

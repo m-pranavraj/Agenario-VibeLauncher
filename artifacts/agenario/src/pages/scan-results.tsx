@@ -6030,9 +6030,6 @@ export default function ScanResultsPage() {
     activeTab = "deeptech";
   } else if (rawSection.startsWith("impact-")) {
     activeTab = "intelligence";
-  } else if (rawSection.startsWith("issues-")) {
-    activeCategory = rawSection.replace("issues-", "");
-    activeTab = "issues";
   } else if (rawSection === "cofounder") {
     activeTab = "cofounder";
   } else if (rawSection === "evidence") {
@@ -6249,90 +6246,45 @@ export default function ScanResultsPage() {
   const agentFiltered = activeAgent
     ? safeIssues.filter((i: any) => (i.agentName || "AI Code Quality") === activeAgent)
     : safeIssues;
-  const categoryFiltered = activeCategory
-    ? agentFiltered.filter((i: any) => {
-        const cat = activeCategory.toLowerCase();
-        const issueCat = (i.category || "").toLowerCase();
-        const agentName = (i.agentName || "").toLowerCase();
-        const desc = (i.description || "").toLowerCase();
-        const title = (i.title || "").toLowerCase();
+  const matchCategory = (i: any, cat: string): boolean => {
+    const issueCat = (i.category || "").toLowerCase();
+    if (issueCat === cat) return true;
+    const agentName = (i.agentName || "").toLowerCase();
+    const desc = (i.description || "").toLowerCase();
+    const title = (i.title || "").toLowerCase();
+    if (cat === "security") {
+      if (["injection","auth","exposure","security-smell","mass-assign","path-traversal","ssti","xxe","open-redirect","log-injection","file-upload","idor","access-control","cors","csrf","ssrf","rce","xss","sqli","nosqli","ldap","xxe","deserialization","bypass","privilege"].includes(issueCat)) return true;
+      if (agentName.includes("security") || agentName.includes("idor") || agentName.includes("access") || agentName.includes("taint") || agentName.includes("vuln") || agentName.includes("secret") || agentName.includes("csrf") || agentName.includes("xss") || agentName.includes("injection") || agentName.includes("auth") || agentName.includes("crypto") || agentName.includes("bypass") || agentName.includes("cors") || agentName.includes("owasp")) return true;
+      if (title.includes("security") || title.includes("leak") || title.includes("cryptographic") || title.includes("vuln") || title.includes("exploit") || title.includes("injection") || title.includes("xss") || title.includes("csrf") || title.includes("sidestepping") || title.includes("unauthorized") || title.includes("bypass") || title.includes("secret")) return true;
+      if (desc.includes("security") || desc.includes("vuln") || desc.includes("exploit") || desc.includes("injection") || desc.includes("sidestepping") || desc.includes("unauthorized") || desc.includes("bypass")) return true;
+      return false;
+    }
+    if (cat === "compliance") {
+      if (["compliance","regulatory","gdpr","pci","hipaa","soc2","iso27001","ccpa","pdpa","sox","copra","data-governance","data-retention","privacy","consent","cookie"].includes(issueCat)) return true;
+      if (agentName.includes("compliance") || agentName.includes("safety") || agentName.includes("regulatory") || agentName.includes("gdpr") || agentName.includes("pci") || agentName.includes("hipaa") || agentName.includes("soc2") || agentName.includes("audit") || agentName.includes("privacy")) return true;
+      if (desc.includes("compliance") || desc.includes("gdpr") || desc.includes("pci") || desc.includes("hipaa") || desc.includes("regulatory") || desc.includes("policy") || desc.includes("audit") || desc.includes("privacy") || desc.includes("consent") || desc.includes("cookie") || desc.includes("data retention") || desc.includes("soc2")) return true;
+      if (title.includes("compliance") || title.includes("policy") || title.includes("gdpr") || title.includes("hipaa") || title.includes("pci") || title.includes("privacy") || title.includes("consent") || title.includes("cookie") || title.includes("audit") || title.includes("regulatory")) return true;
+      return false;
+    }
+    if (cat === "performance") {
+      if (["performance","circular_dependency","god_module","high_instability","memory-leak","cpu-bottleneck","iobound","nplus1","slow-query","infinite-loop","deadlock","race-condition","throttling","heavy-computation","unoptimized-render","bundle-bloat","unnecessary-re-render"].includes(issueCat)) return true;
+      if (agentName.includes("performance") || agentName.includes("architecture") || agentName.includes("optimization") || agentName.includes("profiling") || agentName.includes("bundle") || agentName.includes("rendering") || agentName.includes("memory")) return true;
+      if (desc.includes("performance") || desc.includes("latency") || desc.includes("slow") || desc.includes("database query") || desc.includes("memory") || desc.includes("cpu") || desc.includes("bottleneck") || desc.includes("n+1") || desc.includes("nplus1") || desc.includes("render") || desc.includes("bundle") || desc.includes("re-render") || desc.includes("throttl") || desc.includes("deadlock") || desc.includes("race")) return true;
+      if (title.includes("performance") || title.includes("latency") || title.includes("memory") || title.includes("slow") || title.includes("bottleneck") || title.includes("render") || title.includes("bundle") || title.includes("optimization")) return true;
+      return false;
+    }
+    if (cat === "uiux") {
+      if (["uiux","ui","ux","wcag_violation","cognitive_overload","ai_boilerplate","inconsistent_design","accessibility","contrast","keyboard","screen-reader","color-blind","responsive","mobile","touch-target","font-size","animation","spacing","layout-shift","dark-mode","form-validation","error-state","loading-state","empty-state"].includes(issueCat)) return true;
+      if (agentName.includes("design") || agentName.includes("ui") || agentName.includes("ux") || agentName.includes("accessibility") || agentName.includes("wcag") || agentName.includes("usability") || agentName.includes("interface")) return true;
+      if (desc.includes("design") || desc.includes("contrast") || desc.includes("wcag") || desc.includes("accessibility") || desc.includes("keyboard") || desc.includes("screen reader") || desc.includes("mobile") || desc.includes("responsive") || desc.includes("touch") || desc.includes("font") || desc.includes("layout") || desc.includes("ui") || desc.includes("ux") || desc.includes("error state") || desc.includes("loading") || desc.includes("empty state") || desc.includes("dark mode")) return true;
+      if (title.includes("ui") || title.includes("ux") || title.includes("contrast") || title.includes("accessibility") || title.includes("wcag") || title.includes("keyboard") || title.includes("screen reader") || title.includes("mobile") || title.includes("responsive") || title.includes("design") || title.includes("usability")) return true;
+      return false;
+    }
+    return issueCat === cat;
+  };
 
-        if (cat === "security") {
-          return (
-            issueCat === "injection" ||
-            issueCat === "auth" ||
-            issueCat === "exposure" ||
-            issueCat === "security-smell" ||
-            issueCat === "mass-assign" ||
-            issueCat === "path-traversal" ||
-            issueCat === "ssti" ||
-            issueCat === "xxe" ||
-            issueCat === "open-redirect" ||
-            issueCat === "log-injection" ||
-            issueCat === "file-upload" ||
-            agentName.includes("security") ||
-            agentName.includes("idor") ||
-            agentName.includes("access") ||
-            agentName.includes("taint") ||
-            title.includes("security") ||
-            title.includes("leak") ||
-            title.includes("cryptographic")
-          );
-        }
-        if (cat === "compliance") {
-          return (
-            issueCat === "compliance" ||
-            issueCat === "regulatory" ||
-            issueCat.includes("compliance") ||
-            agentName.includes("compliance") ||
-            agentName.includes("safety") ||
-            desc.includes("compliance") ||
-            desc.includes("gdpr") ||
-            desc.includes("pci") ||
-            desc.includes("hipaa") ||
-            desc.includes("regulatory") ||
-            desc.includes("policy") ||
-            title.includes("compliance") ||
-            title.includes("policy")
-          );
-        }
-        if (cat === "performance") {
-          return (
-            issueCat === "performance" ||
-            issueCat === "circular_dependency" ||
-            issueCat === "god_module" ||
-            issueCat === "high_instability" ||
-            agentName.includes("performance") ||
-            agentName.includes("architecture") ||
-            desc.includes("performance") ||
-            desc.includes("latency") ||
-            desc.includes("slow") ||
-            desc.includes("database query") ||
-            title.includes("performance") ||
-            title.includes("latency")
-          );
-        }
-        if (cat === "uiux") {
-          return (
-            issueCat === "uiux" ||
-            issueCat === "wcag_violation" ||
-            issueCat === "cognitive_overload" ||
-            issueCat === "ai_boilerplate" ||
-            issueCat === "inconsistent_design" ||
-            agentName.includes("design") ||
-            agentName.includes("ui") ||
-            agentName.includes("ux") ||
-            desc.includes("design") ||
-            desc.includes("contrast") ||
-            desc.includes("wcag") ||
-            title.includes("ui") ||
-            title.includes("ux") ||
-            title.includes("contrast") ||
-            title.includes("accessibility")
-          );
-        }
-        return issueCat === cat;
-      })
+  const categoryFiltered = activeCategory
+    ? agentFiltered.filter((i: any) => matchCategory(i, activeCategory.toLowerCase()))
     : agentFiltered;
   const filteredIssues =
     evidenceFilter === "all"
@@ -7016,89 +6968,10 @@ export default function ScanResultsPage() {
 
 
             {/* ——— Category Sections ————————————————————————————— */}
-            {["security", "compliance", "performance", "uiux"].map((cat) => {
-              const catIssues = sortedIssues.filter((i: any) => {
-                const issueCat = (i.category || "").toLowerCase();
-                const agentName = (i.agentName || "").toLowerCase();
-                const desc = (i.description || "").toLowerCase();
-                const title = (i.title || "").toLowerCase();
-                
-                if (cat === "security") {
-                  return (
-                    issueCat === "injection" ||
-                    issueCat === "auth" ||
-                    issueCat === "exposure" ||
-                    issueCat === "security-smell" ||
-                    issueCat === "mass-assign" ||
-                    issueCat === "path-traversal" ||
-                    issueCat === "ssti" ||
-                    issueCat === "xxe" ||
-                    issueCat === "open-redirect" ||
-                    issueCat === "log-injection" ||
-                    issueCat === "file-upload" ||
-                    agentName.includes("security") ||
-                    agentName.includes("idor") ||
-                    agentName.includes("access") ||
-                    agentName.includes("taint") ||
-                    title.includes("security") ||
-                    title.includes("leak") ||
-                    title.includes("cryptographic")
-                  );
-                }
-                if (cat === "compliance") {
-                  return (
-                    issueCat === "compliance" ||
-                    issueCat === "regulatory" ||
-                    issueCat.includes("compliance") ||
-                    agentName.includes("compliance") ||
-                    agentName.includes("safety") ||
-                    desc.includes("compliance") ||
-                    desc.includes("gdpr") ||
-                    desc.includes("pci") ||
-                    desc.includes("hipaa") ||
-                    desc.includes("regulatory") ||
-                    desc.includes("policy") ||
-                    title.includes("compliance") ||
-                    title.includes("policy")
-                  );
-                }
-                if (cat === "performance") {
-                  return (
-                    issueCat === "performance" ||
-                    issueCat === "circular_dependency" ||
-                    issueCat === "god_module" ||
-                    issueCat === "high_instability" ||
-                    agentName.includes("performance") ||
-                    agentName.includes("architecture") ||
-                    desc.includes("performance") ||
-                    desc.includes("latency") ||
-                    desc.includes("slow") ||
-                    desc.includes("database query") ||
-                    title.includes("performance") ||
-                    title.includes("latency")
-                  );
-                }
-                if (cat === "uiux") {
-                  return (
-                    issueCat === "uiux" ||
-                    issueCat === "wcag_violation" ||
-                    issueCat === "cognitive_overload" ||
-                    issueCat === "ai_boilerplate" ||
-                    issueCat === "inconsistent_design" ||
-                    agentName.includes("design") ||
-                    agentName.includes("ui") ||
-                    agentName.includes("ux") ||
-                    desc.includes("design") ||
-                    desc.includes("contrast") ||
-                    desc.includes("wcag") ||
-                    title.includes("ui") ||
-                    title.includes("ux") ||
-                    title.includes("contrast") ||
-                    title.includes("accessibility")
-                  );
-                }
-                return false;
-              });
+            {(["security", "compliance", "performance", "uiux"] as const)
+              .filter((cat) => !activeCategory || activeCategory === cat)
+              .map((cat) => {
+              const catIssues = sortedIssues.filter((i: any) => matchCategory(i, cat));
               
               if (catIssues.length === 0) return null;
               

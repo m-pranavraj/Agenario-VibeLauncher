@@ -78,6 +78,7 @@ export class RuleEngine {
           parsed,
           findings: this.findings,
           taintStore: this.taintStore,
+          astIndex: buildSharedAstIndex(parsed),
           addFinding: (finding: RuleFinding) => {
             this.findings.push(finding);
           },

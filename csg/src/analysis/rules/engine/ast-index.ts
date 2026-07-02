@@ -22,7 +22,7 @@ export function buildSharedAstIndex(parsed: ParseResult[]): SharedAstIndex {
   };
 
   for (const p of parsed) {
-    const src = p.source || '';
+    const src = p.file || '';
     index.allStrings.push(src);
 
     // Fast regex-based pre-scan for common patterns

@@ -4,12 +4,13 @@ import { useRoute, Link } from "wouter";
 import {
   Shield, Loader2, AlertTriangle, CheckCircle2, XCircle, Clock,
   ChevronRight, Zap, GitBranch, Download, RotateCcw, ArrowLeft, ArrowRight,
-  Sparkles, Code2, Play, CheckCheck, Lock, Crown, Bug
+  Sparkles, Code2, Play, CheckCheck, Lock, Crown, Bug, RefreshCw
 } from "lucide-react";
 import { useIsLight } from "@/hooks/use-is-light";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/use-auth";
+import { api } from "@/lib/api";
 
 interface ScanFix {
   id: string;
@@ -332,12 +333,14 @@ export default function RemediationPage() {
   if (authLoading) return <div className={`min-h-screen flex items-center justify-center ${isLight ? "bg-white" : "bg-[#0A0A0A]"}`}><Loader2 className="w-8 h-8 animate-spin text-violet-500" /></div>;
   if (!user || (user.plan !== "creator" && user.plan !== "enterprise")) return <UpgradeScreen isLight={isLight} />;
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["/api/scans/remediate", scanId],
-    queryFn: () => fetch(`/api/scans/${scanId}/remediate`).then(r => r.ok ? r.json() : Promise.reject()),
-    enabled: !!scanId,
-    refetchInterval: (d) => {
-      const fixes: ScanFix[] = (d as any)?.fixes ?? [];
+    queryFn: () => api.remediation.list(Number(scanId)),
+    enabled: !!scanId && user?.plan === "creator",
+    retry: 2,
+    retryDelay: 1000,
+    refetchInterval: (d: any) => {
+      const fixes: ScanFix[] = d?.fixes ?? [];
       const hasActive = fixes.some(f => f.status === "pending" || f.status === "generating" || f.status === "testing");
       return hasActive ? 3000 : false;
     },
@@ -345,56 +348,46 @@ export default function RemediationPage() {
 
   const { data: scanData } = useQuery({
     queryKey: ["/api/scans", scanId],
-    queryFn: () => fetch(`/api/scans/${scanId}`).then(r => r.ok ? r.json() : Promise.reject()),
+    queryFn: () => api.scans.get(Number(scanId)),
     enabled: !!scanId,
   });
 
   const generateMutation = useMutation({
     mutationFn: async (issueIds: number[]) => {
-      const res = await fetch(`/api/scans/${scanId}/remediate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ issueIds, strategy: "hybrid" }),
-      });
-      if (!res.ok) throw new Error("Failed to start fix generation");
-      return res.json();
+      return api.remediation.generate(Number(scanId), { issueIds, strategy: "hybrid" });
     },
     onSuccess: () => {
       toast({ title: "Fix Generation Started", description: "AI is analyzing and generating patches.", duration: 3000 });
       queryClient.invalidateQueries({ queryKey: ["/api/scans/remediate", scanId] });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to start fix generation", variant: "destructive" });
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message || "Failed to start fix generation", variant: "destructive" });
     },
   });
 
   const applyMutation = useMutation({
     mutationFn: async (fixId: string) => {
-      const res = await fetch(`/api/scans/${scanId}/remediate/${fixId}/apply`, { method: "POST" });
-      if (!res.ok) throw new Error("Failed to apply fix");
-      return res.json();
+      return api.remediation.apply(Number(scanId), fixId);
     },
     onSuccess: () => {
       toast({ title: "Fix Applied", description: "The patch has been marked as applied.", duration: 3000 });
       queryClient.invalidateQueries({ queryKey: ["/api/scans/remediate", scanId] });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to apply fix", variant: "destructive" });
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message || "Failed to apply fix", variant: "destructive" });
     },
   });
 
   const rollbackMutation = useMutation({
     mutationFn: async (fixId: string) => {
-      const res = await fetch(`/api/scans/${scanId}/remediate/${fixId}/rollback`, { method: "POST" });
-      if (!res.ok) throw new Error("Failed to rollback fix");
-      return res.json();
+      return api.remediation.rollback(Number(scanId), fixId);
     },
     onSuccess: () => {
       toast({ title: "Fix Rolled Back", description: "The original code has been restored.", duration: 3000 });
       queryClient.invalidateQueries({ queryKey: ["/api/scans/remediate", scanId] });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to rollback fix", variant: "destructive" });
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message || "Failed to rollback fix", variant: "destructive" });
     },
   });
 
@@ -415,16 +408,32 @@ export default function RemediationPage() {
   }
 
   if (isError) {
+    const errorMsg = (error as any)?.message || "Could not fetch fixes for this scan.";
+    const isAuthError = errorMsg?.includes("401") || errorMsg?.includes("Authentication");
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${isLight ? "bg-gray-50 text-gray-900" : "bg-[#0A0A0A] text-white"}`}>
         <AlertTriangle className="w-12 h-12 text-rose-500 mb-4" />
         <h1 className="text-xl font-bold mb-2">Unable to Load Remediation</h1>
-        <p className="text-sm opacity-50 mb-4">Could not fetch fixes for this scan.</p>
-        <Link href={`/scans/${scanId}`}>
-          <button className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-all">
-            Back to Scan Results
+        <p className="text-sm opacity-50 mb-4">{errorMsg}</p>
+        {isAuthError && (
+          <p className="text-xs text-amber-400 mb-4 max-w-md text-center">
+            Please make sure you are logged in and have access to this scan. Try logging out and back in.
+          </p>
+        )}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => refetch()}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-all"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry
           </button>
-        </Link>
+          <Link href={`/scans/${scanId}`}>
+            <button className="px-4 py-2 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:text-white hover:border-white/20 transition-all">
+              Back to Scan Results
+            </button>
+          </Link>
+        </div>
       </div>
     );
   }
