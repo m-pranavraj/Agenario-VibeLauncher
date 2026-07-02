@@ -479,11 +479,11 @@ function FrameworkMatrix({ isLight }: { isLight: boolean }) {
 //  Main Panel 
 interface Props {
   scan: any;
-  isLight?: boolean;
   activeSection?: string;
 }
 
 export function VerificationPanel({ scan: rawScan, activeSection }: Props) {
+  if (!rawScan) return null;
   const isLight = useIsLight();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["A"]));
 

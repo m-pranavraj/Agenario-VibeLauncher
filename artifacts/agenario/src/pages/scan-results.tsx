@@ -19,7 +19,7 @@ import { FounderView } from "@/components/report/FounderView";
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { RiskForecastSection } from "@/components/intelligence/RiskForecastSection";
 import { FileExplorer } from "@/components/dashboard/FileExplorer";
-import { Folder } from "lucide-react";
+import { Bug as BugIcon } from "lucide-react";
 import { RevenueIntelligenceSection } from "@/components/intelligence/RevenueIntelligenceSection";
 import { ConfidenceContractView } from "@/components/intelligence/ConfidenceContractView";
 import { IntelligenceHeroSection } from "@/components/report/IntelligenceHeroSection";
@@ -116,6 +116,59 @@ import { useIsLight } from "@/hooks/use-is-light";
 import { toast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DeepArchitectureVisualizer } from "@/components/deep-tech/DeepArchitectureVisualizer";
+import { api, type ScanDetail, type ScanIssue, type RiskForecast, type ComplianceResult, type RevenueIntelligence, type ProofEvidence, type RegressionDiff, type BenchmarkData, type LaunchDNA, type LaunchReplayStep, type ShadowApiFindings, type DigitalTwinResult, type PredictiveIntelResult, type RootCauseResult, type DempsterShaferResult } from "@/lib/api";
+import { motion } from "framer-motion";
+import { AbstractInterpretationRadar } from "@/components/deep-tech/AbstractInterpretationRadar";
+import { RtIfcGraphVisualizer } from "@/components/deep-tech/RtIfcGraphVisualizer";
+import { AIConsensusVisualizer } from "@/components/deep-tech/AIConsensusVisualizer";
+import { ProductRealityVisualizer } from "@/components/deep-tech/ProductRealityVisualizer";
+import { RealityCheckVisualizer } from "@/components/deep-tech/RealityCheckVisualizer";
+import { VerificationPanel } from "@/components/deep-tech/VerificationPanel";
+
+const SEVERITY_CONFIG = {
+  critical: { color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", badge: "bg-red-500/15 text-red-500 border-red-500/25", icon: XCircle, label: "Critical" },
+  high: { color: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/20", badge: "bg-orange-500/15 text-orange-500 border-orange-500/25", icon: AlertTriangle, label: "High" },
+  medium: { color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", badge: "bg-amber-500/15 text-amber-500 border-amber-500/25", icon: Eye, label: "Medium" },
+  low: { color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20", badge: "bg-blue-500/15 text-blue-500 border-blue-500/25", icon: BugIcon, label: "Low" },
+};
+
+const COMPLIANCE_COLORS: Record<string, string> = {
+  gdpr: "text-blue-400",
+  hipaa: "text-green-400",
+  pci: "text-purple-400",
+  soc2: "text-amber-400",
+  iso27001: "text-cyan-400",
+  cocpa: "text-red-400",
+  default: "text-white/50"
+};
+
+const VERDICT_CONFIG = {
+  launch: { bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-500", label: "Ready to Launch", icon: CheckCircle },
+  caution: { bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-500", label: "Launch with Caution", icon: AlertTriangle },
+  halt: { bg: "bg-red-500/10 border-red-500/20", text: "text-red-500", label: "Do Not Launch", icon: XCircle },
+};
+
+function getLineColor(color: string): string {
+  const colors: Record<string, string> = {
+    critical: "stroke-red-400",
+    high: "stroke-orange-400",
+    medium: "stroke-amber-400",
+    low: "stroke-blue-400",
+    info: "stroke-gray-400",
+    security: "stroke-red-400",
+    compliance: "stroke-blue-400",
+    performance: "stroke-purple-400",
+    uiux: "stroke-green-400",
+  };
+  return colors[color as keyof typeof colors] ?? "stroke-gray-400";
+}
+
+function getConfidenceStyle(confidence: number) {
+  if (confidence >= 80) return { ...SEVERITY_CONFIG.low, color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", badge: "bg-emerald-500/15 text-emerald-500 border-emerald-500/25", label: "Verified" };
+  if (confidence >= 60) return { ...SEVERITY_CONFIG.low, color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", badge: "bg-amber-500/15 text-amber-500 border-amber-500/25", label: "Partial" };
+  return { ...SEVERITY_CONFIG.low, color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", badge: "bg-red-500/15 text-red-500 border-red-500/25", label: "Low Confidence" };
+}
+
 function PreLaunchChecklist({ scan }: { scan: ScanDetail }) {
   const isLight = useIsLight();
   const issues = (scan.issues ?? []).filter((issue: any) => !issue.locked);
@@ -1390,7 +1443,7 @@ function EvidenceCard({
   const cfg =
     SEVERITY_CONFIG[issue.severity as keyof typeof SEVERITY_CONFIG] ??
     SEVERITY_CONFIG.low;
-  const conf = getConfidenceStyle(issue.confidence ?? 60, isLight);
+  const conf = getConfidenceStyle(issue.confidence ?? 60);
 
   const { data: commImpact } = useQuery({
     queryKey: ["/intelligence/failures", issue.title],
@@ -2595,9 +2648,9 @@ function ProofEvidencePanel({ evidence }: { evidence: ProofEvidence[] }) {
                       <div className={`flex items-center gap-1.5 text-[10px] ${isLight ? "text-gray-400" : "text-white/60"} px-3 py-2 bg-black/20 border-b border-white/[0.05] uppercase tracking-wide font-medium`}>
                         <Camera className="w-3 h-3" />
                         Runtime Screenshot
-                          <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(e.confidence, isLight).badge}`}>
-                            {(() => { const ConfIcon = getConfidenceStyle(e.confidence, isLight).icon; return <ConfIcon className="w-3 h-3 inline" />; })()} {e.confidence}%
-                          </span>
+                            <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(e.confidence).badge}`}>
+                              {(() => { const ConfIcon = getConfidenceStyle(e.confidence).icon; return <ConfIcon className="w-3 h-3 inline" />; })()} {e.confidence}%
+                            </span>
                       </div>
                       <img
                         src={e.screenshot}
@@ -2830,9 +2883,9 @@ function SandboxProofsSection({
                         <div className="w-2 h-2 rounded-full bg-yellow-400/60" />
                         <div className="w-2 h-2 rounded-full bg-green-400/60" />
                       </div>
-                      Runtime Screenshot
-                      <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(first.confidence, isLight).badge}`}>
-                        {(() => { const ConfIcon = getConfidenceStyle(first.confidence, isLight).icon; return <ConfIcon className="w-3 h-3 inline" />; })()} {first.confidence}%
+Runtime Screenshot
+                      <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${getConfidenceStyle(first.confidence).badge}`}>
+                        {(() => { const ConfIcon = getConfidenceStyle(first.confidence).icon; return <ConfIcon className="w-3 h-3 inline" />; })()} {first.confidence}%
                       </span>
                     </div>
                     <img
@@ -6456,9 +6509,9 @@ export default function ScanResultsPage() {
               <>
                 <ExecutiveOverview scan={scan} isLight={isLight} />
                 <IssueBreakdownChart scan={scan} isLight={isLight} />
-                <StickyLaunchAlertBanner scan={scan} />
+                <StickyLaunchAlertBanner />
                 <LaunchGateBanner scan={scan} isLight={isLight} />
-                <LockedInsightsPanel scan={scan} plan={user.plan} />
+                <LockedInsightsPanel scan={scan!} plan={user.plan} />
 
             {/* --- Demo-to-Market-Ready Pipeline & Traffic Light Verdict ------------------------------- */}
             {scan.greenLightVerdict && (
