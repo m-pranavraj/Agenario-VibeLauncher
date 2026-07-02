@@ -275,3 +275,5 @@ export async function runUrlDeepAudit(url: string): Promise<UrlDeepAuditResult |
     return { findings, headersAnalyzed, endpointsScanned: 0 };
   }
 }
+
+// Updated: 2026-07-02 - Production ready with XSS/SQLi/SSTI probes
