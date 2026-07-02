@@ -133,7 +133,7 @@ export default function TestWriterPage() {
   });
 
   const levelConfig = TEST_LEVEL_CONFIG[testLevel];
-  const maxTests = scan?.issues?.filter((i: any) => !i.locked).length * levelConfig.testsPerFinding || 0;
+  const maxTests = (scan?.issues?.filter((i: any) => !i.locked).length ?? 0) * levelConfig.testsPerFinding || 0;
 
   const generateTests = async () => {
     if (!scan?.issues) return;

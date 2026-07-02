@@ -65,7 +65,7 @@ export default function ReportPage() {
 
   const vStyle = getVerdictStyle(cert.verdict);
   const findings = (cert.issues || []).map((i: any) => ({ title: i.title, severity: i.severity, category: i.category }));
-  const files = (cert.filePaths || cert.files || []);
+  const files = ((cert as any)?.filePaths || (cert as any)?.files || []);
 
   return (
     <div className={`min-h-screen relative overflow-hidden ${isLight ? "bg-slate-50 text-slate-900" : "bg-[#020204] text-white"}`}>

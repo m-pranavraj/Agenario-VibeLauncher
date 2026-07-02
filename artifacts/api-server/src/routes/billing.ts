@@ -16,42 +16,9 @@ function getRazorpay(): Razorpay {
   return new Razorpay({ key_id, key_secret });
 }
 
-async function createPaddleOrder(amount: number, currency: string, receipt: string, notes: Record<string, string>) {
-  const apiKey = process.env["PADDLE_API_KEY"];
-  if (!apiKey) throw new Error("Paddle API key not configured");
-  
-  const res = await fetch("https://api.paddle.com/2.0/orders", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({ amount, currency, receipt, notes }),
-  });
-  
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Paddle order creation failed: ${err}`);
-  }
-  
-  return await res.json();
-}
-
-function verifyPaddleWebhook(body: string, signature: string, secret: string): boolean {
-  if (!signature) return false;
-  const expectedSignature = crypto
-    .createHmac("sha256", secret)
-    .update(body, "utf8")
-    .digest("hex");
-  return crypto.timingSafeEqual(
-    Buffer.from(signature, "utf8"),
-    Buffer.from(expectedSignature, "utf8")
-  );
-}
-
-const PLAN_PRICES: Record<string, { amount: number; label: string }> = {
-  creator: { amount: 29900, label: "Creator Plan — ₹299/mo" },
-  enterprise: { amount: 0, label: "Enterprise Plan" },
+const PLAN_PRICES: Record<string, { amountInr: number; label: string; paddlePriceId?: string }> = {
+  creator: { amountInr: 29900, label: "Creator Plan — ₹299/mo", paddlePriceId: process.env["PADDLE_CREATOR_PRICE_ID"] },
+  enterprise: { amountInr: 0, label: "Enterprise Plan" },
 };
 
 const router: IRouter = Router();
@@ -84,7 +51,7 @@ router.post("/billing/validate-coupon", async (req, res): Promise<void> => {
       return;
     }
 
-    const baseAmount = PLAN_PRICES.creator.amount;
+    const baseAmount = PLAN_PRICES.creator.amountInr;
     const discountedAmount = Math.round(baseAmount * (1 - coupon.discount));
 
     res.json({
@@ -117,7 +84,7 @@ router.post("/billing/create-order", async (req, res): Promise<void> => {
     return;
   }
 
-  let finalAmount = planInfo.amount;
+  let finalAmount = planInfo.amountInr;
   let couponLabel = "";
 
   const rawCoupon = String(req.body?.coupon ?? "").trim().toUpperCase();
@@ -130,7 +97,7 @@ router.post("/billing/create-order", async (req, res): Promise<void> => {
         .limit(1);
 
       if (coupon && (!coupon.expiresAt || new Date(coupon.expiresAt) > new Date())) {
-        finalAmount = Math.round(planInfo.amount * (1 - coupon.discount));
+        finalAmount = Math.round(planInfo.amountInr * (1 - coupon.discount));
         couponLabel = ` (${coupon.label})`;
       }
     } catch (err) {
@@ -214,126 +181,123 @@ router.get("/billing/status", async (req, res): Promise<void> => {
   });
 });
 
-router.post("/billing/paddle/create-order", async (req, res): Promise<void> => {
+router.post("/billing/paddle/checkout", async (req, res): Promise<void> => {
   if (!requireAuth(req, res)) return;
-  
+
   const parsed = CreateOrderBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  
+
   const { plan } = parsed.data;
   const planInfo = PLAN_PRICES[plan];
-  if (!planInfo) {
-    res.status(400).json({ error: "Invalid plan" });
+  if (!planInfo || plan === "enterprise") {
+    res.status(400).json({ error: "Paddle checkout is only available for the Creator plan" });
     return;
   }
-  
-  let finalAmount = planInfo.amount;
-  let couponLabel = "";
-  
-  const rawCoupon = String(req.body?.coupon ?? "").trim().toUpperCase();
-  if (rawCoupon) {
-    try {
-      const [coupon] = await db
-        .select()
-        .from(coupons)
-        .where(and(eq(coupons.code, rawCoupon), eq(coupons.enabled, true)))
-        .limit(1);
 
-      if (coupon && (!coupon.expiresAt || new Date(coupon.expiresAt) > new Date())) {
-        finalAmount = Math.round(planInfo.amount * (1 - coupon.discount));
-        couponLabel = ` (${coupon.label})`;
-      }
-    } catch (err) {
-      logger.error({ err, rawCoupon }, "Failed to validate Paddle coupon");
-    }
+  const apiKey = process.env["PADDLE_API_KEY"];
+  const priceId = planInfo.paddlePriceId;
+
+  if (!apiKey) {
+    res.status(503).json({ error: "Paddle not configured" });
+    return;
   }
-  
-  try {
-    const order = await createPaddleOrder(
-      finalAmount,
-      "INR",
-      `agenario_${req.session.userId}_${Date.now()}`,
+  if (!priceId) {
+    res.status(503).json({ error: "Paddle price ID not configured for this plan" });
+    return;
+  }
+
+  const customerEmail = (req.session as any).userEmail;
+  const appUrl = process.env["APP_URL"] || `http://localhost:${process.env.PORT || 5000}`;
+  const successUrl = `${appUrl}/pricing?paddle_session_id={CHECKOUT_SESSION_ID}`;
+
+  const body: Record<string, any> = {
+    customer_email: customerEmail,
+    currency_code: "USD",
+    custom_data: { userId: String(req.session.userId), plan },
+    items: [
       {
-        userId: String(req.session.userId),
-        plan,
-        coupon: rawCoupon || "none",
-      }
-    );
-    
-    res.json({
-      orderId: order.data.id,
-      key: process.env["PADDLE_API_KEY"],
-      amount: finalAmount,
-      currency: "INR",
-      planName: planInfo.label + couponLabel,
+        price_id: priceId,
+        quantity: 1,
+      },
+    ],
+    success_url: successUrl,
+    return_url: successUrl,
+  };
+
+  try {
+    const httpRes = await fetch("https://api.paddle.com/2.0/checkouts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(body),
     });
+
+    if (!httpRes.ok) {
+      const err = await httpRes.text();
+      logger.error({ err, status: httpRes.status }, "Paddle Checkout API error");
+      res.status(502).json({ error: "Failed to create Paddle checkout" });
+      return;
+    }
+
+    const data = await httpRes.json();
+    res.json({ checkoutUrl: data.data?.url, sessionId: data.data?.id });
   } catch (err) {
-    res.status(500).json({ error: "Could not create Paddle order" });
+    logger.error({ err }, "Paddle checkout creation failed");
+    res.status(500).json({ error: "Could not create Paddle checkout" });
   }
 });
 
 router.post("/billing/paddle/verify", async (req, res): Promise<void> => {
   if (!requireAuth(req, res)) return;
-  
-  const { paddleOrderId, paddlePaymentId, paddleSignature, plan } = req.body;
-  
-  const key_secret = process.env["PADDLE_WEBHOOK_SECRET"];
-  if (!key_secret) {
-    res.status(503).json({ error: "Payment not configured" });
-    return;
-  }
-  
-  const expectedSignature = crypto
-    .createHmac("sha256", key_secret)
-    .update(`${paddleOrderId}|${paddlePaymentId}`)
-    .digest("hex");
-  
-  if (expectedSignature !== paddleSignature) {
-    res.status(400).json({ error: "Invalid payment signature" });
-    return;
-  }
-  
-  const [user] = await db
-    .update(usersTable)
-    .set({ plan, updatedAt: new Date() })
-    .where(eq(usersTable.id, req.session.userId!))
-    .returning();
-  
-  req.log.info({ userId: user.id, plan }, "Plan upgraded via Paddle");
-  
-  res.json({ success: true, plan: user.plan });
-});
 
-router.post("/billing/paddle/webhook", async (req, res): Promise<void> => {
-  const signature = req.headers["paddle-signature"] as string;
-  const event = req.body;
-  const body = JSON.stringify(event);
-  
-  const key_secret = process.env["PADDLE_WEBHOOK_SECRET"];
-  if (!key_secret) {
-    res.status(503).json({ error: "Webhook not configured" });
+  const { sessionId } = req.body;
+  if (!sessionId) {
+    res.status(400).json({ error: "sessionId is required" });
     return;
   }
-  
-  const isValid = await verifyPaddleWebhook(body, signature, key_secret);
-  if (!isValid) {
-    res.status(400).json({ error: "Invalid webhook signature" });
+
+  const apiKey = process.env["PADDLE_API_KEY"];
+  if (!apiKey) {
+    res.status(503).json({ error: "Paddle not configured" });
     return;
   }
-  
-  if (event.event_name === "subscription_created") {
-    const userId = event.data.attributes.user_id;
-    const plan = "creator";
-    await db.update(usersTable)
-      .set({ plan, updatedAt: new Date() })
-      .where(eq(usersTable.id, userId));
-    req.log.info({ userId, plan }, "Plan upgraded via Paddle webhook");
+
+  try {
+    const httpRes = await fetch(`https://api.paddle.com/2.0/checkouts/${sessionId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+
+    if (!httpRes.ok) {
+      const err = await httpRes.text();
+      logger.error({ err, status: httpRes.status }, "Paddle session verification failed");
+      res.status(502).json({ error: "Failed to verify Paddle session" });
+      return;
+    }
+
+    const data = await httpRes.json();
+    const attrs = data.data?.attributes || {};
+    const status = attrs.status;
+
+    if (status === "completed" || status === "active") {
+      const plan = "creator";
+      const [user] = await db.update(usersTable).set({ plan, updatedAt: new Date() }).where(eq(usersTable.id, req.session.userId!)).returning();
+      req.log.info({ userId: user.id, plan }, "Plan upgraded via Paddle checkout verify");
+      res.json({ success: true, plan: user.plan });
+    } else {
+      res.json({ success: false, message: `Session status: ${status}`, plan: undefined });
+    }
+  } catch (err) {
+    logger.error({ err }, "Paddle verify error");
+    res.status(500).json({ error: "Could not verify Paddle session" });
   }
-  
-  res.json({ success: true });
 });
 
 export default router;

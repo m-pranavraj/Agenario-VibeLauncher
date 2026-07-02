@@ -7,7 +7,7 @@ import { eq, desc, and, asc } from "drizzle-orm";
 import { db, usersTable, scansTable, scanIssuesTable, scanEngineResults, scanProofs } from "@workspace/db";
 import { CreateScanBody } from "@workspace/api-zod";
 import { runAllAgents, runLaunchImpactCalculator, runProductHuntAudit, type CodeContext } from "../lib/agents.js";
-import { PLAN_LIMITS, applyTierGate } from "../utils/tierGate.js";
+import { PLAN_LIMITS, applyTierGate, checkRescanLimit } from "../utils/tierGate.js";
 import { ingestGitHubRepo, extractRoutesFromDir, cleanupScan } from "../lib/ingestion.js";
 import { ingestZipFile, cleanupZip } from "../lib/zip-ingestion.js";
 import { detectFramework, detectVibeTool, detectBusinessType } from "../lib/detector.js";
@@ -317,6 +317,78 @@ function performanceFindingToIssueRow(
     routePath: null,
     reproductionSteps: null,
     blastRadius: null,
+  };
+}
+
+function computeRescanDiff(
+  previousIssues: typeof scanIssuesTable.$inferSelect[],
+  newIssues: typeof scanIssuesTable.$inferSelect[],
+  previousScore: number | null,
+  newScore: number | null,
+): {
+  scanId: number;
+  previousIssuesCount: number;
+  newIssuesCount: number;
+  fixedIssuesCount: number;
+  unchangedCount: number;
+  newIssues: Array<{ findingId: string | null; title: string; severity: string; agentName: string }>;
+  fixedIssues: Array<{ findingId: string | null; title: string; severity: string; agentName: string }>;
+  scoreChanged: boolean;
+  previousScore: number | null;
+  newScore: number | null;
+  summary: string;
+} {
+  const key = (i: typeof scanIssuesTable.$inferSelect) =>
+    i.findingId || `${i.agentName || ""}:${i.title || ""}:${i.filePath || ""}:${i.lineNumber || 0}`;
+
+  const prevMap = new Map(previousIssues.map((i) => [key(i), i]));
+  const newMap = new Map(newIssues.map((i) => [key(i), i]));
+
+  const newIssuesList: typeof newIssues = [];
+  const fixedIssuesList: typeof previousIssues = [];
+  let unchanged = 0;
+
+  for (const ni of newIssues) {
+    const k = key(ni);
+    const prev = prevMap.get(k);
+    if (!prev) {
+      newIssuesList.push(ni);
+    } else if (prev.severity === ni.severity && prev.confidence === ni.confidence) {
+      unchanged++;
+    } else {
+      newIssuesList.push(ni);
+    }
+  }
+
+  for (const pi of previousIssues) {
+    const k = key(pi);
+    if (!newMap.has(k)) {
+      fixedIssuesList.push(pi);
+    }
+  }
+
+  const newCritical = newIssues.filter((i) => i.severity === "critical").length;
+  const newHigh = newIssues.filter((i) => i.severity === "high").length;
+  const fixedCritical = fixedIssuesList.filter((i) => i.severity === "critical").length;
+  const fixedHigh = fixedIssuesList.filter((i) => i.severity === "high").length;
+
+  const summary =
+    `${newIssuesList.length} new issues (${newCritical} critical, ${newHigh} high), ` +
+    `${fixedIssuesList.length} fixed issues (${fixedCritical} critical, ${fixedHigh} high), ` +
+    `${unchanged} unchanged. Score: ${previousScore ?? "N/A"} → ${newScore ?? "N/A"}.`;
+
+  return {
+    scanId: newIssues[0]?.scanId ?? 0,
+    previousIssuesCount: previousIssues.length,
+    newIssuesCount: newIssues.length,
+    fixedIssuesCount: fixedIssuesList.length,
+    unchangedCount: unchanged,
+    newIssues: newIssuesList.map((i) => ({ findingId: i.findingId, title: i.title, severity: i.severity, agentName: i.agentName })),
+    fixedIssues: fixedIssuesList.map((i) => ({ findingId: i.findingId, title: i.title, severity: i.severity, agentName: i.agentName })),
+    scoreChanged: previousScore !== null && newScore !== null ? previousScore !== newScore : false,
+    previousScore,
+    newScore,
+    summary,
   };
 }
 
@@ -1936,35 +2008,61 @@ router.post("/scans/:id/cancel", async (req, res): Promise<void> => {
   res.json({ success: true, status: "failed", message: "Scan cancelled" });
 });
 
-// ── POST /scans/:id/rescan — re-run analysis on a failed scan ────────────────
+// ── POST /scans/:id/rescan — re-run analysis on any completed/failed scan ────────────────
 router.post("/scans/:id/rescan", async (req, res): Promise<void> => {
   if (!requireAuth(req, res)) return;
 
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
-  if (isNaN(id)) { res.status(400).json({ error: "Invalid scan id" }); return; }
+  const scanId = parseInt(raw, 10);
+  if (isNaN(scanId)) { res.status(400).json({ error: "Invalid scan id" }); return; }
 
-  const [scan] = await db.select().from(scansTable).where(eq(scansTable.id, id));
-  if (!scan || scan.userId !== req.session.userId) {
+  const [scan] = await db
+    .select({
+      id: scansTable.id,
+      userId: scansTable.userId,
+      sourceType: scansTable.sourceType,
+      sourceInput: scansTable.sourceInput,
+      appDescription: scansTable.appDescription,
+      status: scansTable.status,
+      framework: scansTable.framework,
+      vibeTool: scansTable.vibeTool,
+      businessType: scansTable.businessType,
+    })
+    .from(scansTable)
+    .where(eq(scansTable.id, scanId));
+
+  if (!scan) {
     res.status(404).json({ error: "Scan not found" }); return;
   }
-  if (scan.status !== "failed") {
-    res.status(400).json({ error: "Only failed scans can be rescanned" }); return;
+
+  const sessionUserId = req.session?.userId ?? (req as any).userId;
+  const [currentUser] = await db.select().from(usersTable).where(eq(usersTable.id, sessionUserId));
+  const isAdmin = currentUser?.email && process.env["ADMIN_EMAIL"] && currentUser.email.toLowerCase() === process.env["ADMIN_EMAIL"].toLowerCase();
+  if (!scan || (scan.userId && scan.userId !== sessionUserId && !isAdmin)) {
+    res.status(404).json({ error: "Scan not found" }); return;
   }
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId!));
-  if (!user) { res.status(401).json({ error: "Not authenticated" }); return; }
+  if (!currentUser) { res.status(401).json({ error: "Not authenticated" }); return; }
 
-  // Reset scan status to running
-  await db.update(scansTable).set({ status: "running", score: null, summary: null }).where(eq(scansTable.id, id));
-  // Delete old issues
-  await db.delete(scanIssuesTable).where(eq(scanIssuesTable.scanId, id));
+  if (scan.status === "running") {
+    res.status(409).json({ error: "Scan is already running" }); return;
+  }
 
-  res.status(202).json({ scanId: id, status: "running" });
+  if (!(await checkRescanLimit(currentUser, res))) return;
 
-  // Fire pipeline in background
+  const previousIssues = await db.select().from(scanIssuesTable).where(eq(scanIssuesTable.scanId, scanId));
+  const [prevScoreRow] = await db
+    .select({ score: scansTable.score, issueCounts: scansTable.issueCounts })
+    .from(scansTable)
+    .where(eq(scansTable.id, scanId));
+
+  await db.update(scansTable).set({ status: "running", score: null, summary: null, launchVerdict: null, issueCounts: null }).where(eq(scansTable.id, scanId));
+  await db.delete(scanIssuesTable).where(eq(scanIssuesTable.scanId, scanId));
+
+  res.status(202).json({ scanId, status: "running", previousScore: prevScoreRow.score });
+
   (async () => {
-    const release = await scanQueue.acquire(user.id);
+    const release = await scanQueue.acquire(scan.userId!);
     try {
       let dir: string | undefined;
       let packageJson: Record<string, unknown> | undefined;
@@ -1974,31 +2072,52 @@ router.post("/scans/:id/rescan", async (req, res): Promise<void> => {
       let schemas: string | undefined;
 
       if (scan.sourceType === "github") {
-        const ingested = await ingestGitHubRepo(scan.sourceInput, scan.id);
-        if (ingested) {
-          dir = ingested.dir;
-          packageJson = (ingested.context.packageJson ?? {}) as Record<string, unknown>;
-          fileTree = ingested.context.fileTree;
-          totalFiles = ingested.context.totalFiles;
-          keyFiles = ingested.context.keyFiles;
-          schemas = ingested.context.schemas;
+        try {
+          const ingested = await ingestGitHubRepo(scan.sourceInput, scan.id);
+          if (ingested) {
+            dir = ingested.dir;
+            packageJson = (ingested.context.packageJson ?? {}) as Record<string, unknown>;
+            fileTree = ingested.context.fileTree;
+            totalFiles = ingested.context.totalFiles;
+            keyFiles = ingested.context.keyFiles;
+            schemas = ingested.context.schemas;
+          }
+        } catch (err) {
+          logger.warn({ err, scanId: scan.id }, "GitHub re-ingestion failed during rescan — continuing with source-type-aware analysis");
+        }
+      } else if (scan.sourceType === "zip") {
+        const cachedPkg = await getEngineResult(scan.id, "zipPackageJson");
+        if (cachedPkg) {
+          packageJson = cachedPkg as Record<string, unknown>;
         }
       }
 
       await runAnalysisPipeline({
-        scanId: id,
-        userId: user.id,
+        scanId,
+        userId: scan.userId!,
         sourceType: scan.sourceType,
         sourceInput: scan.sourceInput,
         appDescription: scan.appDescription ?? undefined,
-        dir, packageJson, fileTree, totalFiles, keyFiles, schemas,
+        vibeTool: scan.vibeTool ?? undefined,
+        businessType: scan.businessType ?? undefined,
+        dir,
+        packageJson,
+        fileTree,
+        totalFiles,
+        keyFiles,
+        schemas,
       });
+
+      const newIssues = await db.select().from(scanIssuesTable).where(eq(scanIssuesTable.scanId, scanId));
+      const [newScoreRow] = await db.select({ score: scansTable.score }).from(scansTable).where(eq(scansTable.id, scanId));
+      const rescanSummary = computeRescanDiff(previousIssues, newIssues, prevScoreRow.score, newScoreRow.score);
+      await saveEngineResult(scanId, "rescanDiff", rescanSummary);
     } catch (err) {
-      logger.error({ err, scanId: id }, "Rescan failed");
-      await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, id));
+      logger.error({ err, scanId: scan.id }, "Rescan failed");
+      await db.update(scansTable).set({ status: "failed" }).where(eq(scansTable.id, scan.id));
     } finally {
       release();
-      if (scan.sourceType === "github") cleanupScan(id);
+      if (scan.sourceType === "github") cleanupScan(scan.id);
     }
   })();
 });

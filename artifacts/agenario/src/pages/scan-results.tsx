@@ -6607,6 +6607,21 @@ export default function ScanResultsPage() {
           <>
             <IntelligenceHeroSection scan={scan} isLight={isLight} />
 
+            {/* --- Taint Flow Visualizer ---------------------------------------- */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.04 }}
+            >
+              <TaintFlowVisualizer
+                taintPaths={(scan as any).vibeTaint?.taintPaths || []}
+                crossLanguageFindings={(scan as any).crossLanguageTaint?.findings || []}
+                entropyLeaks={(scan as any).thermodynamicEntropy?.entropyLeaks || []}
+                maxPaths={8}
+                height={420}
+              />
+            </motion.div>
+
             {/* --- Launch Impact Calculator - Creator only ------------ */}
             {scan.launchImpact && (
               <motion.div
@@ -6767,6 +6782,23 @@ export default function ScanResultsPage() {
                 >
                   <ComplianceSection results={scan.complianceResults} />
                 </CreatorGate>
+              </motion.div>
+            )}
+
+            {/* --- Compliance Diagrams ------------------------------------ */}
+            {(scan.complianceResults && scan.complianceResults.length > 0) && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.16 }}
+              >
+                <SectionLabel label="Compliance Diagrams" icon={Clipboard} isLight={isLight} />
+                <MermaidComplianceDiagram
+                  complianceResults={scan.complianceResults}
+                  taintPaths={(scan as any).vibeTaint?.taintPaths || []}
+                  diagramType="all"
+                  height={400}
+                />
               </motion.div>
             )}
 
@@ -7217,6 +7249,30 @@ export default function ScanResultsPage() {
                  <VerificationPanel scan={scan} activeSection={rawSection.replace("deeptech-", "")} />
               </div>
             </div>
+
+            {/* --- CSG Call Stack Graph -------------------------------------- */}
+            <SectionLabel label="Call Stack Graph" icon={GitBranch} isLight={isLight} />
+            <CSGNodeGraph
+              callGraph={(scan as any).callGraph}
+              scanIssues={(scan.issues ?? []).map((i: any) => ({
+                agentName: i.agentName,
+                functionName: i.functionName ?? undefined,
+                filePath: i.filePath ?? undefined,
+                severity: i.severity,
+              }))}
+              maxDepth={30}
+              height={440}
+            />
+
+            {/* --- Taint Flow Visualizer (Deep Tech copy) -------------------- */}
+            <SectionLabel label="Taint Analysis" icon={Activity} isLight={isLight} />
+            <TaintFlowVisualizer
+              taintPaths={(scan as any).vibeTaint?.taintPaths || []}
+              crossLanguageFindings={(scan as any).crossLanguageTaint?.findings || []}
+              entropyLeaks={(scan as any).thermodynamicEntropy?.entropyLeaks || []}
+              maxPaths={6}
+              height={380}
+            />
           </>
         )}
 

@@ -32,6 +32,7 @@ import RemediationPage from "@/pages/remediation";
 import IssueChecklistPage from "@/pages/issue-checklist";
 import RoadmapPage from "@/pages/roadmap";
 import TestWriterPage from "@/pages/test-writer";
+import CofounderModePage from "@/pages/cofounder-mode";
 import EvidenceTiersPage from "@/pages/evidence-tiers";
 import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
@@ -76,6 +77,7 @@ function Router() {
       <Route path="/report/:id" component={ReportPage} />
       <Route path="/roadmap" component={RoadmapPage} />
       <Route path="/integrations" component={IntegrationsPage} />
+      <Route path="/cofounder-mode" component={CofounderModePage} />
       <Route path="/api-keys" component={ApiKeysPage} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
